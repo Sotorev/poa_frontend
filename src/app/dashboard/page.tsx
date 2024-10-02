@@ -1,9 +1,22 @@
-import React from 'react'
+import { getServerSession } from '@/lib/server-auth'
+import { hasPermission } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import Dashboard from '@/components/Dashboard'
 
-function DashBoard() {
+export default async function DashBoardPage() {
+
+  const session = await getServerSession()
+
+  if (!session) {
+    redirect('/login')
+  }
+
+  if (!hasPermission(session, 'PEI', 'Edit')) {
+    redirect('/unauthorized')
+  }
+
   return (
-	<div>DashBoard</div>
+    <Dashboard />
   )
 }
 
-export default DashBoard

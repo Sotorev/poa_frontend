@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
 	const session = await getServerSession()	
 
 	// Protect pages that require authentication
-	const protectedPaths = ['/dashboard', '/pei', '/poa']
+	const protectedPaths = ['/', '/dashboard', '/pei', '/poa']
 	if (protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
 		if (!session) {
 			return NextResponse.redirect(new URL('/login', request.url))
@@ -17,5 +17,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-	matcher: ['/dashboard/:path*', '/pei/:path*', '/poa/:path*'],
+	matcher: ['/', '/dashboard/:path*', '/pei/:path*', '/poa/:path*'],
+
 }

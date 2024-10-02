@@ -1,8 +1,8 @@
 'use client'
 
-import { withAuth } from './withAuth'
+import { withAuth } from './auth/withAuth'
 
-function PEI({ user }) {
+function PEI({  }) {
 	return (
 		<div>
 			<h1>PEI Management</h1>

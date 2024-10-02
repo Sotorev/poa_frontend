@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import Image from 'next/image'
+import Logo from '@/assets/images/logo.png'
 
 export default function LoginPage() {
 	const [username, setUsername] = useState('')
@@ -20,24 +22,28 @@ export default function LoginPage() {
 			await login(username, password)
 			router.push('/dashboard')
 		} catch {
-			setError('Invalid username or password')
+			setError('Nombre de usuario o contraseña inválidos')
 		}
 	}
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
 			<div className="max-w-md w-full space-y-8">
-				<div>
+				<div className="flex flex-col items-center">
+					<Image src={Logo} alt="Universidad Mesoamericana Logo" width={150} height={150} />
 					<h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-						Sign in to your account
+						Iniciar sesión
 					</h2>
+					<p className="mt-2 text-center text-sm text-gray-600">
+						Sistema de Gestión POA
+					</p>
 				</div>
 				<form className="mt-8 space-y-6" onSubmit={handleSubmit}>
 					<input type="hidden" name="remember" defaultValue="true" />
 					<div className="rounded-md shadow-sm -space-y-px">
 						<div>
 							<label htmlFor="username" className="sr-only">
-								Username
+								Nombre de usuario
 							</label>
 							<input
 								id="username"
@@ -45,15 +51,15 @@ export default function LoginPage() {
 								type="text"
 								autoComplete="username"
 								required
-								className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-								placeholder="Username"
+								className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-[#007041] focus:border-[#007041] focus:z-10 sm:text-sm"
+								placeholder="Nombre de usuario"
 								value={username}
 								onChange={(e) => setUsername(e.target.value)}
 							/>
 						</div>
 						<div>
 							<label htmlFor="password" className="sr-only">
-								Password
+								Contraseña
 							</label>
 							<input
 								id="password"
@@ -61,8 +67,8 @@ export default function LoginPage() {
 								type="password"
 								autoComplete="current-password"
 								required
-								className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-								placeholder="Password"
+								className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-[#007041] focus:border-[#007041] focus:z-10 sm:text-sm"
+								placeholder="Contraseña"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
 							/>
@@ -75,16 +81,16 @@ export default function LoginPage() {
 								id="remember-me"
 								name="remember-me"
 								type="checkbox"
-								className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+								className="h-4 w-4 text-[#007041] focus:ring-[#007041] border-gray-300 rounded"
 							/>
 							<label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-								Remember me
+								Recordarme
 							</label>
 						</div>
 
 						<div className="text-sm">
-							<Link href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-								Forgot your password?
+							<Link href="/forgot-password" className="font-medium text-[#007041] hover:text-[#2e8f66]">
+								¿Olvidó su contraseña?
 							</Link>
 						</div>
 					</div>
@@ -92,9 +98,9 @@ export default function LoginPage() {
 					<div>
 						<button
 							type="submit"
-							className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#007041] hover:bg-[#2e8f66] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007041]"
 						>
-							Sign in
+							Iniciar sesión
 						</button>
 					</div>
 				</form>
