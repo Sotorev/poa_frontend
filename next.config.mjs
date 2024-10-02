@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	reactStrictMode: true,
+	// reactStrictMode: true,
 	env: {
-		SECRET_COOKIE_PASSWORD: process.env.SECRET_COOKIE_PASSWORD,
+		SECRET_COOKIE_PASSWORD: process.env.JWT_SECRET,
 	}
 };
 

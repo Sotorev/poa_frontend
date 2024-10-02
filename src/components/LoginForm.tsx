@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useFormState } from "react-dom"
-import { login } from "@/lib/actions"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -9,7 +9,40 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export function LoginForm() {
-	const [state, formAction] = useFormState(login, { success: false, error: "" })
+	const [isLoading, setIsLoading] = useState(false)
+	const [error, setError] = useState("")
+	const router = useRouter()
+
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		setIsLoading(true)
+		setError("")
+
+		const formData = new FormData(event.currentTarget)
+		const username = formData.get("username") as string
+		const password = formData.get("password") as string
+
+		try {
+			const response = await fetch("http://localhost:4000/api/auth/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username, password }),
+				credentials: "include", // This is important for including cookies
+			})
+
+			if (!response.ok) {
+				const data = await response.json()
+				throw new Error(data.message || "Error al iniciar sesión")
+			}
+
+			// If login is successful, redirect to dashboard
+			router.push("/")
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Error al iniciar sesión")
+		} finally {
+			setIsLoading(false)
+		}
+	}
 
 	return (
 		<div className="w-full max-w-[400px] space-y-4">
@@ -17,7 +50,7 @@ export function LoginForm() {
 				<h1 className="text-3xl font-bold tracking-tighter">Iniciar sesión en POA</h1>
 				<p className="text-sm text-muted-foreground">Ingrese sus credenciales para acceder a su cuenta</p>
 			</div>
-			<form action={formAction} className="space-y-4">
+			<form onSubmit={handleSubmit} className="space-y-4">
 				<div className="space-y-2">
 					<Label htmlFor="username" className="sr-only">
 						Nombre de usuario
@@ -43,14 +76,14 @@ export function LoginForm() {
 						className="w-full rounded-md border-gray-300 shadow-sm"
 					/>
 				</div>
-				{state.error && (
+				{error && (
 					<Alert variant="destructive">
 						<AlertCircle className="h-4 w-4" />
-						<AlertDescription>{state.error}</AlertDescription>
+						<AlertDescription>{error}</AlertDescription>
 					</Alert>
 				)}
-				<Button className="w-full" type="submit" disabled={state.success}>
-					{!state ? (
+				<Button className="w-full" type="submit" disabled={isLoading}>
+					{isLoading ? (
 						<>
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 							Iniciando sesión...
