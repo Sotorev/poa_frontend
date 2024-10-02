@@ -1,18 +1,18 @@
-"use client";
-import React from 'react'
+"use client"
+
+import React, { useState } from 'react'
 import Link from 'next/link'
-import { Bell, User, ChevronDown, LogOut } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
+import { Bell, ChevronDown, LogOut } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 import Logo from '@/assets/images/logo.png'
-import { useState } from 'react'
 
 export default function Header() {
 	const { user, logout, loading } = useAuth()
 	const [dropdownOpen, setDropdownOpen] = useState(false)
 
 	if (loading || !user) {
-		return null; // Don't render anything if loading or no user
+		return null
 	}
 
 	return (
@@ -24,24 +24,27 @@ export default function Header() {
 							<Image src={Logo} alt="POA Logo" className="h-auto w-20 mr-2" />
 						</Link>
 					</div>
-					<nav className="hidden md:flex space-x-8 font-bold">
-						<Link href="/" className="text-[#007041] hover:text-[#2e8f66]">Usuarios</Link>
-						<Link href="/pei" className="text-[#007041] hover:text-[#2e8f66]">PEI</Link>
-						<Link href="/" className="text-[#007041] hover:text-[#2e8f66]">POA</Link>
-						<Link href="/dashboard" className="text-[#007041] hover:text-[#2e8f66]">Estadísticas</Link>
-						<Link href="/" className="text-[#007041] hover:text-[#2e8f66]">Reportes</Link>
+					<nav className="hidden md:flex space-x-8 font-semibold">
+						<Link href="/dashboard" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Dashboard</Link>
+						<Link href="/usuarios" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Usuarios</Link>
+						<Link href="/pei" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">PEI</Link>
+						<Link href="/poa" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">POA</Link>
+						<Link href="/reportes" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Reportes</Link>
 					</nav>
 					<div className="flex items-center space-x-4">
-						<button className="text-gray-700 hover:text-[#007041]">
+						<button className="text-gray-700 hover:text-[#007041] transition duration-150 ease-in-out relative">
 							<Bell className="h-6 w-6" />
+							<span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">3</span>
 						</button>
 						<div className="relative">
 							<button
-								className="flex items-center space-x-2 text-gray-700 hover:text-[#007041]"
+								className="flex items-center space-x-2 text-gray-700 hover:text-[#007041] transition duration-150 ease-in-out"
 								onClick={() => setDropdownOpen(!dropdownOpen)}
 							>
-								<User className="h-6 w-6" />
-								<span>{user.username}</span>
+								<div className="w-8 h-8 rounded-full bg-[#007041] text-white flex items-center justify-center">
+									<span className="text-sm font-semibold">{user.username.charAt(0).toUpperCase()}</span>
+								</div>
+								<span className="font-semibold">{user.username}</span>
 								<ChevronDown className="h-4 w-4" />
 							</button>
 							{dropdownOpen && (
@@ -51,7 +54,7 @@ export default function Header() {
 											logout();
 											setDropdownOpen(false);
 										}}
-										className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+										className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full transition duration-150 ease-in-out"
 									>
 										<LogOut className="h-4 w-4 mr-2" />
 										Cerrar sesión
@@ -62,6 +65,8 @@ export default function Header() {
 					</div>
 				</div>
 			</div>
+			{/* Separator line */}
+			<div className="h-1 bg-gradient-to-r from-[#007041] to-[#2e8f66]"></div>
 		</header>
 	)
 }
