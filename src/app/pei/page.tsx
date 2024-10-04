@@ -1,7 +1,7 @@
 import { getServerSession } from '@/lib/server-auth'
 import { hasPermission } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import PEIComponent from '@/components/PEI'
+import PEIComponent from '@/components/pei/pei'
 
 export default async function PEIPage() {
 	const session = await getServerSession()
