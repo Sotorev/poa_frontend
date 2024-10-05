@@ -25,7 +25,7 @@ type User = {
   username: string
   roleId: number
   facultyId?: number
-  status: 'Active' | 'Inactive'
+  isDeleted: boolean // Nuevo campo
 }
 
 // Definición del tipo de datos para el formulario
@@ -37,7 +37,7 @@ type UserFormData = {
   password?: string // Opcional, solo necesario al crear o actualizar
   roleId: number
   facultyId?: number
-  status: 'Active' | 'Inactive'
+  // Eliminado el campo status
 }
 
 type Role = {
@@ -60,7 +60,7 @@ const userFormSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").optional(),
   roleId: z.number().int().positive("Debe seleccionar un rol"),
   facultyId: z.number().int().positive("Debe seleccionar una facultad").optional(),
-  status: z.enum(["Active", "Inactive"]),
+  // Eliminado el campo status
 })
 
 export default function UserManagement() {
@@ -126,6 +126,7 @@ export default function UserManagement() {
 
   const filterUsers = useCallback(() => {
     const filtered = users.filter(user => 
+      !user.isDeleted && // Excluir usuarios eliminados
       (user.firstName.toLowerCase().includes(nameFilter.toLowerCase()) ||
        user.lastName.toLowerCase().includes(nameFilter.toLowerCase())) &&
       (roleFilter === "all" || user.roleId.toString() === roleFilter)
@@ -181,11 +182,12 @@ export default function UserManagement() {
     }
   }
 
-  // Función para eliminar usuario
+  // Función para eliminar usuario (soft delete)
   const deleteUser = async (userId: number) => {
     try {
       const response = await fetch(`${API_URL}/api/users/${userId}`, {
         method: "DELETE"
+        // Asumiendo que la API maneja la eliminación suave estableciendo isDeleted a true
       })
       if (response.ok) {
         await fetchUsers()
@@ -257,6 +259,7 @@ export default function UserManagement() {
             <TableHead>Email</TableHead>
             <TableHead>Usuario</TableHead>
             <TableHead>Rol</TableHead>
+            <TableHead>Facultad</TableHead> {/* Nueva columna */}
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -268,6 +271,7 @@ export default function UserManagement() {
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.username}</TableCell>
               <TableCell>{roles.find(role => role.roleId === user.roleId)?.roleName || 'N/A'}</TableCell>
+              <TableCell>{faculties.find(faculty => faculty.facultyId === user.facultyId)?.name || 'N/A'}</TableCell> {/* Mostrar nombre de la facultad */}
               <TableCell>
                 <Button
                   variant="outline"
@@ -318,7 +322,6 @@ function UserForm({ onSubmit, initialData, onCancel, roles, faculties }: {
       username: initialData.username,
       roleId: initialData.roleId,
       facultyId: initialData.facultyId,
-      status: initialData.status,
       // Password no se incluye al editar
     } : {
       firstName: "",
@@ -328,7 +331,6 @@ function UserForm({ onSubmit, initialData, onCancel, roles, faculties }: {
       password: "",
       roleId: roles.length > 0 ? roles[0].roleId : 0,
       facultyId: faculties.length > 0 ? faculties[0].facultyId : undefined,
-      status: "Active"
     }
   })
 
@@ -341,7 +343,6 @@ function UserForm({ onSubmit, initialData, onCancel, roles, faculties }: {
         username: initialData.username,
         roleId: initialData.roleId,
         facultyId: initialData.facultyId,
-        status: initialData.status,
         // No se rellena el password al editar
       })
     } else {
@@ -353,7 +354,6 @@ function UserForm({ onSubmit, initialData, onCancel, roles, faculties }: {
         password: "",
         roleId: roles.length > 0 ? roles[0].roleId : 0,
         facultyId: faculties.length > 0 ? faculties[0].facultyId : undefined,
-        status: "Active"
       })
     }
   }, [initialData, reset, roles, faculties])
@@ -443,18 +443,7 @@ function UserForm({ onSubmit, initialData, onCancel, roles, faculties }: {
         </select>
         {errors.facultyId && <p className="text-red-500">{errors.facultyId.message}</p>}
       </div>
-      <div>
-        <Label htmlFor="status">Estado</Label>
-        <select
-          id="status"
-          {...register("status")}
-          className="mt-1 block w-full border rounded px-3 py-2"
-        >
-          <option value="Active">Activo</option>
-          <option value="Inactive">Inactivo</option>
-        </select>
-        {errors.status && <p className="text-red-500">{errors.status.message}</p>}
-      </div>
+      {/* Eliminado el campo status */}
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" onClick={onCancel} className="border-green-600 text-green-600">
           Cancelar
