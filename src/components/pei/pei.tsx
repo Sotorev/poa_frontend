@@ -1,26 +1,53 @@
 'use client'
 
+import { useState } from 'react'
 import type { PEI } from '@/types/pei'
 import { withAuth } from '../auth/withAuth'
 import PeiManagement from './pei-management'
+import { useToast } from "@/hooks/use-toast"
 
 function PEI() {
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const { toast } = useToast()
 
 	const handleSubmit = async (pei: PEI) => {
-		// Here you would typically send the PEI data to your API
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/pei`, {
-			method: 'POST',
-			body: JSON.stringify(pei),
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			credentials: 'include'
-		})
-		console.log('Submitting PEI:', pei)
-		// Implement your API call here
+		setIsSubmitting(true)
+		try {
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pei`, {
+				method: 'POST',
+				body: JSON.stringify(pei),
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				credentials: 'include'
+			})
+
+			if (!response.ok) {
+				throw new Error('Failed to submit PEI')
+			}
+
+			const data = await response.json()
+			toast({
+				title: "Éxito",
+				description: "¡PEI enviado con éxito!",
+			})
+			console.log('Submitted PEI:', data)
+		} catch (error) {
+			console.error('Error submitting PEI:', error)
+			toast({
+				title: "Error",
+				description: "Error al enviar el PEI. Por favor, inténtelo de nuevo.",
+				variant: "destructive",
+			})
+		} finally {
+			setIsSubmitting(false)
+		}
 	}
+
 	return (
-		<PeiManagement onSubmit={handleSubmit} />
+		<div className='mt-20'>
+			<PeiManagement onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+		</div>
 	)
 }
 

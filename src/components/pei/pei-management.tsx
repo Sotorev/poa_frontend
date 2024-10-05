@@ -12,7 +12,6 @@ import {
 	CardHeader,
 	CardTitle
 } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	Table,
 	TableBody,
@@ -27,28 +26,27 @@ import {
 	ChevronRight,
 	ChevronLeft,
 	ArrowUp,
-	ArrowDown
+	ArrowDown,
+	Loader2
 } from 'lucide-react';
 import { PEI, Strategy } from '@/types/pei';
 import { v4 as uuidv4 } from 'uuid';
 
 const steps = ['Detalles del PEI', 'Áreas y Objetivos Estratégicos', 'Estrategias', 'Revisión'];
 
-export default function PeiRegistrationForm({ onSubmit }: { onSubmit: (pei: PEI) => void }) {
-	const [currentStep, setCurrentStep] = useState(0);
+export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubmit: (pei: PEI) => void, isSubmitting: boolean }) {	const [currentStep, setCurrentStep] = useState(0);
 	const [pei, setPei] = useState<PEI>({
 		name: '',
 		status: 'Active',
-		strategicareas: []
+		strategicareas: [],
+		startYear: new Date().getFullYear(),
+		endYear: new Date().getFullYear() + 1
+		
 	});
 
 	const handlePeiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 		setPei(prev => ({ ...prev, [name]: value }));
-	};
-
-	const handleStatusChange = (value: 'Active' | 'Inactive') => {
-		setPei(prev => ({ ...prev, status: value }));
 	};
 
 	const addStrategicPair = () => {
@@ -148,9 +146,8 @@ export default function PeiRegistrationForm({ onSubmit }: { onSubmit: (pei: PEI)
 
 	const handleNext = () => {
 		if (currentStep < steps.length - 1) {
-			setCurrentStep(currentStep + 1);
+			setCurrentStep(currentStep + 1)
 		} else {
-			// Antes de enviar, eliminamos los tempId
 			const peiToSubmit: PEI = {
 				...pei,
 				strategicareas: pei.strategicareas.map(area => ({
@@ -168,10 +165,10 @@ export default function PeiRegistrationForm({ onSubmit }: { onSubmit: (pei: PEI)
 						}))
 					}
 				}))
-			};
-			onSubmit(peiToSubmit);
+			}
+			onSubmit(peiToSubmit)
 		}
-	};
+	}
 
 	const handleBack = () => {
 		if (currentStep > 0) {
@@ -194,18 +191,33 @@ export default function PeiRegistrationForm({ onSubmit }: { onSubmit: (pei: PEI)
 								placeholder="Ingrese el nombre del PEI"
 							/>
 						</div>
-						<div>
-							<Label>Estado</Label>
-							<RadioGroup value={pei.status} onValueChange={handleStatusChange}>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="Active" id="active" />
-									<Label htmlFor="active">Activo</Label>
-								</div>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="Inactive" id="inactive" />
-									<Label htmlFor="inactive">Inactivo</Label>
-								</div>
-							</RadioGroup>
+						<div className="grid grid-cols-2 gap-4">
+							<div>
+								<Label htmlFor="startYear">Año de inicio</Label>
+								<Input
+									id="startYear"
+									name="startYear"
+									type="number"
+									value={pei.startYear}
+									onChange={handlePeiChange}
+									placeholder="Año de inicio"
+									min={new Date().getFullYear()}
+									max={9999}
+								/>
+							</div>
+							<div>
+								<Label htmlFor="endYear">Año de finalización</Label>
+								<Input
+									id="endYear"
+									name="endYear"
+									type="number"
+									value={pei.endYear}
+									onChange={handlePeiChange}
+									placeholder="Año de finalización"
+									min={pei.startYear ? parseInt(pei.startYear.toString()) + 1 : new Date().getFullYear() + 1}
+									max={9999}
+								/>
+							</div>
 						</div>
 					</div>
 				);
@@ -462,7 +474,7 @@ export default function PeiRegistrationForm({ onSubmit }: { onSubmit: (pei: PEI)
 					type="button"
 					variant="outline"
 					onClick={handleBack}
-					disabled={currentStep === 0}
+					disabled={currentStep === 0 || isSubmitting}
 				>
 					<ChevronLeft className="mr-2 h-4 w-4" /> Atrás
 				</Button>
@@ -470,6 +482,7 @@ export default function PeiRegistrationForm({ onSubmit }: { onSubmit: (pei: PEI)
 					type="button"
 					onClick={handleNext}
 					disabled={
+						isSubmitting ||
 						(currentStep === 0 && !pei.name) ||
 						(currentStep === 1 &&
 							pei.strategicareas.some(
@@ -477,8 +490,18 @@ export default function PeiRegistrationForm({ onSubmit }: { onSubmit: (pei: PEI)
 							))
 					}
 				>
-					{currentStep === steps.length - 1 ? 'Enviar' : 'Siguiente'}{' '}
-					<ChevronRight className="ml-2 h-4 w-4" />
+					{isSubmitting ? (
+						<>
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							Enviando...
+						</>
+					) : currentStep === steps.length - 1 ? (
+						'Enviar'
+					) : (
+						<>
+							Siguiente <ChevronRight className="ml-2 h-4 w-4" />
+						</>
+					)}
 				</Button>
 			</CardFooter>
 		</Card>

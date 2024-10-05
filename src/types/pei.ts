@@ -29,4 +29,6 @@ export interface PEI {
 	name: string;
 	status: 'Active' | 'Inactive';
 	strategicareas: StrategicArea[];
+	startYear: number;
+	endYear: number;
 }
