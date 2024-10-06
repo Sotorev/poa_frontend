@@ -1,9 +1,18 @@
-import React from 'react'
+import { getServerSession } from '@/lib/server-auth'
+import { hasPermission } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import POAComponent from '@/components/poa/poa'
 
-const POAPage = () => {
-  return (
-	<div>POAPage</div>
-  )
+export default async function PEIPage() {
+  const session = await getServerSession()
+
+  if (!session) {
+    redirect('/login')
+  }
+
+  if (!hasPermission(session, 'PEI', 'Edit')) {
+    redirect('/unauthorized')
+  }
+
+  return <POAComponent />
 }
-
-export default POAPage
