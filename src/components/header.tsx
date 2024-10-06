@@ -25,11 +25,11 @@ export default function Header() {
 						</Link>
 					</div>
 					<nav className="hidden md:flex space-x-8 font-semibold">
-						<Link href="/protegida/dashboard" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Dashboard</Link>
-						<Link href="/protegida/usuarios/gestion" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Usuarios</Link>
-						<Link href="/protegida/pei" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">PEI</Link>
-						<Link href="/protegida/poa" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">POA</Link>
-						<Link href="/protegida/reportes" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Reportes</Link>
+						<Link href="/dashboard" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Dashboard</Link>
+						<Link href="/usuarios/gestion" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Usuarios</Link>
+						<Link href="/pei" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">PEI</Link>
+						<Link href="/poa" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">POA</Link>
+						<Link href="/reportes" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Reportes</Link>
 					</nav>
 					<div className="flex items-center space-x-4">
 						<button className="text-gray-700 hover:text-[#007041] transition duration-150 ease-in-out relative">

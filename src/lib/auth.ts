@@ -25,6 +25,7 @@ export async function logout(): Promise<void> {
 		method: 'POST',
 		credentials: 'include',
 	})
+	
 }
 
 export async function getSession(): Promise<UserPayload | null> {
