@@ -11,13 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { PlusCircle, Edit, Trash2, Users, ChevronUp, ChevronDown } from "lucide-react"
+import { PlusCircle, Edit, Trash2, Users, ChevronUp, ChevronDown, X } from "lucide-react"
 import { Notification } from "@/components/components-notification"
 import { Pagination } from "@/components/components-pagination"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
-// Tipos de Datos
+// Types
 type User = {
   userId: number
   firstName: string
@@ -51,7 +51,7 @@ type Faculty = {
 
 type SortableUserKey = keyof Pick<User, 'firstName' | 'lastName' | 'email' | 'username' | 'roleId' | 'facultyId'>
 
-// Esquema de Validación con Zod
+// Zod schema
 const userFormSchema = z.object({
   firstName: z.string().nonempty("El nombre es requerido"),
   lastName: z.string().nonempty("El apellido es requerido"),
@@ -62,7 +62,6 @@ const userFormSchema = z.object({
   facultyId: z.number().int().positive("Debe seleccionar una facultad").optional(),
 })
 
-// Componente para la Confirmación de Eliminación
 function DeleteConfirmationDialog({
   isOpen,
   onClose,
@@ -94,7 +93,6 @@ function DeleteConfirmationDialog({
   )
 }
 
-// Componente para los Filtros Avanzados
 function AdvancedFilter({
   onFilter,
   roles,
@@ -141,7 +139,7 @@ function AdvancedFilter({
               <SelectTrigger>
                 <SelectValue placeholder="Todos los roles" />
               </SelectTrigger>
-              <SelectContent position="popper">
+              <SelectContent> {/* Sin modal={false} */}
                 <SelectItem value="all">Todos los roles</SelectItem>
                 {roles.map((role) => (
                   <SelectItem key={role.roleId} value={role.roleId.toString()}>
@@ -157,7 +155,7 @@ function AdvancedFilter({
               <SelectTrigger>
                 <SelectValue placeholder="Todas las facultades" />
               </SelectTrigger>
-              <SelectContent position="popper">
+              <SelectContent> {/* Sin modal={false} */}
                 <SelectItem value="all">Todas las facultades</SelectItem>
                 {faculties.map((faculty) => (
                   <SelectItem key={faculty.facultyId} value={faculty.facultyId.toString()}>
@@ -173,7 +171,7 @@ function AdvancedFilter({
   )
 }
 
-// Componente para el Formulario de Usuario
+
 function UserForm({
   onSubmit,
   initialData,
@@ -201,7 +199,6 @@ function UserForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Campos de Nombre y Apellido */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="firstName">Nombre</Label>
@@ -214,7 +211,6 @@ function UserForm({
           {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName.message}</p>}
         </div>
       </div>
-      {/* Campos de Email y Nombre de Usuario */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="email">Email</Label>
@@ -227,7 +223,6 @@ function UserForm({
           {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
         </div>
       </div>
-      {/* Campo de Contraseña (Solo en Creación) */}
       {!initialData && (
         <div>
           <Label htmlFor="password">Contraseña</Label>
@@ -235,9 +230,7 @@ function UserForm({
           {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
         </div>
       )}
-      {/* Campos de Selección de Rol y Facultad */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Campo de Selección de Rol */}
         <div>
           <Label htmlFor="roleId">Rol</Label>
           <Controller
@@ -252,7 +245,7 @@ function UserForm({
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar rol" />
                 </SelectTrigger>
-                <SelectContent position="popper">
+                <SelectContent>
                   {roles.map((role) => (
                     <SelectItem key={role.roleId} value={role.roleId.toString()}>
                       {role.roleName}
@@ -264,8 +257,6 @@ function UserForm({
           />
           {errors.roleId && <p className="text-red-500 text-sm">{errors.roleId.message}</p>}
         </div>
-
-        {/* Campo de Selección de Facultad */}
         <div>
           <Label htmlFor="facultyId">Facultad</Label>
           <Controller
@@ -279,7 +270,7 @@ function UserForm({
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar facultad" />
                 </SelectTrigger>
-                <SelectContent position="popper">
+                <SelectContent>
                   {faculties.map((faculty) => (
                     <SelectItem key={faculty.facultyId} value={faculty.facultyId.toString()}>
                       {faculty.name}
@@ -292,13 +283,10 @@ function UserForm({
           {errors.facultyId && <p className="text-red-500 text-sm">{errors.facultyId.message}</p>}
         </div>
       </div>
-      {/* Botones de Acción */}
       <div className="flex justify-end space-x-2">
-        {/* Botón "Cancelar" */}
         <DialogClose asChild>
           <Button variant="outline">Cancelar</Button>
         </DialogClose>
-        {/* Botón "Crear/Actualizar" */}
         <Button type="submit">
           {initialData ? "Actualizar" : "Crear"} Usuario
         </Button>
@@ -307,7 +295,6 @@ function UserForm({
   )
 }
 
-// Componente Principal de Gestión de Usuarios
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
@@ -325,14 +312,12 @@ export default function UserManagement() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
 
-  // Función para resetear editingUser al cerrar el diálogo
   useEffect(() => {
     if (!isDialogOpen) {
       setEditingUser(null)
     }
   }, [isDialogOpen])
 
-  // Funciones para obtener datos desde la API
   const fetchUsers = async () => {
     try {
       const response = await fetch(`${API_URL}/api/users`)
@@ -377,14 +362,12 @@ export default function UserManagement() {
     }
   }
 
-  // Obtener datos al montar el componente
   useEffect(() => {
     fetchUsers()
     fetchRoles()
     fetchFaculties()
   }, [])
 
-  // Función para manejar los filtros avanzados
   const handleAdvancedFilter = useCallback((filters: any) => {
     const filtered = users.filter(user => 
       !user.isDeleted &&
@@ -398,7 +381,6 @@ export default function UserManagement() {
     setCurrentPage(1)
   }, [users])
 
-  // Funciones para agregar y actualizar usuarios
   const addUser = async (data: UserFormData) => {
     try {
       const response = await fetch(`${API_URL}/api/users`, {
@@ -447,7 +429,6 @@ export default function UserManagement() {
     }
   }
 
-  // Funciones para eliminar usuarios
   const deleteUser = async (userId: number) => {
     try {
       const response = await fetch(`${API_URL}/api/users/${userId}`, {
@@ -479,7 +460,6 @@ export default function UserManagement() {
     }
   }
 
-  // Función para manejar el ordenamiento de la tabla
   const requestSort = (key: SortableUserKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -499,37 +479,33 @@ export default function UserManagement() {
     setFilteredUsers(sortedUsers);
   };
 
-  // Función para cerrar las notificaciones
   const closeNotification = useCallback(() => {
     setNotification(null)
   }, [])
 
-  // Paginación de Usuarios
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * 10, currentPage * 10)
 
   return (
-    <Card className="w-full max-w-7xl mx-auto p-4">
+    <Card className="bg-white shadow-md">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold text-green-800">Gestión de Usuarios</CardTitle>
+        <CardTitle className="text-2xl font-bold text-green-800">Gestión de Usuarios</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Botones de Agregar y Ver Usuarios Eliminados */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">
+              <Button className="bg-green-600 hover:bg-green-700 text-white">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Agregar Usuario
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-white">
               <DialogHeader>
                 <DialogTitle>{editingUser ? "Editar Usuario" : "Agregar Usuario"}</DialogTitle>
-                {/* El botón "X" ya está incluido dentro de DialogContent via DialogClose */}
+                <DialogDescription>
+                  {editingUser ? "Actualiza la información del usuario." : "Completa la información para agregar un nuevo usuario."}
+                </DialogDescription>
               </DialogHeader>
-              <DialogDescription>
-                {editingUser ? "Actualiza la información del usuario." : "Completa la información para agregar un nuevo usuario."}
-              </DialogDescription>
               <UserForm
                 onSubmit={editingUser ? updateUser : addUser}
                 initialData={editingUser}
@@ -537,31 +513,25 @@ export default function UserManagement() {
                 roles={roles}
                 faculties={faculties}
               />
-              <DialogFooter>
-                {/* El botón "Cancelar" ya está transformado en DialogClose dentro de UserForm */}
-              </DialogFooter>
             </DialogContent>
           </Dialog>
           
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             <Users className="mr-2 h-4 w-4" />
             Ver Usuarios Eliminados
           </Button>
         </div>
 
-        {/* Filtros Avanzados */}
         <AdvancedFilter
           onFilter={handleAdvancedFilter}
           roles={roles}
           faculties={faculties}
         />
 
-        {/* Tabla de Usuarios */}
         <div className="rounded-md border mt-6 overflow-x-auto">
-          <Table className="min-w-full">
+          <Table>
             <TableHeader>
               <TableRow className="bg-green-100">
-                {/* Encabezados de la Tabla con Funcionalidad de Ordenamiento */}
                 <TableHead className="font-semibold cursor-pointer" onClick={() => requestSort('firstName')}>
                   Nombre
                   {sortConfig?.key === 'firstName' && (
@@ -627,7 +597,7 @@ export default function UserManagement() {
                         variant="destructive" 
                         size="sm" 
                         onClick={() => handleDeleteClick(user)}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -639,14 +609,12 @@ export default function UserManagement() {
           </Table>
         </div>
 
-        {/* Paginación */}
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
 
-        {/* Diálogo de Confirmación de Eliminación */}
         <DeleteConfirmationDialog
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
@@ -654,7 +622,6 @@ export default function UserManagement() {
           userName={userToDelete ? `${userToDelete.firstName} ${userToDelete.lastName}` : ''}
         />
 
-        {/* Notificaciones */}
         {notification && (
           <Notification
             message={notification.message}
