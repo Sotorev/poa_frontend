@@ -22,6 +22,7 @@ export interface UserPayload {
 }
 
 export async function getServerSession(): Promise<UserPayload | null> {
+	"use server";
 	const cookieStore = cookies()
 	const token = cookieStore.get('auth-token')
 
