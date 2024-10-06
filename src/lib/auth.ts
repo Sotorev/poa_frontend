@@ -1,6 +1,6 @@
 import { UserPayload } from './server-auth'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export async function login(username: string, password: string): Promise<UserPayload> {
 	const response = await fetch(`${API_URL}/api/auth/login`, {
