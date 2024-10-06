@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { PEI } from '@/types/pei'
-import { withAuth } from '../auth/withAuth'
+import { withAuth } from '../auth/with-auth'
 import PeiManagement from './pei-management'
 import { useToast } from "@/hooks/use-toast"
 

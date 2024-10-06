@@ -1,10 +1,22 @@
-export default function Home() {
-  
+import { getServerSession } from '@/lib/server-auth'
+import { hasPermission } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import Dashboard from '@/components/dashboard'
+
+export default async function DashBoardPage() {
+
+  const session = await getServerSession()
+
+  if (!session) {
+    redirect('/login')
+  }
+
+  if (!hasPermission(session, 'PEI', 'Edit')) {
+    redirect('/unauthorized')
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background">
-      <div className="w-full max-w-[400px] space-y-8 p-8">
-        mmm
-      </div>
-    </main>
+    <Dashboard />
   )
 }
+

@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { ComponentType, useEffect, useState } from 'react'
 import { hasPermission, hasRole } from '@/lib/auth'

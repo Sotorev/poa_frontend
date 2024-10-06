@@ -1,8 +1,8 @@
 'use client'
 
-import { withAuth } from './auth/withAuth'
+import { withAuth } from './auth/with-auth'
 import React from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/auth-context'
 import {
 	BarChart,
 	CheckCircle,

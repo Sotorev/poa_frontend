@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/auth-context'
 import Link from 'next/link'
 import Image from 'next/image'
 import Logo from '@/assets/images/logo.png'
@@ -21,7 +21,7 @@ export default function LoginPage() {
 
 		try {
 			await login(username, password)
-			router.push('/dashboard')
+			router.push('/')
 		} catch {
 			setError('Nombre de usuario o contraseña inválidos')
 		}

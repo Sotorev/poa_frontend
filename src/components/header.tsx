@@ -4,17 +4,16 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Bell, ChevronDown, LogOut } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/auth-context'
 import Logo from '@/assets/images/logo.png'
 
 export default function Header() {
 	const { user, logout, loading } = useAuth()
 	const [dropdownOpen, setDropdownOpen] = useState(false)
 
-	if (loading || !user) {
+	if (!user || loading) {
 		return null
 	}
-
 	return (
 		<header className="bg-white shadow-md">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,7 +24,7 @@ export default function Header() {
 						</Link>
 					</div>
 					<nav className="hidden md:flex space-x-8 font-semibold">
-						<Link href="/dashboard" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Dashboard</Link>
+						<Link href="/" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Dashboard</Link>
 						<Link href="/usuarios/gestion" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">Usuarios</Link>
 						<Link href="/pei" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">PEI</Link>
 						<Link href="/poa" className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out">POA</Link>
