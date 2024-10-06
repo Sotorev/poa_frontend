@@ -3,7 +3,7 @@ import { UserPayload } from './server-auth'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
 export async function login(username: string, password: string): Promise<UserPayload> {
-	const response = await fetch(`${API_URL}/auth/login`, {
+	const response = await fetch(`${API_URL}/api/auth/login`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -21,14 +21,14 @@ export async function login(username: string, password: string): Promise<UserPay
 }
 
 export async function logout(): Promise<void> {
-	await fetch(`${API_URL}/auth/logout`, {
+	await fetch(`${API_URL}/api/auth/logout`, {
 		method: 'POST',
 		credentials: 'include',
 	})
 }
 
 export async function getSession(): Promise<UserPayload | null> {
-	const response = await fetch(`${API_URL}/auth/session`, {
+	const response = await fetch(`${API_URL}/api/auth/session`, {
 		credentials: 'include',
 	})
 
