@@ -21,7 +21,7 @@ export default function Header() {
 				<div className="flex justify-between items-center py-4">
 					<div className="flex items-center">
 						<Link href="/" className="flex items-center">
-							<Image src={Logo} alt="POA Logo" className="h-auto w-20 mr-2" />
+							<Image src={Logo} alt="POA Logo" className="h-auto w-20 mr-2" priority={true} />
 						</Link>
 					</div>
 					<nav className="hidden md:flex space-x-8 font-semibold">
