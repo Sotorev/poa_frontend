@@ -20,7 +20,7 @@ export default function LoginPage() {
 
 		try {
 			await login(username, password)
-			router.push('/dashboard')
+			router.push('/protegida/dashboard')
 		} catch {
 			setError('Nombre de usuario o contraseña inválidos')
 		}
