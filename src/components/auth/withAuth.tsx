@@ -56,7 +56,7 @@ export function withAuth<P extends object>(
 
 					if (!authorized) {
 						console.log('Authorization failed, redirecting to unauthorized')
-						router.push('/unauthorized')
+						router.push('/no-autorizado')
 					} else {
 						console.log('Authorization successful')
 						setIsAuthorized(true)

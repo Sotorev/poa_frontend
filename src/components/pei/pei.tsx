@@ -13,7 +13,7 @@ function PEI() {
 	const handleSubmit = async (pei: PEI) => {
 		setIsSubmitting(true)
 		try {
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pei`, {
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pei`, {
 				method: 'POST',
 				body: JSON.stringify(pei),
 				headers: {
