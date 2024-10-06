@@ -320,7 +320,9 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/users`)
+      const response = await fetch(`${API_URL}/api/users`,
+        {credentials: 'include'}
+      )
       if (response.ok) {
         const data: User[] = await response.json()
         setUsers(data)
@@ -336,7 +338,9 @@ export default function UserManagement() {
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/roles`)
+      const response = await fetch(`${API_URL}/api/roles`,
+        {credentials: 'include'}
+      )
       if (response.ok) {
         const data: Role[] = await response.json()
         setRoles(data)
@@ -350,7 +354,9 @@ export default function UserManagement() {
 
   const fetchFaculties = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/faculties`)
+      const response = await fetch(`${API_URL}/api/faculties`,
+        {credentials: 'include'}
+      )
       if (response.ok) {
         const data: Faculty[] = await response.json()
         setFaculties(data)
@@ -385,6 +391,7 @@ export default function UserManagement() {
     try {
       const response = await fetch(`${API_URL}/api/users`, {
         method: "POST",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json"
         },
@@ -409,6 +416,7 @@ export default function UserManagement() {
     try {
       const response = await fetch(`${API_URL}/api/users/${editingUser.userId}`, {
         method: "PUT",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json"
         },
@@ -432,7 +440,8 @@ export default function UserManagement() {
   const deleteUser = async (userId: number) => {
     try {
       const response = await fetch(`${API_URL}/api/users/${userId}`, {
-        method: "DELETE"
+        method: "DELETE",
+        credentials: 'include'
       })
       if (response.ok) {
         await fetchUsers()
@@ -494,7 +503,7 @@ export default function UserManagement() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
+              <Button className=" text-white">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Agregar Usuario
               </Button>
@@ -516,7 +525,7 @@ export default function UserManagement() {
             </DialogContent>
           </Dialog>
           
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button className="text-white">
             <Users className="mr-2 h-4 w-4" />
             Ver Usuarios Eliminados
           </Button>
@@ -531,7 +540,7 @@ export default function UserManagement() {
         <div className="rounded-md border mt-6 overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-green-100">
+              <TableRow className="">
                 <TableHead className="font-semibold cursor-pointer" onClick={() => requestSort('firstName')}>
                   Nombre
                   {sortConfig?.key === 'firstName' && (
@@ -573,7 +582,7 @@ export default function UserManagement() {
             </TableHeader>
             <TableBody>
               {paginatedUsers.map((user) => (
-                <TableRow key={user.userId} className="hover:bg-green-50">
+                <TableRow key={user.userId} className="">
                   <TableCell>{user.firstName}</TableCell>
                   <TableCell>{user.lastName}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -585,7 +594,7 @@ export default function UserManagement() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-green-600 text-green-600 hover:bg-green-50"
+                        className="border-primary text-primary hover:bg-green-50"
                         onClick={() => {
                           setEditingUser(user)
                           setIsDialogOpen(true)
