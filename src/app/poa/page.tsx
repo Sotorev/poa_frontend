@@ -1,8 +1,9 @@
 import React from 'react'
+import { PoaDashboardMain } from '@/components/poa-dashboard-main'
 
 const POAPage = () => {
   return (
-	<div>POAPage</div>
+    <div><PoaDashboardMain/></div>
   )
 }
 
