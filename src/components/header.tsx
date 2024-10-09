@@ -16,14 +16,14 @@ export default function Header() {
 	const [canAccessPOA, setCanAccessPOA] = useState(false)
 	const [canAccessReports, setCanAccessReports] = useState(false)
 
-	// useEffect(() => {
-	// 	if (user) {
-	// 		hasPermission(user, 'users', 'read').then(setCanAccessUsers)
-	// 		hasPermission(user, 'pei', 'read').then(setCanAccessPEI)
-	// 		hasPermission(user, 'poa', 'read').then(setCanAccessPOA)
-	// 		hasPermission(user, 'reports', 'read').then(setCanAccessReports)
-	// 	}
-	// }, [user])
+	useEffect(() => {
+		if (user) {
+			hasPermission(user, 'users', 'read').then(setCanAccessUsers)
+			hasPermission(user, 'pei', 'read').then(setCanAccessPEI)
+			hasPermission(user, 'poa', 'read').then(setCanAccessPOA)
+			hasPermission(user, 'reports', 'read').then(setCanAccessReports)
+		}
+	}, [user])
 
 	if (!user || loading) {
 		return null
