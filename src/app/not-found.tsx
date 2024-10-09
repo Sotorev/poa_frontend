@@ -13,7 +13,7 @@ export default function NotFound() {
 	useEffect(() => {
 		setIsClient(true)
 		if (!loading && !user) {
-			router.push('/login')
+			router.push('/iniciar-sesion')
 		}
 	}, [user, loading, router])
 

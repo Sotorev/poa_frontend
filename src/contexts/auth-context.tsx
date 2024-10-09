@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				setUser(userData)
 			} catch (error) {
 				console.error('Failed to load user session:', error)
-				router.push('/login')
+				router.push('/iniciar-sesion')
 			} finally {
 				setLoading(false)
 			}
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			await authLogout()
 			setUser(null)
 			console.log('User logged out')
-			router.push('/login')
+			router.push('/iniciar-sesion')
 		} catch (error) {
 			console.error('Logout error:', error)
 		} finally {

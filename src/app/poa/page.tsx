@@ -7,7 +7,7 @@ export default async function PEIPage() {
   const session = await getServerSession()
 
   if (!session) {
-    redirect('/login')
+    redirect('/iniciar-sesion')
   }
 
   if (!hasPermission(session, 'PEI', 'Edit')) {

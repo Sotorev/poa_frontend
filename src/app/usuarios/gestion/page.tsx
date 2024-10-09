@@ -7,7 +7,7 @@ export default async function UsersPage() {
   const session = await getServerSession()
 
   if (!session) {
-    redirect('/login')
+    redirect('/iniciar-sesion')
   }
 
   if (!hasPermission(session, 'Users', 'Edit')) {

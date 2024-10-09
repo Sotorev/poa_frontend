@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
 	const protectedPaths = ['/*']
 	if (protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
 		if (!session) {
-			return NextResponse.redirect(new URL('/login', request.url))
+			return NextResponse.redirect(new URL('/iniciar-sesion', request.url))
 		}
 	}
 

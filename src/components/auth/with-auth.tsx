@@ -25,7 +25,7 @@ export function withAuth<P extends object>(
 
 				if (!loading && !user) {
 					console.log('No user found, redirecting to login')
-					router.push('/login')
+					router.push('/iniciar-sesion')
 					return
 				}
 

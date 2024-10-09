@@ -8,11 +8,11 @@ export default async function DashBoardPage() {
   const session = await getServerSession()
 
   if (!session) {
-    redirect('/login')
+    redirect('/iniciar-sesion')
   }
 
   if (!hasPermission(session, 'PEI', 'Edit')) {
-    redirect('/unauthorized')
+    redirect('/no-autorizado')
   }
 
   return (
