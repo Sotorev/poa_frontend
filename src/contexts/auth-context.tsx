@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { UserPayload } from '@/lib/server-auth'
 import { login as authLogin, logout as authLogout, getSession } from '@/lib/auth'
 
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<UserPayload | null>(null)
 	const [loading, setLoading] = useState(true)
+	const router = useRouter()
 
 	useEffect(() => {
 		async function loadUserFromSession() {
@@ -25,12 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				setUser(userData)
 			} catch (error) {
 				console.error('Failed to load user session:', error)
+				router.push('/login')
 			} finally {
 				setLoading(false)
 			}
 		}
 		loadUserFromSession()
-	}, [])
+	}, [router])
 
 	const login = async (username: string, password: string) => {
 		setLoading(true)
@@ -38,8 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const userData = await authLogin(username, password)
 			console.log('User logged in:', userData)
 			setUser(userData)
+			router.push('/')
 		} catch (error) {
 			console.error('Login error:', error)
+			router.push('/no-autorizado')
 			throw error
 		} finally {
 			setLoading(false)
@@ -52,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			await authLogout()
 			setUser(null)
 			console.log('User logged out')
+			router.push('/login')
 		} catch (error) {
 			console.error('Logout error:', error)
 		} finally {

@@ -11,7 +11,7 @@ export default async function PEIPage() {
 	}
 
 	if (!hasPermission(session, 'PEI', 'Edit')) {
-		redirect('/unauthorized')
+		redirect('/no-autorizado')
 	}
 
 	return <PEIComponent />
