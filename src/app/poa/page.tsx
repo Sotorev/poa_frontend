@@ -1,7 +1,7 @@
 import { getServerSession } from '@/lib/server-auth'
 import { hasPermission } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import POAComponent from '@/components/poa/poa'
+import { PoaDashboardMain } from '@/components/poa-dashboard-main'
 
 export default async function PEIPage() {
   const session = await getServerSession()
@@ -14,5 +14,5 @@ export default async function PEIPage() {
     redirect('/no-authorizado')
   }
 
-  return <POAComponent />
+  return <PoaDashboardMain/>
 }
