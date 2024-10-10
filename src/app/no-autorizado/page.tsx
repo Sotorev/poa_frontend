@@ -1,20 +1,11 @@
 'use client'
-
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
 import { AlertTriangle } from 'lucide-react'
 
 export default function Unauthorized() {
-	const router = useRouter()
-	const { user, loading } = useAuth()
-
-	useEffect(() => {
-		if (!loading && user) {
-			router.push('/')
-		}
-	}, [user, loading, router])
+	
+	const { loading } = useAuth()
 
 	if (loading) {
 		return null // or a loading spinner

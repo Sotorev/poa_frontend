@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import Logo from '@/assets/images/logo.png'
@@ -11,6 +12,14 @@ export default function LoginPage() {
 	const [password, setPassword] = useState('')
 	const [error, setError] = useState('')
 	const { user, loading, login } = useAuth()
+
+	const router = useRouter()
+
+	useEffect(() => {
+		if (user) {
+			router.push('/')
+		}
+	}, [user, router])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()

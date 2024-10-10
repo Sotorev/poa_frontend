@@ -12,6 +12,6 @@ function Users() {
 }
 
 export default withAuth(Users, {
-	requiredPermissions: [{ module: 'Users', action: 'Edit' }],
-	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator']
+	requiredPermissions: [{ module: 'Auth', action: 'Edit' }],
+	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator', 'Administrador']
 })

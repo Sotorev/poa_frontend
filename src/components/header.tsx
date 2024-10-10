@@ -18,7 +18,7 @@ export default function Header() {
 
 	useEffect(() => {
 		if (user) {
-			hasPermission(user, 'Users', 'View').then(setCanAccessUsers)
+			hasPermission(user, 'Auth', 'View').then(setCanAccessUsers)
 			hasPermission(user, 'PEI', 'View').then(setCanAccessPEI)
 			hasPermission(user, 'POA', 'View').then(setCanAccessPOA)
 			hasPermission(user, 'Reports', 'View').then(setCanAccessReports)
