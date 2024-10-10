@@ -17,14 +17,14 @@ import {
 } from 'lucide-react'
 import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
-import { FacultadDataSection } from './sections-facultad-data-section'
-import { EstructuraFacultadSection } from './sections-estructura-facultad-section'
-import { DepartamentosFacultadSection } from './sections-departamentos-facultad-section'
-import { EquipoResponsableSection } from './sections-equipo-responsable-section'
-import { JustificacionSection } from './sections-justificacion-section'
-import { FODASection } from './sections-foda-section'
-import { OtrosDocumentos } from './sections-otros-documentos'
-import { VisualizarIntervencionesSection } from './sections-visualizar-intervenciones-section'
+import { FacultadDataSection } from '../sections-facultad-data-section'
+import { EstructuraFacultadSection } from '../sections-estructura-facultad-section'
+import { DepartamentosFacultadSection } from '../sections-departamentos-facultad-section'
+import { EquipoResponsableSection } from '../sections-equipo-responsable-section'
+import { JustificacionSection } from '../sections-justificacion-section'
+import { FODASection } from '../sections-foda-section'
+import { OtrosDocumentos } from '../sections-otros-documentos'
+import { VisualizarIntervencionesSection } from '../sections-visualizar-intervenciones-section'
 
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
