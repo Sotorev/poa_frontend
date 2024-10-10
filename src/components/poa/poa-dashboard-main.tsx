@@ -24,7 +24,7 @@ import { EquipoResponsableSection } from '../sections-equipo-responsable-section
 import { JustificacionSection } from '../sections-justificacion-section'
 import { FODASection } from '../sections-foda-section'
 import { OtrosDocumentos } from '../sections-otros-documentos'
-import { VisualizarIntervencionesSection } from '../sections-visualizar-intervenciones-section'
+import { VisualizarIntervencionesSection } from '../visualizar-intervenciones-section'
 
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
