@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { Bell, ChevronDown, LogOut, User, Settings, FileText } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import Logo from '@/assets/images/logo.png'
-import { hasPermission, hasRole } from '@/lib/auth'
+import { hasPermission } from '@/lib/auth'
 
 export default function Header() {
 	const { user, logout, loading } = useAuth()
@@ -21,7 +21,7 @@ export default function Header() {
 			hasPermission(user, 'Users', 'View').then(setCanAccessUsers)
 			hasPermission(user, 'PEI', 'View').then(setCanAccessPEI)
 			hasPermission(user, 'POA', 'View').then(setCanAccessPOA)
-			hasPermission(user, 'R	eports', 'View').then(setCanAccessReports)
+			hasPermission(user, 'Reports', 'View').then(setCanAccessReports)
 		}
 	}, [user])
 
@@ -90,7 +90,7 @@ export default function Header() {
 										<User className="h-4 w-4 mr-2" />
 										Perfil
 									</Link>
-									{hasRole(user, 'Vice Rector') && (
+									{user.role.roleName == "Administrador" && (
 										<Link
 											href="/configuracion"
 											className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full transition duration-150 ease-in-out"

@@ -8,6 +8,7 @@ export interface UserPayload {
 	username: string
 	email: string
 	role: {
+		roleId: number
 		roleName: string
 	}
 	faculty: {
