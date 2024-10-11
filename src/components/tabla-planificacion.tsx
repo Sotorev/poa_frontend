@@ -15,6 +15,7 @@ import { Total } from './total'
 import { AporteUmes } from './aporte-umes'
 import { AporteOtrasFuentesComponent } from './poa/components/aporte-otras-fuentes'
 import { TipoDeCompraComponent } from './poa/components/tipo-de-compra'
+import { RecursosSelectorComponent } from './poa/components/recursos-selector'
 
 import { FechasSelectorComponent } from './fechas-selector'
 
@@ -230,10 +231,10 @@ export function TablaPlanificacionComponent() {
                 </div>
               </TableCell>
                <TableCell>
-                {/* <RecursosSelector 
+                <RecursosSelectorComponent 
                   selectedRecursos={fila.recursos}
                   onSelectRecursos={(recursos) => actualizarFila(fila.id, 'recursos', recursos)}
-                /> */}
+                />
               </TableCell>
               <TableCell>
                 <Input 

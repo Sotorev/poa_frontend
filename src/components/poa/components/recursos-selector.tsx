@@ -25,6 +25,11 @@ interface Recurso {
   isCustom?: boolean
 }
 
+interface RecursosSelectorProps {
+  selectedRecursos: string[]
+  onSelectRecursos: (recursos: string[]) => void
+}
+
 const initialRecursosList: Recurso[] = [
   { id: "rec1", name: "Publicidad", number: 1 },
   { id: "rec2", name: "Pastoral", number: 2 },
@@ -32,9 +37,8 @@ const initialRecursosList: Recurso[] = [
   { id: "rec4", name: "Estudiantina", number: 4 },
 ]
 
-export function RecursosSelectorComponent() {
+export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }: RecursosSelectorProps) {
   const [recursosList, setRecursosList] = useState<Recurso[]>(initialRecursosList)
-  const [selectedRecursosIds, setSelectedRecursosIds] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isOpen, setIsOpen] = useState(false)
   const [newRecurso, setNewRecurso] = useState("")
@@ -50,12 +54,10 @@ export function RecursosSelectorComponent() {
   }, [recursosList, searchTerm])
 
   const handleSelectRecurso = (recId: string) => {
-    setSelectedRecursosIds(prev => {
-      const newSelection = prev.includes(recId) 
-        ? prev.filter(id => id !== recId) 
-        : [...prev, recId]
-      return newSelection
-    })
+    const newSelection = selectedRecursos.includes(recId)
+      ? selectedRecursos.filter(id => id !== recId)
+      : [...selectedRecursos, recId]
+    onSelectRecursos(newSelection)
   }
 
   const handleAddNewRecurso = () => {
@@ -67,7 +69,7 @@ export function RecursosSelectorComponent() {
         isCustom: true
       }
       setRecursosList(prev => [...prev, newRec])
-      setSelectedRecursosIds(prev => [...prev, newRec.id])
+      onSelectRecursos([...selectedRecursos, newRec.id])
       setNewRecurso("")
       setIsAddingNew(false)
       setCustomRecursoCounter(prev => prev + 1)
@@ -76,7 +78,7 @@ export function RecursosSelectorComponent() {
 
   const handleRemoveRecurso = (recId: string, event: React.MouseEvent) => {
     event.stopPropagation()
-    setSelectedRecursosIds(prev => prev.filter(id => id !== recId))
+    onSelectRecursos(selectedRecursos.filter(id => id !== recId))
   }
 
   useEffect(() => {
@@ -94,7 +96,7 @@ export function RecursosSelectorComponent() {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1">
-        {selectedRecursosIds.map(id => {
+        {selectedRecursos.map(id => {
           const recurso = recursosList.find(rec => rec.id === id)
           if (!recurso) return null
           return (
@@ -162,7 +164,7 @@ export function RecursosSelectorComponent() {
                 >
                   <div className="flex items-center">
                     <Checkbox
-                      checked={selectedRecursosIds.includes(rec.id)}
+                      checked={selectedRecursos.includes(rec.id)}
                       onCheckedChange={() => handleSelectRecurso(rec.id)}
                       className="mr-2 border-2 border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:text-white"
                     />
