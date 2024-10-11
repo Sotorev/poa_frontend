@@ -1,3 +1,4 @@
+// src/components/poa/PoaDashboardMain.tsx
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -105,7 +106,7 @@ export function PoaDashboardMain() {
 
       console.log("Enviando solicitud POST para crear POA con los siguientes datos:", payload)
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poa`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
