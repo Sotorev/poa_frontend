@@ -10,9 +10,10 @@ import { useAuth } from '@/contexts/auth-context' // Ajusta la ruta según corre
 interface SectionProps {
   name: string
   isActive: boolean
+  disableEditButton?: boolean  // Nueva prop para controlar la visibilidad del botón "Editar"
 }
 
-export function FacultadDataSection({ name, isActive }: SectionProps) {
+export function FacultadDataSection({ name, isActive, disableEditButton = false }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [facultadData, setFacultadData] = useState({
@@ -160,10 +161,12 @@ export function FacultadDataSection({ name, isActive }: SectionProps) {
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancelar" : "Editar"}
-            </Button>
+            {!disableEditButton && (  // Condición para mostrar o no el botón "Editar"
+              <Button variant="ghost" size="sm" onClick={handleEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                {isEditing ? "Cancelar" : "Editar"}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
