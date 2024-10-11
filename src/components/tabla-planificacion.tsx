@@ -13,6 +13,7 @@ import { OdsSelector } from './ods-selector'
 import { ActividadProyectoSelector } from './actividad-proyecto-selector'
 import { Total } from './total'
 import { AporteUmes } from './aporte-umes'
+import { AporteOtrasFuentesComponent } from './poa/components/aporte-otras-fuentes'
 
 import { FechasSelectorComponent } from './fechas-selector'
 
@@ -183,19 +184,20 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               <TableCell>
-                { <AporteUmes 
+                 <AporteUmes 
                   aportes={fila.aporteUMES}
                   onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
                 />
-              // </TableCell>
-              /*
+              </TableCell>
+          
               <TableCell>
-                <AporteOtrasFuentes 
+                <AporteOtrasFuentesComponent 
                   aportes={fila.aporteOtros}
                   onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
                 />
               </TableCell>
-              <TableCell>
+              
+              {/* <TableCell>
                 <TipoDeCompra 
                   selectedTypes={fila.tipoCompra}
                   onSelectTypes={(tipos) => actualizarFila(fila.id, 'tipoCompra', tipos)}
@@ -226,11 +228,11 @@ export function TablaPlanificacionComponent() {
                   />
                 </div>
               </TableCell>
-              {/* <TableCell>
-                <RecursosSelector 
+               <TableCell>
+                {/* <RecursosSelector 
                   selectedRecursos={fila.recursos}
                   onSelectRecursos={(recursos) => actualizarFila(fila.id, 'recursos', recursos)}
-                />
+                /> */}
               </TableCell>
               <TableCell>
                 <Input 
@@ -239,7 +241,7 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               <TableCell>
-                <DetalleProceso 
+                {/* <DetalleProceso 
                   file={fila.detalleProceso}
                   onFileChange={(file) => actualizarFila(fila.id, 'detalleProceso', file)}
                 /> */}
