@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Trash2 } from 'lucide-react'
+import { Trash2, Send } from 'lucide-react'
 import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector'
 import { EstrategiasSelectorComponent } from './columns/estrategias-selector'
 import { IntervencionesSelectorComponent } from './columns/intervenciones-selector'
@@ -18,7 +18,6 @@ import { TipoDeCompraComponent } from './columns/tipo-de-compra'
 import { RecursosSelectorComponent } from './columns/recursos-selector'
 import { DetalleProcesoComponent } from './columns/detalle-proceso'
 import { DetalleComponent } from './columns/detalle'
-
 import { FechasSelectorComponent } from './columns/fechas-selector'
 
 interface FilaPlanificacion {
@@ -46,6 +45,16 @@ interface FilaPlanificacion {
   indicadorLogro: string
   detalleProceso: File | null
   comentarioDecano: string
+}
+
+// Mapping of strategic objectives to strategic areas
+const objetivoToAreaMap: { [key: string]: string } = {
+  "obj1": "Área Estratégica 1",
+  "obj2": "Área Estratégica 2",
+  "obj3": "Área Estratégica 3",
+  "obj4": "Área Estratégica 4",
+  "obj5": "Área Estratégica 5",
+  // Add more mappings as needed
 }
 
 export function TablaPlanificacionComponent() {
@@ -89,6 +98,19 @@ export function TablaPlanificacionComponent() {
     setFilas(filas.map(fila => 
       fila.id === id ? { ...fila, [campo]: valor } : fila
     ))
+
+    // If the updated field is objetivoEstrategico, update areaEstrategica
+    if (campo === 'objetivoEstrategico') {
+      setFilas(filas.map(fila => 
+        fila.id === id ? { ...fila, areaEstrategica: objetivoToAreaMap[valor] || '' } : fila
+      ))
+    }
+  }
+
+  const enviarActividad = (id: string) => {
+    // Implement the logic to send the activity
+    console.log(`Enviando actividad con ID: ${id}`)
+    // You might want to change the estado of the fila to 'aprobado' or handle this in your backend
   }
 
   return (
@@ -126,6 +148,7 @@ export function TablaPlanificacionComponent() {
                 <Input 
                   value={fila.areaEstrategica} 
                   onChange={(e) => actualizarFila(fila.id, 'areaEstrategica', e.target.value)}
+                  readOnly
                 />
               </TableCell>
               <TableCell>
@@ -254,9 +277,14 @@ export function TablaPlanificacionComponent() {
                 <Label>{fila.comentarioDecano}</Label>
               </TableCell>
               <TableCell>
-                <Button variant="destructive" onClick={() => eliminarFila(fila.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex flex-col space-y-2">
+                  <Button variant="destructive" onClick={() => eliminarFila(fila.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" onClick={() => enviarActividad(fila.id)}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
