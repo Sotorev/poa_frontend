@@ -15,7 +15,7 @@ import { PlusCircle, Edit, Trash2, Users, ChevronUp, ChevronDown } from "lucide-
 import { Notification } from "@/components/users/components-notification"
 import { Pagination } from "@/components/users/components-pagination"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 // Tipos
 type User = {
