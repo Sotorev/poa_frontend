@@ -16,10 +16,9 @@ interface SectionProps {
 }
 
 interface Carrera {
-  id: string
-  nombre: string
-  sede: string
-  coordinador: string
+  programId: number
+  name: string
+  director: string
 }
 
 // Componente principal
@@ -30,7 +29,6 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
   // Estados para carreras
   const [carrerasData, setCarrerasData] = useState<Carrera[]>([])
   const [newItem, setNewItem] = useState<string>("")
-  const [sedes, setSedes] = useState<string[]>(["Sede Central", "Sede Norte", "Sede Sur"])
   const [personas, setPersonas] = useState<string[]>(["Carlos Rodríguez", "Ana Martínez"])
   const { user, loading } = useAuth()
 
@@ -40,6 +38,7 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
       try {
         if (!loading && user) {
           const userId = user.userId
+          console.log("User ID:", userId)
 
           // Obtener datos del usuario
           const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
@@ -48,10 +47,12 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
               'Content-Type': 'application/json',
             },
           })
+          console.log("Fetching user data:", userResponse)
           if (!userResponse.ok) {
             throw new Error('Error al obtener datos del usuario')
           }
           const userData = await userResponse.json()
+          console.log("User data received:", userData)
           const faculty = userData.faculty
 
           if (!faculty) {
@@ -59,6 +60,7 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
           }
 
           const facultyId = faculty.facultyId
+          console.log("Faculty ID:", facultyId)
 
           // Obtener las carreras de la facultad
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/programs?facultyId=${facultyId}`, {
@@ -67,10 +69,12 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
               'Content-Type': 'application/json',
             },
           })
+          console.log("Fetching programs:", response)
           if (!response.ok) {
             throw new Error('Error al cargar las carreras')
           }
           const data = await response.json()
+          console.log("Programs data received:", data)
           setCarrerasData(data)
         }
       } catch (error) {
@@ -82,22 +86,22 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
   }, [user, loading])
 
   // Funciones de manejo de carreras
-  const handleCarreraChange = (id: string, field: keyof Carrera, value: string) => {
+  const handleCarreraChange = (programId: number, field: keyof Carrera, value: string) => {
     setCarrerasData(prevData =>
-      prevData.map(car => car.id === id ? { ...car, [field]: value } : car)
+      prevData.map(car => car.programId === programId ? { ...car, [field]: value } : car)
     )
   }
 
   const handleAddCarreraRow = () => {
-    const newCar: Carrera = { id: Date.now().toString(), nombre: "", sede: "", coordinador: "" }
+    const newCar: Carrera = { programId: Date.now(), name: "", director: "" }
     setCarrerasData([...carrerasData, newCar])
   }
 
-  const handleRemoveCarreraRow = (id: string) => {
-    setCarrerasData(carrerasData.filter(car => car.id !== id))
+  const handleRemoveCarreraRow = (programId: number) => {
+    setCarrerasData(carrerasData.filter(car => car.programId !== programId))
   }
 
-  const NewItemDialog = ({ type, title, onAdd }: { type: 'carrera' | 'sede' | 'persona', title: string, onAdd: () => void }) => (
+  const NewItemDialog = ({ type, title, onAdd }: { type: 'carrera' | 'persona', title: string, onAdd: () => void }) => (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
@@ -140,12 +144,11 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
           <div className="p-4 bg-white">
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium mb-2">Carreras que ofrece la Facultad por sede</h3>
+                <h3 className="text-lg font-medium mb-2">Carreras que ofrece la Facultad</h3>
                 {isEditing && (
                   <div className="mb-2 flex justify-end space-x-2">
                     <NewItemDialog type="carrera" title="carrera" onAdd={handleAddCarreraRow} />
-                    <NewItemDialog type="sede" title="sede" onAdd={() => {}} />
-                    <NewItemDialog type="persona" title="coordinador" onAdd={() => {}} />
+                    <NewItemDialog type="persona" title="director" onAdd={() => {}} />
                     <Button variant="outline" size="sm" onClick={handleAddCarreraRow}>
                       <Plus className="h-4 w-4 mr-2" />
                       Nueva fila
@@ -156,54 +159,29 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Carrera</TableHead>
-                      <TableHead>Sede</TableHead>
-                      <TableHead>Coordinador</TableHead>
+                      <TableHead>Director</TableHead>
                       {isEditing && <TableHead>Acciones</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {carrerasData.map((car) => (
-                      <TableRow key={car.id}>
+                      <TableRow key={car.programId}>
                         <TableCell>
-                          <Select
+                          <Input
                             disabled={!isEditing}
-                            value={car.nombre}
-                            onValueChange={(value) => handleCarreraChange(car.id, "nombre", value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue>{car.nombre || "Seleccionar carrera"}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {carrerasData.map((c) => (
-                                <SelectItem key={c.id} value={c.nombre}>{c.nombre}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            value={car.name}
+                            onChange={(e) => handleCarreraChange(car.programId, "name", e.target.value)}
+                            placeholder="Nombre de la carrera"
+                          />
                         </TableCell>
                         <TableCell>
                           <Select
                             disabled={!isEditing}
-                            value={car.sede}
-                            onValueChange={(value) => handleCarreraChange(car.id, "sede", value)}
+                            value={car.director}
+                            onValueChange={(value) => handleCarreraChange(car.programId, "director", value)}
                           >
                             <SelectTrigger>
-                              <SelectValue>{car.sede || "Seleccionar sede"}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sedes.map((s) => (
-                                <SelectItem key={s} value={s}>{s}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            disabled={!isEditing}
-                            value={car.coordinador}
-                            onValueChange={(value) => handleCarreraChange(car.id, "coordinador", value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue>{car.coordinador || "Seleccionar coordinador"}</SelectValue>
+                              <SelectValue>{car.director || "Seleccionar director"}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               {personas.map((p) => (
@@ -217,7 +195,7 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleRemoveCarreraRow(car.id)}
+                              onClick={() => handleRemoveCarreraRow(car.programId)}
                               aria-label="Eliminar fila"
                             >
                               <Trash2 className="h-4 w-4" />
