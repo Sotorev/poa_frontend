@@ -33,9 +33,14 @@ const initialEstrategiasList: Estrategia[] = [
   // ... add more predefined strategies as needed
 ]
 
-export function EstrategiasSelectorComponent() {
+interface EstrategiasSelectorProps {
+  selectedEstrategias: string[];
+  onSelectEstrategia: (estrategias: string[]) => void;
+}
+
+export function EstrategiasSelectorComponent({ selectedEstrategias, onSelectEstrategia }: EstrategiasSelectorProps) {
   const [estrategiasList, setEstrategiasList] = useState<Estrategia[]>(initialEstrategiasList)
-  const [selectedEstrategiasIds, setSelectedEstrategiasIds] = useState<string[]>([])
+  //const [selectedEstrategias, setSelectedEstrategias] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isOpen, setIsOpen] = useState(false)
   const [newEstrategia, setNewEstrategia] = useState("")
@@ -49,30 +54,30 @@ export function EstrategiasSelectorComponent() {
     )
   }, [estrategiasList, searchTerm])
 
-  const handleSelectEstrategia = (estId: string) => {
-    setSelectedEstrategiasIds(prev => 
-      prev.includes(estId) ? prev.filter(id => id !== estId) : [...prev, estId]
-    )
+  const handleSelectEstrategia = (estrategiaId: string) => {
+    const updatedEstrategias = selectedEstrategias.includes(estrategiaId)
+      ? selectedEstrategias.filter(id => id !== estrategiaId)
+      : [...selectedEstrategias, estrategiaId];
+    onSelectEstrategia(updatedEstrategias);
   }
 
   const handleAddNewEstrategia = () => {
     if (newEstrategia.trim() !== "") {
-      const newNumber = Math.max(...estrategiasList.map(est => est.number), 0) + 1
-      const newEst: Estrategia = {
+      const newEstrategiaObj: Estrategia = {
         id: `custom-${Date.now()}`,
         name: newEstrategia.trim(),
-        number: newNumber,
+        number: estrategiasList.length + 1,
         isCustom: true
       }
-      setEstrategiasList(prev => [...prev, newEst])
-      setSelectedEstrategiasIds(prev => [...prev, newEst.id])
+      setEstrategiasList(prev => [...prev, newEstrategiaObj])
+      onSelectEstrategia([...selectedEstrategias, newEstrategiaObj.id])
       setNewEstrategia("")
       setIsAddingNew(false)
     }
   }
 
   const handleRemoveEstrategia = (id: string) => {
-    setSelectedEstrategiasIds(prev => prev.filter(estId => estId !== id))
+    onSelectEstrategia(selectedEstrategias.filter(estId => estId !== id))
   }
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export function EstrategiasSelectorComponent() {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2 mb-2">
-        {selectedEstrategiasIds.map(id => {
+        {selectedEstrategias.map(id => {
           const estrategia = estrategiasList.find(est => est.id === id)
           if (!estrategia) return null
           return (
@@ -152,8 +157,8 @@ export function EstrategiasSelectorComponent() {
                   <div className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={selectedEstrategiasIds.includes(est.id)}
-                      onChange={() => {}}
+                      checked={selectedEstrategias.includes(est.id)}
+                      onChange={() => handleSelectEstrategia(est.id)}
                       className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
                     />
                     {est.isCustom ? `E${est.number}: ${est.name}` : `${est.number}: ${est.name}`}
