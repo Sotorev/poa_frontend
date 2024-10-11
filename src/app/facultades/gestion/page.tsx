@@ -10,7 +10,7 @@ export default async function UsersPage() {
     redirect('/iniciar-sesion')
   }
 
-  if (!hasPermission(session, 'ODS', 'Edit')) {
+  if (!hasPermission(session, 'Faculty', 'Edit')) {
     redirect('/no-authorizado')
   }
 
