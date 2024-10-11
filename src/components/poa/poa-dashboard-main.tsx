@@ -19,7 +19,6 @@ import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { EstructuraFacultadSection } from './sections/sections-estructura-facultad-section'
-import { DepartamentosFacultadSection } from './sections/sections-departamentos-facultad-section'
 import { EquipoResponsableSection } from './sections/sections-equipo-responsable-section'
 import { JustificacionSection } from './sections/sections-justificacion-section'
 import { FODASection } from './sections/sections-foda-section'
