@@ -1,19 +1,30 @@
 'use client'
 
 import * as React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Upload, X } from "lucide-react"
 
-export function DetalleProcesoComponent() {
-  const [file, setFile] = useState<File | null>(null)
+interface DetalleProcesoProps {
+  file: File | null
+  onFileChange: (file: File | null) => void
+}
+
+export function DetalleProcesoComponent({ file, onFileChange }: DetalleProcesoProps) {
+  const [localFile, setLocalFile] = useState<File | null>(file)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setLocalFile(file)
+  }, [file])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0])
+      const newFile = event.target.files[0]
+      setLocalFile(newFile)
+      onFileChange(newFile)
     }
   }
 
@@ -24,12 +35,15 @@ export function DetalleProcesoComponent() {
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      setFile(event.dataTransfer.files[0])
+      const newFile = event.dataTransfer.files[0]
+      setLocalFile(newFile)
+      onFileChange(newFile)
     }
   }
 
   const handleRemoveFile = () => {
-    setFile(null)
+    setLocalFile(null)
+    onFileChange(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -68,9 +82,9 @@ export function DetalleProcesoComponent() {
           <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT hasta 10MB</p>
         </div>
       </div>
-      {file && (
+      {localFile && (
         <div className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-          <span className="text-sm text-gray-600">{file.name}</span>
+          <span className="text-sm text-gray-600">{localFile.name}</span>
           <Button
             variant="ghost"
             size="sm"

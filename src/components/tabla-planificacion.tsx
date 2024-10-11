@@ -16,6 +16,7 @@ import { AporteUmes } from './aporte-umes'
 import { AporteOtrasFuentesComponent } from './poa/components/aporte-otras-fuentes'
 import { TipoDeCompraComponent } from './poa/components/tipo-de-compra'
 import { RecursosSelectorComponent } from './poa/components/recursos-selector'
+import { DetalleProcesoComponent } from './poa/components/detalle-proceso'
 
 import { FechasSelectorComponent } from './fechas-selector'
 
@@ -243,10 +244,10 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               <TableCell>
-                {/* <DetalleProceso 
+                <DetalleProcesoComponent 
                   file={fila.detalleProceso}
                   onFileChange={(file) => actualizarFila(fila.id, 'detalleProceso', file)}
-                /> */}
+                />
               </TableCell>
               <TableCell>
                 <Label>{fila.comentarioDecano}</Label>
