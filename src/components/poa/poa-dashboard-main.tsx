@@ -218,8 +218,15 @@ export function PoaDashboardMain() {
             isActive={activeSection === section.name}
           />
         ))}
-        <div className="mb-32"></div>
-      </div>
-    </main>
-  )
+ <div className="mb-32"></div>
+
+{/* Botón para enviar POA */}
+<div className="mt-6 flex justify-end">
+  <Button /*onClick={handleEnviarPOA}*/>
+    Enviar POA
+  </Button>
+</div>
+</div>
+</main>
+)
 }

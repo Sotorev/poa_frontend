@@ -1,6 +1,6 @@
 'use client'
 
-import { withAuth } from './auth/with-auth'
+import { withAuth } from '../auth/with-auth'
 import React from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import {
