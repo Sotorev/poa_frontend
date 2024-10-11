@@ -6,20 +6,20 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Trash2 } from 'lucide-react'
-import { ObjetivosEstrategicosSelectorComponent } from './poa/components/objetivos-estrategicos-selector'
-import { EstrategiasSelectorComponent } from './poa/components/estrategias-selector'
-import { IntervencionesSelectorComponent } from './poa/components/intervenciones-selector'
-import { OdsSelector } from './ods-selector'
-import { ActividadProyectoSelector } from './actividad-proyecto-selector'
-import { Total } from './total'
-import { AporteUmes } from './aporte-umes'
-import { AporteOtrasFuentesComponent } from './poa/components/aporte-otras-fuentes'
-import { TipoDeCompraComponent } from './poa/components/tipo-de-compra'
-import { RecursosSelectorComponent } from './poa/components/recursos-selector'
-import { DetalleProcesoComponent } from './poa/components/detalle-proceso'
-import { DetalleComponent } from './poa/components/detalle'
+import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector'
+import { EstrategiasSelectorComponent } from './columns/estrategias-selector'
+import { IntervencionesSelectorComponent } from './columns/intervenciones-selector'
+import { OdsSelector } from './columns/ods-selector'
+import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector'
+import { Total } from './columns/total'
+import { AporteUmes } from './columns/aporte-umes'
+import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes'
+import { TipoDeCompraComponent } from './columns/tipo-de-compra'
+import { RecursosSelectorComponent } from './columns/recursos-selector'
+import { DetalleProcesoComponent } from './columns/detalle-proceso'
+import { DetalleComponent } from './columns/detalle'
 
-import { FechasSelectorComponent } from './fechas-selector'
+import { FechasSelectorComponent } from './columns/fechas-selector'
 
 interface FilaPlanificacion {
   id: string
