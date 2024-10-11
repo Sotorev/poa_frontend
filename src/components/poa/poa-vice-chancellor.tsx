@@ -1,4 +1,3 @@
-// src/components/poa/PoaDashboardMain.tsx
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -23,25 +22,47 @@ import { JustificacionSection } from './sections/sections-justificacion-section'
 import { FODASection } from './sections/sections-foda-section'
 import { OtrosDocumentos } from './sections/sections-otros-documentos'
 import { VisualizarIntervencionesSection } from './sections/visualizar-intervenciones-section'
-import { useAuth } from '@/contexts/auth-context'
 
 const sections = [
-  { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
-  { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
-  { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSection },
-  { name: "Agregar/confirmar FODA", icon: BarChart2, component: FODASection },
-  { name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
-  { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
+  { 
+    name: "Agregar/confirmar datos de la facultad", 
+    icon: Building2, 
+    component: FacultadDataSection, 
+    props: { disableEditButton: true } // Aquí desactivamos el botón "Editar"
+  },
+  { 
+    name: "Agregar/confirmar Estructura de la facultad", 
+    icon: LayoutDashboard, 
+    component: EstructuraFacultadSection 
+  },
+  { 
+    name: "Agregar/confirmar equipo responsable POA", 
+    icon: UserCog, 
+    component: EquipoResponsableSection 
+  },
+  { 
+    name: "Agregar/confirmar FODA", 
+    icon: BarChart2, 
+    component: FODASection 
+  },
+  { 
+    name: "Agregar otros documentos", 
+    icon: FilePlus, 
+    component: OtrosDocumentos 
+  },
+  { 
+    name: "Visualizar intervenciones", 
+    icon: ListTodo, 
+    component: VisualizarIntervencionesSection 
+  }
 ]
 
-export function PoaDashboardMain() {
+export function PoaViceChancellor() {
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [isSidebarVisible, setIsSidebarVisible] = useState(false)
   const [isSidebarFixed, setIsSidebarFixed] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
-  const mainRef = useRef<HTMLDivElement>(null)
-
-  const { user, loading } = useAuth()
+  const mainRef = useRef<HTMLDivElement>(null)  
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -63,71 +84,6 @@ export function PoaDashboardMain() {
     setTimeout(() => {
       setActiveSection(null)
     }, 1000)
-  }
-
-  const handleCreatePoa = async () => {
-    if (loading) {
-      console.log("Cargando información del usuario...")
-      return
-    }
-
-    if (!user) {
-      console.log("No estás autenticado.")
-      alert("No estás autenticado.")
-      return
-    }
-
-    try {
-      // Obtener los datos completos del usuario, incluyendo la facultad
-      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      if (!userResponse.ok) {
-        throw new Error('Error al obtener datos del usuario')
-      }
-      const userData = await userResponse.json()
-
-      const faculty = userData.faculty
-
-      if (!faculty) {
-        throw new Error('El usuario no tiene una facultad asignada')
-      }
-
-      const facultyId = faculty.facultyId
-
-      const payload = {
-        facultyId: facultyId,
-        year: 2024,
-        peiid: 1
-      }
-
-      console.log("Enviando solicitud POST para crear POA con los siguientes datos:", payload)
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      })
-
-      const responseData = await response.json()
-
-      console.log("Respuesta del backend:", responseData)
-
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Error al crear el POA.')
-      }
-
-      alert("POA creado exitosamente.")
-    } catch (error: any) {
-      console.error("Error al crear el POA:", error)
-      alert(`Error: ${error.message}`)
-    }
   }
 
   return (
@@ -203,19 +159,12 @@ export function PoaDashboardMain() {
           isSidebarFixed || isSidebarVisible ? 'ml-16' : 'ml-0'
         }`}
       >
-        {/* Botón para crear POA */}
-        <div className="mb-4">
-          <Button onClick={handleCreatePoa} disabled={loading}>
-            Crear POA
-          </Button>
-        </div>
-
-        {/* Renderizar las secciones */}
         {sections.map((section) => (
           <section.component
             key={section.name}
             name={section.name}
             isActive={activeSection === section.name}
+            {...section.props}  // Pasar las props a los componentes hijos
           />
         ))}
         <div className="mb-32"></div>

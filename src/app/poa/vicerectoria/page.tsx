@@ -1,18 +1,18 @@
 import { getServerSession } from '@/lib/server-auth'
 import { hasPermission } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import OdsComponent from '@/components/ods/ods-component'
+import { PoaViceChancellor} from '@/components/poa/poa-vice-chancellor'
 
-export default async function UsersPage() {
+export default async function PEIPage() {
   const session = await getServerSession()
 
   if (!session) {
     redirect('/iniciar-sesion')
   }
 
-  if (!hasPermission(session, 'ODS', 'Edit')) {
+  if (!hasPermission(session, 'POA', 'View')) {
     redirect('/no-authorizado')
   }
 
-  return <OdsComponent />
+  return <PoaViceChancellor/>
 }

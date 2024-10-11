@@ -1,57 +1,333 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ChevronDown, ChevronUp, Edit, Plus, Search, X } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
 
 interface SectionProps {
   name: string
   isActive: boolean
 }
 
+interface Role {
+  roleId: number
+  roleName: string
+  isDeleted: boolean
+}
+
 interface TeamMember {
-  id: string
-  name: string
-  role: string
+  userId: number
+  firstName: string
+  lastName: string
+  role: Role
   email: string
 }
 
 export function EquipoResponsableSection({ name, isActive }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    { id: "1", name: "Juan Pérez", role: "Coordinador", email: "juan@example.com" },
-    { id: "2", name: "María López", role: "Asistente", email: "maria@example.com" },
-  ])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [newMember, setNewMember] = useState<TeamMember>({ id: "", name: "", role: "", email: "" })
+  const [newMember, setNewMember] = useState<TeamMember>({
+    userId: 0,
+    firstName: "",
+    lastName: "",
+    role: { roleId: 0, roleName: "", isDeleted: false },
+    email: ""
+  })
+  const [roles, setRoles] = useState<Role[]>([])
+  const { user, loading } = useAuth()
+
+  // Obtener roles desde el backend
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        if (!response.ok) {
+          throw new Error('Error al obtener los roles')
+        }
+        const rolesData = await response.json()
+        setRoles(rolesData)
+      } catch (error) {
+        console.error('Error al cargar los roles', error)
+      }
+    }
+
+    fetchRoles()
+  }, [])
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        if (!loading && user) {
+          const userId = user.userId
+          console.log("User ID:", userId)
+
+          // Obtener datos del usuario
+          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+          console.log("Fetching user data:", userResponse)
+          if (!userResponse.ok) {
+            throw new Error('Error al obtener datos del usuario')
+          }
+          const userData = await userResponse.json()
+          console.log("User data received:", userData)
+          const facultyId = userData.facultyId
+          console.log("Faculty ID:", facultyId)
+
+          // Obtener el poaId para esa facultad
+          const poaResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas?facultyId=${facultyId}`, {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+          console.log("Fetching POA data:", poaResponse)
+          if (!poaResponse.ok) {
+            throw new Error('Error al obtener el POA')
+          }
+          const poaData = await poaResponse.json()
+          console.log("POA data received:", poaData)
+
+          // Asumimos que hay un solo POA para la facultad
+          const poa = poaData[0]
+          if (!poa) {
+            throw new Error('No se encontró el POA para la facultad')
+          }
+          const poaId = poa.poaId
+          console.log("POA ID:", poaId)
+
+          // Obtener los miembros del equipo desde poa_team
+          const poaTeamResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poateams?poaId=${poaId}`, {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+          console.log("Fetching POA Team data:", poaTeamResponse)
+          if (!poaTeamResponse.ok) {
+            throw new Error('Error al obtener el equipo del POA')
+          }
+          const poaTeamData = await poaTeamResponse.json()
+          console.log("POA Team data received:", poaTeamData)
+
+          // Obtener los datos de los usuarios del equipo
+          const teamMemberPromises = poaTeamData.map(async (member: any) => {
+            const memberResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${member.userId}`, {
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+            console.log(`Fetching data for team member ${member.userId}:`, memberResponse)
+            if (!memberResponse.ok) {
+              throw new Error(`Error al obtener datos del miembro ${member.userId}`)
+            }
+            const memberData = await memberResponse.json()
+            console.log(`Data received for team member ${member.userId}:`, memberData)
+
+            // Obtener el rol del usuario
+            const roleResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles/${memberData.roleId}`, {
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+            console.log(`Fetching role for user ${memberData.userId}:`, roleResponse)
+            if (!roleResponse.ok) {
+              throw new Error(`Error al obtener el rol del usuario ${memberData.userId}`)
+            }
+            const roleData = await roleResponse.json()
+            console.log(`Role data for user ${memberData.userId}:`, roleData)
+
+            return {
+              userId: memberData.userId,
+              firstName: memberData.firstName,
+              lastName: memberData.lastName,
+              email: memberData.email,
+              role: roleData
+            }
+          })
+
+          const teamMembersData = await Promise.all(teamMemberPromises)
+          console.log("All team members data:", teamMembersData)
+
+          setTeamMembers(teamMembersData)
+        }
+      } catch (error) {
+        console.error("Error al cargar los miembros del equipo", error)
+      }
+    }
+
+    fetchTeamMembers()
+  }, [user, loading])
 
   const handleEdit = () => {
     setIsEditing(!isEditing)
   }
 
-  const handleSave = () => {
-    setIsEditing(false)
-    // Aquí iría la lógica para guardar los datos en el backend
-  }
-
-  const handleAddMember = () => {
-    if (newMember.name && newMember.role && newMember.email) {
-      setTeamMembers([...teamMembers, { ...newMember, id: Date.now().toString() }])
-      setNewMember({ id: "", name: "", role: "", email: "" })
+  const handleSave = async () => {
+    try {
+      console.log("Saving team members:", teamMembers)
+      setIsEditing(false)
+    } catch (error) {
+      console.error("Error al guardar los cambios", error)
     }
   }
 
-  const handleRemoveMember = (id: string) => {
-    setTeamMembers(teamMembers.filter(member => member.id !== id))
+  const handleAddMember = async () => {
+    try {
+      if (newMember.firstName && newMember.lastName && newMember.email && newMember.role.roleId) {
+        console.log("Adding new member:", newMember)
+
+        const createUserResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            firstName: newMember.firstName,
+            lastName: newMember.lastName,
+            email: newMember.email,
+            username: newMember.email,
+            password: 'defaultpassword',
+            roleId: newMember.role.roleId,
+            facultyId: user?.facultyId,
+            isDeleted: false
+          }),
+        })
+        console.log("Create user response:", createUserResponse)
+        if (!createUserResponse.ok) {
+          throw new Error('Error al crear el usuario')
+        }
+        const createdUser = await createUserResponse.json()
+        console.log("Created user:", createdUser)
+
+        const facultyId = user?.facultyId
+        console.log("Faculty ID:", facultyId)
+        const poaResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas?facultyId=${facultyId}`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        console.log("Fetching POA data:", poaResponse)
+        if (!poaResponse.ok) {
+          throw new Error('Error al obtener el POA')
+        }
+        const poaData = await poaResponse.json()
+        console.log("POA data received:", poaData)
+        const poa = poaData[0]
+        if (!poa) {
+          throw new Error('No se encontró el POA para la facultad')
+        }
+        const poaId = poa.poaId
+        console.log("POA ID:", poaId)
+
+        const addMemberResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poateams`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            poaId: poaId,
+            userId: createdUser.userId,
+            isDeleted: false
+          }),
+        })
+        console.log("Add member to POA Team response:", addMemberResponse)
+        if (!addMemberResponse.ok) {
+          throw new Error('Error al agregar el usuario al equipo')
+        }
+        const addedMember = await addMemberResponse.json()
+        console.log("Added member to POA Team:", addedMember)
+
+        // Obtener el rol del usuario
+        const role = roles.find(r => r.roleId === newMember.role.roleId)
+
+        setTeamMembers([...teamMembers, {
+          userId: createdUser.userId,
+          firstName: createdUser.firstName,
+          lastName: createdUser.lastName,
+          email: createdUser.email,
+          role: role || { roleId: 0, roleName: '', isDeleted: false }
+        }])
+        setNewMember({
+          userId: 0,
+          firstName: "",
+          lastName: "",
+          role: { roleId: 0, roleName: "", isDeleted: false },
+          email: ""
+        })
+      }
+    } catch (error) {
+      console.error("Error al agregar el miembro", error)
+    }
+  }
+
+  const handleRemoveMember = async (userId: number) => {
+    try {
+      console.log("Removing member with ID:", userId)
+      const facultyId = user?.facultyId
+      console.log("Faculty ID:", facultyId)
+      const poaResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas?facultyId=${facultyId}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      console.log("Fetching POA data:", poaResponse)
+      if (!poaResponse.ok) {
+        throw new Error('Error al obtener el POA')
+      }
+      const poaData = await poaResponse.json()
+      console.log("POA data received:", poaData)
+      const poa = poaData[0]
+      if (!poa) {
+        throw new Error('No se encontró el POA para la facultad')
+      }
+      const poaId = poa.poaId
+      console.log("POA ID:", poaId)
+
+      const removeMemberResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poateams/${poaId}/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      console.log("Remove member from POA Team response:", removeMemberResponse)
+      if (!removeMemberResponse.ok) {
+        throw new Error('Error al eliminar el usuario del equipo')
+      }
+      const removedMember = await removeMemberResponse.json()
+      console.log("Removed member from POA Team:", removedMember)
+
+      setTeamMembers(teamMembers.filter(member => member.userId !== userId))
+    } catch (error) {
+      console.error("Error al eliminar el miembro", error)
+    }
   }
 
   const filteredMembers = teamMembers.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.role.roleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -99,16 +375,16 @@ export function EquipoResponsableSection({ name, isActive }: SectionProps) {
                 </TableHeader>
                 <TableBody>
                   {filteredMembers.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell>{member.name}</TableCell>
-                      <TableCell>{member.role}</TableCell>
+                    <TableRow key={member.userId}>
+                      <TableCell>{member.firstName} {member.lastName}</TableCell>
+                      <TableCell>{member.role.roleName}</TableCell>
                       <TableCell>{member.email}</TableCell>
                       {isEditing && (
                         <TableCell>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleRemoveMember(member.id)}
+                            onClick={() => handleRemoveMember(member.userId)}
                             aria-label="Eliminar miembro"
                           >
                             <X className="h-4 w-4" />
@@ -134,13 +410,13 @@ export function EquipoResponsableSection({ name, isActive }: SectionProps) {
                     <div className="space-y-4">
                       <Input
                         placeholder="Nombre"
-                        value={newMember.name}
-                        onChange={(e) => setNewMember({...newMember, name: e.target.value})}
+                        value={newMember.firstName}
+                        onChange={(e) => setNewMember({...newMember, firstName: e.target.value})}
                       />
                       <Input
-                        placeholder="Rol"
-                        value={newMember.role}
-                        onChange={(e) => setNewMember({...newMember, role: e.target.value})}
+                        placeholder="Apellido"
+                        value={newMember.lastName}
+                        onChange={(e) => setNewMember({...newMember, lastName: e.target.value})}
                       />
                       <Input
                         placeholder="Email"
@@ -148,6 +424,27 @@ export function EquipoResponsableSection({ name, isActive }: SectionProps) {
                         value={newMember.email}
                         onChange={(e) => setNewMember({...newMember, email: e.target.value})}
                       />
+                      <Select
+                        value={newMember.role.roleId ? newMember.role.roleId.toString() : ""}
+                        onValueChange={(value) => {
+                          const selectedRole = roles.find(r => r.roleId === parseInt(value))
+                          setNewMember({
+                            ...newMember,
+                            role: selectedRole || { roleId: 0, roleName: '', isDeleted: false }
+                          })
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue>{newMember.role.roleName || "Seleccionar rol"}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roles.map(role => (
+                            <SelectItem key={role.roleId} value={role.roleId.toString()}>
+                              {role.roleName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button onClick={handleAddMember}>Agregar miembro</Button>
                     </div>
                   </DialogContent>
