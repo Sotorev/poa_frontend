@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import Logo from '@/assets/images/logo.png'
@@ -11,14 +11,15 @@ export default function LoginPage() {
 	const [username, setUsername] = useState('')
 	const [password, setPassword] = useState('')
 	const [error, setError] = useState('')
-	const router = useRouter()
 	const { user, loading, login } = useAuth()
 
+	const router = useRouter()
+
 	useEffect(() => {
-		if (user && !loading) {
+		if (user) {
 			router.push('/')
 		}
-	}, [user, loading, router])
+	}, [user, router])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -26,7 +27,6 @@ export default function LoginPage() {
 
 		try {
 			await login(username, password)
-			router.push('/')
 		} catch (error) {
 			if (error instanceof Error) {
 				setError(error.message || 'Nombre de usuario o contraseña inválidos')
@@ -37,11 +37,11 @@ export default function LoginPage() {
 	}
 
 	if (loading) {
-		return <div>Cargando...</div>
+		return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
 	}
 
 	if (user) {
-		return null // This will be handled by the useEffect hook
+		return null
 	}
 
 	return (

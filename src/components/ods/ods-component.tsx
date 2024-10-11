@@ -1,12 +1,12 @@
 "use client";
 import { withAuth } from '../auth/with-auth'
-import UsersComponent from './app-users-page'
+import OdsComponent from './ods-management-page'
 
 function Users() {
 
 	return (
 		<div className='mt-20'>
-			<UsersComponent />
+			<OdsComponent />
 		</div>
 	)
 }

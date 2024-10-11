@@ -17,7 +17,7 @@ import { Pagination } from "@/components/users/components-pagination"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
-// Types
+// Tipos
 type User = {
   userId: number
   firstName: string
@@ -51,7 +51,7 @@ type Faculty = {
 
 type SortableUserKey = keyof Pick<User, 'firstName' | 'lastName' | 'email' | 'username' | 'roleId' | 'facultyId'>
 
-// Zod schema
+// Esquema Zod
 const userFormSchema = z.object({
   firstName: z.string().nonempty("El nombre es requerido"),
   lastName: z.string().nonempty("El apellido es requerido"),
@@ -62,6 +62,7 @@ const userFormSchema = z.object({
   facultyId: z.number().int().positive("Debe seleccionar una facultad").optional(),
 })
 
+// Componente de diálogo de confirmación de eliminación
 function DeleteConfirmationDialog({
   isOpen,
   onClose,
@@ -79,7 +80,7 @@ function DeleteConfirmationDialog({
         <DialogHeader>
           <DialogTitle>Confirmar eliminación</DialogTitle>
           <DialogDescription>
-            ¿Estás seguro de que deseas eliminar al usuario {userName}?
+            ¿Estás seguro de que deseas eliminar al usuario <strong>{userName}</strong>?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -93,6 +94,7 @@ function DeleteConfirmationDialog({
   )
 }
 
+// Componente de filtro avanzado
 function AdvancedFilter({
   onFilter,
   roles,
@@ -139,7 +141,7 @@ function AdvancedFilter({
               <SelectTrigger>
                 <SelectValue placeholder="Todos los roles" />
               </SelectTrigger>
-              <SelectContent> {/* Sin modal={false} */}
+              <SelectContent>
                 <SelectItem value="all">Todos los roles</SelectItem>
                 {roles.map((role) => (
                   <SelectItem key={role.roleId} value={role.roleId.toString()}>
@@ -155,7 +157,7 @@ function AdvancedFilter({
               <SelectTrigger>
                 <SelectValue placeholder="Todas las facultades" />
               </SelectTrigger>
-              <SelectContent> {/* Sin modal={false} */}
+              <SelectContent>
                 <SelectItem value="all">Todas las facultades</SelectItem>
                 {faculties.map((faculty) => (
                   <SelectItem key={faculty.facultyId} value={faculty.facultyId.toString()}>
@@ -171,7 +173,7 @@ function AdvancedFilter({
   )
 }
 
-
+// Componente de formulario de usuario
 function UserForm({
   onSubmit,
   initialData,
@@ -295,6 +297,7 @@ function UserForm({
   )
 }
 
+// Componente principal de gestión de usuarios
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
@@ -311,6 +314,7 @@ export default function UserManagement() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
+  const [showDeletedUsers, setShowDeletedUsers] = useState(false)
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -318,65 +322,104 @@ export default function UserManagement() {
     }
   }, [isDialogOpen])
 
+  useEffect(() => {
+    fetchRoles()
+    fetchFaculties()
+    if (showDeletedUsers) {
+      fetchDeletedUsers()
+    } else {
+      fetchUsers()
+    }
+  }, [showDeletedUsers])
+
+  // Función para obtener usuarios activos
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/users`,
-        { credentials: 'include' }
-      )
+      const response = await fetch(`${API_URL}/api/users`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data: User[] = await response.json()
-        setUsers(data)
-        setFilteredUsers(data.filter(user => !user.isDeleted))
-        setTotalPages(Math.ceil(data.filter(user => !user.isDeleted).length / 10))
+        const activeUsers = data.filter(user => !user.isDeleted)
+        setUsers(activeUsers)
+        setFilteredUsers(activeUsers)
+        setTotalPages(Math.ceil(activeUsers.length / 10))
       } else {
-        console.error("Error al obtener usuarios")
+        const errorData = await response.json();
+        console.error("Error al obtener usuarios:", errorData);
+        setNotification({ message: errorData.error || "Error al obtener usuarios", type: "error" })
       }
     } catch (error) {
       console.error("Error al obtener usuarios", error)
+      setNotification({ message: "Error al obtener usuarios", type: "error" })
     }
   }
 
+  // Función para obtener usuarios eliminados
+  const fetchDeletedUsers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/users/deleted`, {
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data: User[] = await response.json()
+        setUsers(data)
+        setFilteredUsers(data)
+        setTotalPages(Math.ceil(data.length / 10))
+      } else {
+        const errorData = await response.json();
+        console.error('Error al obtener usuarios eliminados:', errorData);
+        setNotification({ message: errorData.error || 'Error al obtener usuarios eliminados', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Error al obtener usuarios eliminados', error)
+      setNotification({ message: 'Error al obtener usuarios eliminados', type: 'error' })
+    }
+  }
+
+  // Función para obtener roles
   const fetchRoles = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/roles`,
-        { credentials: 'include' }
-      )
+      const response = await fetch(`${API_URL}/api/roles`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data: Role[] = await response.json()
         setRoles(data)
       } else {
-        console.error("Error al obtener roles")
+        const errorData = await response.json();
+        console.error("Error al obtener roles:", errorData);
+        setNotification({ message: errorData.error || "Error al obtener roles", type: "error" })
       }
     } catch (error) {
       console.error("Error al obtener roles", error)
+      setNotification({ message: "Error al obtener roles", type: "error" })
     }
   }
 
+  // Función para obtener facultades
   const fetchFaculties = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/faculties`,
-        { credentials: 'include' }
-      )
+      const response = await fetch(`${API_URL}/api/faculties`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data: Faculty[] = await response.json()
         setFaculties(data)
       } else {
-        console.error("Error al obtener facultades")
+        const errorData = await response.json();
+        console.error("Error al obtener facultades:", errorData);
+        setNotification({ message: errorData.error || "Error al obtener facultades", type: "error" })
       }
     } catch (error) {
       console.error("Error al obtener facultades", error)
+      setNotification({ message: "Error al obtener facultades", type: "error" })
     }
   }
 
-  useEffect(() => {
-    fetchUsers()
-    fetchRoles()
-    fetchFaculties()
-  }, [])
-
+  // Función para filtrar usuarios
   const handleAdvancedFilter = useCallback((filters: any) => {
     const filtered = users.filter(user =>
-      !user.isDeleted &&
       (filters.name === "" || user.firstName.toLowerCase().includes(filters.name.toLowerCase()) || user.lastName.toLowerCase().includes(filters.name.toLowerCase())) &&
       (filters.email === "" || user.email.toLowerCase().includes(filters.email.toLowerCase())) &&
       (filters.roleId === "all" || user.roleId.toString() === filters.roleId) &&
@@ -387,6 +430,7 @@ export default function UserManagement() {
     setCurrentPage(1)
   }, [users])
 
+  // Función para agregar un nuevo usuario
   const addUser = async (data: UserFormData) => {
     try {
       const response = await fetch(`${API_URL}/api/users`, {
@@ -402,8 +446,9 @@ export default function UserManagement() {
         setIsDialogOpen(false)
         setNotification({ message: "Usuario agregado exitosamente", type: "success" })
       } else {
-        console.error("Error al agregar usuario")
-        setNotification({ message: "Error al agregar usuario", type: "error" })
+        const errorData = await response.json();
+        console.error("Error al agregar usuario:", errorData);
+        setNotification({ message: errorData.error || "Error al agregar usuario", type: "error" })
       }
     } catch (error) {
       console.error("Error al agregar usuario", error)
@@ -411,6 +456,7 @@ export default function UserManagement() {
     }
   }
 
+  // Función para actualizar un usuario existente
   const updateUser = async (data: UserFormData) => {
     if (!editingUser) return
     try {
@@ -423,13 +469,18 @@ export default function UserManagement() {
         body: JSON.stringify(data)
       })
       if (response.ok) {
-        await fetchUsers()
+        if (showDeletedUsers) {
+          await fetchDeletedUsers()
+        } else {
+          await fetchUsers()
+        }
         setEditingUser(null)
         setIsDialogOpen(false)
         setNotification({ message: "Usuario actualizado exitosamente", type: "success" })
       } else {
-        console.error("Error al actualizar usuario")
-        setNotification({ message: "Error al actualizar usuario", type: "error" })
+        const errorData = await response.json();
+        console.error("Error al actualizar usuario:", errorData);
+        setNotification({ message: errorData.error || "Error al actualizar usuario", type: "error" })
       }
     } catch (error) {
       console.error("Error al actualizar usuario", error)
@@ -437,6 +488,7 @@ export default function UserManagement() {
     }
   }
 
+  // Función para eliminar un usuario
   const deleteUser = async (userId: number) => {
     try {
       const response = await fetch(`${API_URL}/api/users/${userId}`, {
@@ -444,11 +496,16 @@ export default function UserManagement() {
         credentials: 'include'
       })
       if (response.ok) {
-        await fetchUsers()
+        if (showDeletedUsers) {
+          await fetchDeletedUsers()
+        } else {
+          await fetchUsers()
+        }
         setNotification({ message: "Usuario eliminado exitosamente", type: "success" })
       } else {
-        console.error("Error al eliminar usuario")
-        setNotification({ message: "Error al eliminar usuario", type: "error" })
+        const errorData = await response.json();
+        console.error("Error al eliminar usuario:", errorData);
+        setNotification({ message: errorData.error || "Error al eliminar usuario", type: "error" })
       }
     } catch (error) {
       console.error("Error al eliminar usuario", error)
@@ -456,11 +513,48 @@ export default function UserManagement() {
     }
   }
 
+  // Función para restaurar un usuario eliminado usando la nueva ruta de restauración
+  const restoreUser = async (userId: number) => {
+    try {
+      const response = await fetch(`${API_URL}/api/users/${userId}/restore`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        // No es necesario enviar un cuerpo si la lógica de restauración está en el backend
+        // body: JSON.stringify({ isDeleted: false })
+      });
+
+      // Obtener y mostrar la respuesta completa
+      const responseData = await response.json();
+      console.log("Response data:", responseData);
+
+      if (response.ok) {
+        // Refrescar la lista de usuarios según la vista actual
+        if (showDeletedUsers) {
+          await fetchDeletedUsers();
+        } else {
+          await fetchUsers();
+        }
+        setNotification({ message: "Usuario restaurado exitosamente", type: "success" });
+      } else {
+        console.error("Error al restaurar usuario:", responseData);
+        setNotification({ message: responseData.error || "Error al restaurar usuario", type: "error" });
+      }
+    } catch (error) {
+      console.error("Error al restaurar usuario:", error);
+      setNotification({ message: "Error al restaurar usuario", type: "error" });
+    }
+  }
+
+  // Manejar clic en eliminar
   const handleDeleteClick = (user: User) => {
     setUserToDelete(user)
     setIsDeleteDialogOpen(true)
   }
 
+  // Confirmar eliminación
   const handleDeleteConfirm = async () => {
     if (userToDelete) {
       await deleteUser(userToDelete.userId)
@@ -469,6 +563,7 @@ export default function UserManagement() {
     }
   }
 
+  // Ordenar usuarios
   const requestSort = (key: SortableUserKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -488,10 +583,12 @@ export default function UserManagement() {
     setFilteredUsers(sortedUsers);
   };
 
+  // Cerrar notificación
   const closeNotification = useCallback(() => {
     setNotification(null)
   }, [])
 
+  // Paginación
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * 10, currentPage * 10)
 
   return (
@@ -503,7 +600,7 @@ export default function UserManagement() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className=" text-white">
+              <Button className="text-white">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Agregar Usuario
               </Button>
@@ -525,9 +622,12 @@ export default function UserManagement() {
             </DialogContent>
           </Dialog>
 
-          <Button className="text-white">
+          <Button
+            className="text-white"
+            onClick={() => setShowDeletedUsers(!showDeletedUsers)}
+          >
             <Users className="mr-2 h-4 w-4" />
-            Ver Usuarios Eliminados
+            {showDeletedUsers ? 'Ver Usuarios Activos' : 'Ver Usuarios Eliminados'}
           </Button>
         </div>
 
@@ -540,7 +640,7 @@ export default function UserManagement() {
         <div className="rounded-md border mt-6 overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="">
+              <TableRow>
                 <TableHead className="font-semibold cursor-pointer" onClick={() => requestSort('firstName')}>
                   Nombre
                   {sortConfig?.key === 'firstName' && (
@@ -582,7 +682,7 @@ export default function UserManagement() {
             </TableHeader>
             <TableBody>
               {paginatedUsers.map((user) => (
-                <TableRow key={user.userId} className="">
+                <TableRow key={user.userId}>
                   <TableCell>{user.firstName}</TableCell>
                   <TableCell>{user.lastName}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -591,25 +691,39 @@ export default function UserManagement() {
                   <TableCell>{faculties.find(faculty => faculty.facultyId === user.facultyId)?.name || 'N/A'}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-primary text-primary hover:bg-green-50"
-                        onClick={() => {
-                          setEditingUser(user)
-                          setIsDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteClick(user)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!showDeletedUsers && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-primary text-primary hover:bg-green-50"
+                            onClick={() => {
+                              setEditingUser(user)
+                              setIsDialogOpen(true)
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteClick(user)}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      {showDeletedUsers && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => restoreUser(user.userId)}
+                          className="border-primary text-primary hover:bg-green-50"
+                        >
+                          Restaurar
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

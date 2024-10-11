@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserPayload } from '@/lib/server-auth'
 import { login as authLogin, logout as authLogout, getSession } from '@/lib/auth'
@@ -19,21 +19,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [loading, setLoading] = useState(true)
 	const router = useRouter()
 
-	useEffect(() => {
-		async function loadUserFromSession() {
-			try {
-				const userData = await getSession()
-				console.log('Session data loaded:', userData)
-				setUser(userData)
-			} catch (error) {
-				console.error('Failed to load user session:', error)
-				router.push('/iniciar-sesion')
-			} finally {
-				setLoading(false)
-			}
+	const loadUserFromSession = useCallback(async () => {
+		try {
+			const userData = await getSession()
+			console.log('Session data loaded:', userData)
+			setUser(userData)
+		} catch (error) {
+			console.error('Failed to load user session:', error)
+			router.push('/iniciar-sesion')
+		} finally {
+			setLoading(false)
 		}
-		loadUserFromSession()
 	}, [router])
+
+	useEffect(() => {
+		loadUserFromSession()
+	}, [loadUserFromSession])
 
 	const login = async (username: string, password: string) => {
 		setLoading(true)

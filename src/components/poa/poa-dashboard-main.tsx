@@ -29,9 +29,7 @@ import { VisualizarIntervencionesSection } from './sections/visualizar-intervenc
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
-  { name: "Agregar/confirmar departamentos de la Facultad", icon: Users, component: DepartamentosFacultadSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSection },
-  { name: "Agregar Justificación (del decano)", icon: FileText, component: JustificacionSection },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FODASection },
   { name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }

@@ -16,7 +16,10 @@ export async function login(username: string, password: string): Promise<UserPay
 		throw new Error('Login failed')
 	}
 
-	const data = await response.json()
+	const data = await getSession()
+	if (!data) {
+		throw new Error('Failed to get user session')
+	}
 	return data
 }
 
