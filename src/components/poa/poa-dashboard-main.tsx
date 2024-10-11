@@ -19,9 +19,7 @@ import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
 import { FacultadDataSection } from '../sections-facultad-data-section'
 import { EstructuraFacultadSection } from '../sections-estructura-facultad-section'
-import { DepartamentosFacultadSection } from '../sections-departamentos-facultad-section'
 import { EquipoResponsableSection } from '../sections-equipo-responsable-section'
-import { JustificacionSection } from '../sections-justificacion-section'
 import { FODASection } from '../sections-foda-section'
 import { OtrosDocumentos } from '../sections-otros-documentos'
 import { VisualizarIntervencionesSection } from '../visualizar-intervenciones-section'
@@ -29,9 +27,7 @@ import { VisualizarIntervencionesSection } from '../visualizar-intervenciones-se
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
-  { name: "Agregar/confirmar departamentos de la Facultad", icon: Users, component: DepartamentosFacultadSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSection },
-  { name: "Agregar Justificación (del decano)", icon: FileText, component: JustificacionSection },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FODASection },
   { name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
