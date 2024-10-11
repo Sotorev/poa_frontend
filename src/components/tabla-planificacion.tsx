@@ -183,11 +183,12 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               <TableCell>
-                {/* <AporteUmes 
+                { <AporteUmes 
                   aportes={fila.aporteUMES}
                   onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
                 />
-              </TableCell>
+              // </TableCell>
+              /*
               <TableCell>
                 <AporteOtrasFuentes 
                   aportes={fila.aporteOtros}

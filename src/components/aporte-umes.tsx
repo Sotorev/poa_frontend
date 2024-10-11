@@ -9,9 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Plus, X } from "lucide-react"
 
 interface AporteUMES {
-  id: string
-  name: string
-  percentage: number
+  fuente: string
+  porcentaje: number
 }
 
 interface AporteUmesProps {
@@ -20,41 +19,44 @@ interface AporteUmesProps {
 }
 
 const initialOptions = [
-  { id: "presupuesto-anual", name: "Presupuesto Anual" },
-  { id: "presupuesto-facultad", name: "Presupuesto por Facultad" },
+  { fuente: "Presupuesto Anual" },
+  { fuente: "Presupuesto por Facultad" },
 ]
 
 export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
   const [options, setOptions] = useState(initialOptions)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [newOption, setNewOption] = useState("")
-  const [percentage, setPercentage] = useState("")
+  const [porcentaje, setPorcentaje] = useState("")
   const [isAddingNew, setIsAddingNew] = useState(false)
+  const [localAportes, setLocalAportes] = useState(aportes)
+
+  useEffect(() => {
+    setLocalAportes(aportes)
+  }, [aportes])
 
   const handleAddNewOption = () => {
     if (newOption.trim() !== "") {
-      const newId = `custom-${Date.now()}`
-      setOptions([...options, { id: newId, name: newOption.trim() }])
+      setOptions([...options, { fuente: newOption.trim() }])
       setNewOption("")
       setIsAddingNew(false)
-      setSelectedOption(newId)
+      setSelectedOption(newOption.trim())
     }
   }
 
   const handleAddAporte = () => {
-    if (selectedOption && percentage) {
-      const option = options.find(opt => opt.id === selectedOption)
-      if (option) {
-        const newAportes = [...aportes, { id: option.id, name: option.name, percentage: parseFloat(percentage) }]
-        onChangeAportes(newAportes)
-        setSelectedOption(null)
-        setPercentage("")
-      }
+    if (selectedOption && porcentaje) {
+      const newAportes = [...localAportes, { fuente: selectedOption, porcentaje: parseFloat(porcentaje) }]
+      setLocalAportes(newAportes)
+      onChangeAportes(newAportes)
+      setSelectedOption(null)
+      setPorcentaje("")
     }
   }
 
-  const handleRemoveAporte = (id: string) => {
-    const newAportes = aportes.filter(aporte => aporte.id !== id)
+  const handleRemoveAporte = (fuente: string) => {
+    const newAportes = localAportes.filter(aporte => aporte.fuente !== fuente)
+    setLocalAportes(newAportes)
     onChangeAportes(newAportes)
   }
 
@@ -68,8 +70,8 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
           </SelectTrigger>
           <SelectContent>
             {options.map(option => (
-              <SelectItem key={option.id} value={option.id}>
-                {option.name}
+              <SelectItem key={option.fuente} value={option.fuente}>
+                {option.fuente}
               </SelectItem>
             ))}
           </SelectContent>
@@ -77,11 +79,11 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
         <Input
           type="number"
           placeholder="Porcentaje"
-          value={percentage}
-          onChange={(e) => setPercentage(e.target.value)}
+          value={porcentaje}
+          onChange={(e) => setPorcentaje(e.target.value)}
           className="w-24"
         />
-        <Button onClick={handleAddAporte} disabled={!selectedOption || !percentage}>
+        <Button onClick={handleAddAporte} disabled={!selectedOption || !porcentaje}>
           Agregar
         </Button>
       </div>
@@ -105,10 +107,10 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
         </Button>
       )}
       <div className="space-y-2">
-        {aportes.map(aporte => (
-          <div key={aporte.id} className="flex items-center justify-between bg-green-100 p-2 rounded-md">
-            <span className="text-green-800">{aporte.name}: {aporte.percentage}%</span>
-            <Button onClick={() => handleRemoveAporte(aporte.id)} variant="ghost" size="sm">
+        {localAportes.map(aporte => (
+          <div key={aporte.fuente} className="flex items-center justify-between bg-green-100 p-2 rounded-md">
+            <span className="text-green-800">{aporte.fuente}: {aporte.porcentaje}%</span>
+            <Button onClick={() => handleRemoveAporte(aporte.fuente)} variant="ghost" size="sm">
               <X className="h-4 w-4" />
             </Button>
           </div>
