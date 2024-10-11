@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,7 +60,7 @@ interface Intervencion {
 export function VisualizarIntervencionesSection({ name, isActive }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const [intervenciones, setIntervenciones] = useState<Intervencion[]>([
     {
       id: '1',
@@ -72,7 +72,7 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
       tipoIniciativa: 'proyecto',
       iniciativa: 'Iniciativa 1',
       objetivo: 'Objetivo 1',
-      estado: 'aprobado',
+      estado: 'revision',
       fechaInicio: new Date(2024, 0, 15),
       fechaFin: new Date(2024, 5, 30),
       costos: {
@@ -148,7 +148,7 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
       tipoIniciativa: 'proyecto',
       iniciativa: 'Iniciativa 3',
       objetivo: 'Objetivo 3',
-      estado: 'rechazado',
+      estado: 'revision',
       fechaInicio: new Date(2024, 4, 10),
       fechaFin: new Date(2024, 11, 20),
       costos: {
@@ -177,7 +177,7 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
       procesoPdfUrl: '/path/to/proceso-3.pdf'
     }
   ]);
-  
+
   const [filtroFechaInicio, setFiltroFechaInicio] = useState<Date | undefined>(undefined);
   const [filtroFechaFin, setFiltroFechaFin] = useState<Date | undefined>(undefined);
   const [filtroArea, setFiltroArea] = useState<string>("all");
@@ -193,13 +193,13 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
   }
 
   const handleApproveReject = (id: string, action: 'aprobado' | 'rechazado' | 'revision') => {
-    setIntervenciones(intervenciones.map(intervencion => 
+    setIntervenciones(intervenciones.map(intervencion =>
       intervencion.id === id ? { ...intervencion, estado: action } : intervencion
     ));
   }
 
   const handleCommentChange = (id: string, comment: string) => {
-    setIntervenciones(intervenciones.map(intervencion => 
+    setIntervenciones(intervenciones.map(intervencion =>
       intervencion.id === id ? { ...intervencion, comentarios: comment } : intervencion
     ));
   }
@@ -427,6 +427,9 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
                 Guardar Cambios
               </Button>
             )}
+            <div className="mt-6 flex justify-end">
+              
+            </div>
           </div>
         )}
       </div>
