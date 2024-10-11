@@ -22,6 +22,11 @@ interface Objetivo {
   isCustom?: boolean
 }
 
+interface ObjetivosEstrategicosProps {
+  selectedObjetivos: string[];
+  onSelectObjetivo: (objetivo: string) => void;
+}
+
 const initialObjetivosList: Objetivo[] = [
   { id: "obj1", name: "Fin de la pobreza", number: 1 },
   { id: "obj2", name: "Hambre cero", number: 2 },
@@ -31,9 +36,9 @@ const initialObjetivosList: Objetivo[] = [
   // ... add more predefined objectives as needed
 ]
 
-export function ObjetivosEstrategicosSelectorComponent() {
+export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSelectObjetivo }: ObjetivosEstrategicosProps) {
   const [objetivosList, setObjetivosList] = useState<Objetivo[]>(initialObjetivosList)
-  const [selectedObjetivoId, setSelectedObjetivoId] = useState<string | null>(null)
+  // Eliminar la línea: const [selectedObjetivo, setSelectedObjetivo] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isOpen, setIsOpen] = useState(false)
   const [newObjetivo, setNewObjetivo] = useState("")
@@ -47,10 +52,9 @@ export function ObjetivosEstrategicosSelectorComponent() {
     )
   }, [objetivosList, searchTerm])
 
-  const handleSelectObjetivo = (objId: string) => {
-    setSelectedObjetivoId(objId)
+  const handleSelectObjetivo = (objetivo: string) => {
+    onSelectObjetivo(objetivo)
     setIsOpen(false)
-    setSearchTerm("")
   }
 
   const handleAddNewObjetivo = () => {
@@ -63,7 +67,7 @@ export function ObjetivosEstrategicosSelectorComponent() {
         isCustom: true
       }
       setObjetivosList([...objetivosList, newObj])
-      setSelectedObjetivoId(newObj.id)
+      //setSelectedObjetivoId(newObj.id) //Removed because selectedObjetivoId is no longer used.
       setNewObjetivo("")
       setIsAddingNew(false)
     }
@@ -92,10 +96,12 @@ export function ObjetivosEstrategicosSelectorComponent() {
             setSearchTerm("")
           }
         }}
-        value={selectedObjetivoId || undefined}
+        value={selectedObjetivos[0] || undefined}
       >
-        <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-0 focus:border-green-600">
-          <SelectValue placeholder="Selecciona un objetivo" />
+        <SelectTrigger className="w-[200px]">
+          <SelectValue placeholder="Seleccionar objetivo">
+            {selectedObjetivos[0] || "Seleccionar objetivo"}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
@@ -111,10 +117,11 @@ export function ObjetivosEstrategicosSelectorComponent() {
           <ScrollArea className="h-[200px]">
             <SelectGroup>
               {filteredObjetivos.map((obj) => (
-                <SelectItem 
-                  key={obj.id} 
-                  value={obj.id} 
-                  className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
+                <SelectItem
+                  key={obj.id}
+                  value={obj.id}
+                  onSelect={() => handleSelectObjetivo(obj.id)}
+                  className={selectedObjetivos.includes(obj.id) ? 'bg-primary/50' : ''}
                 >
                   {obj.isCustom ? `E${obj.number}: ${obj.name}` : `${obj.number}: ${obj.name}`}
                 </SelectItem>
@@ -126,35 +133,32 @@ export function ObjetivosEstrategicosSelectorComponent() {
       <div className="flex items-center space-x-2">
         {isAddingNew ? (
           <>
-<Input
-  ref={newObjetivoInputRef}
-  placeholder="Nuevo objetivo..."
-  value={newObjetivo}
-  onChange={(e) => setNewObjetivo(e.target.value)}
-  onKeyPress={(e) => {
-    if (e.key === 'Enter') {
-      handleAddNewObjetivo()
-    }
-  }}
-  className="h-8 w-[240px] border border-green-300 focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none"
-
-/>
-
-
-            <Button 
-              onClick={handleAddNewObjetivo} 
-              size="sm" 
+            <Input
+              ref={newObjetivoInputRef}
+              placeholder="Nuevo objetivo..."
+              value={newObjetivo}
+              onChange={(e) => setNewObjetivo(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddNewObjetivo()
+                }
+              }}
+              className="h-8 w-[240px] border border-green-300 focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none"
+            />
+            <Button
+              onClick={handleAddNewObjetivo}
+              size="sm"
               variant="ghost"
               className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
             >
               <Check className="h-4 w-4" />
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 setIsAddingNew(false)
                 setNewObjetivo("")
-              }} 
-              size="sm" 
+              }}
+              size="sm"
               variant="ghost"
               className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
             >
@@ -162,10 +166,10 @@ export function ObjetivosEstrategicosSelectorComponent() {
             </Button>
           </>
         ) : (
-          <Button 
-            onClick={() => setIsAddingNew(true)} 
-            size="sm" 
-            variant="ghost" 
+          <Button
+            onClick={() => setIsAddingNew(true)}
+            size="sm"
+            variant="ghost"
             className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
           >
             <Plus className="h-3 w-3 mr-1" />
