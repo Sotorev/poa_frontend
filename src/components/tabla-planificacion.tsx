@@ -14,6 +14,7 @@ import { ActividadProyectoSelector } from './actividad-proyecto-selector'
 import { Total } from './total'
 import { AporteUmes } from './aporte-umes'
 import { AporteOtrasFuentesComponent } from './poa/components/aporte-otras-fuentes'
+import { TipoDeCompraComponent } from './poa/components/tipo-de-compra'
 
 import { FechasSelectorComponent } from './fechas-selector'
 
@@ -197,18 +198,18 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               
-              {/* <TableCell>
-                <TipoDeCompra 
+              <TableCell>
+                <TipoDeCompraComponent 
                   selectedTypes={fila.tipoCompra}
                   onSelectTypes={(tipos) => actualizarFila(fila.id, 'tipoCompra', tipos)}
                 />
               </TableCell>
               <TableCell>
-                <Detalle 
+                {/* <Detalle 
                   file={fila.detalle}
                   onFileChange={(file) => actualizarFila(fila.id, 'detalle', file)}
-                />
-              </TableCell> */}
+                /> */}
+              </TableCell>
               <TableCell>
                 <div className="space-y-2">
                   <Input 
