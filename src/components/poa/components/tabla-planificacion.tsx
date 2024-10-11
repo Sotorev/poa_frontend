@@ -11,7 +11,7 @@ import { EstrategiasSelectorComponent } from './columns/estrategias-selector'
 import { IntervencionesSelectorComponent } from './columns/intervenciones-selector'
 import { OdsSelector } from './columns/ods-selector'
 import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector'
-import { Total } from './columns/total'
+import CurrencyInput from './columns/currency-input'
 import { AporteUmes } from './columns/aporte-umes'
 import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes'
 import { TipoDeCompraComponent } from './columns/tipo-de-compra'
@@ -182,7 +182,7 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               <TableCell>
-                <Total 
+                <CurrencyInput 
                   value={fila.costoTotal}
                   onChange={(valor) => actualizarFila(fila.id, 'costoTotal', valor)}
                 />
