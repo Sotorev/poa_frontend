@@ -17,6 +17,7 @@ import { AporteOtrasFuentesComponent } from './poa/components/aporte-otras-fuent
 import { TipoDeCompraComponent } from './poa/components/tipo-de-compra'
 import { RecursosSelectorComponent } from './poa/components/recursos-selector'
 import { DetalleProcesoComponent } from './poa/components/detalle-proceso'
+import { DetalleComponent } from './poa/components/detalle'
 
 import { FechasSelectorComponent } from './fechas-selector'
 
@@ -207,10 +208,10 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               <TableCell>
-                {/* <Detalle 
+                <DetalleComponent 
                   file={fila.detalle}
                   onFileChange={(file) => actualizarFila(fila.id, 'detalle', file)}
-                /> */}
+                />
               </TableCell>
               <TableCell>
                 <div className="space-y-2">
