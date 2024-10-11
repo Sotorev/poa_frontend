@@ -1,3 +1,4 @@
+// src/components/poa/sections/sections-facultad-data-section.tsx
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -5,12 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChevronDown, ChevronUp, Edit } from 'lucide-react'
-import { useAuth } from '@/contexts/auth-context' // Ajusta la ruta según corresponda
+import { useAuth } from '@/contexts/auth-context'
 
 interface SectionProps {
   name: string
   isActive: boolean
-  disableEditButton?: boolean  // Nueva prop para controlar la visibilidad del botón "Editar"
+  disableEditButton?: boolean
 }
 
 export function FacultadDataSection({ name, isActive, disableEditButton = false }: SectionProps) {
@@ -26,15 +27,13 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
   const { user, loading } = useAuth()
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0] // Obtener la fecha actual en formato YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0]
 
     if (!loading && user) {
       const fetchUserData = async () => {
         try {
-          // Obtener el userId del usuario autenticado
           const userId = user.userId
 
-          // Obtener los datos completos del usuario, incluyendo la facultad
           const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
             credentials: 'include',
             headers: {
@@ -55,7 +54,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
           setFacultadData({
             nombreFacultad: faculty.name,
             nombreDecano: faculty.deanName,
-            fechaPresentacion: faculty.fechaPresentacion || today // Usar la fecha actual si no hay fecha
+            fechaPresentacion: faculty.fechaPresentacion || today
           })
           setTempFacultadData({
             nombreFacultad: faculty.name,
@@ -64,13 +63,11 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
           })
         } catch (error) {
           console.error(error)
-          // Manejo de errores
         }
       }
 
       fetchUserData()
     } else {
-      // Si no se cargan datos y es un nuevo registro, establecer la fecha de hoy
       setFacultadData((prevData) => ({
         ...prevData,
         fechaPresentacion: today
@@ -84,7 +81,6 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
 
   const handleEdit = () => {
     if (isEditing) {
-      // Cancelar edición y restaurar datos originales
       setTempFacultadData(facultadData)
     }
     setIsEditing(!isEditing)
@@ -94,7 +90,6 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
     try {
       const userId = user?.userId
 
-      // Obtener los datos del usuario para obtener la facultad
       const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
         credentials: 'include',
         headers: {
@@ -113,7 +108,6 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
 
       const facultyId = faculty.facultyId
 
-      // Actualizar los datos de la facultad
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
         method: 'PUT',
         credentials: 'include',
@@ -123,7 +117,6 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
         body: JSON.stringify({
           name: tempFacultadData.nombreFacultad,
           deanName: tempFacultadData.nombreDecano,
-          // Asegúrate de que el backend acepte el campo 'fechaPresentacion'
           fechaPresentacion: tempFacultadData.fechaPresentacion
         })
       })
@@ -134,12 +127,11 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
       setFacultadData({
         nombreFacultad: data.name,
         nombreDecano: data.deanName,
-        fechaPresentacion: data.fechaPresentacion || today
+        fechaPresentacion: data.fechaPresentacion || new Date().toISOString().split('T')[0]
       })
       setIsEditing(false)
     } catch (error) {
       console.error(error)
-      // Manejo de errores
     }
   }
 
@@ -161,7 +153,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <div className="flex items-center space-x-2">
-            {!disableEditButton && (  // Condición para mostrar o no el botón "Editar"
+            {!disableEditButton && (
               <Button variant="ghost" size="sm" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
                 {isEditing ? "Cancelar" : "Editar"}
