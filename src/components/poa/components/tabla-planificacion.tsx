@@ -19,8 +19,6 @@ import { RecursosSelectorComponent } from './columns/recursos-selector'
 import { DetalleProcesoComponent } from './columns/detalle-proceso'
 import { DetalleComponent } from './columns/detalle'
 import { FechasSelectorComponent } from './columns/fechas-selector'
-import AreaEstrategicaForm from './columns/AreaEstrategicaForm' // Importa el nuevo componente
-import { useStrategicAreas } from '@/hooks/useStrategicAreas'
 
 interface FilaPlanificacion {
   id: string
@@ -62,8 +60,6 @@ const objetivoToAreaMap: { [key: string]: string } = {
 export function TablaPlanificacionComponent() {
   const [filas, setFilas] = useState<FilaPlanificacion[]>([])
 
-  const { areas, loading, error } = useStrategicAreas()
-
   const agregarFila = () => {
     const nuevaFila: FilaPlanificacion = {
       id: Date.now().toString(),
@@ -99,59 +95,23 @@ export function TablaPlanificacionComponent() {
   }
 
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any) => {
-    setFilas(prevFilas => prevFilas.map(fila => 
+    setFilas(filas.map(fila => 
       fila.id === id ? { ...fila, [campo]: valor } : fila
     ))
 
     // If the updated field is objetivoEstrategico, update areaEstrategica
     if (campo === 'objetivoEstrategico') {
-      setFilas(prevFilas => prevFilas.map(fila => 
+      setFilas(filas.map(fila => 
         fila.id === id ? { ...fila, areaEstrategica: objetivoToAreaMap[valor] || '' } : fila
       ))
     }
   }
 
-  const actualizarAreaEstrategica = (id: string, value: string) => {
-    setFilas(prevFilas => prevFilas.map(fila => 
-      fila.id === id ? { ...fila, areaEstrategica: value } : fila
-    ))
-  }
-
   const enviarActividad = (id: string) => {
-    const fila = filas.find(fila => fila.id === id)
-    if (!fila) return
-
-    // Validar antes de enviar
-    // Aquí puedes usar Zod para validar toda la fila o solo el área estratégica
-    // Por simplicidad, validaremos solo el área estratégica
-    // Asegúrate de importar strategicAreaSchema schemas/strategicAreaSchema
-    import('../../../schemas/strategicAreaSchema').then(({ strategicAreaSchema }) => {
-      const result = strategicAreaSchema.safeParse({ areaEstrategica: fila.areaEstrategica })
-      if (!result.success) {
-        console.error(result.error.errors)
-        alert('Error en el Área Estratégica: ' + result.error.errors[0].message)
-        return
-      }
-
-      // Si la validación es exitosa, envía los datos al backend
-      // Aquí debes implementar la lógica para enviar la actividad al backend
-      // Por ejemplo, usando axios:
-      import('axios').then(({ default: axios }) => {
-        axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/actividades`, fila)
-          .then(response => {
-            console.log('Actividad enviada con éxito:', response.data)
-            // Opcional: actualizar el estado de la fila, mostrar notificaciones, etc.
-          })
-          .catch(err => {
-            console.error('Error al enviar la actividad:', err)
-            alert('Error al enviar la actividad')
-          })
-      })
-    })
+    // Implement the logic to send the activity
+    console.log(`Enviando actividad con ID: ${id}`)
+    // You might want to change the estado of the fila to 'aprobado' or handle this in your backend
   }
-
-  if (loading) return <div>Cargando áreas estratégicas...</div>
-  if (error) return <div>{error}</div>
 
   return (
     <div className="container mx-auto p-4">
@@ -185,11 +145,10 @@ export function TablaPlanificacionComponent() {
           {filas.map((fila) => (
             <TableRow key={fila.id}>
               <TableCell>
-                <AreaEstrategicaForm
-                  id={fila.id}
-                  areas={areas}
-                  currentValue={fila.areaEstrategica}
-                  onSave={actualizarAreaEstrategica}
+                <Input 
+                  value={fila.areaEstrategica} 
+                  onChange={(e) => actualizarFila(fila.id, 'areaEstrategica', e.target.value)}
+                  readOnly
                 />
               </TableCell>
               <TableCell>
