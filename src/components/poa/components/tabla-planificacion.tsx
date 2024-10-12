@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,10 @@ import { RecursosSelectorComponent } from './columns/recursos-selector'
 import { DetalleProcesoComponent } from './columns/detalle-proceso'
 import { DetalleComponent } from './columns/detalle'
 import { FechasSelectorComponent } from './columns/fechas-selector'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
+import { z } from 'zod'
 
 interface FilaPlanificacion {
   id: string
@@ -47,18 +51,74 @@ interface FilaPlanificacion {
   comentarioDecano: string
 }
 
-// Mapping of strategic objectives to strategic areas
-const objetivoToAreaMap: { [key: string]: string } = {
-  "obj1": "Área Estratégica 1",
-  "obj2": "Área Estratégica 2",
-  "obj3": "Área Estratégica 3",
-  "obj4": "Área Estratégica 4",
-  "obj5": "Área Estratégica 5",
-  // Add more mappings as needed
-}
+// Definir el esquema de las filas para useForm con Zod
+const filaPlanificacionSchema = z.object({
+  id: z.string(),
+  areaEstrategica: z.string().nonempty("Área Estratégica es requerida"),
+  objetivoEstrategico: z.string().nonempty("Objetivo Estratégico es requerido"),
+  // Puedes añadir más validaciones según sea necesario
+});
+
+type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 export function TablaPlanificacionComponent() {
   const [filas, setFilas] = useState<FilaPlanificacion[]>([])
+  const [strategicAreas, setStrategicAreas] = useState<{ strategicAreaId: number; name: string; peiId: number; isDeleted: boolean }[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Configurar useForm para validación con Zod
+  const { control, handleSubmit, formState: { errors }, reset } = useForm<FilaPlanificacionForm>({
+    resolver: zodResolver(filaPlanificacionSchema),
+    defaultValues: {
+      areaEstrategica: '',
+      objetivoEstrategico: '',
+    }
+  })
+
+  // Definir un mapa estático de objetivos a áreas estratégicas
+  // Puedes reemplazar esto con una lógica dinámica si tienes la información en el backend
+  const objetivoToAreaMap: { [key: string]: string } = {
+    "obj1": "Área Estratégica 1",
+    "obj2": "Área Estratégica 2",
+    "obj3": "Área Estratégica 3",
+    "obj4": "Área Estratégica 4",
+    "obj5": "Área Estratégica 5",
+    // Añade más mapeos según sea necesario
+  }
+
+  // Fetch de áreas estratégicas al montar el componente
+  useEffect(() => {
+    const fetchStrategicAreas = async () => {
+      setLoading(true)
+      try {
+        if (!process.env.NEXT_PUBLIC_API_URL) {
+          throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
+        }
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/api/strategicareas`)
+        if (!response.ok) {
+          throw new Error(`Error al fetch: ${response.statusText}`)
+        }
+        const data = await response.json()
+        // Validar los datos con Zod
+        const parsedData = strategicAreasSchema.parse(data)
+        // Filtrar las áreas que no están eliminadas
+        const activeAreas = parsedData.filter((area: { isDeleted: boolean }) => !area.isDeleted)
+        setStrategicAreas(activeAreas)
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          setError("Error en la validación de datos de áreas estratégicas.")
+          console.error(err.errors)
+        } else {
+          setError((err as Error).message)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStrategicAreas()
+  }, [])
 
   const agregarFila = () => {
     const nuevaFila: FilaPlanificacion = {
@@ -99,19 +159,84 @@ export function TablaPlanificacionComponent() {
       fila.id === id ? { ...fila, [campo]: valor } : fila
     ))
 
-    // If the updated field is objetivoEstrategico, update areaEstrategica
+    // Si el campo actualizado es objetivoEstrategico, actualizar areaEstrategica
     if (campo === 'objetivoEstrategico') {
+      const nuevaArea = objetivoToAreaMap[valor] || ''
       setFilas(filas.map(fila => 
-        fila.id === id ? { ...fila, areaEstrategica: objetivoToAreaMap[valor] || '' } : fila
+        fila.id === id ? { ...fila, areaEstrategica: nuevaArea } : fila
       ))
+
+      // Actualizar el formulario para validar el nuevo valor de areaEstrategica
+      reset({
+        ...filaPlanificacionSchema.parse({
+          id: id,
+          areaEstrategica: nuevaArea,
+          objetivoEstrategico: valor
+        })
+      }, {
+        keepValues: true,
+        keepDirty: true,
+        keepErrors: true,
+        keepTouched: true,
+      })
     }
   }
 
-  const enviarActividad = (id: string) => {
-    // Implement the logic to send the activity
-    console.log(`Enviando actividad con ID: ${id}`)
-    // You might want to change the estado of the fila to 'aprobado' or handle this in your backend
+  const enviarActividad = async (id: string) => {
+    // Obtener la fila correspondiente
+    const fila = filas.find(fila => fila.id === id)
+    if (!fila) {
+      console.error(`Fila con ID ${id} no encontrada.`)
+      return
+    }
+
+    // Validar la fila antes de enviar
+    try {
+      filaPlanificacionSchema.parse({
+        id: fila.id,
+        areaEstrategica: fila.areaEstrategica,
+        objetivoEstrategico: fila.objetivoEstrategico,
+        // Añade más campos si es necesario para la validación
+      })
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        console.error("Error de validación:", validationError.errors)
+        alert("Hay errores en la fila. Por favor, revisa los campos.")
+        return
+      }
+    }
+
+    // Implementa la lógica para enviar la actividad al backend
+    try {
+      if (!process.env.NEXT_PUBLIC_API_URL) {
+        throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
+      }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/api/activities`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(fila)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error al enviar la actividad: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log(`Actividad enviada exitosamente:`, result)
+      // Opcional: Actualizar el estado de la fila, por ejemplo, cambiar el estado a 'aprobado'
+      setFilas(filas.map(filaItem => 
+        filaItem.id === id ? { ...filaItem, estado: 'aprobado' } : filaItem
+      ))
+    } catch (err) {
+      console.error(err)
+      alert(`Error al enviar la actividad: ${(err as Error).message}`)
+    }
   }
+
+  if (loading) return <div>Cargando áreas estratégicas...</div>
+  if (error) return <div className="text-red-500">Error: {error}</div>
 
   return (
     <div className="container mx-auto p-4">
@@ -145,11 +270,25 @@ export function TablaPlanificacionComponent() {
           {filas.map((fila) => (
             <TableRow key={fila.id}>
               <TableCell>
-                <Input 
-                  value={fila.areaEstrategica} 
-                  onChange={(e) => actualizarFila(fila.id, 'areaEstrategica', e.target.value)}
-                  readOnly
+                {/* Integración de react-hook-form para Área Estratégica */}
+                <Controller
+                  name="areaEstrategica"
+                  control={control}
+                  rules={{ required: "Área Estratégica es requerida" }}
+                  render={({ field }) => (
+                    <Input 
+                      {...field}
+                      value={fila.areaEstrategica} 
+                      onChange={(e) => {
+                        field.onChange(e.target.value)
+                        actualizarFila(fila.id, 'areaEstrategica', e.target.value)
+                      }}
+                      readOnly
+                    />
+                  )}
                 />
+                {/* Mostrar error si existe */}
+                {errors.areaEstrategica && <span className="text-red-500 text-sm">{errors.areaEstrategica.message}</span>}
               </TableCell>
               <TableCell>
                 <ObjetivosEstrategicosSelectorComponent 
@@ -211,7 +350,7 @@ export function TablaPlanificacionComponent() {
                 />
               </TableCell>
               <TableCell>
-                 <AporteUmes 
+                <AporteUmes 
                   aportes={fila.aporteUMES}
                   onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
                 />
