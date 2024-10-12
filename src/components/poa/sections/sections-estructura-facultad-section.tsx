@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ChevronDown, ChevronUp, Edit, Plus, Trash2 } from 'lucide-react'
@@ -19,6 +18,14 @@ interface Carrera {
   programId: number
   name: string
   director: string
+  facultyId?: number
+}
+
+interface Sede {
+  sedeId: number
+  nombre: string
+  ciudad: string
+  departamento: string
 }
 
 // Componente principal
@@ -26,15 +33,25 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
 
-  // Estados para carreras
+  // Estados para carreras y sedes
   const [carrerasData, setCarrerasData] = useState<Carrera[]>([])
-  const [newItem, setNewItem] = useState<string>("")
-  const [personas, setPersonas] = useState<string[]>(["Carlos Rodríguez", "Ana Martínez"])
+  const [sedesData, setSedesData] = useState<Sede[]>([])
   const { user, loading } = useAuth()
 
-  // Obtener las carreras del backend según la facultad del usuario
+  // Estados para los diálogos
+  const [isAddSedeDialogOpen, setIsAddSedeDialogOpen] = useState(false)
+  const [isAddCarreraDialogOpen, setIsAddCarreraDialogOpen] = useState(false)
+
+  // Estados para los nuevos datos
+  const [newSedeData, setNewSedeData] = useState<Sede>({ sedeId: 0, nombre: '', ciudad: '', departamento: '' })
+  const [newCarreraData, setNewCarreraData] = useState<Carrera>({ programId: 0, name: '', director: '' })
+
+  // Almacenar facultyId
+  const [facultyId, setFacultyId] = useState<number | null>(null)
+
+  // Obtener las carreras y sedes del backend según la facultad del usuario
   useEffect(() => {
-    const fetchCarreras = async () => {
+    const fetchData = async () => {
       try {
         if (!loading && user) {
           const userId = user.userId
@@ -61,28 +78,32 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
 
           const facultyId = faculty.facultyId
           console.log("Faculty ID:", facultyId)
+          setFacultyId(facultyId)
 
           // Obtener las carreras de la facultad
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/programs?facultyId=${facultyId}`, {
+          const responsePrograms = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/programs/faculty/${facultyId}`, {
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
-            },
+            },  
           })
-          console.log("Fetching programs:", response)
-          if (!response.ok) {
+          console.log("Fetching programs:", responsePrograms)
+          if (!responsePrograms.ok) {
             throw new Error('Error al cargar las carreras')
           }
-          const data = await response.json()
-          console.log("Programs data received:", data)
-          setCarrerasData(data)
+          const dataPrograms = await responsePrograms.json()
+          console.log("Programs data received:", dataPrograms)
+          setCarrerasData(dataPrograms)
+
+          // Obtener las sedes de la facultad
+          // Aquí deberías ajustar la ruta y lógica para obtener las sedes si corresponde
         }
       } catch (error) {
-        console.error("Error al cargar las carreras", error)
+        console.error("Error al cargar los datos", error)
       }
     }
 
-    fetchCarreras()
+    fetchData()
   }, [user, loading])
 
   // Funciones de manejo de carreras
@@ -92,36 +113,99 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
     )
   }
 
-  const handleAddCarreraRow = () => {
-    const newCar: Carrera = { programId: Date.now(), name: "", director: "" }
-    setCarrerasData([...carrerasData, newCar])
+  const handleAddCarrera = async () => {
+    try {
+      if (!facultyId) {
+        throw new Error('No se encontró el facultyId')
+      }
+      const newCarrera: Carrera = { name: newCarreraData.name, director: newCarreraData.director, facultyId }
+      // Realizar la solicitud POST al backend para crear la nueva carrera
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/programs`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCarrera),
+      })
+      if (!response.ok) {
+        throw new Error('Error al crear la carrera')
+      }
+      const createdProgram = await response.json()
+      setCarrerasData([...carrerasData, createdProgram])
+      setIsAddCarreraDialogOpen(false)
+      setNewCarreraData({ programId: 0, name: '', director: '' })
+    } catch (error) {
+      console.error("Error al agregar carrera", error)
+    }
   }
 
-  const handleRemoveCarreraRow = (programId: number) => {
-    setCarrerasData(carrerasData.filter(car => car.programId !== programId))
+  const handleRemoveCarreraRow = async (programId: number) => {
+    try {
+      // Realizar la solicitud DELETE al backend para eliminar la carrera
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/programs/${programId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (!response.ok) {
+        throw new Error('Error al eliminar la carrera')
+      }
+      // Actualizar el estado local
+      setCarrerasData(carrerasData.filter(car => car.programId !== programId))
+    } catch (error) {
+      console.error("Error al eliminar carrera", error)
+    }
   }
 
-  const NewItemDialog = ({ type, title, onAdd }: { type: 'carrera' | 'persona', title: string, onAdd: () => void }) => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo {title}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Agregar nuevo {title}</DialogTitle>
-        </DialogHeader>
-        <Input
-          placeholder={`Nombre del nuevo ${title}`}
-          value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
-        />
-        <Button onClick={onAdd}>Agregar</Button>
-      </DialogContent>
-    </Dialog>
-  )
+  // Función para actualizar carreras
+  const handleUpdateCarrera = async (program: Carrera) => {
+    try {
+      // Realizar la solicitud PUT al backend para actualizar la carrera
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/programs/${program.programId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(program),
+      })
+      if (!response.ok) {
+        throw new Error('Error al actualizar la carrera')
+      }
+      const updatedProgram = await response.json()
+      // Actualizar el estado local
+      setCarrerasData(prevData =>
+        prevData.map(car => car.programId === updatedProgram.programId ? updatedProgram : car)
+      )
+    } catch (error) {
+      console.error("Error al actualizar carrera", error)
+    }
+  }
+
+  // Funciones de manejo de sedes (similar al manejo de carreras, debes ajustarlas según tus rutas)
+
+  const handleSave = async () => {
+    try {
+      // Guardar los cambios realizados en las carreras
+      for (const carrera of carrerasData) {
+        if (carrera.programId < 0) {
+          // Si programId es negativo, es una nueva carrera que necesita ser creada
+          await handleAddCarrera()
+        } else {
+          // Carrera existente, actualizar
+          await handleUpdateCarrera(carrera)
+        }
+      }
+      // Aquí puedes manejar la lógica para las sedes si lo deseas
+    } catch (error) {
+      console.error("Error al guardar los cambios", error)
+    } finally {
+      setIsEditing(false)
+    }
+  }
 
   return (
     <div id={name} className="mb-6">
@@ -143,16 +227,39 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
         {!isMinimized && (
           <div className="p-4 bg-white">
             <div className="space-y-6">
+              {/* Tabla de Sedes (opcional, ajusta según tus necesidades) */}
+
+              {/* Tabla de Carreras */}
               <div>
                 <h3 className="text-lg font-medium mb-2">Carreras que ofrece la Facultad</h3>
                 {isEditing && (
                   <div className="mb-2 flex justify-end space-x-2">
-                    <NewItemDialog type="carrera" title="carrera" onAdd={handleAddCarreraRow} />
-                    <NewItemDialog type="persona" title="director" onAdd={() => {}} />
-                    <Button variant="outline" size="sm" onClick={handleAddCarreraRow}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nueva fila
-                    </Button>
+                    <Dialog open={isAddCarreraDialogOpen} onOpenChange={setIsAddCarreraDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Agregar Carrera
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Agregar Nueva Carrera</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Input
+                            placeholder="Nombre de la carrera"
+                            value={newCarreraData.name}
+                            onChange={(e) => setNewCarreraData({ ...newCarreraData, name: e.target.value })}
+                          />
+                          <Input
+                            placeholder="Director"
+                            value={newCarreraData.director}
+                            onChange={(e) => setNewCarreraData({ ...newCarreraData, director: e.target.value })}
+                          />
+                          <Button onClick={handleAddCarrera}>Agregar</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 )}
                 <Table>
@@ -171,24 +278,18 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
                             disabled={!isEditing}
                             value={car.name}
                             onChange={(e) => handleCarreraChange(car.programId, "name", e.target.value)}
+                            onBlur={() => isEditing && handleUpdateCarrera(car)}
                             placeholder="Nombre de la carrera"
                           />
                         </TableCell>
                         <TableCell>
-                          <Select
+                          <Input
                             disabled={!isEditing}
                             value={car.director}
-                            onValueChange={(value) => handleCarreraChange(car.programId, "director", value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue>{car.director || "Seleccionar director"}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {personas.map((p) => (
-                                <SelectItem key={p} value={p}>{p}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            onChange={(e) => handleCarreraChange(car.programId, "director", e.target.value)}
+                            onBlur={() => isEditing && handleUpdateCarrera(car)}
+                            placeholder="Nombre del director"
+                          />
                         </TableCell>
                         {isEditing && (
                           <TableCell>
@@ -196,7 +297,7 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleRemoveCarreraRow(car.programId)}
-                              aria-label="Eliminar fila"
+                              aria-label="Eliminar carrera"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -208,7 +309,7 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
                 </Table>
               </div>
               {isEditing && (
-                <Button onClick={() => {}} className="mt-4">
+                <Button onClick={handleSave} className="mt-4">
                   Guardar Cambios
                 </Button>
               )}
