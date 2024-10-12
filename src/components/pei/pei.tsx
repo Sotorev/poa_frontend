@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button"
 import { PlusCircle, Settings } from 'lucide-react'
 import { PoaRegistrationPeriodForm } from './poa-registration-period'
 
+type PoaRegistrationPeriod = {
+	year: number
+	registrationStartDate: string
+	registrationEndDate: string
+	peiId: number
+}
+
 function PEIModule() {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const { toast } = useToast()

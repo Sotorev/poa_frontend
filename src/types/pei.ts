@@ -1,5 +1,10 @@
 // src/types/pei.ts
 
+export type Intervention = {
+	interventionId?: number;
+	name: string;
+};
+
 export interface Strategy {
 	strategyId?: number; // IDs son opcionales
 	tempId?: string;
@@ -7,6 +12,7 @@ export interface Strategy {
 	completionPercentage: number;
 	assignedBudget: number;
 	executedBudget: number;
+	interventions: Intervention[];
 }
 
 export interface StrategicObjective {
@@ -20,7 +26,7 @@ export interface StrategicArea {
 	strategicAreaId?: number; // IDs son opcionales
 	tempId?: string;
 	name: string;
-	strategicobjective: StrategicObjective;
+	strategicObjective: StrategicObjective;
 }
 
 export interface PEI {
@@ -28,7 +34,7 @@ export interface PEI {
 	tempId?: string;
 	name: string;
 	status: 'Active' | 'Inactive';
-	strategicareas: StrategicArea[];
+	strategicAreas: StrategicArea[];
 	startYear: number;
 	endYear: number;
 }

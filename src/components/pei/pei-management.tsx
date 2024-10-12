@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
@@ -29,19 +29,19 @@ import {
 	ArrowDown,
 	Loader2
 } from 'lucide-react';
-import { PEI, Strategy } from '@/types/pei';
-import { v4 as uuidv4 } from 'uuid';
 
-const steps = ['Detalles del PEI', 'Áreas y Objetivos Estratégicos', 'Estrategias', 'Revisión'];
+import type { PEI, Strategy, Intervention } from '@/types/pei';
 
-export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubmit: (pei: PEI) => void, isSubmitting: boolean }) {	const [currentStep, setCurrentStep] = useState(0);
+const steps = ['Detalles del PEI', 'Áreas y Objetivos Estratégicos', 'Estrategias e Intervenciones', 'Revisión'];
+
+export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: PEI) => void, isSubmitting: boolean }) {
+	const [currentStep, setCurrentStep] = useState(0);
 	const [pei, setPei] = useState<PEI>({
 		name: '',
 		status: 'Active',
-		strategicareas: [],
+		strategicAreas: [],
 		startYear: new Date().getFullYear(),
 		endYear: new Date().getFullYear() + 1
-		
 	});
 
 	const handlePeiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,17 +50,15 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 	};
 
 	const addStrategicPair = () => {
-		const tempId = uuidv4();
 
 		setPei(prev => ({
 			...prev,
-			strategicareas: [
-				...prev.strategicareas,
+			strategicAreas: [
+				...prev.strategicAreas,
 				{
-					tempId,
 					name: '',
-					strategicobjective: {
-						tempId: uuidv4(),
+					strategicObjective: {
+						strategicObjectiveId: Math.floor(Math.random() * 1000000), // Temporary ID
 						description: '',
 						strategies: []
 					}
@@ -71,32 +69,32 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 
 	const updateStrategicPair = (index: number, field: 'area' | 'objective', value: string) => {
 		setPei(prev => {
-			const newAreas = [...prev.strategicareas];
+			const newAreas = [...prev.strategicAreas];
 			if (field === 'area') {
 				newAreas[index].name = value;
 			} else {
-				newAreas[index].strategicobjective.description = value;
+				newAreas[index].strategicObjective.description = value;
 			}
-			return { ...prev, strategicareas: newAreas };
+			return { ...prev, strategicAreas: newAreas };
 		});
 	};
 
 	const removeStrategicPair = (index: number) => {
 		setPei(prev => ({
 			...prev,
-			strategicareas: prev.strategicareas.filter((_, i) => i !== index)
+			strategicAreas: prev.strategicAreas.filter((_, i) => i !== index)
 		}));
 	};
 
 	const moveStrategicPair = (index: number, direction: 'up' | 'down') => {
 		setPei(prev => {
-			const newAreas = [...prev.strategicareas];
+			const newAreas = [...prev.strategicAreas];
 			if (direction === 'up' && index > 0) {
 				[newAreas[index - 1], newAreas[index]] = [newAreas[index], newAreas[index - 1]];
 			} else if (direction === 'down' && index < newAreas.length - 1) {
 				[newAreas[index], newAreas[index + 1]] = [newAreas[index + 1], newAreas[index]];
 			}
-			return { ...prev, strategicareas: newAreas };
+			return { ...prev, strategicAreas: newAreas };
 		});
 	};
 
@@ -105,19 +103,20 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 			description: '',
 			completionPercentage: 0,
 			assignedBudget: 0,
-			executedBudget: 0
+			executedBudget: 0,
+			interventions: []
 		};
 
 		setPei(prev => {
-			const newAreas = [...prev.strategicareas];
+			const newAreas = [...prev.strategicAreas];
 			newAreas[areaIndex] = {
 				...newAreas[areaIndex],
-				strategicobjective: {
-					...newAreas[areaIndex].strategicobjective,
-					strategies: [...newAreas[areaIndex].strategicobjective.strategies, newStrategy]
+				strategicObjective: {
+					...newAreas[areaIndex].strategicObjective,
+					strategies: [...(newAreas[areaIndex].strategicObjective.strategies || []), newStrategy]
 				}
 			};
-			return { ...prev, strategicareas: newAreas };
+			return { ...prev, strategicAreas: newAreas };
 		});
 	};
 
@@ -128,47 +127,88 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 		value: string | number
 	) => {
 		setPei(prev => {
-			const newAreas = [...prev.strategicareas];
-			const strategies = newAreas[areaIndex].strategicobjective.strategies;
+			const newAreas = [...prev.strategicAreas];
+			const strategies = newAreas[areaIndex].strategicObjective.strategies || [];
 			strategies[strategyIndex] = { ...strategies[strategyIndex], [field]: value };
-			return { ...prev, strategicareas: newAreas };
+			return { ...prev, strategicAreas: newAreas };
 		});
 	};
 
 	const removeStrategy = (areaIndex: number, strategyIndex: number) => {
 		setPei(prev => {
-			const newAreas = [...prev.strategicareas];
-			newAreas[areaIndex].strategicobjective.strategies =
-				newAreas[areaIndex].strategicobjective.strategies.filter((_, i) => i !== strategyIndex);
-			return { ...prev, strategicareas: newAreas };
+			const newAreas = [...prev.strategicAreas];
+			newAreas[areaIndex].strategicObjective.strategies =
+				newAreas[areaIndex].strategicObjective.strategies?.filter((_, i) => i !== strategyIndex);
+			return { ...prev, strategicAreas: newAreas };
+		});
+	};
+
+	const addIntervention = (areaIndex: number, strategyIndex: number) => {
+		const newIntervention: Intervention = {
+			name: ''
+		};
+
+		setPei(prev => {
+			const newAreas = [...prev.strategicAreas];
+			const strategies = newAreas[areaIndex].strategicObjective.strategies || [];
+			const newStrategies = [...strategies];
+			newStrategies[strategyIndex] = {
+				...newStrategies[strategyIndex],
+				interventions: [...(newStrategies[strategyIndex].interventions || []), newIntervention]
+			};
+			newAreas[areaIndex] = {
+				...newAreas[areaIndex],
+				strategicObjective: {
+					...newAreas[areaIndex].strategicObjective,
+					strategies: newStrategies
+				}
+			};
+			return { ...prev, strategicAreas: newAreas };
+		});
+	};
+
+	const updateIntervention = (
+		areaIndex: number,
+		strategyIndex: number,
+		interventionIndex: number,
+		value: string
+	) => {
+		setPei(prev => {
+			const newAreas = [...prev.strategicAreas];
+			const strategies = newAreas[areaIndex].strategicObjective.strategies || [];
+			const newStrategies = [...strategies];
+			const interventions = newStrategies[strategyIndex].interventions || [];
+			const newInterventions = [...interventions];
+			newInterventions[interventionIndex] = { ...newInterventions[interventionIndex], name: value };
+			newStrategies[strategyIndex] = { ...newStrategies[strategyIndex], interventions: newInterventions };
+			newAreas[areaIndex] = {
+				...newAreas[areaIndex],
+				strategicObjective: {
+					...newAreas[areaIndex].strategicObjective,
+					strategies: newStrategies
+				}
+			};
+			return { ...prev, strategicAreas: newAreas };
+		});
+	};
+
+	const removeIntervention = (areaIndex: number, strategyIndex: number, interventionIndex: number) => {
+		setPei(prev => {
+			const newAreas = [...prev.strategicAreas];
+			const strategies = newAreas[areaIndex].strategicObjective.strategies || [];
+			strategies[strategyIndex].interventions =
+				strategies[strategyIndex].interventions?.filter((_, i) => i !== interventionIndex);
+			return { ...prev, strategicAreas: newAreas };
 		});
 	};
 
 	const handleNext = () => {
 		if (currentStep < steps.length - 1) {
-			setCurrentStep(currentStep + 1)
+			setCurrentStep(currentStep + 1);
 		} else {
-			const peiToSubmit: PEI = {
-				...pei,
-				strategicareas: pei.strategicareas.map(area => ({
-					strategicAreaId: area.strategicAreaId,
-					name: area.name,
-					strategicobjective: {
-						strategicObjectiveId: area.strategicobjective.strategicObjectiveId,
-						description: area.strategicobjective.description,
-						strategies: area.strategicobjective.strategies.map(strategy => ({
-							strategyId: strategy.strategyId,
-							description: strategy.description,
-							completionPercentage: strategy.completionPercentage,
-							assignedBudget: strategy.assignedBudget,
-							executedBudget: strategy.executedBudget
-						}))
-					}
-				}))
-			}
-			onSubmit(peiToSubmit)
+			onSubmit(pei);
 		}
-	}
+	};
 
 	const handleBack = () => {
 		if (currentStep > 0) {
@@ -214,7 +254,7 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 									value={pei.endYear}
 									onChange={handlePeiChange}
 									placeholder="Año de finalización"
-									min={pei.startYear ? parseInt(pei.startYear.toString()) + 1 : new Date().getFullYear() + 1}
+									min={pei.startYear ? pei.startYear + 1 : new Date().getFullYear() + 1}
 									max={9999}
 								/>
 							</div>
@@ -235,8 +275,8 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{pei.strategicareas.map((area, index) => (
-									<TableRow key={area.tempId || index}>
+								{pei.strategicAreas.map((area, index) => (
+									<TableRow key={area.strategicAreaId || index}>
 										<TableCell>
 											<div className="flex flex-col items-center space-y-1">
 												<Button
@@ -252,7 +292,7 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 													variant="ghost"
 													size="icon"
 													onClick={() => moveStrategicPair(index, 'down')}
-													disabled={index === pei.strategicareas.length - 1}
+													disabled={index === pei.strategicAreas.length - 1}
 												>
 													<ArrowDown className="h-4 w-4" />
 												</Button>
@@ -267,7 +307,7 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 										</TableCell>
 										<TableCell>
 											<Input
-												value={area.strategicobjective.description}
+												value={area.strategicObjective.description}
 												onChange={(e) => updateStrategicPair(index, 'objective', e.target.value)}
 												placeholder={`Ingrese Objetivo Estratégico ${index + 1}`}
 											/>
@@ -293,11 +333,11 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 			case 2:
 				return (
 					<div className="space-y-4">
-						{pei.strategicareas.map((area, areaIndex) => (
-							<Card key={area.tempId || areaIndex} className="mb-4">
+						{pei.strategicAreas.map((area, areaIndex) => (
+							<Card key={area.strategicAreaId || areaIndex} className="mb-4">
 								<CardHeader>
 									<CardTitle>{area.name}</CardTitle>
-									<CardDescription>{area.strategicobjective.description}</CardDescription>
+									<CardDescription>{area.strategicObjective.description}</CardDescription>
 								</CardHeader>
 								<CardContent>
 									<Table>
@@ -307,12 +347,13 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 												<TableHead>% de Cumplimiento</TableHead>
 												<TableHead>Presupuesto Asignado</TableHead>
 												<TableHead>Presupuesto Ejecutado</TableHead>
+												<TableHead>Intervenciones</TableHead>
 												<TableHead>Acciones</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
-											{area.strategicobjective.strategies.map((strategy, strategyIndex) => (
-												<TableRow key={strategy.tempId || strategyIndex}>
+											{area.strategicObjective.strategies?.map((strategy, strategyIndex) => (
+												<TableRow key={strategy.strategyId || strategyIndex}>
 													<TableCell>
 														<Input
 															value={strategy.description}
@@ -368,6 +409,30 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 														/>
 													</TableCell>
 													<TableCell>
+														{strategy.interventions?.map((intervention, interventionIndex) => (
+															<div key={intervention.interventionId || interventionIndex} className="flex items-center mb-2">
+																<Input
+																	value={intervention.name}
+																	onChange={(e) =>
+																		updateIntervention(areaIndex, strategyIndex, interventionIndex, e.target.value)
+																	}
+																	placeholder={`Intervención ${interventionIndex + 1}`}
+																	className="mr-2"
+																/>
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	onClick={() => removeIntervention(areaIndex, strategyIndex, interventionIndex)}
+																>
+																	<Trash2 className="h-4 w-4" />
+																</Button>
+															</div>
+														))}
+														<Button onClick={() => addIntervention(areaIndex, strategyIndex)} size="sm">
+															<PlusCircle className="mr-2 h-4 w-4" /> Agregar Intervención
+														</Button>
+													</TableCell>
+													<TableCell>
 														<Button
 															variant="ghost"
 															size="icon"
@@ -400,16 +465,22 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 								<p>
 									<strong>Estado:</strong> {pei.status === 'Active' ? 'Activo' : 'Inactivo'}
 								</p>
+								<p>
+									<strong>Año de inicio:</strong> {pei.startYear}
+								</p>
+								<p>
+									<strong>Año de finalización:</strong> {pei.endYear}
+								</p>
 							</CardContent>
 						</Card>
-						{pei.strategicareas.map((area, areaIndex) => (
-							<Card key={area.tempId || areaIndex}>
+						{pei.strategicAreas.map((area, areaIndex) => (
+							<Card key={area.strategicAreaId || areaIndex}>
 								<CardHeader>
 									<CardTitle>{area.name}</CardTitle>
 								</CardHeader>
 								<CardContent>
 									<p>
-										<strong>Objetivo:</strong> {area.strategicobjective.description}
+										<strong>Objetivo:</strong> {area.strategicObjective.description}
 									</p>
 									<Table>
 										<TableHeader>
@@ -418,15 +489,25 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 												<TableHead>% de Cumplimiento</TableHead>
 												<TableHead>Presupuesto Asignado</TableHead>
 												<TableHead>Presupuesto Ejecutado</TableHead>
+												<TableHead>Intervenciones</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
-											{area.strategicobjective.strategies.map((strategy, strategyIndex) => (
-												<TableRow key={strategy.tempId || strategyIndex}>
+											{area.strategicObjective.strategies?.map((strategy, strategyIndex) => (
+												<TableRow key={strategy.strategyId || strategyIndex}>
 													<TableCell>{strategy.description}</TableCell>
 													<TableCell>{strategy.completionPercentage}%</TableCell>
 													<TableCell>${strategy.assignedBudget}</TableCell>
 													<TableCell>${strategy.executedBudget}</TableCell>
+													<TableCell>
+														<ul>
+															{strategy.interventions?.map((intervention, interventionIndex) => (
+																<li key={intervention.interventionId || interventionIndex}>
+																	{intervention.name}
+																</li>
+															))}
+														</ul>
+													</TableCell>
 												</TableRow>
 											))}
 										</TableBody>
@@ -485,8 +566,8 @@ export default function PeiRegistrationForm({ onSubmit, isSubmitting }: { onSubm
 						isSubmitting ||
 						(currentStep === 0 && !pei.name) ||
 						(currentStep === 1 &&
-							pei.strategicareas.some(
-								area => !area.name || !area.strategicobjective.description
+							pei.strategicAreas.some(
+								area => !area.name || !area.strategicObjective.description
 							))
 					}
 				>
