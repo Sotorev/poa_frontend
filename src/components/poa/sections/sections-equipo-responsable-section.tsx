@@ -10,7 +10,6 @@ import { ChevronDown, ChevronUp, Edit, Plus, Search, X } from 'lucide-react'
 interface SectionProps {
   name: string
   isActive: boolean
-  poaId: string | null; // Incluir poaId en las props
 }
 
 interface TeamMember {
@@ -20,8 +19,7 @@ interface TeamMember {
   email: string
 }
 
-export function EquipoResponsableSection({ name, isActive, poaId }: SectionProps) {
-  console.log("POA ID:", poaId); // Imprimir el poaId para verificar
+export function EquipoResponsableSection({ name, isActive }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
