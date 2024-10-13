@@ -78,12 +78,8 @@ export function EstrategiasSelectorComponent({
           throw new Error(`Error al fetch estrategias: ${response.statusText}`);
         }
         const data: Estrategia[] = await response.json();
-        // Filtrar estrategias no eliminadas y relacionadas con el strategicObjectiveId
-        const filteredEstrategias = data.filter(
-          (estrategia) =>
-            !estrategia.isDeleted && estrategia.strategicObjectiveId === strategicObjectiveId
-        );
-        setEstrategiasList(filteredEstrategias);
+
+        setEstrategiasList(data);
       } catch (error) {
         console.error("Error al obtener estrategias:", error);
         // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
