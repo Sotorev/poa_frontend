@@ -1,4 +1,3 @@
-// src/components/poa/PoaDashboardMain.tsx
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -30,7 +29,7 @@ const sections = [
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSection },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FODASection },
-  //{ name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
+  { name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
 ]
 
@@ -42,6 +41,60 @@ export function PoaDashboardMain() {
   const mainRef = useRef<HTMLDivElement>(null)
 
   const { user, loading } = useAuth()
+
+  const [facultyId, setFacultyId] = useState<string | null>(null) // Estado para almacenar el facultyId
+  const [poaId, setPoaId] = useState<string | null>(null); // Estado para almacenar el poaId
+
+  // useEffect para obtener el facultyId cuando el componente se monta
+  useEffect(() => {
+    const fetchFacultyId = async () => {
+      if (loading) {
+        console.log("Cargando información del usuario...");
+        return;
+      }
+    
+      if (!user) {
+        console.log("No estás autenticado.");
+        alert("No estás autenticado.");
+        return;
+      }
+    
+      try {
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+    
+        if (!userResponse.ok) {
+          throw new Error('Error al obtener datos del usuario');
+        }
+    
+        const userData = await userResponse.json();
+        const faculty = userData.faculty;
+    
+        if (!faculty) {
+          throw new Error('El usuario no tiene una facultad asignada');
+        }
+    
+        const fetchedFacultyId = faculty.facultyId; // Obtener el facultyId
+        console.log("facultyId obtenido:", fetchedFacultyId);
+        setFacultyId(fetchedFacultyId); // Guardar el facultyId en el estado
+
+        // Asegurarse de que facultyId no sea null antes de llamar a getPoaByFacultyAndYear
+        if (fetchedFacultyId) {
+          getPoaByFacultyAndYear(fetchedFacultyId);
+        }
+    
+      } catch (error: any) {
+        console.error("Error al obtener el facultyId:", error);
+        alert(`Error: ${error.message}`);
+      }
+    }
+
+    fetchFacultyId()
+  }, [user, loading])
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -65,40 +118,36 @@ export function PoaDashboardMain() {
     }, 1000)
   }
 
-  const [poaId, setPoaId] = useState<string | null>(null); // Estado para almacenar el poaId
-
-  const handleCreatePoa = async () => {
-    if (loading) {
-      console.log("Cargando información del usuario...");
-      return;
-    }
-  
-    if (!user) {
-      console.log("No estás autenticado.");
-      alert("No estás autenticado.");
-      return;
-    }
-  
+  // Obtener el POA actual si ya fue creado
+  const getPoaByFacultyAndYear = async (facultyId: string) => {
+    const currentYear = new Date().getFullYear();
     try {
-      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
-        credentials: 'include',
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${facultyId}/${currentYear}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
   
-      if (!userResponse.ok) {
-        throw new Error('Error al obtener datos del usuario');
+      if (!response.ok) {
+        throw new Error('Error al obtener el POA para la facultad y año especificado.');
       }
   
-      const userData = await userResponse.json();
-      const faculty = userData.faculty;
+      const poaData = await response.json();
+      console.log('Datos del POA:', poaData);
+      
+      // Aquí puedes manejar los datos recibidos (ej. almacenarlos en el estado)
+      setPoaId(poaData.poaId); // Guardar el poaId en el estado
   
-      if (!faculty) {
-        throw new Error('El usuario no tiene una facultad asignada');
-      }
-  
-      const facultyId = faculty.facultyId; // Obtener el facultyId
+    } catch (error: any) {
+      console.error('Error al realizar la consulta del POA:', error);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  const handleCreatePoa = async () => {
+    try {
       const currentYear = new Date().getFullYear();
       const payload = {
         facultyId: facultyId,
@@ -107,7 +156,7 @@ export function PoaDashboardMain() {
       };
 
       // Mostrar el payload en la consola
-console.log("Payload enviado:", JSON.stringify(payload));
+      console.log("Payload enviado:", JSON.stringify(payload));
   
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
         method: 'POST',
@@ -119,7 +168,7 @@ console.log("Payload enviado:", JSON.stringify(payload));
       });
   
       const responseData = await response.json();
-      //mostrar respuesta en la consola
+      // Mostrar respuesta en la consola
       console.log("Response data:", responseData);
   
       if (!response.ok) {
@@ -128,16 +177,14 @@ console.log("Payload enviado:", JSON.stringify(payload));
   
       alert("POA creado exitosamente.");
       
-      const poaId = responseData.poaId; // Obtener el poaId del response
-      setPoaId(poaId); // Guardar el poaId en el estado
+      const newPoaId = responseData.poaId; // Obtener el poaId del response
+      setPoaId(newPoaId); // Guardar el poaId en el estado
   
     } catch (error: any) {
       console.error("Error al crear el POA:", error);
       alert(`Error: ${error.message}`);
     }
   };
-  
-  
 
   return (
     <main className="flex bg-green-50 min-h-screen">
@@ -214,9 +261,12 @@ console.log("Payload enviado:", JSON.stringify(payload));
       >
         {/* Botón para crear POA */}
         <div className="mb-4">
-          <Button onClick={handleCreatePoa} disabled={loading}>
+          <Button onClick={handleCreatePoa} disabled={loading || !facultyId}>
             Iniciar POA
           </Button>
+          {!facultyId && !loading && (
+            <p className="text-red-500 mt-2">No se pudo obtener el facultyId. Intenta de nuevo más tarde.</p>
+          )}
         </div>
 
         {/* Renderizar las secciones */}
@@ -228,15 +278,15 @@ console.log("Payload enviado:", JSON.stringify(payload));
             poaId={poaId} // Pasar el poaId a cada sección
           />
         ))}
- <div className="mb-32"></div>
+        <div className="mb-32"></div>
 
-{/* Botón para enviar POA */}
-<div className="mt-6 flex justify-end">
-  <Button /*onClick={handleEnviarPOA}*/>
-    Enviar POA
-  </Button>
-</div>
-</div>
-</main>
-)
+        {/* Botón para enviar POA */}
+        <div className="mt-6 flex justify-end">
+          <Button /*onClick={handleEnviarPOA}*/>
+            Enviar POA
+          </Button>
+        </div>
+      </div>
+    </main>
+  )
 }
