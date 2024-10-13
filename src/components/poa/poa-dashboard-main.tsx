@@ -17,7 +17,7 @@ import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { EstructuraFacultadSection } from './sections/estructura-facultad-section'
-import { EquipoResponsableSection } from './sections/sections-equipo-responsable-section'
+import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { JustificacionSection } from './sections/sections-justificacion-section'
 import { FODASection } from './sections/sections-foda-section'
 import { OtrosDocumentos } from './sections/sections-otros-documentos'
@@ -27,9 +27,9 @@ import { useAuth } from '@/contexts/auth-context'
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
-  { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSection },
+  { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FODASection },
-  { name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
+  //{ name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
 ]
 
@@ -142,7 +142,7 @@ export function PoaDashboardMain() {
   
     } catch (error: any) {
       console.error('Error al realizar la consulta del POA:', error);
-      alert(`Error: ${error.message}`);
+      //alert(`Error: ${error.message}`);
     }
   };
 
@@ -262,7 +262,7 @@ export function PoaDashboardMain() {
         {/* Botón para crear POA */}
         <div className="mb-4">
           <Button onClick={handleCreatePoa} disabled={loading || !facultyId}>
-            Iniciar POA
+            Iniciar nuevo POA
           </Button>
           {!facultyId && !loading && (
             <p className="text-red-500 mt-2">No se pudo obtener el facultyId. Intenta de nuevo más tarde.</p>
@@ -280,12 +280,6 @@ export function PoaDashboardMain() {
         ))}
         <div className="mb-32"></div>
 
-        {/* Botón para enviar POA */}
-        <div className="mt-6 flex justify-end">
-          <Button /*onClick={handleEnviarPOA}*/>
-            Enviar POA
-          </Button>
-        </div>
       </div>
     </main>
   )

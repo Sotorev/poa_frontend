@@ -99,7 +99,7 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
   const handleSave = () => {
     setIsEditing(false)
     Toast({
-      title: "Cambios guardados"
+      title: "Cambios guardados",
     })
   }
 
@@ -339,32 +339,38 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
                         <TableCell>{dep.nombre}</TableCell>
                         <TableCell>{dep.director}</TableCell>
                         <TableCell>
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handleEditDepartamento(dep)} 
-                              className="text-green-700 hover:text-green-800 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                              disabled={!isEditing}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handleRemoveDepartamentoRow(dep.id)} 
-                              className="text-green-700 hover:text-green-800 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                              disabled={!isEditing}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          {isEditing && (
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                onClick={() => handleEditDepartamento(dep)} 
+                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                onClick={() => handleRemoveDepartamentoRow(dep.id)} 
+                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-                <Button variant="outline" onClick={handleAddDepartamento} className="mt-4 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800" disabled={!isEditing}>
+                <Button 
+                  variant="outline" 
+                  onClick={handleAddDepartamento} 
+                  className={`mt-4 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${
+                    isEditing ? '' : 'hidden'
+                  }`}
+                >
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Agregar Departamento
                 </Button>
@@ -387,7 +393,7 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
 
                   <Dialog open={isSedeDialogOpen} onOpenChange={setIsSedeDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800" disabled={!isEditing}>Crear Nueva Sede</Button>
+                      <Button variant="outline" className={`bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${isEditing ? '' : 'hidden'}`} disabled={!isEditing}>Crear Nueva Sede</Button>
                     </DialogTrigger>
                     <DialogContent className="bg-green-50">
                       <DialogHeader>
@@ -468,32 +474,38 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
                             <TableCell>{career.name}</TableCell>
                             <TableCell>{career.coordinator}</TableCell>
                             <TableCell>
-                              <div className="flex space-x-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="icon" 
-                                  onClick={() => handleEditCareer(sede.id, career)} 
-                                  className="text-green-700 hover:text-green-800 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                                  disabled={!isEditing}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="icon" 
-                                  onClick={() => handleDeleteCareer(sede.id, career.id)} 
-                                  className="text-green-700 hover:text-green-800 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                                  disabled={!isEditing}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              {isEditing && (
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="icon" 
+                                    onClick={() => handleEditCareer(sede.id, career)} 
+                                    className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="icon" 
+                                    onClick={() => handleDeleteCareer(sede.id, career.id)} 
+                                    className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                    <Button variant="outline" onClick={() => handleAddCareer(sede.id)} className="bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800" disabled={!isEditing}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleAddCareer(sede.id)} 
+                      className={`bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${
+                        isEditing ? '' : 'hidden'
+                      }`}
+                    >
                       <PlusCircle className="h-4 w-4 mr-2" />
                       Agregar Carrera
                     </Button>
@@ -502,8 +514,9 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
               </div>
               <Button 
                 onClick={handleSave} 
-                className="mt-4 bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isEditing}
+                className={`mt-4 bg-green-600 text-white hover:bg-green-700 ${
+                  isEditing ? '' : 'hidden'
+                }`}
               >
                 <Save className="h-4 w-4 mr-2" />
                 Guardar Cambios
