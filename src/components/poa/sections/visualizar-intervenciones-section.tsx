@@ -16,6 +16,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 interface SectionProps {
   name: string;
   isActive: boolean;
+  poaId: string | null; // Incluir poaId en las props
 }
 
 interface Intervencion {
@@ -57,7 +58,8 @@ interface Intervencion {
   procesoPdfUrl: string;
 }
 
-export function VisualizarIntervencionesSection({ name, isActive }: SectionProps) {
+export function VisualizarIntervencionesSection({ name, isActive, poaId }: SectionProps) {
+  console.log("POA ID:", poaId); // Imprimir el poaId para verificar
   const [isMinimized, setIsMinimized] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
