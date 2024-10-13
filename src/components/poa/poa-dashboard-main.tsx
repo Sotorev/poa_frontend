@@ -65,47 +65,50 @@ export function PoaDashboardMain() {
     }, 1000)
   }
 
+  const [poaId, setPoaId] = useState<string | null>(null); // Estado para almacenar el poaId
+
   const handleCreatePoa = async () => {
     if (loading) {
-      console.log("Cargando información del usuario...")
-      return
+      console.log("Cargando información del usuario...");
+      return;
     }
-
+  
     if (!user) {
-      console.log("No estás autenticado.")
-      alert("No estás autenticado.")
-      return
+      console.log("No estás autenticado.");
+      alert("No estás autenticado.");
+      return;
     }
-
+  
     try {
-      // Obtener los datos completos del usuario, incluyendo la facultad
       const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-      })
+      });
+  
       if (!userResponse.ok) {
-        throw new Error('Error al obtener datos del usuario')
+        throw new Error('Error al obtener datos del usuario');
       }
-      const userData = await userResponse.json()
-
-      const faculty = userData.faculty
-
+  
+      const userData = await userResponse.json();
+      const faculty = userData.faculty;
+  
       if (!faculty) {
-        throw new Error('El usuario no tiene una facultad asignada')
+        throw new Error('El usuario no tiene una facultad asignada');
       }
-
-      const facultyId = faculty.facultyId
-
+  
+      const facultyId = faculty.facultyId; // Obtener el facultyId
+      const currentYear = new Date().getFullYear();
       const payload = {
         facultyId: facultyId,
-        year: 2024,
-        peiId: 1
-      }
+        year: currentYear,
+        peiId: 1,
+      };
 
-      console.log("Enviando solicitud POST para crear POA con los siguientes datos:", payload)
-
+      // Mostrar el payload en la consola
+console.log("Payload enviado:", JSON.stringify(payload));
+  
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
         method: 'POST',
         headers: {
@@ -113,22 +116,28 @@ export function PoaDashboardMain() {
         },
         credentials: 'include',
         body: JSON.stringify(payload),
-      })
-      
-      const responseData = await response.json()
-
-      console.log("Respuesta del backend:", responseData)
-
+      });
+  
+      const responseData = await response.json();
+      //mostrar respuesta en la consola
+      console.log("Response data:", responseData);
+  
       if (!response.ok) {
-        throw new Error(responseData.message || 'Error al crear el POA.')
+        throw new Error(responseData.message || 'Error al crear el POA.');
       }
-
-      alert("POA creado exitosamente.")
+  
+      alert("POA creado exitosamente.");
+      
+      const poaId = responseData.poaId; // Obtener el poaId del response
+      setPoaId(poaId); // Guardar el poaId en el estado
+  
     } catch (error: any) {
-      console.error("Error al crear el POA:", error)
-      alert(`Error: ${error.message}`)
+      console.error("Error al crear el POA:", error);
+      alert(`Error: ${error.message}`);
     }
-  }
+  };
+  
+  
 
   return (
     <main className="flex bg-green-50 min-h-screen">
@@ -216,6 +225,7 @@ export function PoaDashboardMain() {
             key={section.name}
             name={section.name}
             isActive={activeSection === section.name}
+            poaId={poaId} // Pasar el poaId a cada sección
           />
         ))}
  <div className="mb-32"></div>
