@@ -7,11 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { StrategicObjectiveSchema, StrategicObjective } from "@/schemas/strategicObjectiveSchema";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { z } from "zod";
 
 type FormData = Omit<StrategicObjective, 'strategicObjectiveId' | 'isDeleted'>;
 
 interface StrategicObjectiveFormProps {
-  onSuccess: () => void;
+  onSuccess: (newObjetivo: StrategicObjective) => void;
 }
 
 export const StrategicObjectiveForm: React.FC<StrategicObjectiveFormProps> = ({ onSuccess }) => {
@@ -23,7 +24,7 @@ export const StrategicObjectiveForm: React.FC<StrategicObjectiveFormProps> = ({ 
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/strategicobjectives`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,8 +40,9 @@ export const StrategicObjectiveForm: React.FC<StrategicObjectiveFormProps> = ({ 
         throw new Error(`Error: ${response.statusText}`);
       }
 
+      const createdObjetivo: StrategicObjective = await response.json();
       reset();
-      onSuccess();
+      onSuccess(createdObjetivo);
     } catch (error) {
       console.error("Error al agregar el objetivo estratégico:", error);
       // Aquí puedes agregar manejo de errores más sofisticado, como mostrar una notificación al usuario.

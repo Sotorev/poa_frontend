@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, Check, X } from "lucide-react";
 import { StrategicObjective } from "@/schemas/strategicObjectiveSchema";
+import { StrategicObjectiveForm } from "@/components/strategicObjective/StrategicObjectiveForm";
 
 interface Objetivo {
   id: string;
@@ -33,9 +34,8 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newObjetivo, setNewObjetivo] = useState(""); // Definición añadida
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const newObjetivoInputRef = useRef<HTMLInputElement>(null);
+  const newObjetivoFormRef = useRef<HTMLDivElement>(null); // Ref para el formulario
 
   // Obtener objetivos estratégicos desde el backend al montar el componente
   useEffect(() => {
@@ -73,44 +73,17 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
     setIsOpen(false);
   };
 
-  const handleAddNewObjetivo = async () => {
-    const newDescripcion = newObjetivo.trim();
-    if (newDescripcion !== "") {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            description: newDescripcion,
-            strategicAreaId: 1, // Asigna el ID del área estratégica correspondiente
-            isDeleted: false,
-          }),
-        });
+  const handleAddNewObjetivoSuccess = (createdObjetivo: StrategicObjective) => {
+    const newObj: Objetivo = {
+      id: createdObjetivo.strategicObjectiveId.toString(),
+      name: createdObjetivo.description,
+      number: createdObjetivo.strategicObjectiveId, // Ajusta según corresponda
+      isCustom: true,
+    };
 
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-
-        const createdObjetivo: StrategicObjective = await response.json();
-
-        const newObj: Objetivo = {
-          id: createdObjetivo.strategicObjectiveId.toString(),
-          name: createdObjetivo.description,
-          number: createdObjetivo.strategicObjectiveId, // Ajusta según corresponda
-          isCustom: true,
-        };
-
-        setObjetivosList(prev => [...prev, newObj]);
-        onSelectObjetivo(newObj.id);
-        setNewObjetivo("");
-        setIsAddingNew(false);
-      } catch (error) {
-        console.error("Error al agregar el nuevo objetivo estratégico:", error);
-        // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
-      }
-    }
+    setObjetivosList(prev => [...prev, newObj]);
+    onSelectObjetivo(newObj.id);
+    setIsAddingNew(false);
   };
 
   useEffect(() => {
@@ -120,8 +93,11 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
   }, [isOpen]);
 
   useEffect(() => {
-    if (isAddingNew && newObjetivoInputRef.current) {
-      newObjetivoInputRef.current.focus();
+    if (isAddingNew && newObjetivoFormRef.current) {
+      const firstInput = newObjetivoFormRef.current.querySelector('input');
+      if (firstInput) {
+        (firstInput as HTMLInputElement).focus();
+      }
     }
   }, [isAddingNew]);
 
@@ -172,39 +148,20 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
       </Select>
       <div className="flex items-center space-x-2">
         {isAddingNew ? (
-          <>
-            <Input
-              ref={newObjetivoInputRef}
-              placeholder="Nuevo objetivo..."
-              value={newObjetivo}
-              onChange={(e) => setNewObjetivo(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddNewObjetivo();
-                }
-              }}
-              className="h-8 w-[240px] border border-green-300 focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none"
-            />
-            <Button
-              onClick={handleAddNewObjetivo}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={() => {
-                setIsAddingNew(false);
-                setNewObjetivo("");
-              }}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </>
+          <div ref={newObjetivoFormRef} className="w-full">
+            <StrategicObjectiveForm onSuccess={handleAddNewObjetivoSuccess} />
+            <div className="flex items-center space-x-2 mt-2">
+              <Button
+                onClick={() => setIsAddingNew(false)}
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
+              >
+                <X className="h-4 w-4" />
+                Cancelar
+              </Button>
+            </div>
+          </div>
         ) : (
           <Button
             onClick={() => setIsAddingNew(true)}
