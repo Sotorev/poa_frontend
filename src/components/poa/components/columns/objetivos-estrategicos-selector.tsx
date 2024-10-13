@@ -1,7 +1,7 @@
-'use client'
+// components/ObjetivosEstrategicosSelectorComponent.tsx
+'use client';
 
-import * as React from "react"
-import { useState, useMemo, useRef, useEffect } from "react"
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -9,17 +9,18 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, Plus, Check, X } from "lucide-react"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search, Plus, Check, X } from "lucide-react";
+import { StrategicObjective } from "@/schemas/strategicObjectiveSchema";
 
 interface Objetivo {
-  id: string
-  name: string
-  number: number
-  isCustom?: boolean
+  id: string;
+  name: string;
+  number: number;
+  isCustom?: boolean;
 }
 
 interface ObjetivosEstrategicosProps {
@@ -27,63 +28,102 @@ interface ObjetivosEstrategicosProps {
   onSelectObjetivo: (objetivo: string) => void;
 }
 
-const initialObjetivosList: Objetivo[] = [
-  { id: "obj1", name: "Fin de la pobreza", number: 1 },
-  { id: "obj2", name: "Hambre cero", number: 2 },
-  { id: "obj3", name: "Salud y bienestar", number: 3 },
-  { id: "obj4", name: "Educación de calidad", number: 4 },
-  { id: "obj5", name: "Igualdad de género", number: 5 },
-  // ... add more predefined objectives as needed
-]
-
 export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSelectObjetivo }: ObjetivosEstrategicosProps) {
-  const [objetivosList, setObjetivosList] = useState<Objetivo[]>(initialObjetivosList)
-  // Eliminar la línea: const [selectedObjetivo, setSelectedObjetivo] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
-  const [newObjetivo, setNewObjetivo] = useState("")
-  const [isAddingNew, setIsAddingNew] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const newObjetivoInputRef = useRef<HTMLInputElement>(null)
+  const [objetivosList, setObjetivosList] = useState<Objetivo[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newObjetivo, setNewObjetivo] = useState(""); // Definición añadida
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const newObjetivoInputRef = useRef<HTMLInputElement>(null);
+
+  // Obtener objetivos estratégicos desde el backend al montar el componente
+  useEffect(() => {
+    const fetchObjetivos = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`);
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        const data: StrategicObjective[] = await response.json();
+        const mappedObjetivos: Objetivo[] = data.map(obj => ({
+          id: obj.strategicObjectiveId.toString(),
+          name: obj.description,
+          number: obj.strategicObjectiveId, // Ajusta según corresponda
+          isCustom: false,
+        }));
+        setObjetivosList(mappedObjetivos);
+      } catch (error) {
+        console.error("Error al obtener los objetivos estratégicos:", error);
+        // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
+      }
+    };
+
+    fetchObjetivos();
+  }, []);
 
   const filteredObjetivos = useMemo(() => {
     return objetivosList.filter(obj => 
       obj.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [objetivosList, searchTerm])
+    );
+  }, [objetivosList, searchTerm]);
 
   const handleSelectObjetivo = (objetivo: string) => {
-    onSelectObjetivo(objetivo)
-    setIsOpen(false)
-  }
+    onSelectObjetivo(objetivo);
+    setIsOpen(false);
+  };
 
-  const handleAddNewObjetivo = () => {
-    if (newObjetivo.trim() !== "") {
-      const newNumber = Math.max(...objetivosList.map(obj => obj.number), 0) + 1
-      const newObj: Objetivo = {
-        id: `custom-${Date.now()}`,
-        name: newObjetivo.trim(),
-        number: newNumber,
-        isCustom: true
+  const handleAddNewObjetivo = async () => {
+    const newDescripcion = newObjetivo.trim();
+    if (newDescripcion !== "") {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            description: newDescripcion,
+            strategicAreaId: 1, // Asigna el ID del área estratégica correspondiente
+            isDeleted: false,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+
+        const createdObjetivo: StrategicObjective = await response.json();
+
+        const newObj: Objetivo = {
+          id: createdObjetivo.strategicObjectiveId.toString(),
+          name: createdObjetivo.description,
+          number: createdObjetivo.strategicObjectiveId, // Ajusta según corresponda
+          isCustom: true,
+        };
+
+        setObjetivosList(prev => [...prev, newObj]);
+        onSelectObjetivo(newObj.id);
+        setNewObjetivo("");
+        setIsAddingNew(false);
+      } catch (error) {
+        console.error("Error al agregar el nuevo objetivo estratégico:", error);
+        // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
       }
-      setObjetivosList([...objetivosList, newObj])
-      //setSelectedObjetivoId(newObj.id) //Removed because selectedObjetivoId is no longer used.
-      setNewObjetivo("")
-      setIsAddingNew(false)
     }
-  }
+  };
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus()
+      searchInputRef.current.focus();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   useEffect(() => {
     if (isAddingNew && newObjetivoInputRef.current) {
-      newObjetivoInputRef.current.focus()
+      newObjetivoInputRef.current.focus();
     }
-  }, [isAddingNew])
+  }, [isAddingNew]);
 
   return (
     <div className="space-y-2">
@@ -91,9 +131,9 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
         onValueChange={handleSelectObjetivo} 
         open={isOpen} 
         onOpenChange={(open) => {
-          setIsOpen(open)
+          setIsOpen(open);
           if (!open) {
-            setSearchTerm("")
+            setSearchTerm("");
           }
         }}
         value={selectedObjetivos[0] || undefined}
@@ -140,7 +180,7 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
               onChange={(e) => setNewObjetivo(e.target.value)}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
-                  handleAddNewObjetivo()
+                  handleAddNewObjetivo();
                 }
               }}
               className="h-8 w-[240px] border border-green-300 focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none"
@@ -155,8 +195,8 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
             </Button>
             <Button
               onClick={() => {
-                setIsAddingNew(false)
-                setNewObjetivo("")
+                setIsAddingNew(false);
+                setNewObjetivo("");
               }}
               size="sm"
               variant="ghost"
@@ -178,5 +218,5 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
         )}
       </div>
     </div>
-  )
+  );
 }
