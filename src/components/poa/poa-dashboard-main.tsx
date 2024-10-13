@@ -30,7 +30,7 @@ const sections = [
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSection },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FODASection },
-  { name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
+  //{ name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
 ]
 
@@ -101,7 +101,7 @@ export function PoaDashboardMain() {
       const payload = {
         facultyId: facultyId,
         year: 2024,
-        peiid: 1
+        peiId: 1
       }
 
       console.log("Enviando solicitud POST para crear POA con los siguientes datos:", payload)
@@ -114,7 +114,7 @@ export function PoaDashboardMain() {
         credentials: 'include',
         body: JSON.stringify(payload),
       })
-
+      
       const responseData = await response.json()
 
       console.log("Respuesta del backend:", responseData)
@@ -206,7 +206,7 @@ export function PoaDashboardMain() {
         {/* Botón para crear POA */}
         <div className="mb-4">
           <Button onClick={handleCreatePoa} disabled={loading}>
-            Crear POA
+            Iniciar POA
           </Button>
         </div>
 
