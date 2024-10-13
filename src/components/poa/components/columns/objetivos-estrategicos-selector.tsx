@@ -1,4 +1,4 @@
-// components/ObjetivosEstrategicosSelectorComponent.tsx
+// src/components/poa/components/columns/objetivos-estrategicos-selector.tsx
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, Check, X } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 import { StrategicObjective } from "@/schemas/strategicObjectiveSchema";
 import { StrategicObjectiveForm } from "@/components/strategicObjective/StrategicObjectiveForm";
 
@@ -27,9 +27,11 @@ interface Objetivo {
 interface ObjetivosEstrategicosProps {
   selectedObjetivos: string[];
   onSelectObjetivo: (objetivo: string) => void;
+  strategicObjectives: StrategicObjective[];
+  addStrategicObjective: (objetivo: StrategicObjective) => void;
 }
 
-export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSelectObjetivo }: ObjetivosEstrategicosProps) {
+export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSelectObjetivo, strategicObjectives, addStrategicObjective }: ObjetivosEstrategicosProps) {
   const [objetivosList, setObjetivosList] = useState<Objetivo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -37,30 +39,16 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
   const searchInputRef = useRef<HTMLInputElement>(null);
   const newObjetivoFormRef = useRef<HTMLDivElement>(null); // Ref para el formulario
 
-  // Obtener objetivos estratégicos desde el backend al montar el componente
+  // Construir la lista de objetivos desde los strategicObjectives prop
   useEffect(() => {
-    const fetchObjetivos = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`);
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-        const data: StrategicObjective[] = await response.json();
-        const mappedObjetivos: Objetivo[] = data.map(obj => ({
-          id: obj.strategicObjectiveId.toString(),
-          name: obj.description,
-          number: obj.strategicObjectiveId, // Ajusta según corresponda
-          isCustom: false,
-        }));
-        setObjetivosList(mappedObjetivos);
-      } catch (error) {
-        console.error("Error al obtener los objetivos estratégicos:", error);
-        // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
-      }
-    };
-
-    fetchObjetivos();
-  }, []);
+    const mappedObjetivos: Objetivo[] = strategicObjectives.map(obj => ({
+      id: obj.strategicObjectiveId.toString(),
+      name: obj.description,
+      number: obj.strategicObjectiveId, // Asumiendo que 'number' corresponde a 'strategicObjectiveId'
+      isCustom: false,
+    }))
+    setObjetivosList(mappedObjetivos)
+  }, [strategicObjectives])
 
   const filteredObjetivos = useMemo(() => {
     return objetivosList.filter(obj => 
@@ -84,6 +72,9 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
     setObjetivosList(prev => [...prev, newObj]);
     onSelectObjetivo(newObj.id);
     setIsAddingNew(false);
+
+    // Llamar a la función del padre para agregar el nuevo objetivo estratégico
+    addStrategicObjective(createdObjetivo)
   };
 
   useEffect(() => {
