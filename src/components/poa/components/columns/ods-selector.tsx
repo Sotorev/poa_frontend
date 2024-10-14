@@ -87,6 +87,7 @@ export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al obtener ODS: ${response.statusText}`);
@@ -159,6 +160,7 @@ export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 

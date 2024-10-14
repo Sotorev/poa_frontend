@@ -73,6 +73,7 @@ export function EstrategiasSelectorComponent({
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al fetch estrategias: ${response.statusText}`);
@@ -113,6 +114,7 @@ export function EstrategiasSelectorComponent({
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 

@@ -88,6 +88,7 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al obtener recursos: ${response.statusText}`);
@@ -142,6 +143,7 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 

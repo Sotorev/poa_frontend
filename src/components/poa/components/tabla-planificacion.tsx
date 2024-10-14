@@ -92,6 +92,7 @@ export function TablaPlanificacionComponent() {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
         if (!responseAreas.ok) {
           throw new Error(`Error al fetch strategic areas: ${responseAreas.statusText}`);
@@ -106,6 +107,7 @@ export function TablaPlanificacionComponent() {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
         if (!responseObjectives.ok) {
           throw new Error(`Error al fetch strategic objectives: ${responseObjectives.statusText}`);
@@ -285,6 +287,7 @@ export function TablaPlanificacionComponent() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(fila)
       });
 

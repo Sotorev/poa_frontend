@@ -67,6 +67,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al fetch intervenciones: ${response.statusText}`);
@@ -117,6 +118,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
