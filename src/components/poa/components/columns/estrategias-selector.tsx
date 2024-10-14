@@ -1,4 +1,3 @@
-// src/components/poa/components/columns/estrategias-selector.tsx
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
@@ -13,15 +12,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, Check, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createStrategySchema, CreateStrategyInput } from "@/schemas/strategySchema";
-import { z } from "zod";
 
-// Definir el tipo Estrategia según el backend
 interface Estrategia {
   strategyId: number;
   description: string;
@@ -30,13 +28,13 @@ interface Estrategia {
   assignedBudget: number;
   executedBudget: number;
   isDeleted: boolean;
-  isCustom?: boolean; // Añadido
+  isCustom?: boolean;
 }
 
 interface EstrategiasSelectorProps {
   selectedEstrategias: string[];
   onSelectEstrategia: (estrategias: string[]) => void;
-  strategicObjectiveId: number; // ID del objetivo estratégico asociado
+  strategicObjectiveId: number;
 }
 
 export function EstrategiasSelectorComponent({
@@ -47,11 +45,8 @@ export function EstrategiasSelectorComponent({
   const [estrategiasList, setEstrategiasList] = useState<Estrategia[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [isAddingNew, setIsAddingNew] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const newEstrategiaInputRef = useRef<HTMLInputElement>(null);
 
-  // Formulario para agregar nueva estrategia
   const {
     register,
     handleSubmit,
@@ -65,7 +60,6 @@ export function EstrategiasSelectorComponent({
     },
   });
 
-  // Fetch de estrategias desde el backend al montar el componente
   useEffect(() => {
     const fetchEstrategias = async () => {
       try {
@@ -79,11 +73,9 @@ export function EstrategiasSelectorComponent({
           throw new Error(`Error al fetch estrategias: ${response.statusText}`);
         }
         const data: Estrategia[] = await response.json();
-
         setEstrategiasList(data);
       } catch (error) {
         console.error("Error al obtener estrategias:", error);
-        // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
       }
     };
 
@@ -107,65 +99,14 @@ export function EstrategiasSelectorComponent({
     onSelectEstrategia(selectedEstrategias.filter((estId) => estId !== id));
   };
 
-  const onSubmit = async (data: CreateStrategyInput) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategies`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al crear la estrategia");
-      }
-
-      const createdEstrategia: Estrategia = await response.json();
-
-      // Asignar isCustom a true para estrategias creadas desde el frontend
-      const newEstrategia: Estrategia = { ...createdEstrategia, isCustom: true };
-
-      // Actualizar la lista de estrategias
-      setEstrategiasList((prev) => [...prev, newEstrategia]);
-
-      // Seleccionar la nueva estrategia
-      onSelectEstrategia([...selectedEstrategias, newEstrategia.strategyId.toString()]);
-
-      // Resetear el formulario y cerrar el formulario de agregar
-      reset();
-      setIsAddingNew(false);
-    } catch (error) {
-      console.error("Error al agregar nueva estrategia:", error);
-      // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
-    }
-  };
-
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isAddingNew && newEstrategiaInputRef.current) {
-      newEstrategiaInputRef.current.focus();
-    }
-  }, [isAddingNew]);
-
-  // Define un callback ref para asignar ambos refs
-  const handleInputRef = (e: HTMLInputElement | null) => {
-    register("description").ref(e);
-    if (newEstrategiaInputRef.current && e) {
-      newEstrategiaInputRef.current.value = e.value;
-    }
-  };
-
   return (
-    <div className="space-y-2">
-      {/* Mostrar estrategias seleccionadas */}
+    <div className="space-y-2 w-full max-w-md">
       <div className="flex flex-wrap gap-2 mb-2">
         {selectedEstrategias.map((id) => {
           const estrategia = estrategiasList.find(
@@ -176,12 +117,14 @@ export function EstrategiasSelectorComponent({
             <TooltipProvider key={id}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {estrategia.isCustom ? `E${estrategia.strategyId}` : estrategia.strategyId}
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 p-0 flex items-center">
+                    <span className="text-green-500 font-bold text-xs mr-1">
+                      {estrategia.strategyId}
+                    </span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="ml-1 h-4 w-4 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
+                      className="h-5 w-5 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
                       onClick={() => handleRemoveEstrategia(id)}
                     >
                       <X className="h-3 w-3" />
@@ -197,7 +140,6 @@ export function EstrategiasSelectorComponent({
         })}
       </div>
 
-      {/* Selector de estrategias */}
       <Select
         onValueChange={handleSelectEstrategia}
         open={isOpen}
@@ -208,12 +150,12 @@ export function EstrategiasSelectorComponent({
           }
         }}
       >
-        <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-0 focus:border-green-600">
+        <SelectTrigger className="w-[300px] border-green-500 focus:ring-green-500">
           <SelectValue placeholder="Selecciona estrategias" />
         </SelectTrigger>
         <SelectContent>
           <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
-            <Search className="mr-2 h-4 w-4 shrink-0 text-green-500" />
+            <Search className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
             <Input
               ref={searchInputRef}
               placeholder="Buscar estrategia..."
@@ -228,18 +170,29 @@ export function EstrategiasSelectorComponent({
                 <SelectItem
                   key={est.strategyId}
                   value={est.strategyId.toString()}
-                  className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
+                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-green-50"
                 >
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
+                  <div className="flex items-start w-full">
+                    <Checkbox
                       checked={selectedEstrategias.includes(est.strategyId.toString())}
-                      onChange={() => handleSelectEstrategia(est.strategyId.toString())}
-                      className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
+                      onCheckedChange={() => handleSelectEstrategia(est.strategyId.toString())}
+                      className="mr-2 mt-1 h-4 w-4 rounded border-green-500 text-green-500 focus:ring-green-500"
                     />
-                    {est.isCustom
-                      ? `E${est.strategyId}: ${est.description}`
-                      : `${est.strategyId}: ${est.description}`}
+                    <div className="flex-shrink-0 w-6 h-6 rounded bg-green-500 text-white font-bold flex items-center justify-center mr-2">
+                      {est.strategyId}
+                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex-grow">
+                            <p className="text-sm leading-tight truncate">{est.description}</p>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{est.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </SelectItem>
               ))}
@@ -247,60 +200,6 @@ export function EstrategiasSelectorComponent({
           </ScrollArea>
         </SelectContent>
       </Select>
-
-      {/* Agregar nueva estrategia */}
-      <div className="flex items-center space-x-2">
-        {isAddingNew ? (
-          <form onSubmit={handleSubmit(onSubmit)} className="flex items-center space-x-2">
-            <Input
-              placeholder="Nueva estrategia..."
-              {...register("description", { setValueAs: (value) => {
-                handleInputRef(value);
-                return value;
-              } })}
-              className={`h-8 w-[240px] border ${
-                errors.description ? "border-red-500" : "border-green-300"
-              } focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none`}
-            />
-            <Button
-              type="submit"
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setIsAddingNew(false);
-                reset();
-              }}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </form>
-        ) : (
-          <Button
-            type="button"
-            onClick={() => setIsAddingNew(true)}
-            size="sm"
-            variant="ghost"
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Agregar nueva estrategia
-          </Button>
-        )}
-      </div>
-
-      {/* Mostrar errores de validación */}
-      {errors.description && (
-        <span className="text-red-500 text-sm">{errors.description.message}</span>
-      )}
     </div>
   );
 }
