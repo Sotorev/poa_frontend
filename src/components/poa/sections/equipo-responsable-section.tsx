@@ -464,7 +464,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
               </Label>
               <Select name="roleId" onValueChange={(value) => handleNewUserChange({ target: { name: 'roleId', value } } as React.ChangeEvent<HTMLSelectElement>)}>
                 <SelectTrigger className="w-[180px] border-green-300 focus:border-green-500">
-                  <SelectValue placeholder="Select a role" />
+                  <SelectValue placeholder="Selecciona un rol" />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((role) => (
