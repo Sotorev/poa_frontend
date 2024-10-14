@@ -139,7 +139,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
     try {
       // Here you would typically send the updated team members to the backend
       // For now, we'll just simulate an API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // await new Promise(resolve => setTimeout(resolve, 1000))
       setIsEditing(false)
       toast({
         title: "Éxito",
