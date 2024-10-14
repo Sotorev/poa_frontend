@@ -1,10 +1,25 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export interface Campus {
+	campusId: number;
+	name: string;
+	city: string;
+	department: string;
+	isDeleted: boolean;
+	currentStudentCount: number | null;
+	program_campus: {
+		programId: number;
+		campusId: number;
+	};
+}
+
 export interface Program {
 	programId: number;
+	campusIds: number[];
 	name: string;
 	director: string;
-	campusIds: number[];
+	isDeleted?: boolean;
+	campuses?: Campus[];
 }
 
 export const programApi = {

@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ChevronDown, ChevronUp, Edit, Trash2, PlusCircle, Pencil, Save } from 'lucide-react'
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from "@/components/ui/checkbox"
-
 import { departmentApi, Department } from '@/api/department'
 import { campusApi, Campus } from '@/api/campus'
 import { programApi, Program } from '@/api/program'
@@ -201,7 +199,7 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
     setNewProgram(program);
     setEditMode('edit');
     setEditItemId(program.programId);
-    setSelectedCampuses(program.campusIds);
+    setSelectedCampuses(program.campuses?.map(campus => campus.campusId) || []);
     setIsProgramDialogOpen(true);
   };
 
@@ -458,7 +456,9 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
                       <TableRow key={program.programId}>
                         <TableCell>{program.name}</TableCell>
                         <TableCell>{program.director}</TableCell>
-                        <TableCell>{program.campusIds}</TableCell>
+                        <TableCell>
+                          {program.campuses?.map(campus => campus.name).join(', ')}
+                        </TableCell>
                         <TableCell>
                           {isEditing && (
                             <div className="flex space-x-2">
@@ -636,7 +636,7 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
               </Label>
               <Input
                 id="programDirector"
-                value={newProgram.director}
+                value={newProgram?.director}
                 onChange={(e) => setNewProgram({ ...newProgram, director: e.target.value })}
                 className="col-span-3 border-green-300 focus:border-green-500"
               />
@@ -650,12 +650,12 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
                   <div key={campus.campusId} className="flex items-center space-x-2">
                     <Checkbox
                       id={`campus-${campus.campusId}`}
-                      checked={selectedCampuses.includes(campus.campusId)}
+                      checked={selectedCampuses?.includes(campus.campusId) || false}
                       onCheckedChange={(checked) => {
                         if (checked) {
-                          setSelectedCampuses([...selectedCampuses, campus.campusId]);
+                          setSelectedCampuses([...(selectedCampuses || []), campus.campusId]);
                         } else {
-                          setSelectedCampuses(selectedCampuses.filter(id => id !== campus.campusId));
+                          setSelectedCampuses((selectedCampuses || []).filter(id => id !== campus.campusId));
                         }
                       }}
                     />
@@ -739,12 +739,12 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
                   <div key={campus.campusId} className="flex items-center space-x-2">
                     <Checkbox
                       id={`campus-${campus.campusId}`}
-                      checked={selectedCampuses.includes(campus.campusId)}
+                      checked={selectedCampuses?.includes(campus.campusId) || false}
                       onCheckedChange={(checked) => {
                         if (checked) {
-                          setSelectedCampuses([...selectedCampuses, campus.campusId]);
+                          setSelectedCampuses([...(selectedCampuses || []), campus.campusId]);
                         } else {
-                          setSelectedCampuses(selectedCampuses.filter(id => id !== campus.campusId));
+                          setSelectedCampuses((selectedCampuses || []).filter(id => id !== campus.campusId));
                         }
                       }}
                     />
