@@ -19,11 +19,11 @@ interface TipoDeCompraProps {
 }
 
 const initialOptions: TipoCompra[] = [
-  { id: "cotizacion", name: "Cotización" },
-  { id: "compra-directa", name: "Compra Directa" },
-  { id: "financiamiento", name: "Financiamiento" },
-  { id: "otros", name: "Otros" },
-  { id: "na", name: "NA" },
+  { id: "Cotización", name: "Cotización" },
+  { id: "Compra directa", name: "Compra directa" },
+  { id: "Financiamiento", name: "Financiamiento" },
+  { id: "Otros", name: "Otros" },
+  { id: "NA", name: "NA" },
 ]
 
 export function TipoDeCompraComponent({ selectedTypes, onSelectTypes }: TipoDeCompraProps) {
@@ -38,10 +38,9 @@ export function TipoDeCompraComponent({ selectedTypes, onSelectTypes }: TipoDeCo
 
   const handleAddNewType = () => {
     if (newType.trim() !== "") {
-      const newId = `custom-${Date.now()}`
-      const newOption = { id: newId, name: newType.trim() }
+      const newOption = { id: newType.trim(), name: newType.trim() }
       setOptions([...options, newOption])
-      const updatedTypes = [...localSelectedTypes, newId]
+      const updatedTypes = [...localSelectedTypes, newOption.id]
       setLocalSelectedTypes(updatedTypes)
       onSelectTypes(updatedTypes)
       setNewType("")
