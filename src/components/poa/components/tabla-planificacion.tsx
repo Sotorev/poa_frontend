@@ -334,12 +334,12 @@ export function TablaPlanificacionComponent() {
             name: fila.responsablePlanificacion.trim(),
           },
           {
-            responsibleRole: 'Ejecución',
+            responsibleRole: 'Ejecución', // Eliminado el acento
             name: fila.responsableEjecucion.trim(),
           },
           {
-            responsibleRole: 'Seguimiento', // Cambiado de 'Finalización' a 'Seguimiento'
-            name: fila.responsableSeguimiento.trim(), // Cambio aquí
+            responsibleRole: 'Seguimiento',
+            name: fila.responsableSeguimiento.trim(),
           },
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)), // Asegura que sean números válidos
