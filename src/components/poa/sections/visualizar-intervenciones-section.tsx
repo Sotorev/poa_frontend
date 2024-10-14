@@ -2,219 +2,199 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, ChevronDown, ChevronUp, Edit, Info, Check, X, Download } from 'lucide-react';
-import { Textarea } from "@/components/ui/textarea";
+import { Info, Check, X, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { formatCurrency } from '@/utils/formatCurrency';
+
+// Definir las interfaces
+interface DateEntry {
+  eventDateId: number;
+  eventId: number;
+  startDate: string; // Formato ISO: "2023-12-31"
+  endDate: string;   // Formato ISO: "2024-01-04"
+  isDeleted: boolean;
+}
+
+interface Financing {
+  eventFinancingId: number;
+  eventId: number;
+  financingSourceId: number;
+  amount: number;
+  percentage: number;
+  isDeleted: boolean;
+}
+
+interface Responsible {
+  eventResponsibleId: number;
+  eventId: number;
+  responsibleRole: string;
+  isDeleted: boolean;
+  name: string;
+}
+
+interface Status {
+  statusId: number;
+  name: string;
+  isDeleted: boolean;
+}
+
+interface Campus {
+  campusId: number;
+  name: string;
+  city: string;
+  department: string;
+  isDeleted: boolean;
+}
+
+interface Intervencion {
+  eventId?: number;
+  name?: string;
+  type?: string;
+  submissionDate?: string | null;
+  poaId?: number;
+  statusId?: number;
+  completionPercentage?: number;
+  campusId?: number;
+  eventNature?: string;
+  isDeleted?: boolean;
+  objective?: string;
+  isDelayed?: boolean;
+  achievementIndicator?: string;
+  purchaseType?: string;
+  totalCost?: number;
+  processDocumentPath?: string | null;
+  dates?: DateEntry[];
+  financings?: Financing[];
+  resources?: string[];
+  responsibles?: Responsible[];
+  feedbacks?: any[];      // Si tienes una estructura específica, puedes definirla
+  costDetails?: any[];    // Si tienes una estructura específica, puedes definirla
+  status?: Status;        // Agregado para mapear el nombre del estado
+  campus?: Campus;        // Agregado para mapear el nombre del campus
+}
 
 interface SectionProps {
   name: string;
   isActive: boolean;
+  poaId: string | null; // Incluir poaId en las props
 }
 
-interface Intervencion {
-  id: string;
-  ods: string[];
-  areaEstrategica: string;
-  objetivoEstrategico: string;
-  estrategias: string[];
-  intervencion: string;
-  tipoIniciativa: 'actividad' | 'proyecto';
-  iniciativa: string;
-  objetivo: string;
-  estado: 'revision' | 'aprobado' | 'rechazado';
-  fechaInicio: Date;
-  fechaFin: Date;
-  costos: {
-    total: number;
-    aporte: {
-      umes: {
-        tipo: string;
-        porcentaje: number;
-      };
-      otraFuente: {
-        tipo: string;
-        porcentaje: number;
-      };
-    };
-    tipoCompra: 'cotización' | 'compra directa' | 'financiamiento' | 'otros' | 'NA';
-    detallesPdfUrl: string;
-  };
-  responsables: {
-    planificacion: string[];
-    ejecucion: string[];
-    finalizacion: string[];
-  };
-  recursos: string[];
-  indicadorLogro: string;
-  comentarios: string;
-  procesoPdfUrl: string;
-}
-
-export function VisualizarIntervencionesSection({ name, isActive }: SectionProps) {
+export function VisualizarIntervencionesSection({ name, isActive, poaId }: SectionProps) {
+  console.log("POA ID:", poaId); // Imprimir el poaId para verificar
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
-  const [intervenciones, setIntervenciones] = useState<Intervencion[]>([
-    {
-      id: '1',
-      ods: ['ODS 1', 'ODS 2'],
-      areaEstrategica: 'Área 1',
-      objetivoEstrategico: 'Objetivo Estratégico 1',
-      estrategias: ['Estrategia 1', 'Estrategia 2'],
-      intervencion: 'Intervención 1',
-      tipoIniciativa: 'proyecto',
-      iniciativa: 'Iniciativa 1',
-      objetivo: 'Objetivo 1',
-      estado: 'revision',
-      fechaInicio: new Date(2024, 0, 15),
-      fechaFin: new Date(2024, 5, 30),
-      costos: {
-        total: 50000,
-        aporte: {
-          umes: {
-            tipo: 'presupuesto anual',
-            porcentaje: 60
-          },
-          otraFuente: {
-            tipo: 'donación',
-            porcentaje: 40
-          }
-        },
-        tipoCompra: 'compra directa',
-        detallesPdfUrl: '/path/to/detalles-costos-1.pdf'
-      },
-      responsables: {
-        planificacion: ['Responsable A', 'Responsable B'],
-        ejecucion: ['Responsable C'],
-        finalizacion: ['Responsable D']
-      },
-      recursos: ['Recurso 1', 'Recurso 2'],
-      indicadorLogro: 'Indicador de Logro 1',
-      comentarios: '',
-      procesoPdfUrl: '/path/to/proceso-1.pdf'
-    },
-    {
-      id: '2',
-      ods: ['ODS 3'],
-      areaEstrategica: 'Área 2',
-      objetivoEstrategico: 'Objetivo Estratégico 2',
-      estrategias: ['Estrategia 3'],
-      intervencion: 'Intervención 2',
-      tipoIniciativa: 'actividad',
-      iniciativa: 'Iniciativa 2',
-      objetivo: 'Objetivo 2',
-      estado: 'revision',
-      fechaInicio: new Date(2024, 2, 1),
-      fechaFin: new Date(2024, 7, 15),
-      costos: {
-        total: 25000,
-        aporte: {
-          umes: {
-            tipo: 'presupuesto por facultad',
-            porcentaje: 80
-          },
-          otraFuente: {
-            tipo: 'estudiantes',
-            porcentaje: 20
-          }
-        },
-        tipoCompra: 'cotización',
-        detallesPdfUrl: '/path/to/detalles-costos-2.pdf'
-      },
-      responsables: {
-        planificacion: ['Responsable E'],
-        ejecucion: ['Responsable F', 'Responsable G'],
-        finalizacion: ['Responsable H']
-      },
-      recursos: ['Recurso 3'],
-      indicadorLogro: 'Indicador de Logro 2',
-      comentarios: '',
-      procesoPdfUrl: '/path/to/proceso-2.pdf'
-    },
-    {
-      id: '3',
-      ods: ['ODS 4', 'ODS 5'],
-      areaEstrategica: 'Área 1',
-      objetivoEstrategico: 'Objetivo Estratégico 3',
-      estrategias: ['Estrategia 1', 'Estrategia 4'],
-      intervencion: 'Intervención 3',
-      tipoIniciativa: 'proyecto',
-      iniciativa: 'Iniciativa 3',
-      objetivo: 'Objetivo 3',
-      estado: 'revision',
-      fechaInicio: new Date(2024, 4, 10),
-      fechaFin: new Date(2024, 11, 20),
-      costos: {
-        total: 75000,
-        aporte: {
-          umes: {
-            tipo: 'otros',
-            porcentaje: 70
-          },
-          otraFuente: {
-            tipo: 'otros',
-            porcentaje: 30
-          }
-        },
-        tipoCompra: 'financiamiento',
-        detallesPdfUrl: '/path/to/detalles-costos-3.pdf'
-      },
-      responsables: {
-        planificacion: ['Responsable I'],
-        ejecucion: ['Responsable J'],
-        finalizacion: ['Responsable K', 'Responsable L']
-      },
-      recursos: ['Recurso 4', 'Recurso 5'],
-      indicadorLogro: 'Indicador de Logro 3',
-      comentarios: '',
-      procesoPdfUrl: '/path/to/proceso-3.pdf'
+  const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState<number | null>(null); // ID de la intervención que se está actualizando
+
+  useEffect(() => {
+    if (poaId !== null && poaId !== undefined) {
+      fetchIntervenciones();
     }
-  ]);
+  }, [poaId]);
 
-  const [filtroFechaInicio, setFiltroFechaInicio] = useState<Date | undefined>(undefined);
-  const [filtroFechaFin, setFiltroFechaFin] = useState<Date | undefined>(undefined);
-  const [filtroArea, setFiltroArea] = useState<string>("all");
-  const [filtroEstrategia, setFiltroEstrategia] = useState<string>("all");
+  const fetchIntervenciones = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent/poa/${poaId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-  const handleEdit = () => {
-    setIsEditing(!isEditing);
-  }
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.statusText}`);
+      }
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Aquí iría la lógica para guardar los datos en el backend
-  }
+      const data: Intervencion[] = await response.json();
 
-  const handleApproveReject = (id: string, action: 'aprobado' | 'rechazado' | 'revision') => {
-    setIntervenciones(intervenciones.map(intervencion =>
-      intervencion.id === id ? { ...intervencion, estado: action } : intervencion
-    ));
-  }
+      setIntervenciones(data);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Ocurrió un error desconocido.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleCommentChange = (id: string, comment: string) => {
-    setIntervenciones(intervenciones.map(intervencion =>
-      intervencion.id === id ? { ...intervencion, comentarios: comment } : intervencion
-    ));
-  }
+  // Función para actualizar el statusId de una intervención
+  const handleUpdateStatus = async (id: number, newStatusId: number) => {
+    setUpdating(id); // Indicar que se está actualizando esta intervención
+    setError(null); // Limpiar errores previos
 
-  const filteredIntervenciones = intervenciones.filter(intervencion => {
-    const cumpleFechaInicio = filtroFechaInicio ? intervencion.fechaInicio >= filtroFechaInicio : true;
-    const cumpleFechaFin = filtroFechaFin ? intervencion.fechaFin <= filtroFechaFin : true;
-    const cumpleArea = filtroArea !== "all" ? intervencion.areaEstrategica === filtroArea : true;
-    const cumpleEstrategia = filtroEstrategia !== "all" ? intervencion.estrategias.includes(filtroEstrategia) : true;
-    return cumpleFechaInicio && cumpleFechaFin && cumpleArea && cumpleEstrategia;
-  });
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ statusId: newStatusId }),
+      });
 
-  const aprobadas = filteredIntervenciones.filter(intervencion => intervencion.estado === 'aprobado');
-  const noAprobadas = filteredIntervenciones.filter(intervencion => intervencion.estado !== 'aprobado');
+      if (!response.ok) {
+        throw new Error(`Error al actualizar: ${response.statusText}`);
+      }
 
+      // Determinar el nombre del estado basado en el nuevo statusId
+      let newStatusName = '';
+      switch (newStatusId) {
+        case 1:
+          newStatusName = 'En revisión';
+          break;
+        case 3:
+          newStatusName = 'Aprobado';
+          break;
+        case 4:
+          newStatusName = 'Rechazado';
+          break;
+        default:
+          newStatusName = 'Desconocido';
+      }
+
+      // Actualizar el estado localmente
+      setIntervenciones(prevIntervenciones =>
+        prevIntervenciones.map(intervencion =>
+          intervencion.eventId === id
+            ? { 
+                ...intervencion, 
+                statusId: newStatusId, 
+                status: { 
+                  ...intervencion.status, 
+                  statusId: newStatusId, 
+                  name: newStatusName 
+                } 
+              }
+            : intervencion
+        )
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(`Error al actualizar la intervención ${id}: ${err.message}`);
+      } else {
+        setError(`Ocurrió un error desconocido al actualizar la intervención ${id}.`);
+      }
+    } finally {
+      setUpdating(null); // Finalizar el estado de actualización
+    }
+  };
+
+  // Filtrar intervenciones en Aprobadas y No Aprobadas
+  const aprobadas = intervenciones.filter(intervencion => intervencion.statusId === 3); // statusId 3 = Aprobado
+  const noAprobadas = intervenciones.filter(intervencion => intervencion.statusId === 1 || intervencion.statusId === 4); // statusId 1 o 4 = No Aprobado
+
+  // Función para renderizar información adicional en las columnas
   const renderColumnInfo = (title: string, content: string) => (
     <Popover>
       <PopoverTrigger asChild>
@@ -229,98 +209,98 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
     </Popover>
   );
 
+  // Función para renderizar la tabla de intervenciones
   const renderTabla = (intervenciones: Intervencion[], isAprobadas: boolean) => (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>ODS {renderColumnInfo("ODS", "Objetivos de Desarrollo Sostenible")}</TableHead>
-          <TableHead>Área Estratégica</TableHead>
-          <TableHead>Objetivo Estratégico</TableHead>
-          <TableHead>Estrategias</TableHead>
-          <TableHead>Intervención</TableHead>
-          <TableHead>Tipo de Iniciativa</TableHead>
-          <TableHead>Iniciativa</TableHead>
-          <TableHead>Objetivo</TableHead>
+          <TableHead>Nombre</TableHead>
+          <TableHead>Tipo</TableHead>
           <TableHead>Estado</TableHead>
-          <TableHead>Fechas</TableHead>
-          <TableHead>Costo Total</TableHead>
-          <TableHead>Aporte UMES</TableHead>
-          <TableHead>Aporte Otra Fuente</TableHead>
-          <TableHead>Tipo de Compra</TableHead>
-          <TableHead>Detalle de Costos</TableHead>
-          <TableHead>Responsables</TableHead>
-          <TableHead>Recursos</TableHead>
+          <TableHead>% Completado</TableHead>
+          <TableHead>Campus</TableHead>
+          <TableHead>Naturaleza del Evento</TableHead>
+          <TableHead>Objetivo</TableHead>
           <TableHead>Indicador de Logro</TableHead>
-          <TableHead>Proceso</TableHead>
+          <TableHead>Tipo de Compra</TableHead>
+          <TableHead>Costo Total</TableHead>
+          <TableHead>Fechas</TableHead>
+          <TableHead>Financiamientos</TableHead>
+          <TableHead>Responsables</TableHead>
+          <TableHead>Documento del Proceso</TableHead>
           <TableHead>Comentarios</TableHead>
           <TableHead>Acciones</TableHead>
         </TableRow>
       </TableHeader>
+
       <TableBody>
         {intervenciones.map(intervencion => (
-          <TableRow key={intervencion.id}>
-            <TableCell>{intervencion.ods.join(', ')}</TableCell>
-            <TableCell>{intervencion.areaEstrategica}</TableCell>
-            <TableCell>{intervencion.objetivoEstrategico}</TableCell>
-            <TableCell>{intervencion.estrategias.join(', ')}</TableCell>
-            <TableCell>{intervencion.intervencion}</TableCell>
-            <TableCell>{intervencion.tipoIniciativa}</TableCell>
-            <TableCell>{intervencion.iniciativa}</TableCell>
-            <TableCell>{intervencion.objetivo}</TableCell>
-            <TableCell>{intervencion.estado}</TableCell>
-            <TableCell>{`${format(intervencion.fechaInicio, 'dd/MM/yyyy')} - ${format(intervencion.fechaFin, 'dd/MM/yyyy')}`}</TableCell>
-            <TableCell>{formatCurrency(intervencion.costos.total)}</TableCell>
-            <TableCell>{`${intervencion.costos.aporte.umes.tipo} (${intervencion.costos.aporte.umes.porcentaje}%)`}</TableCell>
-            <TableCell>{`${intervencion.costos.aporte.otraFuente.tipo} (${intervencion.costos.aporte.otraFuente.porcentaje}%)`}</TableCell>
-            <TableCell>{intervencion.costos.tipoCompra}</TableCell>
+          <TableRow key={intervencion.eventId}>
+            <TableCell>{intervencion.name || '-'}</TableCell>
+            <TableCell>{intervencion.type || '-'}</TableCell>
+            <TableCell>{intervencion.status?.name || '-'}</TableCell> {/* Nombre del estado */}
+            <TableCell>{intervencion.completionPercentage !== undefined ? `${intervencion.completionPercentage}%` : '-'}</TableCell>
+            <TableCell>{intervencion.campus?.name || '-'}</TableCell> {/* Nombre del campus */}
+            <TableCell>{intervencion.eventNature || '-'}</TableCell>
+            <TableCell>{intervencion.objective || '-'}</TableCell>
+            <TableCell>{intervencion.achievementIndicator || '-'}</TableCell>
+            <TableCell>{intervencion.purchaseType || '-'}</TableCell>
+            <TableCell>{intervencion.totalCost !== undefined ? formatCurrency(intervencion.totalCost) : '-'}</TableCell>
             <TableCell>
-              <Button variant="ghost" size="icon" onClick={() => window.open(intervencion.costos.detallesPdfUrl, '_blank')}>
-                <Download className="h-4 w-4" />
-              </Button>
-            </TableCell>
-            <TableCell>{`Planificación: ${intervencion.responsables.planificacion.join(', ')}`}</TableCell>
-            <TableCell>{intervencion.recursos.join(', ')}</TableCell>
-            <TableCell>{intervencion.indicadorLogro}</TableCell>
-            <TableCell>
-              <Button variant="ghost" size="icon" onClick={() => window.open(intervencion.procesoPdfUrl, '_blank')}>
-                <Download className="h-4 w-4" />
-              </Button>
+              {intervencion.dates && intervencion.dates.length > 0
+                ? intervencion.dates.map(date => `${format(new Date(date.startDate), 'dd/MM/yyyy')} - ${format(new Date(date.endDate), 'dd/MM/yyyy')}`).join(', ')
+                : '-'}
             </TableCell>
             <TableCell>
-              <Textarea
-                value={intervencion.comentarios}
-                onChange={(e) => handleCommentChange(intervencion.id, e.target.value)}
-                placeholder="Agregar comentario..."
-                className="w-full"
-              />
+              {intervencion.financings && intervencion.financings.length > 0
+                ? intervencion.financings.map(financing => `${financing.amount} (${financing.percentage}%)`).join(', ')
+                : '-'}
+            </TableCell>
+            <TableCell>
+              {intervencion.responsibles && intervencion.responsibles.length > 0
+                ? intervencion.responsibles.map(responsible => `${responsible.name} (${responsible.responsibleRole})`).join(', ')
+                : '-'}
+            </TableCell>
+            <TableCell>
+              {intervencion.processDocumentPath ? (
+                <Button variant="ghost" size="icon" onClick={() => window.open(intervencion.processDocumentPath, '_blank')}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              ) : '-'}
+            </TableCell>
+            <TableCell>
+              {intervencion.objective || '-'}
             </TableCell>
             <TableCell>
               {isAprobadas ? (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleApproveReject(intervencion.id, 'revision')}
-                  aria-label={`Desaprobar intervención ${intervencion.id}`}
+                  onClick={() => handleUpdateStatus(intervencion.eventId || 0, 1)} // No Aprobar: statusId = 1
+                  aria-label={`No Aprobar intervención ${intervencion.eventId || 'desconocido'}`}
+                  disabled={updating === intervencion.eventId}
                 >
-                  <X className="h-4 w-4 text-red-500" />
+                  {updating === intervencion.eventId ? '...' : <X className="h-4 w-4 text-red-500" />}
                 </Button>
               ) : (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleApproveReject(intervencion.id, 'aprobado')}
-                    aria-label={`Aprobar intervención ${intervencion.id}`}
+                    onClick={() => handleUpdateStatus(intervencion.eventId || 0, 3)} // Aprobar: statusId = 3
+                    aria-label={`Aprobar intervención ${intervencion.eventId || 'desconocido'}`}
+                    disabled={updating === intervencion.eventId}
                   >
-                    <Check className="h-4 w-4 text-green-500" />
+                    {updating === intervencion.eventId ? '...' : <Check className="h-4 w-4 text-green-500" />}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleApproveReject(intervencion.id, 'rechazado')}
-                    aria-label={`Rechazar intervención ${intervencion.id}`}
+                    onClick={() => handleUpdateStatus(intervencion.eventId || 0, 4)} // No Aprobar: statusId = 4
+                    aria-label={`No Aprobar intervención ${intervencion.eventId || 'desconocido'}`}
+                    disabled={updating === intervencion.eventId}
                   >
-                    <X className="h-4 w-4 text-red-500" />
+                    {updating === intervencion.eventId ? '...' : <X className="h-4 w-4 text-red-500" />}
                   </Button>
                 </>
               )}
@@ -341,10 +321,7 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancelar" : "Editar"}
-            </Button>
+            {/* Botón de Editar Eliminado */}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
@@ -352,83 +329,34 @@ export function VisualizarIntervencionesSection({ name, isActive }: SectionProps
         </div>
         {!isMinimized && (
           <div className="p-4 bg-white">
-            <div className="mb-4 flex flex-wrap gap-4">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={`w-[280px] justify-start text-left font-normal ${
-                      !filtroFechaInicio && "text-muted-foreground"
-                    }`}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filtroFechaInicio ? format(filtroFechaInicio, "PPP", { locale: es }) : <span>Fecha Inicio</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={filtroFechaInicio}
-                    onSelect={setFiltroFechaInicio}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={`w-[280px] justify-start text-left font-normal ${
-                      !filtroFechaFin && "text-muted-foreground"
-                    }`}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filtroFechaFin ? format(filtroFechaFin, "PPP", { locale: es }) : <span>Fecha Fin</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={filtroFechaFin}
-                    onSelect={setFiltroFechaFin}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <Select value={filtroArea} onValueChange={setFiltroArea}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filtrar por Área" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las áreas</SelectItem>
-                  <SelectItem value="Área 1">Área 1</SelectItem>
-                  <SelectItem value="Área 2">Área 2</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filtroEstrategia} onValueChange={setFiltroEstrategia}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filtrar por Estrategia" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las estrategias</SelectItem>
-                  <SelectItem value="Estrategia 1">Estrategia 1</SelectItem>
-                  <SelectItem value="Estrategia 2">Estrategia 2</SelectItem>
-                  <SelectItem value="Estrategia 3">Estrategia 3</SelectItem>
-                  <SelectItem value="Estrategia 4">Estrategia 4</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Intervenciones No Aprobadas</h3>
-            {renderTabla(noAprobadas, false)}
-            <h3 className="text-lg font-semibold mt-6 mb-2">Intervenciones Aprobadas</h3>
-            {renderTabla(aprobadas, true)}
-            {isEditing && (
+            {/* Formulario de Filtros Eliminado */}
+
+            {/* Estado de carga y errores */}
+            {loading ? (
+              <p>Cargando intervenciones...</p>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : (
+              <>
+                {/* Intervenciones No Aprobadas */}
+                <h3 className="text-lg font-semibold mb-2">Intervenciones No Aprobadas</h3>
+                {noAprobadas.length > 0 ? renderTabla(noAprobadas, false) : <p>No hay intervenciones no aprobadas.</p>}
+
+                {/* Intervenciones Aprobadas */}
+                <h3 className="text-lg font-semibold mt-6 mb-2">Intervenciones Aprobadas</h3>
+                {aprobadas.length > 0 ? renderTabla(aprobadas, true) : <p>No hay intervenciones aprobadas.</p>}
+              </>
+            )}
+
+            {/* Botón para guardar cambios Eliminado */}
+            {/* {isEditing && (
               <Button onClick={handleSave} className="mt-4">
                 Guardar Cambios
               </Button>
-            )}
+            )} */}
+
             <div className="mt-6 flex justify-end">
-              
+              {/* Puedes agregar más controles aquí si es necesario */}
             </div>
           </div>
         )}

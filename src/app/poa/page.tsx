@@ -10,7 +10,7 @@ export default async function PEIPage() {
     redirect('/iniciar-sesion')
   }
 
-  if (!hasPermission(session, 'PEI', 'Edit')) {
+  if (!hasPermission(session, 'POA', 'Edit')) {
     redirect('/no-authorizado')
   }
 

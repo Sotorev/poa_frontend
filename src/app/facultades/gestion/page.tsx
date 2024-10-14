@@ -11,6 +11,7 @@ export default async function UsersPage() {
   }
 
   if (!hasPermission(session, 'Faculty', 'Edit')) {
+
     redirect('/no-authorizado')
   }
 

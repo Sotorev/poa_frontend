@@ -11,7 +11,8 @@ import { useAuth } from '@/contexts/auth-context'
 interface SectionProps {
   name: string
   isActive: boolean
-  disableEditButton?: boolean
+  disableEditButton?: boolean,
+  poaId: number;
 }
 
 export function FacultadDataSection({ name, isActive, disableEditButton = false }: SectionProps) {
