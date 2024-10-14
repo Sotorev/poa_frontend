@@ -41,7 +41,6 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [customInterventionCounter, setCustomInterventionCounter] = useState(1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const newIntervencionInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,7 +54,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
     resolver: zodResolver(createInterventionSchema),
     defaultValues: {
       name: "",
-      strategyId: 0, // Debes ajustar esto según la lógica de tu aplicación
+      strategyId: 0, // Ajusta esto según la lógica de tu aplicación
     },
   });
 
@@ -70,18 +69,16 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
           credentials: 'include',
         });
         if (!response.ok) {
-          throw new Error(`Error al fetch intervenciones: ${response.statusText}`);
+          throw new Error(`Error al obtener intervenciones: ${response.statusText}`);
         }
         const data: Intervencion[] = await response.json();
         // Filtrar intervenciones no eliminadas
         const filteredIntervenciones = data.filter(
           (intervencion) => !intervencion.isDeleted
         );
-        console.log("Intervenciones obtenidas:", filteredIntervenciones); // Para depuración
         setIntervencionesList(filteredIntervenciones);
       } catch (error) {
         console.error("Error al obtener intervenciones:", error);
-        // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
       }
     };
 
@@ -89,26 +86,23 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
   }, []);
 
   const filteredIntervenciones = useMemo(() => {
-    const filtered = intervencionesList.filter((int) =>
+    return intervencionesList.filter((int) =>
       int.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    console.log("Intervenciones filtradas:", filtered); // Para depuración
-    return filtered;
   }, [intervencionesList, searchTerm]);
 
   const handleSelectIntervencion = (intervencionId: string) => {
+    if (!intervencionId) return; // Evitar valores inválidos
     const updatedIntervenciones = selectedIntervenciones.includes(intervencionId)
       ? selectedIntervenciones.filter((id) => id !== intervencionId)
       : [...selectedIntervenciones, intervencionId];
     onSelectIntervencion(updatedIntervenciones);
-    console.log("Intervenciones seleccionadas:", updatedIntervenciones); // Para depuración
   };
 
   const handleRemoveIntervencion = (intId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const updatedIntervenciones = selectedIntervenciones.filter(id => id !== intId);
     onSelectIntervencion(updatedIntervenciones);
-    console.log("Intervenciones después de remover:", updatedIntervenciones); // Para depuración
   };
 
   const onSubmit = async (data: CreateInterventionInput) => {
@@ -134,18 +128,15 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
 
       // Actualizar la lista de intervenciones
       setIntervencionesList((prev) => [...prev, newIntervencion]);
-      console.log("Nueva intervención creada:", newIntervencion); // Para depuración
 
       // Seleccionar la nueva intervención
       onSelectIntervencion([...selectedIntervenciones, newIntervencion.interventionId.toString()]);
-      console.log("Intervenciones seleccionadas después de agregar nueva:", [...selectedIntervenciones, newIntervencion.interventionId.toString()]); // Para depuración
 
       // Resetear el formulario y cerrar el formulario de agregar
       reset();
       setIsAddingNew(false);
     } catch (error) {
       console.error("Error al agregar nueva intervención:", error);
-      // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
     }
   };
 
@@ -198,7 +189,6 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
 
       {/* Selector de intervenciones */}
       <Select
-        onValueChange={handleSelectIntervencion}
         open={isOpen}
         onOpenChange={(open) => {
           setIsOpen(open);
@@ -228,6 +218,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
                   key={int.interventionId} 
                   value={int.interventionId.toString()} 
                   className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
+                  onClick={() => handleSelectIntervencion(int.interventionId.toString())}
                 >
                   <div className="flex items-center">
                     <Checkbox
