@@ -234,36 +234,36 @@ export function TablaPlanificacionComponent() {
 
   // Función para manejar cambios en fechas desde ActividadProyectoSelector
   const manejarCambioFechas = (id: string, data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
-    setFilas(prevFilas =>
-      prevFilas.map(fila => {
-        if (fila.id === id) {
-          const updatedFila = {
-            ...fila,
-            tipoEvento: data.tipoEvento,
-            fechas: data.fechas as [DatePair, ...DatePair[]], // Asegurar el tipo de tupla
-          };
+    // setFilas(prevFilas =>
+    //   prevFilas.map(fila => {
+    //     if (fila.id === id) {
+    //       const updatedFila = {
+    //         ...fila,
+    //         tipoEvento: data.tipoEvento,
+    //         fechas: data.fechas as [DatePair, ...DatePair[]], // Asegurar el tipo de tupla
+    //       };
 
-          // Validar la fila actualizada
-          const validation = filaPlanificacionSchema.safeParse(updatedFila);
-          if (!validation.success) {
-            const errors: FilaError = {};
-            validation.error.errors.forEach(err => {
-              const field = err.path[0] as string;
-              errors[field] = err.message;
-            });
-            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
-            toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
-            console.error("Error de validación:", validation.error.errors);
-          } else {
-            // Limpiar errores si la validación es exitosa
-            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
-          }
+    //       // Validar la fila actualizada
+    //       const validation = filaPlanificacionSchema.safeParse(updatedFila);
+    //       if (!validation.success) {
+    //         const errors: FilaError = {};
+    //         validation.error.errors.forEach(err => {
+    //           const field = err.path[0] as string;
+    //           errors[field] = err.message;
+    //         });
+    //         setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
+    //         toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
+    //         console.error("Error de validación:", validation.error.errors);
+    //       } else {
+    //         // Limpiar errores si la validación es exitosa
+    //         setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+    //       }
 
-          return updatedFila;
-        }
-        return fila;
-      })
-    );
+    //       return updatedFila;
+    //     }
+    //     return fila;
+    //   })
+    // );
   };
 
   // Función para enviar una fila al backend
