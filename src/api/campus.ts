@@ -5,7 +5,7 @@ export interface Campus {
 	name: string;
 	city: string;
 	department: string;
-	studentCount: number;
+	currentStudentCount: number;
 }
 
 export const campusApi = {

@@ -32,7 +32,7 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
   const [allCampuses, setAllCampuses] = useState<Campus[]>([]);
   const [allPrograms, setAllPrograms] = useState<Program[]>([]);
   const [newDepartment, setNewDepartment] = useState<Omit<Department, 'departmentId'>>({ name: '', director: '', facultyId: Number(facultyId) });
-  const [newCampus, setNewCampus] = useState<Omit<Campus, 'campusId'>>({ name: '', city: '', department: '', studentCount: 0 });
+  const [newCampus, setNewCampus] = useState<Omit<Campus, 'campusId'>>({ name: '', city: '', department: '', currentStudentCount: 0 });
   const [newProgram, setNewProgram] = useState<Omit<Program, 'programId'>>({ name: '', director: '', campusIds: [] });
   const [isDepartmentDialogOpen, setIsDepartmentDialogOpen] = useState(false);
   const [isCampusDialogOpen, setIsCampusDialogOpen] = useState(false);
@@ -136,7 +136,7 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
   };
 
   const handleAddCampus = () => {
-    setNewCampus({ name: '', city: '', department: '', studentCount: 0 });
+    setNewCampus({ name: '', city: '', department: '', currentStudentCount: 0 });
     setEditMode('create');
     setIsCampusDialogOpen(true);
   };
@@ -394,7 +394,7 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
                         <TableCell>{campus.name}</TableCell>
                         <TableCell>{campus.city}</TableCell>
                         <TableCell>{campus.department}</TableCell>
-                        <TableCell>{campus.studentCount}</TableCell>
+                        <TableCell>{campus.currentStudentCount}</TableCell>
                         <TableCell>
                           {isEditing && (
                             <div className="flex space-x-2">
@@ -600,8 +600,8 @@ export function FacultyStructureSection({ name, isActive, facultyId }: FacultySt
               <Input
                 id="campusStudentCount"
                 type="number"
-                value={newCampus.studentCount}
-                onChange={(e) => setNewCampus({ ...newCampus, studentCount: parseInt(e.target.value) || 0 })}
+                value={newCampus.currentStudentCount}
+                onChange={(e) => setNewCampus({ ...newCampus, currentStudentCount: parseInt(e.target.value) || 0 })}
                 className="col-span-3 border-green-300 focus:border-green-500"
               />
             </div>
