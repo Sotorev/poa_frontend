@@ -1,18 +1,22 @@
-'use client'
+// src/components/poa/components/columns/actividad-proyecto-selector.tsx
+'use client';
 
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import { X, Plus } from "lucide-react"
 
 interface ActividadProyectoSelectorProps {
   selectedOption: "actividad" | "proyecto";
   onSelectOption: (tipo: "actividad" | "proyecto") => void;
+  onChange: (data: {
+    tipoEvento: "actividad" | "proyecto";
+    fechas: DatePair[];
+  }) => void;
 }
 
 interface DatePair {
@@ -20,9 +24,23 @@ interface DatePair {
   end: Date;
 }
 
-export function ActividadProyectoSelector({ selectedOption, onSelectOption }: ActividadProyectoSelectorProps) {
+export function ActividadProyectoSelector({ selectedOption, onSelectOption, onChange }: ActividadProyectoSelectorProps) {
   const [actividadDatePairs, setActividadDatePairs] = useState<DatePair[]>([])
   const [proyectoDatePair, setProyectoDatePair] = useState<DatePair>({ start: new Date(), end: new Date() })
+
+  useEffect(() => {
+    if (selectedOption === "actividad") {
+      onChange({
+        tipoEvento: "actividad",
+        fechas: actividadDatePairs,
+      });
+    } else {
+      onChange({
+        tipoEvento: "proyecto",
+        fechas: [proyectoDatePair],
+      });
+    }
+  }, [selectedOption, actividadDatePairs, proyectoDatePair, onChange]);
 
   const handleActividadDateSelect = (index: number, type: 'start' | 'end', date: Date) => {
     setActividadDatePairs(prev => {

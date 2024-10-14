@@ -20,7 +20,6 @@ import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleProcesoComponent } from './columns/detalle-proceso';
 import { DetalleComponent } from './columns/detalle';
 
-
 import { AreaEstrategicaComponent } from './columns/area-estrategica';
 import { EventoComponent } from './columns/evento';
 import { ObjetivoComponent } from './columns/objetivo';
@@ -32,6 +31,7 @@ import { AccionesComponent } from './columns/acciones';
 
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
+import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';// Asegúrate de importar el esquema actualizado
 
 // Definir el tipo para las opciones de compra
 interface PurchaseType {
@@ -47,40 +47,7 @@ const initialOptions: PurchaseType[] = [
   // Añade más opciones según tus necesidades
 ];
 
-// Definir el esquema de las filas para validación con Zod
-const filaPlanificacionSchema = z.object({
-  id: z.string(),
-  areaEstrategica: z.string().nonempty("Área Estratégica es requerida"),
-  objetivoEstrategico: z.string().nonempty("Objetivo Estratégico es requerido"),
-  estrategias: z.array(z.string()).nonempty("Debe seleccionar al menos una estrategia"),
-  intervencion: z.array(z.string()).nonempty("Debe seleccionar al menos una intervención"),
-  ods: z.array(z.string()),
-  tipoEvento: z.enum(['actividad', 'proyecto']),
-  evento: z.string().nonempty("El nombre del evento es requerido"),
-  objetivo: z.string().nonempty("El objetivo es requerido"),
-  fechaInicio: z.date(),
-  fechaFin: z.date(),
-  costoTotal: z.number().nonnegative("El costo total no puede ser negativo"),
-  aporteUMES: z.array(z.object({
-    financingSourceId: z.number(),
-    porcentaje: z.number().min(0).max(100),
-    amount: z.number().nonnegative(),
-  })),
-  aporteOtros: z.array(z.object({
-    financingSourceId: z.number(),
-    porcentaje: z.number().min(0).max(100),
-    amount: z.number().nonnegative(),
-  })),
-  tipoCompra: z.array(z.string()),
-  detalle: z.any().nullable(),
-  responsablePlanificacion: z.string().nonempty("Responsable de planificación es requerido"),
-  responsableEjecucion: z.string().nonempty("Responsable de ejecución es requerido"),
-  responsableSeguimiento: z.string().nonempty("Responsable de seguimiento es requerido"),
-  recursos: z.array(z.string()),
-  indicadorLogro: z.string().nonempty("El indicador de logro es requerido"),
-  detalleProceso: z.any().nullable(),
-});
-
+// Definir el esquema de las filas para validación con Zod (actualizado en Paso 1)
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
@@ -90,6 +57,11 @@ interface FilaPlanificacion extends FilaPlanificacionForm {
 
 interface FilaError {
   [key: string]: string;
+}
+
+interface DatePair {
+  start: Date;
+  end: Date;
 }
 
 export function TablaPlanificacionComponent() {
@@ -180,8 +152,6 @@ export function TablaPlanificacionComponent() {
       evento: '',
       objetivo: '',
       estado: 'planificado',
-      fechaInicio: new Date(),
-      fechaFin: new Date(),
       costoTotal: 0,
       aporteUMES: [],
       aporteOtros: [],
@@ -194,6 +164,7 @@ export function TablaPlanificacionComponent() {
       indicadorLogro: '',
       detalleProceso: null,
       comentarioDecano: '',
+      fechas: [{ start: new Date(), end: new Date() }], // Inicializar con una fecha
     };
     setFilas([...filas, nuevaFila]);
     toast.info("Nueva fila agregada."); // Notificación opcional al agregar una fila
@@ -269,6 +240,45 @@ export function TablaPlanificacionComponent() {
     toast.success("Nuevo objetivo estratégico agregado."); // Notificación al agregar un objetivo estratégico
   };
 
+  // Función para manejar cambios en fechas desde ActividadProyectoSelector
+  const manejarCambioFechas = (id: string, data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila =>
+        fila.id === id
+          ? {
+              ...fila,
+              tipoEvento: data.tipoEvento,
+              fechas: data.fechas as [DatePair, ...DatePair[]], // Asegurar el tipo de tupla
+            }
+          : fila
+      )
+    );
+
+    // Validar la fila actualizada
+    const filaActual = filas.find(fila => fila.id === id);
+    if (filaActual) {
+      const dataToValidate = {
+        ...filaActual,
+        tipoEvento: data.tipoEvento,
+        fechas: data.fechas,
+      };
+      const validation = filaPlanificacionSchema.safeParse(dataToValidate);
+      if (!validation.success) {
+        const errors: FilaError = {};
+        validation.error.errors.forEach(err => {
+          const field = err.path[0] as string;
+          errors[field] = err.message;
+        });
+        setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
+        toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
+        console.error("Error de validación:", validation.error.errors);
+      } else {
+        // Limpiar errores si la validación es exitosa
+        setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+      }
+    }
+  };
+
   // Función para enviar una fila al backend
   const enviarActividad = async (id: string) => {
     // Obtener la fila correspondiente
@@ -317,12 +327,10 @@ export function TablaPlanificacionComponent() {
           return tipo ? tipo.name : typeId; // Asegura que se envíen los nombres correctos
         }).join(', ').trim(),
         totalCost: fila.costoTotal,
-        dates: [
-          {
-            startDate: fila.fechaInicio.toISOString().split('T')[0],
-            endDate: fila.fechaFin.toISOString().split('T')[0],
-          }
-        ],
+        dates: fila.fechas.map(pair => ({
+          startDate: pair.start.toISOString().split('T')[0],
+          endDate: pair.end.toISOString().split('T')[0],
+        })),
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
@@ -413,6 +421,7 @@ export function TablaPlanificacionComponent() {
             <TableHead>Evento</TableHead>
             <TableHead>Objetivo</TableHead>
             <TableHead>Estado</TableHead>
+            <TableHead>Fechas</TableHead>
             <TableHead>Costo Total</TableHead>
             <TableHead>Aporte UMES</TableHead>
             <TableHead>Aporte Otros</TableHead>
@@ -478,6 +487,7 @@ export function TablaPlanificacionComponent() {
                   <ActividadProyectoSelector
                     selectedOption={fila.tipoEvento}
                     onSelectOption={(tipo) => actualizarFila(fila.id, 'tipoEvento', tipo)}
+                    onChange={(data) => manejarCambioFechas(fila.id, data)}
                   />
                 </TableCell>
                 <TableCell>
@@ -495,14 +505,16 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <EstadoComponent estado={fila.estado} />
                 </TableCell>
-                {/* <TableCell>
-                  <FechasSelectorComponent
-                    fechaInicio={fila.fechaInicio}
-                    fechaFin={fila.fechaFin}
-                    onChangeFechaInicio={(fecha: Date | null) => actualizarFila(fila.id, 'fechaInicio', fecha)}
-                    onChangeFechaFin={(fecha: Date | null) => actualizarFila(fila.id, 'fechaFin', fecha)}
-                  />
-                </TableCell> */}
+                <TableCell>
+                  {/* Mostrar las fechas seleccionadas */}
+                  <ul className="list-disc pl-5">
+                    {fila.fechas.map((pair, index) => (
+                      <li key={index}>
+                        {pair.start.toLocaleDateString('es-ES')} - {pair.end.toLocaleDateString('es-ES')}
+                      </li>
+                    ))}
+                  </ul>
+                </TableCell>
                 <TableCell>
                   <CurrencyInput
                     value={fila.costoTotal}
