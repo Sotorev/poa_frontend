@@ -2,21 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, ChevronDown, ChevronUp, Edit, Info, Check, X, Download } from 'lucide-react';
-import { Textarea } from "@/components/ui/textarea";
-import { formatCurrency } from '@/utils/formatCurrency';
+import { Info, Check, X, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { SectionProps } from '../poa-dashboard-main';
+import { formatCurrency } from '@/utils/formatCurrency';
 
-
-// Importar las interfaces definidas
-// Puedes mover estas interfaces a un archivo separado si lo prefieres
+// Definir las interfaces
 interface DateEntry {
   eventDateId: number;
   eventId: number;
@@ -42,6 +36,20 @@ interface Responsible {
   name: string;
 }
 
+interface Status {
+  statusId: number;
+  name: string;
+  isDeleted: boolean;
+}
+
+interface Campus {
+  campusId: number;
+  name: string;
+  city: string;
+  department: string;
+  isDeleted: boolean;
+}
+
 interface Intervencion {
   eventId?: number;
   name?: string;
@@ -65,48 +73,30 @@ interface Intervencion {
   responsibles?: Responsible[];
   feedbacks?: any[];      // Si tienes una estructura específica, puedes definirla
   costDetails?: any[];    // Si tienes una estructura específica, puedes definirla
+  status?: Status;        // Agregado para mapear el nombre del estado
+  campus?: Campus;        // Agregado para mapear el nombre del campus
 }
 
-
-
-interface FilterFormInputs {
-  fechaInicio?: Date;
-  fechaFin?: Date;
-  area: string;
-  estrategia: string;
+interface SectionProps {
+  name: string;
+  isActive: boolean;
+  poaId: string | null; // Incluir poaId en las props
 }
 
 export function VisualizarIntervencionesSection({ name, isActive, poaId }: SectionProps) {
   console.log("POA ID:", poaId); // Imprimir el poaId para verificar
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
   const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Configuración de react-hook-form sin validación
-  const { register, handleSubmit, watch, setValue } = useForm<FilterFormInputs>({
-    defaultValues: {
-      area: "all",
-      estrategia: "all",
-    },
-  });
-
-  // Manejo de los filtros aplicados
-  const [filters, setFilters] = useState<FilterFormInputs>({
-    fechaInicio: undefined,
-    fechaFin: undefined,
-    area: "all",
-    estrategia: "all",
-  });
+  const [updating, setUpdating] = useState<number | null>(null); // ID de la intervención que se está actualizando
 
   useEffect(() => {
     if (poaId !== null && poaId !== undefined) {
       fetchIntervenciones();
     }
   }, [poaId]);
-  
 
   const fetchIntervenciones = async () => {
     setLoading(true);
@@ -138,46 +128,71 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
     }
   };
 
-  const applyFilters = (data: FilterFormInputs) => {
-    setFilters(data);
+  // Función para actualizar el statusId de una intervención
+  const handleUpdateStatus = async (id: number, newStatusId: number) => {
+    setUpdating(id); // Indicar que se está actualizando esta intervención
+    setError(null); // Limpiar errores previos
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ statusId: newStatusId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al actualizar: ${response.statusText}`);
+      }
+
+      // Determinar el nombre del estado basado en el nuevo statusId
+      let newStatusName = '';
+      switch (newStatusId) {
+        case 1:
+          newStatusName = 'En revisión';
+          break;
+        case 3:
+          newStatusName = 'Aprobado';
+          break;
+        case 4:
+          newStatusName = 'Rechazado';
+          break;
+        default:
+          newStatusName = 'Desconocido';
+      }
+
+      // Actualizar el estado localmente
+      setIntervenciones(prevIntervenciones =>
+        prevIntervenciones.map(intervencion =>
+          intervencion.eventId === id
+            ? { 
+                ...intervencion, 
+                statusId: newStatusId, 
+                status: { 
+                  ...intervencion.status, 
+                  statusId: newStatusId, 
+                  name: newStatusName 
+                } 
+              }
+            : intervencion
+        )
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(`Error al actualizar la intervención ${id}: ${err.message}`);
+      } else {
+        setError(`Ocurrió un error desconocido al actualizar la intervención ${id}.`);
+      }
+    } finally {
+      setUpdating(null); // Finalizar el estado de actualización
+    }
   };
 
-  const onSubmit: SubmitHandler<FilterFormInputs> = (data) => {
-    applyFilters(data);
-  };
-
-  const handleEdit = () => {
-    setIsEditing(!isEditing);
-  };
-
-  const handleSave = () => {
-    setIsEditing(false);
-    // Aquí iría la lógica para guardar los datos en el backend
-  };
-
-  const handleApproveReject = (id: number, action: 'aprobado' | 'rechazado' | 'revision') => {
-    setIntervenciones(intervenciones.map(intervencion =>
-      intervencion.eventId === id ? { ...intervencion, statusId: action === 'aprobado' ? 2 : action === 'rechazado' ? 3 : 1 } : intervencion
-    ));
-  };
-
-  const handleCommentChange = (id: number, comment: string) => {
-    setIntervenciones(intervenciones.map(intervencion =>
-      intervencion.eventId === id ? { ...intervencion, objective: comment } : intervencion
-    ));
-  };
-
-  // Filtrado de intervenciones según los filtros aplicados
-  const filteredIntervenciones = intervenciones.filter(intervencion => {
-    const cumpleFechaInicio = filters.fechaInicio ? new Date(intervencion.dates?.[0]?.startDate || 0) >= filters.fechaInicio : true;
-    const cumpleFechaFin = filters.fechaFin ? new Date(intervencion.dates?.[0]?.endDate || 0) <= filters.fechaFin : true;
-    const cumpleArea = filters.area !== "all" ? intervencion.eventNature === filters.area : true;
-    const cumpleEstrategia = filters.estrategia !== "all" ? (intervencion.responsibles?.some(r => r.responsibleRole === filters.estrategia)) : true;
-    return cumpleFechaInicio && cumpleFechaFin && cumpleArea && cumpleEstrategia;
-  });
-
-  const aprobadas = filteredIntervenciones.filter(intervencion => intervencion.statusId === 2); // Asumiendo statusId 2 = aprobado
-  const noAprobadas = filteredIntervenciones.filter(intervencion => intervencion.statusId !== 2);
+  // Filtrar intervenciones en Aprobadas y No Aprobadas
+  const aprobadas = intervenciones.filter(intervencion => intervencion.statusId === 3); // statusId 3 = Aprobado
+  const noAprobadas = intervenciones.filter(intervencion => intervencion.statusId === 1 || intervencion.statusId === 4); // statusId 1 o 4 = No Aprobado
 
   // Función para renderizar información adicional en las columnas
   const renderColumnInfo = (title: string, content: string) => (
@@ -199,36 +214,33 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Event ID</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>POA ID</TableHead>
-          <TableHead>Status ID</TableHead>
-          <TableHead>Completion %</TableHead>
-          <TableHead>Campus ID</TableHead>
-          <TableHead>Event Nature</TableHead>
-          <TableHead>Objective</TableHead>
-          <TableHead>Achievement Indicator</TableHead>
-          <TableHead>Purchase Type</TableHead>
-          <TableHead>Total Cost</TableHead>
-          <TableHead>Dates</TableHead>
-          <TableHead>Financings</TableHead>
-          <TableHead>Responsibles</TableHead>
-          <TableHead>Process Document</TableHead>
-          <TableHead>Comments</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead>Nombre</TableHead>
+          <TableHead>Tipo</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead>% Completado</TableHead>
+          <TableHead>Campus</TableHead>
+          <TableHead>Naturaleza del Evento</TableHead>
+          <TableHead>Objetivo</TableHead>
+          <TableHead>Indicador de Logro</TableHead>
+          <TableHead>Tipo de Compra</TableHead>
+          <TableHead>Costo Total</TableHead>
+          <TableHead>Fechas</TableHead>
+          <TableHead>Financiamientos</TableHead>
+          <TableHead>Responsables</TableHead>
+          <TableHead>Documento del Proceso</TableHead>
+          <TableHead>Comentarios</TableHead>
+          <TableHead>Acciones</TableHead>
         </TableRow>
       </TableHeader>
+
       <TableBody>
         {intervenciones.map(intervencion => (
           <TableRow key={intervencion.eventId}>
-            <TableCell>{intervencion.eventId || '-'}</TableCell>
             <TableCell>{intervencion.name || '-'}</TableCell>
             <TableCell>{intervencion.type || '-'}</TableCell>
-            <TableCell>{intervencion.poaId || '-'}</TableCell>
-            <TableCell>{intervencion.statusId || '-'}</TableCell>
+            <TableCell>{intervencion.status?.name || '-'}</TableCell> {/* Nombre del estado */}
             <TableCell>{intervencion.completionPercentage !== undefined ? `${intervencion.completionPercentage}%` : '-'}</TableCell>
-            <TableCell>{intervencion.campusId || '-'}</TableCell>
+            <TableCell>{intervencion.campus?.name || '-'}</TableCell> {/* Nombre del campus */}
             <TableCell>{intervencion.eventNature || '-'}</TableCell>
             <TableCell>{intervencion.objective || '-'}</TableCell>
             <TableCell>{intervencion.achievementIndicator || '-'}</TableCell>
@@ -251,13 +263,12 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
             </TableCell>
             <TableCell>
               {intervencion.processDocumentPath ? (
-                <Button variant="ghost" size="icon" onClick={() => intervencion.processDocumentPath && window.open(intervencion.processDocumentPath, '_blank')}>
+                <Button variant="ghost" size="icon" onClick={() => window.open(intervencion.processDocumentPath, '_blank')}>
                   <Download className="h-4 w-4" />
                 </Button>
               ) : '-'}
             </TableCell>
             <TableCell>
-              {/* Aquí puedes mapear otros campos como comentarios si existen */}
               {intervencion.objective || '-'}
             </TableCell>
             <TableCell>
@@ -265,28 +276,31 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleApproveReject(intervencion.eventId || 0, 'revision')}
-                  aria-label={`Desaprobar intervención ${intervencion.eventId || 'desconocido'}`}
+                  onClick={() => handleUpdateStatus(intervencion.eventId || 0, 1)} // No Aprobar: statusId = 1
+                  aria-label={`No Aprobar intervención ${intervencion.eventId || 'desconocido'}`}
+                  disabled={updating === intervencion.eventId}
                 >
-                  <X className="h-4 w-4 text-red-500" />
+                  {updating === intervencion.eventId ? '...' : <X className="h-4 w-4 text-red-500" />}
                 </Button>
               ) : (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleApproveReject(intervencion.eventId || 0, 'aprobado')}
+                    onClick={() => handleUpdateStatus(intervencion.eventId || 0, 3)} // Aprobar: statusId = 3
                     aria-label={`Aprobar intervención ${intervencion.eventId || 'desconocido'}`}
+                    disabled={updating === intervencion.eventId}
                   >
-                    <Check className="h-4 w-4 text-green-500" />
+                    {updating === intervencion.eventId ? '...' : <Check className="h-4 w-4 text-green-500" />}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleApproveReject(intervencion.eventId || 0, 'rechazado')}
-                    aria-label={`Rechazar intervención ${intervencion.eventId || 'desconocido'}`}
+                    onClick={() => handleUpdateStatus(intervencion.eventId || 0, 4)} // No Aprobar: statusId = 4
+                    aria-label={`No Aprobar intervención ${intervencion.eventId || 'desconocido'}`}
+                    disabled={updating === intervencion.eventId}
                   >
-                    <X className="h-4 w-4 text-red-500" />
+                    {updating === intervencion.eventId ? '...' : <X className="h-4 w-4 text-red-500" />}
                   </Button>
                 </>
               )}
@@ -307,10 +321,7 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancelar" : "Editar"}
-            </Button>
+            {/* Botón de Editar Eliminado */}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
@@ -318,96 +329,7 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
         </div>
         {!isMinimized && (
           <div className="p-4 bg-white">
-            {/* Formulario de filtros */}
-            <form onSubmit={handleSubmit(onSubmit)} className="mb-4 flex flex-wrap gap-4">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    type="button"
-                    className={`w-[280px] justify-start text-left font-normal ${
-                      !watch('fechaInicio') && "text-muted-foreground"
-                    }`}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.fechaInicio ? format(filters.fechaInicio, "PPP", { locale: es }) : <span>Fecha Inicio</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={filters.fechaInicio}
-                    onSelect={(date) => {
-                      setValue('fechaInicio', date || undefined);
-                      applyFilters({ ...filters, fechaInicio: date || undefined });
-                    }}
-                    locale={es}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    type="button"
-                    className={`w-[280px] justify-start text-left font-normal ${
-                      !watch('fechaFin') && "text-muted-foreground"
-                    }`}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.fechaFin ? format(filters.fechaFin, "PPP", { locale: es }) : <span>Fecha Fin</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={filters.fechaFin}
-                    onSelect={(date) => {
-                      setValue('fechaFin', date || undefined);
-                      applyFilters({ ...filters, fechaFin: date || undefined });
-                    }}
-                    locale={es}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <Select
-                value={filters.area}
-                onValueChange={(value) => {
-                  setValue('area', value);
-                  applyFilters({ ...filters, area: value });
-                }}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filtrar por Área" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las áreas</SelectItem>
-                  <SelectItem value="Planificado">Planificado</SelectItem>
-                  <SelectItem value="Otro">Otro</SelectItem>
-                  {/* Agrega más áreas según sea necesario */}
-                </SelectContent>
-              </Select>
-              <Select
-                value={filters.estrategia}
-                onValueChange={(value) => {
-                  setValue('estrategia', value);
-                  applyFilters({ ...filters, estrategia: value });
-                }}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filtrar por Estrategia" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las estrategias</SelectItem>
-                  <SelectItem value="Principal">Principal</SelectItem>
-                  <SelectItem value="Secundario">Secundario</SelectItem>
-                  {/* Agrega más estrategias según sea necesario */}
-                </SelectContent>
-              </Select>
-              <Button type="submit">Aplicar Filtros</Button>
-            </form>
+            {/* Formulario de Filtros Eliminado */}
 
             {/* Estado de carga y errores */}
             {loading ? (
@@ -426,12 +348,12 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
               </>
             )}
 
-            {/* Botón para guardar cambios si está en modo edición */}
-            {isEditing && (
+            {/* Botón para guardar cambios Eliminado */}
+            {/* {isEditing && (
               <Button onClick={handleSave} className="mt-4">
                 Guardar Cambios
               </Button>
-            )}
+            )} */}
 
             <div className="mt-6 flex justify-end">
               {/* Puedes agregar más controles aquí si es necesario */}
