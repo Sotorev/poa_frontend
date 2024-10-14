@@ -1,4 +1,3 @@
-// src/components/poa/components/columns/ods-selector.tsx
 'use client'
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -33,8 +32,6 @@ interface ODSSelectorProps {
   onSelectODS: (ods: string[]) => void;
 }
 
-
-
 const predefinedOdsList: ODSWithFrontend[] = [
   { id: "1", name: "Fin de la pobreza", number: 1, color: "#E5243B", odsId: 1, isDeleted: false },
   { id: "2", name: "Hambre cero", number: 2, color: "#DDA63A", odsId: 2, isDeleted: false },
@@ -54,7 +51,6 @@ const predefinedOdsList: ODSWithFrontend[] = [
   { id: "16", name: "Paz, justicia e instituciones sólidas", number: 16, color: "#00689D", odsId: 16, isDeleted: false },
   { id: "17", name: "Alianzas para lograr los objetivos", number: 17, color: "#19486A", odsId: 17, isDeleted: false },
 ];
-
 
 export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
   const [odsList, setOdsList] = useState<ODSWithFrontend[]>(predefinedOdsList);
@@ -304,7 +300,7 @@ export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
       </Select>
 
       {/* Agregar nuevo ODS */}
-      <div className="flex items-center space-x-2">
+      {/* <div className="flex items-center space-x-2">
         {isAddingNew ? (
           <form onSubmit={handleSubmit(onSubmit)} className="flex items-center space-x-2">
             <Input
@@ -347,7 +343,7 @@ export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
             Agregar nuevo ODS
           </Button>
         )}
-      </div>
+      </div> */}
 
       {/* Mostrar errores de validación */}
       {errors.name && (
