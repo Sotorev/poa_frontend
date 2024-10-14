@@ -3,7 +3,7 @@ import { hasPermission } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { PoaDashboardMain } from '@/components/poa/poa-dashboard-main'
 
-export default async function PEIPage() {
+export default async function POAPage() {
   const session = await getServerSession()
 
   if (!session) {

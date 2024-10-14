@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ChevronDown, ChevronUp, Edit, Plus, Trash2, Upload } from 'lucide-react'
+import Image from 'next/image'
 
 interface SectionProps {
   name: string
@@ -99,7 +100,7 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
     if (fileType.startsWith('image/')) {
       return (
         <div className="max-w-xs max-h-48 overflow-hidden">
-          <img src={document.previewUrl} alt={document.name} className="w-full h-auto" />
+          <Image src={document.previewUrl} alt={document.name} className="w-full h-auto" />
         </div>
       )
     } else if (fileType === 'application/pdf') {

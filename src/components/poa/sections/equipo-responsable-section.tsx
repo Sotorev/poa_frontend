@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { ChevronDown, ChevronUp, Trash2, PlusCircle, Save, Edit, Loader2, UserPlus } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { z } from 'zod'
-
 import { SectionProps } from '../poa-dashboard-main';
 
 

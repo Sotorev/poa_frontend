@@ -68,8 +68,10 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
       const newIntervencionObj: Intervencion = {
         id: `custom-${Date.now()}`,
         name: newIntervencion.trim(),
+        number: customInterventionCounter,
         isCustom: true
       }
+      setCustomInterventionCounter(prev => prev + 1)
       setIntervencionesList(prev => [...prev, newIntervencionObj])
       onSelectIntervencion([...selectedIntervenciones, newIntervencionObj.id])
       setNewIntervencion("")

@@ -14,14 +14,9 @@ import { departmentApi, Department } from '@/api/department'
 import { campusApi, Campus } from '@/api/campus'
 import { programApi, Program } from '@/api/program'
 import { facultyApi } from '@/api/faculty'
+import { SectionProps } from '../poa-dashboard-main'
 
-interface FacultyStructureSectionProps {
-  name: string;
-  isActive: boolean;
-  facultyId: number;
-}
-
-export function FacultyStructureSection({ name, isActive, facultyId }: FacultyStructureSectionProps) {
+export function FacultyStructureSection({ name, isActive, facultyId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
