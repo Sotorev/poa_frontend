@@ -29,7 +29,7 @@ export const filaPlanificacionSchema = z.object({
     porcentaje: z.number().min(0).max(100),
     amount: z.number().nonnegative(),
   })),
-  tipoCompra: z.array(z.string()),
+  tipoCompra: z.string(),
   detalle: z.any().nullable(),
   responsablePlanificacion: z.string().nonempty("Responsable de planificación es requerido"),
   responsableEjecucion: z.string().nonempty("Responsable de ejecución es requerido"),

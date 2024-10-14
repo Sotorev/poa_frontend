@@ -154,7 +154,7 @@ export function TablaPlanificacionComponent() {
       costoTotal: 0,
       aporteUMES: [],
       aporteOtros: [],
-      tipoCompra: [],
+      tipoCompra: '', // Inicializado como cadena vacía
       detalle: null,
       responsablePlanificacion: '',
       responsableEjecucion: '',
@@ -266,10 +266,7 @@ export function TablaPlanificacionComponent() {
         eventNature: 'Planificado', // Ajusta según tu lógica
         isDelayed: false, // Ajusta según tu lógica
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseType: fila.tipoCompra.map((typeId) => {
-          const tipo = initialOptions.find((opt) => opt.id === parseInt(typeId, 10));
-          return tipo ? tipo.name : typeId; // Asegura que se envíen los nombres correctos
-        }).join(', ').trim(),
+        purchaseType: fila.tipoCompra, // Ahora es una cadena
         totalCost: fila.costoTotal,
         dates: fila.fechas.map(pair => ({
           startDate: pair.start.toISOString().split('T')[0],
@@ -469,9 +466,12 @@ export function TablaPlanificacionComponent() {
 
                 <TableCell>
                   <TipoDeCompraComponent
-                    selectedTypes={fila.tipoCompra}
-                    onSelectTypes={(tipos) => actualizarFila(fila.id, 'tipoCompra', tipos)}
+                    selectedType={fila.tipoCompra} // Ahora es una cadena
+                    onSelectType={(tipo: string) => actualizarFila(fila.id, 'tipoCompra', tipo)} // Cambiado a string
                   />
+                  {filaErrors[fila.id]?.tipoCompra && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoCompra}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <DetalleComponent
