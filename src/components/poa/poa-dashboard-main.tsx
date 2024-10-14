@@ -90,7 +90,6 @@ export function PoaDashboardMain() {
     
       } catch (error: any) {
         console.error("Error al obtener el facultyId:", error);
-        alert(`Error: ${error.message}`);
       }
     }
 
@@ -179,7 +178,7 @@ export function PoaDashboardMain() {
   
     } catch (error: any) {
       console.error("Error al crear el POA:", error);
-      alert(`Error: ${error.message}`);
+      alert("Ya creaste el POA para este año.");
     }
   };
 
@@ -261,9 +260,6 @@ export function PoaDashboardMain() {
           <Button onClick={handleCreatePoa} disabled={loading || !facultyId}>
             Iniciar nuevo POA
           </Button>
-          {!facultyId && !loading && (
-            <p className="text-red-500 mt-2">No se pudo obtener el facultyId. Intenta de nuevo más tarde.</p>
-          )}
         </div>
 
         {/* Renderizar las secciones */}
