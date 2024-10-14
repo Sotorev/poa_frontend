@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ChevronDown, ChevronUp, Plus, Trash2, PlusCircle, Save, Edit } from 'lucide-react'
-import { Toast } from '@radix-ui/react-toast'
 
 interface SectionProps {
   name: string
@@ -48,9 +47,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
 
   const handleSave = () => {
     setIsEditing(false)
-    Toast({
-      title: "Cambios guardados",
-    })
+
   }
 
   const handleAddMember = () => {

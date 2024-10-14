@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ChevronDown, ChevronUp, Edit, Plus, Trash2, PlusCircle, Pencil, Save } from 'lucide-react'
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Toast } from '@radix-ui/react-toast'
 
 interface SectionProps {
   name: string
@@ -98,9 +97,6 @@ export function EstructuraFacultadSection({ name, isActive }: SectionProps) {
 
   const handleSave = () => {
     setIsEditing(false)
-    Toast({
-      title: "Cambios guardados",
-    })
   }
 
   const handleDepartamentoChange = (id: string, field: keyof Departamento, value: string) => {

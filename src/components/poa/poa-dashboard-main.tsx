@@ -79,7 +79,6 @@ export function PoaDashboardMain() {
         }
     
         const fetchedFacultyId = faculty.facultyId; // Obtener el facultyId
-        console.log("facultyId obtenido:", fetchedFacultyId);
         setFacultyId(fetchedFacultyId); // Guardar el facultyId en el estado
 
         // Asegurarse de que facultyId no sea null antes de llamar a getPoaByFacultyAndYear
@@ -135,7 +134,6 @@ export function PoaDashboardMain() {
       }
   
       const poaData = await response.json();
-      console.log('Datos del POA:', poaData);
       
       // Aquí puedes manejar los datos recibidos (ej. almacenarlos en el estado)
       setPoaId(poaData.poaId); // Guardar el poaId en el estado
@@ -154,9 +152,6 @@ export function PoaDashboardMain() {
         year: currentYear,
         peiId: 1,
       };
-
-      // Mostrar el payload en la consola
-      console.log("Payload enviado:", JSON.stringify(payload));
   
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
         method: 'POST',
@@ -169,7 +164,7 @@ export function PoaDashboardMain() {
   
       const responseData = await response.json();
       // Mostrar respuesta en la consola
-      console.log("Response data:", responseData);
+   
   
       if (!response.ok) {
         throw new Error(responseData.message || 'Error al crear el POA.');
@@ -276,6 +271,7 @@ export function PoaDashboardMain() {
             name={section.name}
             isActive={activeSection === section.name}
             poaId={poaId} // Pasar el poaId a cada sección
+            facultyId={facultyId || ''} // Pasar el facultyId a cada sección
           />
         ))}
         <div className="mb-32"></div>
