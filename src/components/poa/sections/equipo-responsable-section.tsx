@@ -422,7 +422,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right text-green-700">
-                Email
+                Correo electrónico
               </Label>
               <Input
                 id="email"
@@ -435,7 +435,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="username" className="text-right text-green-700">
-                Username
+                Nombre de usuario
               </Label>
               <Input
                 id="username"
@@ -447,7 +447,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="password" className="text-right text-green-700">
-                Password
+                Contraseña
               </Label>
               <Input
                 id="password"
@@ -460,7 +460,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="roleId" className="text-right text-green-700">
-                Role
+                Rol
               </Label>
               <Select name="roleId" onValueChange={(value) => handleNewUserChange({ target: { name: 'roleId', value } } as React.ChangeEvent<HTMLSelectElement>)}>
                 <SelectTrigger className="w-[180px] border-green-300 focus:border-green-500">
