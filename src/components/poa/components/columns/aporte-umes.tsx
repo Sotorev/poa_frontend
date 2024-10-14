@@ -13,16 +13,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Plus, Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFinancingSourceSchema, CreateFinancingSourceInput } from "@/schemas/financingSourceSchema";
 import { z } from "zod";
 import { FinancingSource } from "@/types/FinancingSource";
 
 // Definir el esquema para el formulario de aportes
 const aporteUmesSchema = z.object({
-  fuente: z.string().min(1, "La fuente es requerida"),
+  financingSourceId: z.string().nonempty("La fuente es requerida"),
   porcentaje: z
     .number({
       required_error: "El porcentaje es requerido",
@@ -30,13 +29,20 @@ const aporteUmesSchema = z.object({
     })
     .min(0, "El porcentaje no puede ser negativo")
     .max(100, "El porcentaje no puede superar 100"),
+  amount: z
+    .number({
+      required_error: "El monto es requerido",
+      invalid_type_error: "El monto debe ser un número",
+    })
+    .nonnegative("El monto no puede ser negativo"),
 });
 
 type AporteUmesForm = z.infer<typeof aporteUmesSchema>;
 
 interface AporteUMES {
-  fuente: string;
+  financingSourceId: string;
   porcentaje: number;
+  amount: number;
 }
 
 interface AporteUmesProps {
@@ -44,13 +50,9 @@ interface AporteUmesProps {
   onChangeAportes: (aportes: AporteUMES[]) => void;
 }
 
-interface FinancingSourceWithFrontend extends FinancingSource {
-  id: string;
-}
-
 export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
-  const [options, setOptions] = useState<FinancingSourceWithFrontend[]>([]);
-  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,12 +61,15 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<AporteUmesForm>({
     resolver: zodResolver(aporteUmesSchema),
     defaultValues: {
-      fuente: "",
+      financingSourceId: '',
       porcentaje: 0,
+      amount: 0,
     },
   });
 
@@ -88,13 +93,7 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
         // Filtrar por category "UMES"
         const filteredData = data.filter(source => source.category === "UMES" && !source.isDeleted);
 
-        // Mapear a FinancingSourceWithFrontend
-        const mappedSources: FinancingSourceWithFrontend[] = filteredData.map((source) => ({
-          ...source,
-          id: source.financingSourceId.toString(),
-        }));
-
-        setOptions(mappedSources);
+        setFinancingSources(filteredData);
       } catch (err) {
         console.error(err);
         setError((err as Error).message);
@@ -107,47 +106,17 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
   }, []);
 
   // Función para manejar el envío del formulario de agregar aporte
-  const onSubmit = async (data: AporteUmesForm) => {
+  const onSubmit = (data: AporteUmesForm) => {
     try {
-      // Verificar si la fuente ya existe en las opciones
-      let existingSource = options.find(source => source.name.toLowerCase() === data.fuente.toLowerCase());
-
-      if (!existingSource) {
-        // Crear una nueva fuente de financiamiento en el backend
-        const createResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            name: data.fuente,
-            category: "UMES",
-          } as CreateFinancingSourceInput),
-        });
-
-        if (!createResponse.ok) {
-          const errorData = await createResponse.json();
-          throw new Error(errorData.message || "Error al crear la fuente de financiamiento");
-        }
-
-        const createdSource: FinancingSource = await createResponse.json();
-        existingSource = {
-          ...createdSource,
-          id: createdSource.financingSourceId.toString(),
-        };
-
-        // Actualizar las opciones
-        setOptions(prev => [...prev, existingSource as FinancingSourceWithFrontend]);
-      }
-
-      // Agregar el nuevo aporte
-      const newAportes = [...aportes, { fuente: existingSource.name, porcentaje: data.porcentaje }];
+      const nuevoAporte: AporteUMES = {
+        financingSourceId: data.financingSourceId,
+        porcentaje: data.porcentaje,
+        amount: data.amount,
+      };
+      const newAportes = [...aportes, nuevoAporte];
       onChangeAportes(newAportes);
-
-      // Resetear el formulario
       reset();
-      setIsAddingNew(false);
+      setIsAdding(false);
     } catch (err) {
       console.error(err);
       alert(`Error al agregar el aporte: ${(err as Error).message}`);
@@ -155,8 +124,8 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
   };
 
   // Función para manejar la eliminación de un aporte
-  const handleRemoveAporte = (fuente: string) => {
-    const newAportes = aportes.filter(aporte => aporte.fuente !== fuente);
+  const handleRemoveAporte = (index: number) => {
+    const newAportes = aportes.filter((_, i) => i !== index);
     onChangeAportes(newAportes);
   };
 
@@ -166,88 +135,81 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
   return (
     <div className="space-y-4">
       <Label className="text-sm font-medium text-gray-700">Aporte UMES</Label>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
-        <Select
-          value={undefined}
-          onValueChange={(value) => {
-            // Manejar selección externa si es necesario
-          }}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Seleccionar fuente" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {options.map(option => (
-                <SelectItem key={option.id} value={option.name}>
-                  {option.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <Input
-          type="number"
-          placeholder="Porcentaje"
-          {...register("porcentaje", { valueAsNumber: true })}
-          className={`w-24 ${
-            errors.porcentaje ? "border-red-500" : "border-green-300"
-          }`}
-        />
-        <Button type="submit" disabled={!!errors.porcentaje}>
-          Agregar
+      {!isAdding && (
+        <Button onClick={() => setIsAdding(true)} variant="outline" className="text-sm">
+          Agregar aporte
         </Button>
-      </form>
-
-      {/* Mostrar errores de validación */}
-      {errors.fuente && (
-        <span className="text-red-500 text-sm">{errors.fuente.message}</span>
       )}
-      {errors.porcentaje && (
-        <span className="text-red-500 text-sm">{errors.porcentaje.message}</span>
-      )}
-
-      {/* Agregar nueva fuente */}
-      {isAddingNew ? (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
-          <Input
-            placeholder="Nueva fuente..."
-            {...register("fuente")}
-            className={`w-[200px] ${
-              errors.fuente ? "border-red-500" : "border-green-300"
-            }`}
-          />
-          <Input
-            type="number"
-            placeholder="Porcentaje"
-            {...register("porcentaje", { valueAsNumber: true })}
-            className={`w-24 ${
-              errors.porcentaje ? "border-red-500" : "border-green-300"
-            }`}
-          />
+      {isAdding && (
+        <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2 items-end">
+          <div>
+            <Label>Fuente</Label>
+            <Select onValueChange={(value) => setValue('financingSourceId', value)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Seleccionar fuente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {financingSources.map((source) => (
+                    <SelectItem key={source.financingSourceId} value={source.financingSourceId.toString()}>
+                      {source.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {errors.financingSourceId && (
+              <span className="text-red-500 text-sm">{errors.financingSourceId.message}</span>
+            )}
+          </div>
+          <div>
+            <Label>Porcentaje</Label>
+            <Input
+              type="number"
+              placeholder="Porcentaje"
+              {...register("porcentaje", { valueAsNumber: true })}
+              className={`w-24 ${errors.porcentaje ? "border-red-500" : "border-green-300"}`}
+            />
+            {errors.porcentaje && (
+              <span className="text-red-500 text-sm">{errors.porcentaje.message}</span>
+            )}
+          </div>
+          <div>
+            <Label>Monto</Label>
+            <Input
+              type="number"
+              placeholder="Monto"
+              {...register("amount", { valueAsNumber: true })}
+              className={`w-24 ${errors.amount ? "border-red-500" : "border-green-300"}`}
+            />
+            {errors.amount && (
+              <span className="text-red-500 text-sm">{errors.amount.message}</span>
+            )}
+          </div>
           <Button type="submit">
-            <Check className="h-4 w-4" />
+            Agregar
           </Button>
-          <Button type="button" onClick={() => { reset(); setIsAddingNew(false); }}>
+          <Button type="button" onClick={() => { reset(); setIsAdding(false); }}>
             <X className="h-4 w-4" />
           </Button>
         </form>
-      ) : (
-        <Button onClick={() => setIsAddingNew(true)} variant="outline" className="text-sm">
-          <Plus className="h-4 w-4 mr-2" /> Agregar nueva fuente
-        </Button>
       )}
 
       {/* Lista de aportes */}
       <div className="space-y-2">
-        {aportes.map(aporte => (
-          <div key={aporte.fuente} className="flex items-center justify-between bg-green-100 p-2 rounded-md">
-            <span className="text-green-800">{aporte.fuente}: {aporte.porcentaje}%</span>
-            <Button onClick={() => handleRemoveAporte(aporte.fuente)} variant="ghost" size="sm">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+        {aportes.map((aporte, index) => {
+          const fuente = financingSources.find(source => source.financingSourceId.toString() === aporte.financingSourceId)?.name || aporte.financingSourceId;
+          return (
+            <div key={index} className="flex items-center justify-between bg-green-100 p-2 rounded-md">
+              <span className="text-green-800">
+                {fuente}: {aporte.porcentaje}% - ${aporte.amount}
+              </span>
+              <Button onClick={() => handleRemoveAporte(index)} variant="ghost" size="sm">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

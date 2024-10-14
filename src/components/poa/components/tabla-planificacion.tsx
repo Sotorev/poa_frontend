@@ -1,12 +1,11 @@
 // src/components/poa/components/tabla-planificacion.tsx
-'use client'
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Trash2, Send } from 'lucide-react';
+import { z } from 'zod';
+
 import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector';
 import { EstrategiasSelectorComponent } from './columns/estrategias-selector';
 import { IntervencionesSelectorComponent } from './columns/intervenciones-selector';
@@ -20,7 +19,15 @@ import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleProcesoComponent } from './columns/detalle-proceso';
 import { DetalleComponent } from './columns/detalle';
 import { FechasSelectorComponent } from './columns/fechas-selector';
-import { z } from 'zod';
+
+import { AreaEstrategicaComponent } from './columns/area-estrategica';
+import { EventoComponent } from './columns/evento';
+import { ObjetivoComponent } from './columns/objetivo';
+import { EstadoComponent } from './columns/estado';
+import { ResponsablesComponent } from './columns/responsables';
+import { IndicadorLogroComponent } from './columns/indicador-logro';
+import { ComentarioDecanoComponent } from './columns/comentario-decano';
+import { AccionesComponent } from './columns/acciones';
 
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
@@ -30,43 +37,45 @@ const filaPlanificacionSchema = z.object({
   id: z.string(),
   areaEstrategica: z.string().nonempty("Área Estratégica es requerida"),
   objetivoEstrategico: z.string().nonempty("Objetivo Estratégico es requerido"),
-  // Puedes añadir más validaciones según sea necesario
+  estrategias: z.array(z.string()).nonempty("Debe seleccionar al menos una estrategia"),
+  intervencion: z.array(z.string()).nonempty("Debe seleccionar al menos una intervención"),
+  ods: z.array(z.string()),
+  tipoEvento: z.enum(['actividad', 'proyecto']),
+  evento: z.string().nonempty("El nombre del evento es requerido"),
+  objetivo: z.string().nonempty("El objetivo es requerido"),
+  fechaInicio: z.date(),
+  fechaFin: z.date(),
+  costoTotal: z.number().nonnegative("El costo total no puede ser negativo"),
+  aporteUMES: z.array(z.object({
+    financingSourceId: z.string(),
+    porcentaje: z.number().min(0).max(100),
+    amount: z.number().nonnegative(),
+  })),
+  aporteOtros: z.array(z.object({
+    financingSourceId: z.string(),
+    fuente: z.string(),
+    porcentaje: z.number().min(0).max(100),
+    amount: z.number().nonnegative(),
+  })),
+  tipoCompra: z.array(z.string()),
+  detalle: z.any().nullable(),
+  responsablePlanificacion: z.string().nonempty("Responsable de planificación es requerido"),
+  responsableEjecucion: z.string().nonempty("Responsable de ejecución es requerido"),
+  responsableFinalizacion: z.string().nonempty("Responsable de finalización es requerido"),
+  recursos: z.array(z.string()),
+  indicadorLogro: z.string().nonempty("El indicador de logro es requerido"),
+  detalleProceso: z.any().nullable(),
 });
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
-interface FilaPlanificacion {
-  id: string;
-  areaEstrategica: string;
-  objetivoEstrategico: string; // Este es el ID del objetivo estratégico como string
-  estrategias: string[];
-  intervencion: string[];
-  ods: string[];
-  tipoEvento: 'actividad' | 'proyecto';
-  evento: string;
-  objetivo: string;
+interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
-  fechaInicio: Date | null;
-  fechaFin: Date | null;
-  costoTotal: number;
-  aporteUMES: { fuente: string; porcentaje: number }[];
-  aporteOtros: { fuente: string; porcentaje: number }[];
-  tipoCompra: string[];
-  detalle: File | null;
-  responsablePlanificacion: string;
-  responsableEjecucion: string;
-  responsableFinalizacion: string;
-  recursos: string[];
-  indicadorLogro: string;
-  detalleProceso: File | null;
   comentarioDecano: string;
 }
 
-// Definir un tipo para errores por fila
 interface FilaError {
-  areaEstrategica?: string;
-  objetivoEstrategico?: string;
-  // Añadir más campos según sea necesario
+  [key: string]: string;
 }
 
 export function TablaPlanificacionComponent() {
@@ -95,7 +104,7 @@ export function TablaPlanificacionComponent() {
           credentials: 'include',
         });
         if (!responseAreas.ok) {
-          throw new Error(`Error al fetch strategic areas: ${responseAreas.statusText}`);
+          throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`);
         }
         const dataAreas = await responseAreas.json();
         const parsedAreas = strategicAreasSchema.parse(dataAreas);
@@ -110,7 +119,7 @@ export function TablaPlanificacionComponent() {
           credentials: 'include',
         });
         if (!responseObjectives.ok) {
-          throw new Error(`Error al fetch strategic objectives: ${responseObjectives.statusText}`);
+          throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`);
         }
         const dataObjectives = await responseObjectives.json();
         const parsedObjectives = dataObjectives.map((obj: any) => {
@@ -150,15 +159,15 @@ export function TablaPlanificacionComponent() {
       id: Date.now().toString(),
       areaEstrategica: '',
       objetivoEstrategico: '',
-      estrategias: [],
-      intervencion: [],
+      estrategias: [''],
+      intervencion: [''],
       ods: [],
       tipoEvento: 'actividad',
       evento: '',
       objetivo: '',
       estado: 'planificado',
-      fechaInicio: null,
-      fechaFin: null,
+      fechaInicio: new Date(),
+      fechaFin: new Date(),
       costoTotal: 0,
       aporteUMES: [],
       aporteOtros: [],
@@ -203,27 +212,25 @@ export function TablaPlanificacionComponent() {
       );
 
       // Validar la fila actualizada
-      const dataToValidate = {
-        id: id,
-        areaEstrategica: nuevaArea,
-        objetivoEstrategico: valor,
-      };
-      const validation = filaPlanificacionSchema.safeParse(dataToValidate);
-      if (!validation.success) {
-        const errors: FilaError = {};
-        validation.error.errors.forEach(err => {
-          if (err.path[0] === 'areaEstrategica') {
-            errors.areaEstrategica = err.message;
-          }
-          if (err.path[0] === 'objetivoEstrategico') {
-            errors.objetivoEstrategico = err.message;
-          }
-          // Añadir más campos si es necesario
-        });
-        setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
-      } else {
-        // Limpiar errores si la validación es exitosa
-        setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+      const filaActual = filas.find(fila => fila.id === id);
+      if (filaActual) {
+        const dataToValidate = {
+          ...filaActual,
+          areaEstrategica: nuevaArea,
+          objetivoEstrategico: valor,
+        };
+        const validation = filaPlanificacionSchema.safeParse(dataToValidate);
+        if (!validation.success) {
+          const errors: FilaError = {};
+          validation.error.errors.forEach(err => {
+            const field = err.path[0] as string;
+            errors[field] = err.message;
+          });
+          setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
+        } else {
+          // Limpiar errores si la validación es exitosa
+          setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+        }
       }
     }
   };
@@ -253,23 +260,13 @@ export function TablaPlanificacionComponent() {
     }
 
     // Validar la fila antes de enviar
-    const validation = filaPlanificacionSchema.safeParse({
-      id: fila.id,
-      areaEstrategica: fila.areaEstrategica,
-      objetivoEstrategico: fila.objetivoEstrategico,
-      // Añade más campos si es necesario para la validación
-    });
+    const validation = filaPlanificacionSchema.safeParse(fila);
 
     if (!validation.success) {
       const errors: FilaError = {};
       validation.error.errors.forEach(err => {
-        if (err.path[0] === 'areaEstrategica') {
-          errors.areaEstrategica = err.message;
-        }
-        if (err.path[0] === 'objetivoEstrategico') {
-          errors.objetivoEstrategico = err.message;
-        }
-        // Añadir más campos si es necesario
+        const field = err.path[0] as string;
+        errors[field] = err.message;
       });
       setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
       alert("Hay errores en la fila. Por favor, revisa los campos.");
@@ -282,27 +279,81 @@ export function TablaPlanificacionComponent() {
       if (!process.env.NEXT_PUBLIC_API_URL) {
         throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
       }
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities`, {
+
+      // Construir el objeto de datos para enviar al backend
+      const eventData = {
+        name: fila.evento,
+        type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
+        poaId: 1, // Reemplaza con el ID de POA correspondiente
+        statusId: 1, // Reemplaza con el ID de estado correspondiente
+        completionPercentage: 50, // Ajusta según tu lógica
+        campusId: 1, // Reemplaza con el ID de campus correspondiente
+        objective: fila.objetivo,
+        eventNature: 'Planificado', // Ajusta según tu lógica
+        isDelayed: false, // Ajusta según tu lógica
+        achievementIndicator: fila.indicadorLogro,
+        purchaseType: fila.tipoCompra.join(', '),
+        totalCost: fila.costoTotal,
+        dates: [
+          {
+            startDate: fila.fechaInicio.toISOString().split('T')[0],
+            endDate: fila.fechaFin.toISOString().split('T')[0],
+          }
+        ],
+        financings: fila.aporteUMES.map(aporte => ({
+          financingSourceId: aporte.financingSourceId.toString(),
+          percentage: aporte.porcentaje,
+          amount: aporte.amount,
+        })),
+        responsibles: [
+          {
+            responsibleRole: 'Principal',
+            name: fila.responsablePlanificacion,
+          },
+          {
+            responsibleRole: 'Ejecución',
+            name: fila.responsableEjecucion,
+          },
+          {
+            responsibleRole: 'Finalización',
+            name: fila.responsableFinalizacion,
+          },
+        ],
+        interventions: fila.intervencion.map(id => parseInt(id)), // Asegúrate de que estos IDs sean correctos
+      };
+
+      console.log('Datos a enviar:', eventData);
+
+      // Crear un FormData para enviar archivos
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(eventData));
+
+      // Adjuntar archivos si existen
+      if (fila.detalle) {
+        formData.append('costDetailDocuments', fila.detalle);
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         credentials: 'include',
-        body: JSON.stringify(fila)
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Error al enviar la actividad: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(`Error al enviar la actividad: ${errorData.message || response.statusText}`);
       }
 
       const result = await response.json();
       console.log(`Actividad enviada exitosamente:`, result);
+
       // Opcional: Actualizar el estado de la fila, por ejemplo, cambiar el estado a 'aprobado'
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
           filaItem.id === id ? { ...filaItem, estado: 'aprobado' } : filaItem
         )
       );
+
       // Limpiar errores si la actividad se envió correctamente
       setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
     } catch (err) {
@@ -355,16 +406,10 @@ export function TablaPlanificacionComponent() {
             return (
               <TableRow key={fila.id}>
                 <TableCell>
-                  {/* Área Estratégica (read-only) */}
-                  <Input
-                    value={fila.areaEstrategica}
-                    readOnly
-                    className={filaErrors[fila.id]?.areaEstrategica ? "border-red-500" : ""}
+                  <AreaEstrategicaComponent
+                    areaEstrategica={fila.areaEstrategica}
+                    error={filaErrors[fila.id]?.areaEstrategica}
                   />
-                  {/* Mostrar error si existe */}
-                  {filaErrors[fila.id]?.areaEstrategica && (
-                    <span className="text-red-500 text-sm">{filaErrors[fila.id].areaEstrategica}</span>
-                  )}
                 </TableCell>
                 <TableCell>
                   <ObjetivosEstrategicosSelectorComponent
@@ -373,7 +418,6 @@ export function TablaPlanificacionComponent() {
                     strategicObjectives={strategicObjectives}
                     addStrategicObjective={addStrategicObjective}
                   />
-                  {/* Mostrar error si existe */}
                   {filaErrors[fila.id]?.objetivoEstrategico && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].objetivoEstrategico}</span>
                   )}
@@ -404,19 +448,19 @@ export function TablaPlanificacionComponent() {
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
+                  <EventoComponent
                     value={fila.evento}
-                    onChange={(e) => actualizarFila(fila.id, 'evento', e.target.value)}
+                    onChange={(value) => actualizarFila(fila.id, 'evento', value)}
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
+                  <ObjetivoComponent
                     value={fila.objetivo}
-                    onChange={(e) => actualizarFila(fila.id, 'objetivo', e.target.value)}
+                    onChange={(value) => actualizarFila(fila.id, 'objetivo', value)}
                   />
                 </TableCell>
                 <TableCell>
-                  <Label>{fila.estado}</Label>
+                  <EstadoComponent estado={fila.estado} />
                 </TableCell>
                 <TableCell>
                   <FechasSelectorComponent
@@ -443,7 +487,7 @@ export function TablaPlanificacionComponent() {
                   <AporteOtrasFuentesComponent
                     aportes={fila.aporteOtros}
                     onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
-                  />
+                  /> 
                 </TableCell>
 
                 <TableCell>
@@ -459,23 +503,14 @@ export function TablaPlanificacionComponent() {
                   />
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Responsable Planificación"
-                      value={fila.responsablePlanificacion}
-                      onChange={(e) => actualizarFila(fila.id, 'responsablePlanificacion', e.target.value)}
-                    />
-                    <Input
-                      placeholder="Responsable Ejecución"
-                      value={fila.responsableEjecucion}
-                      onChange={(e) => actualizarFila(fila.id, 'responsableEjecucion', e.target.value)}
-                    />
-                    <Input
-                      placeholder="Responsable Finalización"
-                      value={fila.responsableFinalizacion}
-                      onChange={(e) => actualizarFila(fila.id, 'responsableFinalizacion', e.target.value)}
-                    />
-                  </div>
+                  <ResponsablesComponent
+                    responsablePlanificacion={fila.responsablePlanificacion}
+                    responsableEjecucion={fila.responsableEjecucion}
+                    responsableFinalizacion={fila.responsableFinalizacion}
+                    onChangeResponsablePlanificacion={(value) => actualizarFila(fila.id, 'responsablePlanificacion', value)}
+                    onChangeResponsableEjecucion={(value) => actualizarFila(fila.id, 'responsableEjecucion', value)}
+                    onChangeResponsableFinalizacion={(value) => actualizarFila(fila.id, 'responsableFinalizacion', value)}
+                  />
                 </TableCell>
                 <TableCell>
                   <RecursosSelectorComponent
@@ -484,9 +519,9 @@ export function TablaPlanificacionComponent() {
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
+                  <IndicadorLogroComponent
                     value={fila.indicadorLogro}
-                    onChange={(e) => actualizarFila(fila.id, 'indicadorLogro', e.target.value)}
+                    onChange={(value) => actualizarFila(fila.id, 'indicadorLogro', value)}
                   />
                 </TableCell>
                 <TableCell>
@@ -496,17 +531,13 @@ export function TablaPlanificacionComponent() {
                   />
                 </TableCell>
                 <TableCell>
-                  <Label>{fila.comentarioDecano}</Label>
+                  <ComentarioDecanoComponent comentario={fila.comentarioDecano} />
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col space-y-2">
-                    <Button variant="destructive" onClick={() => eliminarFila(fila.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" onClick={() => enviarActividad(fila.id)}>
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <AccionesComponent
+                    onEliminar={() => eliminarFila(fila.id)}
+                    onEnviar={() => enviarActividad(fila.id)}
+                  />
                 </TableCell>
               </TableRow>
             );
