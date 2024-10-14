@@ -104,8 +104,11 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
   });
 
   useEffect(() => {
-    fetchIntervenciones();
-  }, []);
+    if (poaId !== null && poaId !== undefined) {
+      fetchIntervenciones();
+    }
+  }, [poaId]);
+  
 
   const fetchIntervenciones = async () => {
     setLoading(true);
@@ -114,10 +117,9 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
       console.log("Consultando intervenciones para POA ID:", poaId); // Imprimir el poaId para verificar
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          // Agrega headers de autenticación si es necesario
-          // Por ejemplo: 'Authorization': `Bearer ${token}`
         },
       });
 
