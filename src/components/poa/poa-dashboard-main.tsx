@@ -18,9 +18,6 @@ import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { EstructuraFacultadSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
-import { JustificacionSection } from './sections/sections-justificacion-section'
-import { FODASection } from './sections/sections-foda-section'
-import { OtrosDocumentos } from './sections/sections-otros-documentos'
 import { VisualizarIntervencionesSection } from './sections/visualizar-intervenciones-section'
 import { useAuth } from '@/contexts/auth-context'
 
@@ -28,8 +25,6 @@ const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
-  { name: "Agregar/confirmar FODA", icon: BarChart2, component: FODASection },
-  //{ name: "Agregar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
 ]
 

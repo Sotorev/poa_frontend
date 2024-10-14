@@ -104,9 +104,11 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
   });
 
   useEffect(() => {
-    if (!poaId) return
-    fetchIntervenciones();
+    if (poaId !== null && poaId !== undefined) {
+      fetchIntervenciones();
+    }
   }, [poaId]);
+  
 
   const fetchIntervenciones = async () => {
     setLoading(true);
