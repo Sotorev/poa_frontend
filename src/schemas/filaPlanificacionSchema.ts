@@ -7,20 +7,17 @@ const datePairSchema = z.object({
   end: z.date(),
 });
 
-// Actualizar el esquema de filaPlanificacionSchema
+// Define el esquema de planificación de fila
 export const filaPlanificacionSchema = z.object({
   id: z.string(),
   areaEstrategica: z.string().nonempty("Área Estratégica es requerida"),
   objetivoEstrategico: z.string().nonempty("Objetivo Estratégico es requerido"),
-  estrategias: z.array(z.string()).nonempty("Debe seleccionar al menos una estrategia"),
-  intervencion: z.array(z.string()).nonempty("Debe seleccionar al menos una intervención"),
+  estrategias: z.array(z.string().nonempty("La estrategia no puede estar vacía")),
+  intervencion: z.array(z.string().nonempty("La intervención no puede estar vacía")),
   ods: z.array(z.string()),
   tipoEvento: z.enum(['actividad', 'proyecto']),
   evento: z.string().nonempty("El nombre del evento es requerido"),
   objetivo: z.string().nonempty("El objetivo es requerido"),
-  // Remover fechaInicio y fechaFin
-  // fechaInicio: z.date(),
-  // fechaFin: z.date(),
   costoTotal: z.number().nonnegative("El costo total no puede ser negativo"),
   aporteUMES: z.array(z.object({
     financingSourceId: z.number(),
@@ -40,9 +37,9 @@ export const filaPlanificacionSchema = z.object({
   recursos: z.array(z.string()),
   indicadorLogro: z.string().nonempty("El indicador de logro es requerido"),
   detalleProceso: z.any().nullable(),
-  // Añadir el campo fechas
   fechas: z.array(datePairSchema).nonempty("Debe haber al menos una fecha."),
 }).refine((data) => {
+  // Validación personalizada: proyectos deben tener exactamente una fecha
   if (data.tipoEvento === "proyecto") {
     return data.fechas.length === 1;
   }
