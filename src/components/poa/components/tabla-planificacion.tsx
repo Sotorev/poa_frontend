@@ -17,7 +17,6 @@ import { AporteUmes } from './columns/aporte-umes';
 import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes';
 import { TipoDeCompraComponent } from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
-import { DetalleProcesoComponent } from './columns/detalle-proceso';
 import { DetalleComponent } from './columns/detalle';
 
 import { AreaEstrategicaComponent } from './columns/area-estrategica';
@@ -366,7 +365,6 @@ export function TablaPlanificacionComponent() {
             <TableHead>Evento</TableHead>
             <TableHead>Objetivo</TableHead>
             <TableHead>Estado</TableHead>
-            <TableHead>Fechas</TableHead>
             <TableHead>Costo Total</TableHead>
             <TableHead>Aporte UMES</TableHead>
             <TableHead>Aporte Otros</TableHead>
@@ -375,7 +373,6 @@ export function TablaPlanificacionComponent() {
             <TableHead>Responsables</TableHead>
             <TableHead>Recursos</TableHead>
             <TableHead>Indicador de Logro</TableHead>
-            <TableHead>Detalle Proceso</TableHead>
             <TableHead>Comentario Decano</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
@@ -451,16 +448,6 @@ export function TablaPlanificacionComponent() {
                   <EstadoComponent estado={fila.estado} />
                 </TableCell>
                 <TableCell>
-                  {/* Mostrar las fechas seleccionadas */}
-                  <ul className="list-disc pl-5">
-                    {fila.fechas.map((pair, index) => (
-                      <li key={index}>
-                        {pair.start.toLocaleDateString('es-ES')} - {pair.end.toLocaleDateString('es-ES')}
-                      </li>
-                    ))}
-                  </ul>
-                </TableCell>
-                <TableCell>
                   <CurrencyInput
                     value={fila.costoTotal}
                     onChange={(valor: number | undefined) => actualizarFila(fila.id, 'costoTotal', valor ?? 0)}
@@ -512,12 +499,6 @@ export function TablaPlanificacionComponent() {
                   <IndicadorLogroComponent
                     value={fila.indicadorLogro}
                     onChange={(value: string) => actualizarFila(fila.id, 'indicadorLogro', value)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <DetalleProcesoComponent
-                    file={fila.detalleProceso}
-                    onFileChange={(file) => actualizarFila(fila.id, 'detalleProceso', file)}
                   />
                 </TableCell>
                 <TableCell>
