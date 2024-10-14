@@ -21,7 +21,10 @@ import { FinancingSource } from "@/types/FinancingSource";
 
 // Definir el esquema para el formulario de aportes
 const aporteOtrasFuentesSchema = z.object({
-  financingSourceId: z.string().nonempty("La fuente es requerida"),
+  financingSourceId: z.number({
+    required_error: "La fuente es requerida",
+    invalid_type_error: "La fuente debe ser un número",
+  }),
   porcentaje: z
     .number({
       required_error: "El porcentaje es requerido",
@@ -40,7 +43,7 @@ const aporteOtrasFuentesSchema = z.object({
 type AporteOtrasFuentesForm = z.infer<typeof aporteOtrasFuentesSchema>;
 
 interface AporteOtrasFuentes {
-  financingSourceId: string;
+  financingSourceId: number;
   porcentaje: number;
   amount: number;
 }
@@ -61,13 +64,12 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
     register,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<AporteOtrasFuentesForm>({
     resolver: zodResolver(aporteOtrasFuentesSchema),
     defaultValues: {
-      financingSourceId: '',
+      financingSourceId: 0,
       porcentaje: 0,
       amount: 0,
     },
@@ -144,7 +146,7 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
         <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2 items-end">
           <div>
             <Label>Fuente</Label>
-            <Select onValueChange={(value) => setValue('financingSourceId', value)}>
+            <Select onValueChange={(value) => setValue('financingSourceId', parseInt(value))}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Seleccionar fuente" />
               </SelectTrigger>
@@ -198,7 +200,7 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
       {/* Lista de aportes */}
       <div className="space-y-2">
         {aportes.map((aporte, index) => {
-          const fuente = financingSources.find(source => source.financingSourceId.toString() === aporte.financingSourceId)?.name || aporte.financingSourceId;
+          const fuente = financingSources.find(source => source.financingSourceId === aporte.financingSourceId)?.name || aporte.financingSourceId;
           return (
             <div key={index} className="flex items-center justify-between bg-blue-100 p-2 rounded-md">
               <span className="text-blue-800">

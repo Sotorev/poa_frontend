@@ -47,13 +47,12 @@ const filaPlanificacionSchema = z.object({
   fechaFin: z.date(),
   costoTotal: z.number().nonnegative("El costo total no puede ser negativo"),
   aporteUMES: z.array(z.object({
-    financingSourceId: z.string(),
+    financingSourceId: z.number(),
     porcentaje: z.number().min(0).max(100),
     amount: z.number().nonnegative(),
   })),
   aporteOtros: z.array(z.object({
-    financingSourceId: z.string(),
-    fuente: z.string(),
+    financingSourceId: z.number(),
     porcentaje: z.number().min(0).max(100),
     amount: z.number().nonnegative(),
   })),
@@ -282,17 +281,17 @@ export function TablaPlanificacionComponent() {
 
       // Construir el objeto de datos para enviar al backend
       const eventData = {
-        name: fila.evento,
+        name: fila.evento.trim(),
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
         poaId: 1, // Reemplaza con el ID de POA correspondiente
         statusId: 1, // Reemplaza con el ID de estado correspondiente
         completionPercentage: 50, // Ajusta según tu lógica
         campusId: 1, // Reemplaza con el ID de campus correspondiente
-        objective: fila.objetivo,
+        objective: fila.objetivo.trim(),
         eventNature: 'Planificado', // Ajusta según tu lógica
         isDelayed: false, // Ajusta según tu lógica
-        achievementIndicator: fila.indicadorLogro,
-        purchaseType: fila.tipoCompra.join(', '),
+        achievementIndicator: fila.indicadorLogro.trim(),
+        purchaseType: fila.tipoCompra.join(', ').trim(),
         totalCost: fila.costoTotal,
         dates: [
           {
@@ -300,23 +299,30 @@ export function TablaPlanificacionComponent() {
             endDate: fila.fechaFin.toISOString().split('T')[0],
           }
         ],
-        financings: fila.aporteUMES.map(aporte => ({
-          financingSourceId: aporte.financingSourceId.toString(),
-          percentage: aporte.porcentaje,
-          amount: aporte.amount,
-        })),
+        financings: [
+          ...fila.aporteUMES.map(aporte => ({
+            financingSourceId: aporte.financingSourceId,
+            percentage: aporte.porcentaje,
+            amount: aporte.amount,
+          })),
+          ...fila.aporteOtros.map(aporte => ({
+            financingSourceId: aporte.financingSourceId,
+            percentage: aporte.porcentaje,
+            amount: aporte.amount,
+          })),
+        ],
         responsibles: [
           {
             responsibleRole: 'Principal',
-            name: fila.responsablePlanificacion,
+            name: fila.responsablePlanificacion.trim(),
           },
           {
             responsibleRole: 'Ejecución',
-            name: fila.responsableEjecucion,
+            name: fila.responsableEjecucion.trim(),
           },
           {
             responsibleRole: 'Finalización',
-            name: fila.responsableFinalizacion,
+            name: fila.responsableFinalizacion.trim(),
           },
         ],
         interventions: fila.intervencion.map(id => parseInt(id)), // Asegúrate de que estos IDs sean correctos
