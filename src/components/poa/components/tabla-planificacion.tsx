@@ -32,6 +32,20 @@ import { AccionesComponent } from './columns/acciones';
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
 
+// Definir el tipo para las opciones de compra
+interface PurchaseType {
+  id: number;
+  name: string;
+}
+
+// Definir initialOptions con tipos explícitos
+const initialOptions: PurchaseType[] = [
+  { id: 1, name: 'Compra Directa' },
+  { id: 2, name: 'Licitación Pública' },
+  { id: 3, name: 'Concurso de Proveedores' },
+  // Añade más opciones según tus necesidades
+];
+
 // Definir el esquema de las filas para validación con Zod
 const filaPlanificacionSchema = z.object({
   id: z.string(),
@@ -60,7 +74,7 @@ const filaPlanificacionSchema = z.object({
   detalle: z.any().nullable(),
   responsablePlanificacion: z.string().nonempty("Responsable de planificación es requerido"),
   responsableEjecucion: z.string().nonempty("Responsable de ejecución es requerido"),
-  responsableFinalizacion: z.string().nonempty("Responsable de finalización es requerido"),
+  responsableSeguimiento: z.string().nonempty("Responsable de seguimiento es requerido"), // Cambio aquí
   recursos: z.array(z.string()),
   indicadorLogro: z.string().nonempty("El indicador de logro es requerido"),
   detalleProceso: z.any().nullable(),
@@ -158,8 +172,8 @@ export function TablaPlanificacionComponent() {
       id: Date.now().toString(),
       areaEstrategica: '',
       objetivoEstrategico: '',
-      estrategias: [''],
-      intervencion: [''],
+      estrategias: [''], // Cambiado de [''] a []
+      intervencion: [''], // Cambiado de [''] a []
       ods: [],
       tipoEvento: 'actividad',
       evento: '',
@@ -174,7 +188,7 @@ export function TablaPlanificacionComponent() {
       detalle: null,
       responsablePlanificacion: '',
       responsableEjecucion: '',
-      responsableFinalizacion: '',
+      responsableSeguimiento: '', // Cambio aquí
       recursos: [],
       indicadorLogro: '',
       detalleProceso: null,
@@ -193,7 +207,7 @@ export function TablaPlanificacionComponent() {
   };
 
   // Función para actualizar una fila
-  const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any) => {
+  const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
     setFilas(prevFilas =>
       prevFilas.map(fila =>
         fila.id === id ? { ...fila, [campo]: valor } : fila
@@ -291,7 +305,10 @@ export function TablaPlanificacionComponent() {
         eventNature: 'Planificado', // Ajusta según tu lógica
         isDelayed: false, // Ajusta según tu lógica
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseType: fila.tipoCompra.join(', ').trim(),
+        purchaseType: fila.tipoCompra.map((typeId) => {
+          const tipo = initialOptions.find((opt) => opt.id === parseInt(typeId, 10));
+          return tipo ? tipo.name : typeId; // Asegura que se envíen los nombres correctos
+        }).join(', ').trim(),
         totalCost: fila.costoTotal,
         dates: [
           {
@@ -321,11 +338,11 @@ export function TablaPlanificacionComponent() {
             name: fila.responsableEjecucion.trim(),
           },
           {
-            responsibleRole: 'Finalización',
-            name: fila.responsableFinalizacion.trim(),
+            responsibleRole: 'Seguimiento', // Cambiado de 'Finalización' a 'Seguimiento'
+            name: fila.responsableSeguimiento.trim(), // Cambio aquí
           },
         ],
-        interventions: fila.intervencion.map(id => parseInt(id)), // Asegúrate de que estos IDs sean correctos
+        interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)), // Asegura que sean números válidos
       };
 
       console.log('Datos a enviar:', eventData);
@@ -472,14 +489,14 @@ export function TablaPlanificacionComponent() {
                   <FechasSelectorComponent
                     fechaInicio={fila.fechaInicio}
                     fechaFin={fila.fechaFin}
-                    onChangeFechaInicio={(fecha) => actualizarFila(fila.id, 'fechaInicio', fecha)}
-                    onChangeFechaFin={(fecha) => actualizarFila(fila.id, 'fechaFin', fecha)}
+                    onChangeFechaInicio={(fecha: Date | null) => actualizarFila(fila.id, 'fechaInicio', fecha)}
+                    onChangeFechaFin={(fecha: Date | null) => actualizarFila(fila.id, 'fechaFin', fecha)}
                   />
                 </TableCell>
                 <TableCell>
                   <CurrencyInput
                     value={fila.costoTotal}
-                    onChange={(valor) => actualizarFila(fila.id, 'costoTotal', valor)}
+                    onChange={(valor: number | undefined) => actualizarFila(fila.id, 'costoTotal', valor ?? 0)}
                   />
                 </TableCell>
                 <TableCell>
@@ -512,10 +529,10 @@ export function TablaPlanificacionComponent() {
                   <ResponsablesComponent
                     responsablePlanificacion={fila.responsablePlanificacion}
                     responsableEjecucion={fila.responsableEjecucion}
-                    responsableFinalizacion={fila.responsableFinalizacion}
-                    onChangeResponsablePlanificacion={(value) => actualizarFila(fila.id, 'responsablePlanificacion', value)}
-                    onChangeResponsableEjecucion={(value) => actualizarFila(fila.id, 'responsableEjecucion', value)}
-                    onChangeResponsableFinalizacion={(value) => actualizarFila(fila.id, 'responsableFinalizacion', value)}
+                    responsableSeguimiento={fila.responsableSeguimiento} // Cambio aquí
+                    onChangeResponsablePlanificacion={(value: string) => actualizarFila(fila.id, 'responsablePlanificacion', value)}
+                    onChangeResponsableEjecucion={(value: string) => actualizarFila(fila.id, 'responsableEjecucion', value)}
+                    onChangeResponsableSeguimiento={(value: string) => actualizarFila(fila.id, 'responsableSeguimiento', value)} // Cambio aquí
                   />
                 </TableCell>
                 <TableCell>
@@ -527,7 +544,7 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <IndicadorLogroComponent
                     value={fila.indicadorLogro}
-                    onChange={(value) => actualizarFila(fila.id, 'indicadorLogro', value)}
+                    onChange={(value: string) => actualizarFila(fila.id, 'indicadorLogro', value)}
                   />
                 </TableCell>
                 <TableCell>
