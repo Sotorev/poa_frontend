@@ -1,4 +1,3 @@
-// src/components/poa/components/columns/objetivos-estrategicos-selector.tsx
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -11,11 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Check } from "lucide-react";
 import { StrategicObjective } from "@/schemas/strategicObjectiveSchema";
-import { StrategicObjectiveForm } from "@/components/strategicObjective/StrategicObjectiveForm";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Objetivo {
   id: string;
@@ -35,16 +33,13 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
   const [objetivosList, setObjetivosList] = useState<Objetivo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [isAddingNew, setIsAddingNew] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const newObjetivoFormRef = useRef<HTMLDivElement>(null); // Ref para el formulario
 
-  // Construir la lista de objetivos desde los strategicObjectives prop
   useEffect(() => {
     const mappedObjetivos: Objetivo[] = strategicObjectives.map(obj => ({
       id: obj.strategicObjectiveId.toString(),
       name: obj.description,
-      number: obj.strategicObjectiveId, // Asumiendo que 'number' corresponde a 'strategicObjectiveId'
+      number: obj.strategicObjectiveId,
       isCustom: false,
     }))
     setObjetivosList(mappedObjetivos)
@@ -58,23 +53,6 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
 
   const handleSelectObjetivo = (objetivo: string) => {
     onSelectObjetivo(objetivo);
-    setIsOpen(false);
-  };
-
-  const handleAddNewObjetivoSuccess = (createdObjetivo: StrategicObjective) => {
-    const newObj: Objetivo = {
-      id: createdObjetivo.strategicObjectiveId.toString(),
-      name: createdObjetivo.description,
-      number: createdObjetivo.strategicObjectiveId, // Ajusta según corresponda
-      isCustom: true,
-    };
-
-    setObjetivosList(prev => [...prev, newObj]);
-    onSelectObjetivo(newObj.id);
-    setIsAddingNew(false);
-
-    // Llamar a la función del padre para agregar el nuevo objetivo estratégico
-    addStrategicObjective(createdObjetivo)
   };
 
   useEffect(() => {
@@ -83,36 +61,40 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isAddingNew && newObjetivoFormRef.current) {
-      const firstInput = newObjetivoFormRef.current.querySelector('input');
-      if (firstInput) {
-        (firstInput as HTMLInputElement).focus();
-      }
-    }
-  }, [isAddingNew]);
+  const selectedObjetivo = objetivosList.find(obj => obj.id === selectedObjetivos[0]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full max-w-md">
       <Select 
         onValueChange={handleSelectObjetivo} 
         open={isOpen} 
-        onOpenChange={(open) => {
-          setIsOpen(open);
-          if (!open) {
-            setSearchTerm("");
-          }
-        }}
+        onOpenChange={setIsOpen}
         value={selectedObjetivos[0] || undefined}
       >
-        <SelectTrigger className="w-[200px]">
+        <SelectTrigger className="w-full border-green-500 focus:ring-green-500">
           <SelectValue placeholder="Seleccionar objetivo">
-            {selectedObjetivos[0] || "Seleccionar objetivo"}
+            {selectedObjetivo && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center w-full">
+                      <div className="flex-shrink-0 w-6 h-6 rounded bg-green-500 text-white font-bold flex items-center justify-center mr-2">
+                        {selectedObjetivo.number}
+                      </div>
+                      <span className="truncate flex-grow">{selectedObjetivo.name}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start" className="max-w-xs">
+                    <p>{selectedObjetivo.name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
-            <Search className="mr-2 h-4 w-4 shrink-0 text-green-500" />
+            <Search className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
             <Input
               ref={searchInputRef}
               placeholder="Buscar objetivo..."
@@ -127,44 +109,24 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
                 <SelectItem
                   key={obj.id}
                   value={obj.id}
-                  onSelect={() => handleSelectObjetivo(obj.id)}
-                  className={selectedObjetivos.includes(obj.id) ? 'bg-primary/50' : ''}
+                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-green-50"
                 >
-                  {obj.isCustom ? `E${obj.number}: ${obj.name}` : `${obj.number}: ${obj.name}`}
+                  <div className="flex items-start w-[300px]">
+                    <div className={`flex-shrink-0 w-6 h-6 rounded ${
+                      selectedObjetivos.includes(obj.id) ? 'bg-green-700' : 'bg-green-500'
+                    } text-white font-bold flex items-center justify-center mr-2`}>
+                      {obj.number}
+                    </div>
+                    <div className="flex-grow">
+                      <p className="text-sm leading-tight">{obj.name}</p>
+                    </div>
+                  </div>
                 </SelectItem>
               ))}
             </SelectGroup>
           </ScrollArea>
         </SelectContent>
       </Select>
-      <div className="flex items-center space-x-2">
-        {isAddingNew ? (
-          <div ref={newObjetivoFormRef} className="w-full">
-            <StrategicObjectiveForm onSuccess={handleAddNewObjetivoSuccess} />
-            <div className="flex items-center space-x-2 mt-2">
-              <Button
-                onClick={() => setIsAddingNew(false)}
-                size="sm"
-                variant="ghost"
-                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
-              >
-                <X className="h-4 w-4" />
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            onClick={() => setIsAddingNew(true)}
-            size="sm"
-            variant="ghost"
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Agregar nuevo objetivo
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
