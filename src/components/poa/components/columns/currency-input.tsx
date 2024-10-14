@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { NumericFormat } from 'react-number-format'
 
 interface CurrencyInputProps {
@@ -10,14 +10,9 @@ interface CurrencyInputProps {
 export default function CurrencyInput({ value, onChange, width = 'w-64' }: CurrencyInputProps) {
   const [inputValue, setInputValue] = useState<string>('')
 
-  useEffect(() => {
-    if (value !== undefined) {
-      setInputValue(value.toString())
-    }
-  }, [value])
-
   const handleValueChange = (values: any) => {
     const { floatValue } = values
+    setInputValue(values.value)
     onChange(floatValue)
   }
 
