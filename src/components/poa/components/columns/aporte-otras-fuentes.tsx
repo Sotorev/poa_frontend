@@ -1,113 +1,246 @@
-'use client'
+// src/components/poa/components/columns/aporte-otras-fuentes.tsx
+'use client';
 
-import * as React from "react"
-import { useState, useEffect } from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Plus, X } from "lucide-react"
+import React, { useState, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Plus, Check, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createFinancingSourceSchema, CreateFinancingSourceInput } from "@/schemas/financingSourceSchema";
+import { z } from "zod";
+import { FinancingSource } from "@/types/FinancingSource";
+
+// Definir el esquema para el formulario de aportes
+const aporteOtrasFuentesSchema = z.object({
+  fuente: z.string().min(1, "La fuente es requerida"),
+  porcentaje: z
+    .number({
+      required_error: "El porcentaje es requerido",
+      invalid_type_error: "El porcentaje debe ser un número",
+    })
+    .min(0, "El porcentaje no puede ser negativo")
+    .max(100, "El porcentaje no puede superar 100"),
+});
+
+type AporteOtrasFuentesForm = z.infer<typeof aporteOtrasFuentesSchema>;
 
 interface AporteOtrasFuentes {
-  fuente: string
-  porcentaje: number
+  fuente: string;
+  porcentaje: number;
 }
 
 interface AporteOtrasFuentesProps {
-  aportes: AporteOtrasFuentes[]
-  onChangeAportes: (aportes: AporteOtrasFuentes[]) => void
+  aportes: AporteOtrasFuentes[];
+  onChangeAportes: (aportes: AporteOtrasFuentes[]) => void;
 }
 
-const initialOptions = [
-  { fuente: "Estudiantes" },
-  { fuente: "Donación" },
-]
+interface FinancingSourceWithFrontend extends FinancingSource {
+  id: string;
+}
 
 export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: AporteOtrasFuentesProps) {
-  const [options, setOptions] = useState(initialOptions)
-  const [selectedOption, setSelectedOption] = useState<string | null>(null)
-  const [newOption, setNewOption] = useState("")
-  const [porcentaje, setPorcentaje] = useState("")
-  const [localAportes, setLocalAportes] = useState<AporteOtrasFuentes[]>(aportes)
-  const [isAddingNew, setIsAddingNew] = useState(false)
+  const [options, setOptions] = useState<FinancingSourceWithFrontend[]>([]);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Configurar react-hook-form
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AporteOtrasFuentesForm>({
+    resolver: zodResolver(aporteOtrasFuentesSchema),
+    defaultValues: {
+      fuente: "",
+      porcentaje: 0,
+    },
+  });
+
+  // Fetch de fuentes de financiamiento con category "Otra"
   useEffect(() => {
-    setLocalAportes(aportes)
-  }, [aportes])
+    const fetchFinancingSources = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
 
-  const handleAddNewOption = () => {
-    if (newOption.trim() !== "") {
-      setOptions([...options, { fuente: newOption.trim() }])
-      setNewOption("")
-      setIsAddingNew(false)
-      setSelectedOption(newOption.trim())
+        if (!response.ok) {
+          throw new Error(`Error al obtener fuentes de financiamiento: ${response.statusText}`);
+        }
+
+        const data: FinancingSource[] = await response.json();
+        // Filtrar por category "Otra"
+        const filteredData = data.filter(source => source.category === "Otra" && !source.isDeleted);
+
+        // Mapear a FinancingSourceWithFrontend
+        const mappedSources: FinancingSourceWithFrontend[] = filteredData.map((source) => ({
+          ...source,
+          id: source.financingSourceId.toString(),
+        }));
+
+        setOptions(mappedSources);
+      } catch (err) {
+        console.error(err);
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFinancingSources();
+  }, []);
+
+  // Función para manejar el envío del formulario de agregar aporte
+  const onSubmit = async (data: AporteOtrasFuentesForm) => {
+    try {
+      // Verificar si la fuente ya existe en las opciones
+      let existingSource = options.find(source => source.name.toLowerCase() === data.fuente.toLowerCase());
+
+      if (!existingSource) {
+        // Crear una nueva fuente de financiamiento en el backend
+        const createResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            name: data.fuente,
+            category: "Otra",
+          } as CreateFinancingSourceInput),
+        });
+
+        if (!createResponse.ok) {
+          const errorData = await createResponse.json();
+          throw new Error(errorData.message || "Error al crear la fuente de financiamiento");
+        }
+
+        const createdSource: FinancingSource = await createResponse.json();
+        existingSource = {
+          ...createdSource,
+          id: createdSource.financingSourceId.toString(),
+        };
+
+        // Actualizar las opciones
+        setOptions(prev => [...prev, existingSource as FinancingSourceWithFrontend]);
+      }
+
+      // Agregar el nuevo aporte
+      const newAportes = [...aportes, { fuente: existingSource.name, porcentaje: data.porcentaje }];
+      onChangeAportes(newAportes);
+
+      // Resetear el formulario
+      reset();
+      setIsAddingNew(false);
+    } catch (err) {
+      console.error(err);
+      alert(`Error al agregar el aporte: ${(err as Error).message}`);
     }
-  }
+  };
 
-  const handleAddAporte = () => {
-    if (selectedOption && porcentaje) {
-      const newAportes = [...localAportes, { fuente: selectedOption, porcentaje: parseFloat(porcentaje) }]
-      setLocalAportes(newAportes)
-      onChangeAportes(newAportes)
-      setSelectedOption(null)
-      setPorcentaje("")
-    }
-  }
-
+  // Función para manejar la eliminación de un aporte
   const handleRemoveAporte = (fuente: string) => {
-    const newAportes = localAportes.filter(aporte => aporte.fuente !== fuente)
-    setLocalAportes(newAportes)
-    onChangeAportes(newAportes)
-  }
+    const newAportes = aportes.filter(aporte => aporte.fuente !== fuente);
+    onChangeAportes(newAportes);
+  };
+
+  if (loading) return <div>Cargando fuentes de financiamiento...</div>;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
 
   return (
     <div className="space-y-4">
       <Label className="text-sm font-medium text-gray-700">Aporte Otras Fuentes</Label>
-      <div className="flex space-x-2">
-        <Select value={selectedOption || ""} onValueChange={setSelectedOption}>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
+        <Select
+          value={undefined}
+          onValueChange={(value) => {
+            // Manejar selección externa si es necesario
+          }}
+        >
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Seleccionar fuente" />
           </SelectTrigger>
           <SelectContent>
-            {options.map(option => (
-              <SelectItem key={option.fuente} value={option.fuente}>
-                {option.fuente}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              {options.map(option => (
+                <SelectItem key={option.id} value={option.name}>
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
         <Input
           type="number"
           placeholder="Porcentaje"
-          value={porcentaje}
-          onChange={(e) => setPorcentaje(e.target.value)}
-          className="w-24"
+          {...register("porcentaje", { valueAsNumber: true })}
+          className={`w-24 ${
+            errors.porcentaje ? "border-red-500" : "border-green-300"
+          }`}
         />
-        <Button onClick={handleAddAporte} disabled={!selectedOption || !porcentaje}>
+        <Button type="submit" disabled={!!errors.porcentaje}>
           Agregar
         </Button>
-      </div>
+      </form>
+
+      {/* Mostrar errores de validación */}
+      {errors.fuente && (
+        <span className="text-red-500 text-sm">{errors.fuente.message}</span>
+      )}
+      {errors.porcentaje && (
+        <span className="text-red-500 text-sm">{errors.porcentaje.message}</span>
+      )}
+
+      {/* Agregar nueva fuente */}
       {isAddingNew ? (
-        <div className="flex space-x-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
           <Input
-            placeholder="Nueva fuente"
-            value={newOption}
-            onChange={(e) => setNewOption(e.target.value)}
+            placeholder="Nueva fuente..."
+            {...register("fuente")}
+            className={`w-[200px] ${
+              errors.fuente ? "border-red-500" : "border-green-300"
+            }`}
           />
-          <Button onClick={handleAddNewOption}>
-            <Plus className="h-4 w-4" />
+          <Input
+            type="number"
+            placeholder="Porcentaje"
+            {...register("porcentaje", { valueAsNumber: true })}
+            className={`w-24 ${
+              errors.porcentaje ? "border-red-500" : "border-green-300"
+            }`}
+          />
+          <Button type="submit">
+            <Check className="h-4 w-4" />
           </Button>
-          <Button onClick={() => setIsAddingNew(false)} variant="outline">
+          <Button type="button" onClick={() => { reset(); setIsAddingNew(false); }}>
             <X className="h-4 w-4" />
           </Button>
-        </div>
+        </form>
       ) : (
         <Button onClick={() => setIsAddingNew(true)} variant="outline" className="text-sm">
           <Plus className="h-4 w-4 mr-2" /> Agregar nueva fuente
         </Button>
       )}
+
+      {/* Lista de aportes */}
       <div className="space-y-2">
-        {localAportes.map(aporte => (
+        {aportes.map(aporte => (
           <div key={aporte.fuente} className="flex items-center justify-between bg-blue-100 p-2 rounded-md">
             <span className="text-blue-800">{aporte.fuente}: {aporte.porcentaje}%</span>
             <Button onClick={() => handleRemoveAporte(aporte.fuente)} variant="ghost" size="sm">
@@ -117,5 +250,5 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
         ))}
       </div>
     </div>
-  )
+  );
 }
