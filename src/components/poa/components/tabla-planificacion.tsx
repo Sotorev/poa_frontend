@@ -180,7 +180,7 @@ export function TablaPlanificacionComponent() {
     toast.success("Fila eliminada exitosamente."); // Notificación al eliminar una fila
   };
 
-  // Función para actualizar una fila
+  // Función para actualizar una fila (Modificada: Eliminada la validación)
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
     setFilas(prevFilas =>
       prevFilas.map(fila => {
@@ -193,21 +193,8 @@ export function TablaPlanificacionComponent() {
             updatedFila.areaEstrategica = nuevaArea;
           }
 
-          // Validar la fila actualizada
-          const validation = filaPlanificacionSchema.safeParse(updatedFila);
-          if (!validation.success) {
-            const errors: FilaError = {};
-            validation.error.errors.forEach(err => {
-              const field = err.path[0] as string;
-              errors[field] = err.message;
-            });
-            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
-            toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
-            console.error("Error de validación:", validation.error.errors);
-          } else {
-            // Limpiar errores si la validación es exitosa
-            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
-          }
+          // Eliminamos la validación aquí
+          // Ya no validamos en cada cambio de datos
 
           return updatedFila;
         }
@@ -234,36 +221,7 @@ export function TablaPlanificacionComponent() {
 
   // Función para manejar cambios en fechas desde ActividadProyectoSelector
   const manejarCambioFechas = (id: string, data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
-    // setFilas(prevFilas =>
-    //   prevFilas.map(fila => {
-    //     if (fila.id === id) {
-    //       const updatedFila = {
-    //         ...fila,
-    //         tipoEvento: data.tipoEvento,
-    //         fechas: data.fechas as [DatePair, ...DatePair[]], // Asegurar el tipo de tupla
-    //       };
-
-    //       // Validar la fila actualizada
-    //       const validation = filaPlanificacionSchema.safeParse(updatedFila);
-    //       if (!validation.success) {
-    //         const errors: FilaError = {};
-    //         validation.error.errors.forEach(err => {
-    //           const field = err.path[0] as string;
-    //           errors[field] = err.message;
-    //         });
-    //         setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
-    //         toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
-    //         console.error("Error de validación:", validation.error.errors);
-    //       } else {
-    //         // Limpiar errores si la validación es exitosa
-    //         setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
-    //       }
-
-    //       return updatedFila;
-    //     }
-    //     return fila;
-    //   })
-    // );
+    // Puedes implementar esta función si es necesario
   };
 
   // Función para enviar una fila al backend
