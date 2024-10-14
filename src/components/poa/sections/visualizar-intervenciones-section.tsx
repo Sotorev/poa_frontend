@@ -12,6 +12,8 @@ import { CalendarIcon, ChevronDown, ChevronUp, Edit, Info, Check, X, Download } 
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useForm, SubmitHandler } from 'react-hook-form';
+import { SectionProps } from '../poa-dashboard-main';
+
 
 // Importar las interfaces definidas
 // Puedes mover estas interfaces a un archivo separado si lo prefieres
@@ -65,11 +67,7 @@ interface Intervencion {
   costDetails?: any[];    // Si tienes una estructura específica, puedes definirla
 }
 
-interface SectionProps {
-  name: string;
-  isActive: boolean;
-  poaId: string | null; // Incluir poaId en las props
-}
+
 
 interface FilterFormInputs {
   fechaInicio?: Date;
@@ -253,7 +251,7 @@ export function VisualizarIntervencionesSection({ name, isActive, poaId }: Secti
             </TableCell>
             <TableCell>
               {intervencion.processDocumentPath ? (
-                <Button variant="ghost" size="icon" onClick={() => window.open(intervencion.processDocumentPath, '_blank')}>
+                <Button variant="ghost" size="icon" onClick={() => intervencion.processDocumentPath && window.open(intervencion.processDocumentPath, '_blank')}>
                   <Download className="h-4 w-4" />
                 </Button>
               ) : '-'}

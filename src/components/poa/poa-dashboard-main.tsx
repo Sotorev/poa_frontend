@@ -16,14 +16,21 @@ import {
 import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
-import { EstructuraFacultadSection } from './sections/estructura-facultad-section'
+import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { VisualizarIntervencionesSection } from './sections/visualizar-intervenciones-section'
 import { useAuth } from '@/contexts/auth-context'
 
+export interface SectionProps {
+  name: string
+  isActive: boolean
+  poaId: number
+  facultyId: number
+}
+
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
-  { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: EstructuraFacultadSection },
+  { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
   { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
 ]
@@ -37,8 +44,8 @@ export function PoaDashboardMain() {
 
   const { user, loading } = useAuth()
 
-  const [facultyId, setFacultyId] = useState<string | null>(null) // Estado para almacenar el facultyId
-  const [poaId, setPoaId] = useState<string | null>(null); // Estado para almacenar el poaId
+  const [facultyId, setFacultyId] = useState<number>() // Estado para almacenar el facultyId
+  const [poaId, setPoaId] = useState<number>(); // Estado para almacenar el poaId
 
   // useEffect para obtener el facultyId cuando el componente se monta
   useEffect(() => {
@@ -260,13 +267,13 @@ export function PoaDashboardMain() {
         </div>
 
         {/* Renderizar las secciones */}
-        {sections.map((section) => (
+        {poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
           <section.component
             key={section.name}
             name={section.name}
             isActive={activeSection === section.name}
             poaId={poaId} // Pasar el poaId a cada sección
-            facultyId={facultyId || ''} // Pasar el facultyId a cada sección
+            facultyId={facultyId} // Pasar el facultyId a cada sección
           />
         ))}
         <div className="mb-32"></div>

@@ -11,11 +11,8 @@ import { ChevronDown, ChevronUp, Trash2, PlusCircle, Save, Edit, Loader2, UserPl
 import { useToast } from "@/hooks/use-toast"
 import { z } from 'zod'
 
-interface SectionProps {
-  name: string
-  isActive: boolean
-  poaId: number
-}
+import { SectionProps } from '../poa-dashboard-main';
+
 
 interface TeamMember {
   name: string
@@ -51,7 +48,7 @@ const createUserSchema = z.object({
   facultyId: z.number().int().positive(),
 })
 
-export function EquipoResponsableSectionComponent({ name, isActive, poaId }: SectionProps) {
+export function EquipoResponsableSectionComponent({ name, isActive, poaId, facultyId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [allUsers, setAllUsers] = useState<User[]>([])
@@ -68,7 +65,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
     username: '',
     password: '',
     roleId: 0,
-    facultyId: 1, // Assuming a default facultyId
+    facultyId: facultyId, // Assuming a default facultyId
   })
   const { toast } = useToast()
 
@@ -316,8 +313,8 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId }: Sec
                     <TableHeader>
                       <TableRow>
                         <TableHead className="text-green-700">Nombre</TableHead>
-                        <TableHead className="text-green-700">Email</TableHead>
-                        <TableHead className="text-green-700">Username</TableHead>
+                        <TableHead className="text-green-700">Correo electrónico</TableHead>
+                        <TableHead className="text-green-700">Nombre de usuario</TableHead>
                         {isEditing && <TableHead className="text-green-700">Acciones</TableHead>}
                       </TableRow>
                     </TableHeader>
