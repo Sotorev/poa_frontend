@@ -19,7 +19,7 @@ import { TipoDeCompraComponent } from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleProcesoComponent } from './columns/detalle-proceso';
 import { DetalleComponent } from './columns/detalle';
-import { FechasSelectorComponent } from './columns/fechas-selector';
+
 
 import { AreaEstrategicaComponent } from './columns/area-estrategica';
 import { EventoComponent } from './columns/evento';
@@ -413,7 +413,6 @@ export function TablaPlanificacionComponent() {
             <TableHead>Evento</TableHead>
             <TableHead>Objetivo</TableHead>
             <TableHead>Estado</TableHead>
-            <TableHead>Fechas</TableHead>
             <TableHead>Costo Total</TableHead>
             <TableHead>Aporte UMES</TableHead>
             <TableHead>Aporte Otros</TableHead>
@@ -496,14 +495,14 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <EstadoComponent estado={fila.estado} />
                 </TableCell>
-                <TableCell>
+                {/* <TableCell>
                   <FechasSelectorComponent
                     fechaInicio={fila.fechaInicio}
                     fechaFin={fila.fechaFin}
                     onChangeFechaInicio={(fecha: Date | null) => actualizarFila(fila.id, 'fechaInicio', fecha)}
                     onChangeFechaFin={(fecha: Date | null) => actualizarFila(fila.id, 'fechaFin', fecha)}
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell>
                   <CurrencyInput
                     value={fila.costoTotal}
