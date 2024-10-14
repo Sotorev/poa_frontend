@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { z } from 'zod';
+import { toast } from 'react-toastify'; // Importa toast de react-toastify
 
 import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector';
 import { EstrategiasSelectorComponent } from './columns/estrategias-selector';
@@ -74,7 +75,7 @@ const filaPlanificacionSchema = z.object({
   detalle: z.any().nullable(),
   responsablePlanificacion: z.string().nonempty("Responsable de planificación es requerido"),
   responsableEjecucion: z.string().nonempty("Responsable de ejecución es requerido"),
-  responsableSeguimiento: z.string().nonempty("Responsable de seguimiento es requerido"), // Cambio aquí
+  responsableSeguimiento: z.string().nonempty("Responsable de seguimiento es requerido"),
   recursos: z.array(z.string()),
   indicadorLogro: z.string().nonempty("El indicador de logro es requerido"),
   detalleProceso: z.any().nullable(),
@@ -195,6 +196,7 @@ export function TablaPlanificacionComponent() {
       comentarioDecano: '',
     };
     setFilas([...filas, nuevaFila]);
+    toast.info("Nueva fila agregada."); // Notificación opcional al agregar una fila
   };
 
   // Función para eliminar una fila
@@ -204,6 +206,7 @@ export function TablaPlanificacionComponent() {
     const updatedErrors = { ...filaErrors };
     delete updatedErrors[id];
     setFilaErrors(updatedErrors);
+    toast.success("Fila eliminada exitosamente."); // Notificación al eliminar una fila
   };
 
   // Función para actualizar una fila
@@ -240,6 +243,8 @@ export function TablaPlanificacionComponent() {
             errors[field] = err.message;
           });
           setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
+          toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
+          console.error("Error de validación:", validation.error.errors);
         } else {
           // Limpiar errores si la validación es exitosa
           setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
@@ -261,6 +266,7 @@ export function TablaPlanificacionComponent() {
     } else {
       console.warn(`No se encontró Área Estratégica para el nuevo Objetivo Estratégico ID: ${createdObjetivo.strategicObjectiveId}`);
     }
+    toast.success("Nuevo objetivo estratégico agregado."); // Notificación al agregar un objetivo estratégico
   };
 
   // Función para enviar una fila al backend
@@ -269,6 +275,7 @@ export function TablaPlanificacionComponent() {
     const fila = filas.find(fila => fila.id === id);
     if (!fila) {
       console.error(`Fila con ID ${id} no encontrada.`);
+      toast.error("La fila no se encontró."); // Notificación de error
       return;
     }
 
@@ -282,7 +289,7 @@ export function TablaPlanificacionComponent() {
         errors[field] = err.message;
       });
       setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
-      alert("Hay errores en la fila. Por favor, revisa los campos.");
+      toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
       console.error("Error de validación:", validation.error.errors);
       return;
     }
@@ -290,7 +297,7 @@ export function TablaPlanificacionComponent() {
     // Implementar la lógica para enviar la actividad al backend
     try {
       if (!process.env.NEXT_PUBLIC_API_URL) {
-        throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
+        throw new Error("La URL de la API no está definida.");
       }
 
       // Construir el objeto de datos para enviar al backend
@@ -370,6 +377,9 @@ export function TablaPlanificacionComponent() {
       const result = await response.json();
       console.log(`Actividad enviada exitosamente:`, result);
 
+      // Notificar éxito al usuario
+      toast.success("Actividad enviada exitosamente.");
+
       // Opcional: Actualizar el estado de la fila, por ejemplo, cambiar el estado a 'aprobado'
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
@@ -381,7 +391,8 @@ export function TablaPlanificacionComponent() {
       setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
     } catch (err) {
       console.error(err);
-      alert(`Error al enviar la actividad: ${(err as Error).message}`);
+      // Notificar error al usuario
+      toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
 

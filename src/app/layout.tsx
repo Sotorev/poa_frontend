@@ -1,10 +1,11 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
 import Header from "@/components/header";
-import { Toaster } from "@/components/ui/toaster"
-
+import { ToastContainer } from 'react-toastify'; // Importa ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Importa los estilos de react-toastify
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,10 +35,22 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Header />
-          <main>
+          <main className="flex-grow">
             {children}
           </main>
-          <Toaster />
+          {/* Configuración del contenedor de react-toastify */}
+          <ToastContainer 
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored" // Puedes cambiar el tema según tus preferencias
+          />
         </AuthProvider>
       </body>
     </html>
