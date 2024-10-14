@@ -1,4 +1,3 @@
-// src/components/poa/components/columns/intervenciones-selector.tsx
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
@@ -20,15 +19,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createInterventionSchema, CreateInterventionInput } from "@/schemas/interventionSchema";
-import { z } from "zod";
 
-// Definir el tipo Intervencion según el backend
 interface Intervencion {
   interventionId: number;
   name: string;
   isDeleted: boolean;
   strategyId: number;
-  isCustom?: boolean; // Añadido para intervenciones personalizadas
+  isCustom?: boolean;
 }
 
 interface IntervencionesProps {
@@ -44,7 +41,6 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
   const searchInputRef = useRef<HTMLInputElement>(null);
   const newIntervencionInputRef = useRef<HTMLInputElement>(null);
 
-  // Configurar react-hook-form
   const {
     register,
     handleSubmit,
@@ -54,11 +50,10 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
     resolver: zodResolver(createInterventionSchema),
     defaultValues: {
       name: "",
-      strategyId: 0, // Ajusta esto según la lógica de tu aplicación
+      strategyId: 0,
     },
   });
 
-  // Fetch de intervenciones desde el backend al montar el componente
   useEffect(() => {
     const fetchIntervenciones = async () => {
       try {
@@ -72,7 +67,6 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
           throw new Error(`Error al obtener intervenciones: ${response.statusText}`);
         }
         const data: Intervencion[] = await response.json();
-        // Filtrar intervenciones no eliminadas
         const filteredIntervenciones = data.filter(
           (intervencion) => !intervencion.isDeleted
         );
@@ -92,7 +86,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
   }, [intervencionesList, searchTerm]);
 
   const handleSelectIntervencion = (intervencionId: string) => {
-    if (!intervencionId) return; // Evitar valores inválidos
+    if (!intervencionId) return;
     const updatedIntervenciones = selectedIntervenciones.includes(intervencionId)
       ? selectedIntervenciones.filter((id) => id !== intervencionId)
       : [...selectedIntervenciones, intervencionId];
@@ -122,17 +116,9 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
       }
 
       const createdIntervencion: Intervencion = await response.json();
-
-      // Asignar isCustom a true para intervenciones creadas desde el frontend
       const newIntervencion: Intervencion = { ...createdIntervencion, isCustom: true };
-
-      // Actualizar la lista de intervenciones
       setIntervencionesList((prev) => [...prev, newIntervencion]);
-
-      // Seleccionar la nueva intervención
       onSelectIntervencion([...selectedIntervenciones, newIntervencion.interventionId.toString()]);
-
-      // Resetear el formulario y cerrar el formulario de agregar
       reset();
       setIsAddingNew(false);
     } catch (error) {
@@ -154,7 +140,6 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
 
   return (
     <div className="space-y-2">
-      {/* Mostrar intervenciones seleccionadas */}
       <div className="flex flex-wrap gap-2 mb-2">
         {selectedIntervenciones.map((id) => {
           const intervencion = intervencionesList.find(
@@ -187,17 +172,12 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
         })}
       </div>
 
-      {/* Selector de intervenciones */}
       <Select
         open={isOpen}
-        onOpenChange={(open) => {
-          setIsOpen(open);
-          if (!open) {
-            setSearchTerm("");
-          }
-        }}
+        onOpenChange={setIsOpen}
+        onValueChange={handleSelectIntervencion}
       >
-        <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-0 focus:border-green-600">
+        <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
           <SelectValue placeholder="Selecciona intervenciones" />
         </SelectTrigger>
         <SelectContent>
@@ -218,7 +198,6 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
                   key={int.interventionId} 
                   value={int.interventionId.toString()} 
                   className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
-                  onClick={() => handleSelectIntervencion(int.interventionId.toString())}
                 >
                   <div className="flex items-center">
                     <Checkbox
@@ -240,8 +219,8 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
         </SelectContent>
       </Select>
 
-      {/* Agregar nueva intervención */}
-      <div className="flex items-center space-x-2">
+      {/* Commenting out the add new intervention functionality */}
+      {/* <div className="flex items-center space-x-2">
         {isAddingNew ? (
           <form onSubmit={handleSubmit(onSubmit)} className="flex items-center space-x-2">
             <Input
@@ -249,13 +228,13 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
               {...register("name")}
               className={`h-8 w-[240px] border ${
                 errors.name ? "border-red-500" : "border-green-300"
-              } focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none`}
+              } focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
             />
             <Button
               type="submit"
               size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
+              variant="outline"
+              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100 border-green-300 hover:border-green-500"
             >
               <Check className="h-4 w-4" />
             </Button>
@@ -266,8 +245,8 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
                 reset();
               }}
               size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
+              variant="outline"
+              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100 border-red-300 hover:border-red-500"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -277,19 +256,19 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
             type="button"
             onClick={() => setIsAddingNew(true)}
             size="sm"
-            variant="ghost"
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
+            variant="outline"
+            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 border-green-300 hover:border-green-500"
           >
             <Plus className="h-3 w-3 mr-1" />
-            Agregar nueva intervención
+            Proponer nueva intervención
           </Button>
         )}
-      </div>
+      </div> */}
 
-      {/* Mostrar errores de validación */}
-      {errors.name && (
+      {/* Removing error message display */}
+      {/* {errors.name && (
         <span className="text-red-500 text-sm">{errors.name.message}</span>
-      )}
+      )} */}
     </div>
   );
 }
