@@ -31,7 +31,7 @@ import { AccionesComponent } from './columns/acciones';
 
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
-import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';// Asegúrate de importar el esquema actualizado
+import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'; // Asegúrate de importar el esquema actualizado
 
 // Definir el tipo para las opciones de compra
 interface PurchaseType {
@@ -145,8 +145,8 @@ export function TablaPlanificacionComponent() {
       id: Date.now().toString(),
       areaEstrategica: '',
       objetivoEstrategico: '',
-      estrategias: [''], // Cambiado de [''] a []
-      intervencion: [''], // Cambiado de [''] a []
+      estrategias: [], // Inicializado como array vacío
+      intervencion: [], // Inicializado como array vacío
       ods: [],
       tipoEvento: 'actividad',
       evento: '',
@@ -159,7 +159,7 @@ export function TablaPlanificacionComponent() {
       detalle: null,
       responsablePlanificacion: '',
       responsableEjecucion: '',
-      responsableSeguimiento: '', // Cambio aquí
+      responsableSeguimiento: '',
       recursos: [],
       indicadorLogro: '',
       detalleProceso: null,
@@ -183,45 +183,37 @@ export function TablaPlanificacionComponent() {
   // Función para actualizar una fila
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
     setFilas(prevFilas =>
-      prevFilas.map(fila =>
-        fila.id === id ? { ...fila, [campo]: valor } : fila
-      )
-    );
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          const updatedFila = { ...fila, [campo]: valor };
 
-    // Si el campo actualizado es objetivoEstrategico, actualizar areaEstrategica
-    if (campo === 'objetivoEstrategico') {
-      const nuevaArea = objetivoToAreaMap[valor] || '';
+          // Si el campo actualizado es objetivoEstrategico, actualizar areaEstrategica
+          if (campo === 'objetivoEstrategico') {
+            const nuevaArea = objetivoToAreaMap[valor] || '';
+            updatedFila.areaEstrategica = nuevaArea;
+          }
 
-      setFilas(prevFilas =>
-        prevFilas.map(fila =>
-          fila.id === id ? { ...fila, areaEstrategica: nuevaArea } : fila
-        )
-      );
+          // Validar la fila actualizada
+          const validation = filaPlanificacionSchema.safeParse(updatedFila);
+          if (!validation.success) {
+            const errors: FilaError = {};
+            validation.error.errors.forEach(err => {
+              const field = err.path[0] as string;
+              errors[field] = err.message;
+            });
+            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
+            toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
+            console.error("Error de validación:", validation.error.errors);
+          } else {
+            // Limpiar errores si la validación es exitosa
+            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+          }
 
-      // Validar la fila actualizada
-      const filaActual = filas.find(fila => fila.id === id);
-      if (filaActual) {
-        const dataToValidate = {
-          ...filaActual,
-          areaEstrategica: nuevaArea,
-          objetivoEstrategico: valor,
-        };
-        const validation = filaPlanificacionSchema.safeParse(dataToValidate);
-        if (!validation.success) {
-          const errors: FilaError = {};
-          validation.error.errors.forEach(err => {
-            const field = err.path[0] as string;
-            errors[field] = err.message;
-          });
-          setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
-          toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
-          console.error("Error de validación:", validation.error.errors);
-        } else {
-          // Limpiar errores si la validación es exitosa
-          setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+          return updatedFila;
         }
-      }
-    }
+        return fila;
+      })
+    );
   };
 
   // Función para agregar un nuevo objetivo estratégico desde el formulario hijo
@@ -243,40 +235,35 @@ export function TablaPlanificacionComponent() {
   // Función para manejar cambios en fechas desde ActividadProyectoSelector
   const manejarCambioFechas = (id: string, data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
     setFilas(prevFilas =>
-      prevFilas.map(fila =>
-        fila.id === id
-          ? {
-              ...fila,
-              tipoEvento: data.tipoEvento,
-              fechas: data.fechas as [DatePair, ...DatePair[]], // Asegurar el tipo de tupla
-            }
-          : fila
-      )
-    );
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          const updatedFila = {
+            ...fila,
+            tipoEvento: data.tipoEvento,
+            fechas: data.fechas as [DatePair, ...DatePair[]], // Asegurar el tipo de tupla
+          };
 
-    // Validar la fila actualizada
-    const filaActual = filas.find(fila => fila.id === id);
-    if (filaActual) {
-      const dataToValidate = {
-        ...filaActual,
-        tipoEvento: data.tipoEvento,
-        fechas: data.fechas,
-      };
-      const validation = filaPlanificacionSchema.safeParse(dataToValidate);
-      if (!validation.success) {
-        const errors: FilaError = {};
-        validation.error.errors.forEach(err => {
-          const field = err.path[0] as string;
-          errors[field] = err.message;
-        });
-        setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
-        toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
-        console.error("Error de validación:", validation.error.errors);
-      } else {
-        // Limpiar errores si la validación es exitosa
-        setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
-      }
-    }
+          // Validar la fila actualizada
+          const validation = filaPlanificacionSchema.safeParse(updatedFila);
+          if (!validation.success) {
+            const errors: FilaError = {};
+            validation.error.errors.forEach(err => {
+              const field = err.path[0] as string;
+              errors[field] = err.message;
+            });
+            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
+            toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
+            console.error("Error de validación:", validation.error.errors);
+          } else {
+            // Limpiar errores si la validación es exitosa
+            setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+          }
+
+          return updatedFila;
+        }
+        return fila;
+      })
+    );
   };
 
   // Función para enviar una fila al backend
