@@ -1,4 +1,3 @@
-// src/components/poa/components/columns/aporte-otras-fuentes.tsx
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -19,7 +18,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FinancingSource } from "@/types/FinancingSource";
 
-// Definir el esquema para el formulario de aportes
 const aporteOtrasFuentesSchema = z.object({
   financingSourceId: z.number({
     required_error: "La fuente es requerida",
@@ -59,7 +57,6 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Configurar react-hook-form
   const {
     register,
     handleSubmit,
@@ -69,13 +66,12 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
   } = useForm<AporteOtrasFuentesForm>({
     resolver: zodResolver(aporteOtrasFuentesSchema),
     defaultValues: {
-      financingSourceId: 0,
-      porcentaje: 0,
-      amount: 0,
+      financingSourceId: undefined,
+      porcentaje: undefined,
+      amount: undefined,
     },
   });
 
-  // Fetch de fuentes de financiamiento con category "Otra"
   useEffect(() => {
     const fetchFinancingSources = async () => {
       setLoading(true);
@@ -92,7 +88,6 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
         }
 
         const data: FinancingSource[] = await response.json();
-        // Filtrar por category "Otra"
         const filteredData = data.filter(source => source.category === "Otra" && !source.isDeleted);
 
         setFinancingSources(filteredData);
@@ -107,7 +102,6 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
     fetchFinancingSources();
   }, []);
 
-  // Función para manejar el envío del formulario de agregar aporte
   const onSubmit = (data: AporteOtrasFuentesForm) => {
     try {
       const nuevoAporte: AporteOtrasFuentes = {
@@ -125,29 +119,28 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
     }
   };
 
-  // Función para manejar la eliminación de un aporte
   const handleRemoveAporte = (index: number) => {
     const newAportes = aportes.filter((_, i) => i !== index);
     onChangeAportes(newAportes);
   };
 
-  if (loading) return <div>Cargando fuentes de financiamiento...</div>;
+  if (loading) return <div className="text-green-600">Cargando fuentes de financiamiento...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
 
   return (
     <div className="space-y-4">
-      <Label className="text-sm font-medium text-gray-700">Aporte Otras Fuentes</Label>
+      <Label className="text-sm font-medium text-green-700">Aporte Otras Fuentes</Label>
       {!isAdding && (
-        <Button onClick={() => setIsAdding(true)} variant="outline" className="text-sm">
+        <Button onClick={() => setIsAdding(true)} variant="outline" className="text-sm text-green-600 border-green-300 hover:bg-green-50">
           Agregar aporte
         </Button>
       )}
       {isAdding && (
         <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2 items-end">
           <div>
-            <Label>Fuente</Label>
+            <Label className="text-green-700">Fuente</Label>
             <Select onValueChange={(value) => setValue('financingSourceId', parseInt(value))}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px] border-green-300 focus:ring-green-500">
                 <SelectValue placeholder="Seleccionar fuente" />
               </SelectTrigger>
               <SelectContent>
@@ -165,7 +158,7 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
             )}
           </div>
           <div>
-            <Label>Porcentaje</Label>
+            <Label className="text-green-700">Porcentaje</Label>
             <Input
               type="number"
               placeholder="Porcentaje"
@@ -177,7 +170,7 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
             )}
           </div>
           <div>
-            <Label>Monto</Label>
+            <Label className="text-green-700">Monto</Label>
             <Input
               type="number"
               placeholder="Monto"
@@ -188,25 +181,24 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
               <span className="text-red-500 text-sm">{errors.amount.message}</span>
             )}
           </div>
-          <Button type="submit">
+          <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
             Agregar
           </Button>
-          <Button type="button" onClick={() => { reset(); setIsAdding(false); }}>
+          <Button type="button" onClick={() => { reset(); setIsAdding(false); }} className="text-green-600 hover:text-green-700">
             <X className="h-4 w-4" />
           </Button>
         </form>
       )}
 
-      {/* Lista de aportes */}
       <div className="space-y-2">
         {aportes.map((aporte, index) => {
           const fuente = financingSources.find(source => source.financingSourceId === aporte.financingSourceId)?.name || aporte.financingSourceId;
           return (
-            <div key={index} className="flex items-center justify-between bg-blue-100 p-2 rounded-md">
-              <span className="text-blue-800">
-                {fuente}: {aporte.porcentaje}% - ${aporte.amount}
+            <div key={index} className="flex items-center justify-between bg-green-100 p-2 rounded-md">
+              <span className="text-green-800">
+                {fuente}: {aporte.porcentaje}% - Q{aporte.amount.toFixed(2)}
               </span>
-              <Button onClick={() => handleRemoveAporte(index)} variant="ghost" size="sm">
+              <Button onClick={() => handleRemoveAporte(index)} variant="ghost" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-200">
                 <X className="h-4 w-4" />
               </Button>
             </div>
