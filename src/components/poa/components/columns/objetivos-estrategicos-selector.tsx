@@ -1,7 +1,6 @@
-'use client'
+'use client';
 
-import * as React from "react"
-import { useState, useMemo, useRef, useEffect } from "react"
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -9,103 +8,93 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, Plus, Check, X } from "lucide-react"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search, Check } from "lucide-react";
+import { StrategicObjective } from "@/schemas/strategicObjectiveSchema";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Objetivo {
-  id: string
-  name: string
-  number: number
-  isCustom?: boolean
+  id: string;
+  name: string;
+  number: number;
+  isCustom?: boolean;
 }
 
 interface ObjetivosEstrategicosProps {
   selectedObjetivos: string[];
   onSelectObjetivo: (objetivo: string) => void;
+  strategicObjectives: StrategicObjective[];
+  addStrategicObjective: (objetivo: StrategicObjective) => void;
 }
 
-const initialObjetivosList: Objetivo[] = [
-  { id: "obj1", name: "Fin de la pobreza", number: 1 },
-  { id: "obj2", name: "Hambre cero", number: 2 },
-  { id: "obj3", name: "Salud y bienestar", number: 3 },
-  { id: "obj4", name: "Educación de calidad", number: 4 },
-  { id: "obj5", name: "Igualdad de género", number: 5 },
-  // ... add more predefined objectives as needed
-]
+export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSelectObjetivo, strategicObjectives, addStrategicObjective }: ObjetivosEstrategicosProps) {
+  const [objetivosList, setObjetivosList] = useState<Objetivo[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSelectObjetivo }: ObjetivosEstrategicosProps) {
-  const [objetivosList, setObjetivosList] = useState<Objetivo[]>(initialObjetivosList)
-  // Eliminar la línea: const [selectedObjetivo, setSelectedObjetivo] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
-  const [newObjetivo, setNewObjetivo] = useState("")
-  const [isAddingNew, setIsAddingNew] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const newObjetivoInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const mappedObjetivos: Objetivo[] = strategicObjectives.map(obj => ({
+      id: obj.strategicObjectiveId.toString(),
+      name: obj.description,
+      number: obj.strategicObjectiveId,
+      isCustom: false,
+    }))
+    setObjetivosList(mappedObjetivos)
+  }, [strategicObjectives])
 
   const filteredObjetivos = useMemo(() => {
     return objetivosList.filter(obj => 
       obj.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [objetivosList, searchTerm])
+    );
+  }, [objetivosList, searchTerm]);
 
   const handleSelectObjetivo = (objetivo: string) => {
-    onSelectObjetivo(objetivo)
-    setIsOpen(false)
-  }
-
-  const handleAddNewObjetivo = () => {
-    if (newObjetivo.trim() !== "") {
-      const newNumber = Math.max(...objetivosList.map(obj => obj.number), 0) + 1
-      const newObj: Objetivo = {
-        id: `custom-${Date.now()}`,
-        name: newObjetivo.trim(),
-        number: newNumber,
-        isCustom: true
-      }
-      setObjetivosList([...objetivosList, newObj])
-      //setSelectedObjetivoId(newObj.id) //Removed because selectedObjetivoId is no longer used.
-      setNewObjetivo("")
-      setIsAddingNew(false)
-    }
-  }
+    onSelectObjetivo(objetivo);
+  };
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus()
+      searchInputRef.current.focus();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
-  useEffect(() => {
-    if (isAddingNew && newObjetivoInputRef.current) {
-      newObjetivoInputRef.current.focus()
-    }
-  }, [isAddingNew])
+  const selectedObjetivo = objetivosList.find(obj => obj.id === selectedObjetivos[0]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full max-w-md">
       <Select 
         onValueChange={handleSelectObjetivo} 
         open={isOpen} 
-        onOpenChange={(open) => {
-          setIsOpen(open)
-          if (!open) {
-            setSearchTerm("")
-          }
-        }}
+        onOpenChange={setIsOpen}
         value={selectedObjetivos[0] || undefined}
       >
-        <SelectTrigger className="w-[200px]">
+        <SelectTrigger className="w-full border-green-500 focus:ring-green-500">
           <SelectValue placeholder="Seleccionar objetivo">
-            {selectedObjetivos[0] || "Seleccionar objetivo"}
+            {selectedObjetivo && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center w-full">
+                      <div className="flex-shrink-0 w-6 h-6 rounded bg-green-500 text-white font-bold flex items-center justify-center mr-2">
+                        {selectedObjetivo.number}
+                      </div>
+                      <span className="truncate flex-grow">{selectedObjetivo.name}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start" className="max-w-xs">
+                    <p>{selectedObjetivo.name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
-            <Search className="mr-2 h-4 w-4 shrink-0 text-green-500" />
+            <Search className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
             <Input
               ref={searchInputRef}
               placeholder="Buscar objetivo..."
@@ -120,63 +109,24 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
                 <SelectItem
                   key={obj.id}
                   value={obj.id}
-                  onSelect={() => handleSelectObjetivo(obj.id)}
-                  className={selectedObjetivos.includes(obj.id) ? 'bg-primary/50' : ''}
+                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-green-50"
                 >
-                  {obj.isCustom ? `E${obj.number}: ${obj.name}` : `${obj.number}: ${obj.name}`}
+                  <div className="flex items-start w-[300px]">
+                    <div className={`flex-shrink-0 w-6 h-6 rounded ${
+                      selectedObjetivos.includes(obj.id) ? 'bg-green-700' : 'bg-green-500'
+                    } text-white font-bold flex items-center justify-center mr-2`}>
+                      {obj.number}
+                    </div>
+                    <div className="flex-grow">
+                      <p className="text-sm leading-tight">{obj.name}</p>
+                    </div>
+                  </div>
                 </SelectItem>
               ))}
             </SelectGroup>
           </ScrollArea>
         </SelectContent>
       </Select>
-      <div className="flex items-center space-x-2">
-        {isAddingNew ? (
-          <>
-            <Input
-              ref={newObjetivoInputRef}
-              placeholder="Nuevo objetivo..."
-              value={newObjetivo}
-              onChange={(e) => setNewObjetivo(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddNewObjetivo()
-                }
-              }}
-              className="h-8 w-[240px] border border-green-300 focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none"
-            />
-            <Button
-              onClick={handleAddNewObjetivo}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={() => {
-                setIsAddingNew(false)
-                setNewObjetivo("")
-              }}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </>
-        ) : (
-          <Button
-            onClick={() => setIsAddingNew(true)}
-            size="sm"
-            variant="ghost"
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Agregar nuevo objetivo
-          </Button>
-        )}
-      </div>
     </div>
-  )
+  );
 }
