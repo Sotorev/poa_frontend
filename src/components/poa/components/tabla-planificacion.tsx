@@ -273,7 +273,7 @@ export function TablaPlanificacionComponent() {
         completionPercentage: 50, // Ajusta según tu lógica
         campusId: 1, // Reemplaza con el ID de campus correspondiente
         objective: fila.objetivo.trim(),
-        eventNature: 'Planificado', // Ajusta según tu lógica
+        eventNature: 'En revisión', // Ajusta según tu lógica
         isDelayed: false, // Ajusta según tu lógica
         achievementIndicator: fila.indicadorLogro.trim(),
         purchaseType: fila.tipoCompra, // Ahora es una cadena
