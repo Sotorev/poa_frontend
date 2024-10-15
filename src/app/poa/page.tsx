@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { PoaDashboardMain } from '@/components/poa/poa-dashboard-main'
 import { withAuth } from '@/components/auth/with-auth'
 
-export function POAPage() {
+function POAPage() {
   // const session = await getServerSession()
 
   // if (!session) {
