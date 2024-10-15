@@ -30,28 +30,15 @@ export async function getServerSession(): Promise<UserPayload | null> {
 	console.log('Auth token:', token ? 'Found' : 'Not found')
 
 	if (!token) {
+		console.log('No auth-token cookie, returning null')
 		return null
 	}
 
 	try {
 		console.log('Attempting to verify JWT')
-		const { payload } = await jwtVerify(
-			token.value,
-			new TextEncoder().encode(JWT_SECRET),
-			{
-				algorithms: ['HS256'],
-			}
-		)
-
+		const verified = await jwtVerify(token.value, new TextEncoder().encode(JWT_SECRET))
 		console.log('JWT verified successfully')
-
-		if (payload.exp && Date.now() >= payload.exp * 1000) {
-			console.log('Token has expired')
-			return null
-		}
-
-		console.log('Valid session found')
-		return payload as UserPayload
+		return verified.payload as unknown as UserPayload
 	} catch (error) {
 		console.error('Error verifying JWT:', error)
 		return null
