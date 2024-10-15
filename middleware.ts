@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getServerSession } from './lib/server-auth'
 
 // Define public paths that don't require authentication
 const publicPaths = ['/iniciar-sesion']
