@@ -5,15 +5,15 @@ import Dashboard from '@/components/dashboard/dashboard'
 
 export default async function DashBoardPage() {
 
-  const session = await getServerSession()
+  // const session = await getServerSession()
 
-  if (!session) {
-    redirect('/iniciar-sesion')
-  }
+  // if (!session) {
+  //   redirect('/iniciar-sesion')
+  // }
 
-  if (!hasPermission(session, 'PEI', 'Edit')) {
-    redirect('/no-autorizado')
-  }
+  // if (!hasPermission(session, 'PEI', 'Edit')) {
+  //   redirect('/no-autorizado')
+  // }
 
   return (
     <Dashboard />

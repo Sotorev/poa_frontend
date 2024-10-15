@@ -4,15 +4,15 @@ import { redirect } from 'next/navigation'
 import { PoaDashboardMain } from '@/components/poa/poa-dashboard-main'
 
 export default async function POAPage() {
-  const session = await getServerSession()
+  // const session = await getServerSession()
 
-  if (!session) {
-    redirect('/iniciar-sesion')
-  }
+  // if (!session) {
+  //   redirect('/iniciar-sesion')
+  // }
 
-  if (!hasPermission(session, 'POA', 'Edit')) {
-    redirect('/no-authorizado')
-  }
+  // if (!hasPermission(session, 'POA', 'Edit')) {
+  //   redirect('/no-authorizado')
+  // }
 
   return <PoaDashboardMain/>
 }

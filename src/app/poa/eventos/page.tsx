@@ -4,15 +4,15 @@ import { redirect } from 'next/navigation'
 import { TablaPlanificacionComponent } from '@/components/poa/components/tabla-planificacion'
 
 export default async function PEIPage() {
-  const session = await getServerSession()
+  // const session = await getServerSession()
 
-  if (!session) {
-    redirect('/iniciar-sesion')
-  }
+  // if (!session) {
+  //   redirect('/iniciar-sesion')
+  // }
 
-  if (!hasPermission(session, 'PEI', 'Edit')) {
-    redirect('/no-authorizado')
-  }
+  // if (!hasPermission(session, 'PEI', 'Edit')) {
+  //   redirect('/no-authorizado')
+  // }
 
   return <TablaPlanificacionComponent/>
 }
