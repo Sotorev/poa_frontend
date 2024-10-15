@@ -49,7 +49,7 @@ const initialOptions: PurchaseType[] = [
   // Añade más opciones según tus necesidades
 ];
 
-// Definir el esquema de las filas para validación con Zod (actualizado en Paso 1)
+// Definir el esquema de las filas para validación con Zod (actualizado)
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
@@ -76,6 +76,35 @@ const objetivoToAreaMapInitial: { [key: string]: string } = {
   // Add more mappings as needed
 }
 
+// Mapeo de campos a nombres de columnas para el modal de errores
+const getColumnName = (field: string): string => {
+  const columnMap: { [key: string]: string } = {
+    areaEstrategica: "Área Estratégica",
+    objetivoEstrategico: "Objetivo Estratégico",
+    estrategias: "Estrategias",
+    intervencion: "Intervención",
+    ods: "ODS",
+    tipoEvento: "Tipo de Evento",
+    evento: "Evento",
+    objetivo: "Objetivo",
+    estado: "Estado",
+    costoTotal: "Costo Total",
+    aporteUMES: "Aporte UMES",
+    aporteOtros: "Aporte Otros",
+    tipoCompra: "Tipo de Compra",
+    detalle: "Detalle",
+    responsablePlanificacion: "Responsable de Planificación",
+    responsableEjecucion: "Responsable de Ejecución",
+    responsableSeguimiento: "Responsable de Seguimiento",
+    recursos: "Recursos",
+    indicadorLogro: "Indicador de Logro",
+    fechas: "Fechas",
+    detalleProceso: "Detalle del Proceso",
+    comentarioDecano: "Comentario Decano",
+  };
+  return columnMap[field] || field;
+};
+
 export function TablaPlanificacionComponent() {
   const { user, loading: loadingAuth } = useAuth();
   const userId = user?.userId;
@@ -93,6 +122,13 @@ export function TablaPlanificacionComponent() {
   const [poaId, setPoaId] = useState<number | null>(null);
   const [loadingPoa, setLoadingPoa] = useState<boolean>(false);
   const [errorPoa, setErrorPoa] = useState<string | null>(null);
+
+  // Estados para los modales
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false);
+  const [modalErrorList, setModalErrorList] = useState<{ column: string, message: string }[]>([]);
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [pendingSendId, setPendingSendId] = useState<string | null>(null);
 
   // Fetch de áreas estratégicas y objetivos estratégicos al montar el componente
   useEffect(() => {
@@ -256,7 +292,7 @@ export function TablaPlanificacionComponent() {
     toast.success("Fila eliminada exitosamente."); // Notificación al eliminar una fila
   };
 
-  // Función para actualizar una fila (Modificada: Eliminada la validación)
+  // Función para actualizar una fila
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
     setFilas(prevFilas =>
       prevFilas.map(fila => {
@@ -268,9 +304,6 @@ export function TablaPlanificacionComponent() {
             const nuevaArea = objetivoToAreaMap[valor] || '';
             updatedFila.areaEstrategica = nuevaArea;
           }
-
-          // Eliminamos la validación aquí
-          // Ya no validamos en cada cambio de datos
 
           return updatedFila;
         }
@@ -330,17 +363,38 @@ export function TablaPlanificacionComponent() {
 
     if (!validation.success) {
       const errors: FilaError = {};
+      const errorsList: { column: string, message: string }[] = [];
+
       validation.error.errors.forEach(err => {
         const field = err.path[0] as string;
-        errors[field] = err.message;
+        const message = err.message;
+        errors[field] = message;
+        errorsList.push({
+          column: getColumnName(field),
+          message: message,
+        });
       });
       setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
+      setModalErrorList(errorsList);
+      setIsErrorModalOpen(true);
       toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
       console.error("Error de validación:", validation.error.errors);
       return;
     }
 
-    // Implementar la lógica para enviar la actividad al backend
+    // Verificar si 'detalle' está vacío
+    if (!fila.detalle) {
+      setPendingSendId(id);
+      setIsConfirmModalOpen(true);
+      return;
+    }
+
+    // Si todo está bien, proceder a enviar
+    await enviarAlBackend(fila);
+  };
+
+  // Función para proceder con el envío al backend
+  const enviarAlBackend = async (fila: FilaPlanificacion) => {
     try {
       if (!process.env.NEXT_PUBLIC_API_URL) {
         throw new Error("La URL de la API no está definida.");
@@ -382,7 +436,7 @@ export function TablaPlanificacionComponent() {
             name: fila.responsablePlanificacion.trim(),
           },
           {
-            responsibleRole: 'Ejecución', // Eliminado el acento
+            responsibleRole: 'Ejecución',
             name: fila.responsableEjecucion.trim(),
           },
           {
@@ -390,7 +444,7 @@ export function TablaPlanificacionComponent() {
             name: fila.responsableSeguimiento.trim(),
           },
         ],
-        interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)), // Asegura que sean números válidos
+        interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
       };
 
       console.log('Datos a enviar:', eventData);
@@ -424,17 +478,37 @@ export function TablaPlanificacionComponent() {
       // Opcional: Actualizar el estado de la fila, por ejemplo, cambiar el estado a 'aprobado'
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
-          filaItem.id === id ? { ...filaItem, estado: 'aprobado' } : filaItem
+          filaItem.id === fila.id ? { ...filaItem, estado: 'aprobado' } : filaItem
         )
       );
 
       // Limpiar errores si la actividad se envió correctamente
-      setFilaErrors(prevErrors => ({ ...prevErrors, [id]: {} }));
+      setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
       console.error(err);
       // Notificar error al usuario
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
+  };
+
+  // Función para manejar la confirmación de envío sin detalle de costos
+  const confirmarEnvioSinDetalle = async () => {
+    if (!pendingSendId) return;
+
+    const fila = filas.find(fila => fila.id === pendingSendId);
+    if (!fila) {
+      toast.error("La fila no se encontró.");
+      setIsConfirmModalOpen(false);
+      setPendingSendId(null);
+      return;
+    }
+
+    // Proceder a enviar al backend sin el detalle de costos
+    await enviarAlBackend(fila);
+
+    // Cerrar el modal de confirmación y limpiar el ID pendiente
+    setIsConfirmModalOpen(false);
+    setPendingSendId(null);
   };
 
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
@@ -484,6 +558,9 @@ export function TablaPlanificacionComponent() {
                     areaEstrategica={fila.areaEstrategica}
                     error={filaErrors[fila.id]?.areaEstrategica}
                   />
+                  {filaErrors[fila.id]?.areaEstrategica && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].areaEstrategica}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <ObjetivosEstrategicosSelectorComponent
@@ -502,18 +579,27 @@ export function TablaPlanificacionComponent() {
                     onSelectEstrategia={(estrategias) => actualizarFila(fila.id, 'estrategias', estrategias)}
                     strategicObjectiveId={strategicObjectiveId} // Asegurado
                   />
+                  {filaErrors[fila.id]?.estrategias && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].estrategias}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <IntervencionesSelectorComponent
                     selectedIntervenciones={fila.intervencion}
                     onSelectIntervencion={(intervenciones) => actualizarFila(fila.id, 'intervencion', intervenciones)}
                   />
+                  {filaErrors[fila.id]?.intervencion && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].intervencion}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <OdsSelector
                     selectedODS={fila.ods}
                     onSelectODS={(ods) => actualizarFila(fila.id, 'ods', ods)}
                   />
+                  {filaErrors[fila.id]?.ods && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].ods}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <ActividadProyectoSelector
@@ -521,33 +607,51 @@ export function TablaPlanificacionComponent() {
                     onSelectOption={(tipo) => actualizarFila(fila.id, 'tipoEvento', tipo)}
                     onChange={(data) => manejarCambioFechas(fila.id, data)}
                   />
+                  {filaErrors[fila.id]?.tipoEvento && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoEvento}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <EventoComponent
                     value={fila.evento}
                     onChange={(value) => actualizarFila(fila.id, 'evento', value)}
                   />
+                  {filaErrors[fila.id]?.evento && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].evento}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <ObjetivoComponent
                     value={fila.objetivo}
                     onChange={(value) => actualizarFila(fila.id, 'objetivo', value)}
                   />
+                  {filaErrors[fila.id]?.objetivo && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].objetivo}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <EstadoComponent estado={fila.estado} />
+                  {filaErrors[fila.id]?.estado && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].estado}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <CurrencyInput
                     value={fila.costoTotal}
                     onChange={(valor: number | undefined) => actualizarFila(fila.id, 'costoTotal', valor ?? 0)}
                   />
+                  {filaErrors[fila.id]?.costoTotal && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].costoTotal}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <AporteUmes
                     aportes={fila.aporteUMES}
                     onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
                   />
+                  {filaErrors[fila.id]?.aporteUMES && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteUMES}</span>
+                  )}
                 </TableCell>
 
                 <TableCell>
@@ -555,6 +659,9 @@ export function TablaPlanificacionComponent() {
                     aportes={fila.aporteOtros}
                     onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
                   /> 
+                  {filaErrors[fila.id]?.aporteOtros && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteOtros}</span>
+                  )}
                 </TableCell>
 
                 <TableCell>
@@ -571,6 +678,10 @@ export function TablaPlanificacionComponent() {
                     file={fila.detalle}
                     onFileChange={(file) => actualizarFila(fila.id, 'detalle', file)}
                   />
+                  {/* Mostrar advertencia si 'detalle' está vacío */}
+                  {!fila.detalle && (
+                    <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <ResponsablesComponent
@@ -581,21 +692,39 @@ export function TablaPlanificacionComponent() {
                     onChangeResponsableEjecucion={(value: string) => actualizarFila(fila.id, 'responsableEjecucion', value)}
                     onChangeResponsableSeguimiento={(value: string) => actualizarFila(fila.id, 'responsableSeguimiento', value)} // Cambio aquí
                   />
+                  {filaErrors[fila.id]?.responsablePlanificacion && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].responsablePlanificacion}</span>
+                  )}
+                  {filaErrors[fila.id]?.responsableEjecucion && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].responsableEjecucion}</span>
+                  )}
+                  {filaErrors[fila.id]?.responsableSeguimiento && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].responsableSeguimiento}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <RecursosSelectorComponent
                     selectedRecursos={fila.recursos}
                     onSelectRecursos={(recursos) => actualizarFila(fila.id, 'recursos', recursos)}
                   />
+                  {filaErrors[fila.id]?.recursos && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].recursos}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <IndicadorLogroComponent
                     value={fila.indicadorLogro}
                     onChange={(value: string) => actualizarFila(fila.id, 'indicadorLogro', value)}
                   />
+                  {filaErrors[fila.id]?.indicadorLogro && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].indicadorLogro}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <ComentarioDecanoComponent comentario={fila.comentarioDecano} />
+                  {filaErrors[fila.id]?.comentarioDecano && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].comentarioDecano}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <AccionesComponent
@@ -609,6 +738,41 @@ export function TablaPlanificacionComponent() {
         </TableBody>
       </Table>
       <Button onClick={agregarFila} className="mt-4">Agregar Fila</Button>
+
+      {/* Modal de Errores */}
+      {isErrorModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full">
+            <h2 className="text-xl font-bold mb-4">Errores en la Fila</h2>
+            <ul className="list-disc list-inside mb-4">
+              {modalErrorList.map((error, index) => (
+                <li key={index}>
+                  <strong>{error.column}:</strong> {error.message}
+                </li>
+              ))}
+            </ul>
+            <Button onClick={() => setIsErrorModalOpen(false)}>Cerrar</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación para Envío sin Detalle de Costos */}
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Confirmar Envío</h2>
+            <p>¿Estás seguro de que deseas enviar la actividad sin el detalle de costos?</p>
+            <div className="flex justify-end mt-6 space-x-4">
+              <Button variant="outline" onClick={() => { setIsConfirmModalOpen(false); setPendingSendId(null); }}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmarEnvioSinDetalle}>
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
