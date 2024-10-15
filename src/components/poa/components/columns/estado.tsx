@@ -5,14 +5,14 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 
 interface EstadoComponentProps {
-  estado: 'En revisión' | 'Aprobado' | 'Rechazado';
+  estado: 'planificado' | 'aprobado' | 'rechazado';
 }
 
 export function EstadoComponent({ estado }: EstadoComponentProps) {
   let colorClass = '';
-  if (estado === 'En revisión') colorClass = 'text-blue-500';
-  else if (estado === 'Aprobado') colorClass = 'text-green-500';
-  else if (estado === 'Rechazado') colorClass = 'text-red-500';
+  if (estado === 'planificado') colorClass = 'text-blue-500';
+  else if (estado === 'aprobado') colorClass = 'text-green-500';
+  else if (estado === 'rechazado') colorClass = 'text-red-500';
 
   return (
     <Label className={colorClass}>
