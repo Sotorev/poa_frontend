@@ -23,29 +23,34 @@ export interface UserPayload extends JWTPayload {
 }
 
 export async function getServerSession(): Promise<UserPayload | null> {
+	console.log('getServerSession called')
 	const cookieStore = cookies()
 	const token = cookieStore.get('auth-token')
 
+	console.log('Auth token:', token ? 'Found' : 'Not found')
+
 	if (!token) {
-		console.log('No auth-token cookie found')
 		return null
 	}
 
 	try {
+		console.log('Attempting to verify JWT')
 		const { payload } = await jwtVerify(
 			token.value,
 			new TextEncoder().encode(JWT_SECRET),
 			{
-				algorithms: ['HS256'], // Specify the algorithm you're using
+				algorithms: ['HS256'],
 			}
 		)
 
-		// Check if the token has expired
+		console.log('JWT verified successfully')
+
 		if (payload.exp && Date.now() >= payload.exp * 1000) {
 			console.log('Token has expired')
 			return null
 		}
 
+		console.log('Valid session found')
 		return payload as UserPayload
 	} catch (error) {
 		console.error('Error verifying JWT:', error)
