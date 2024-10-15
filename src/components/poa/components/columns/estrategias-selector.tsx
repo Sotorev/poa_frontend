@@ -1,7 +1,6 @@
-'use client'
+'use client';
 
-import * as React from "react"
-import { useState, useMemo, useRef, useEffect } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -9,105 +8,123 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, Plus, Check, X } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createStrategySchema, CreateStrategyInput } from "@/schemas/strategySchema";
 
 interface Estrategia {
-  id: string
-  name: string
-  number: number
-  isCustom?: boolean
+  strategyId: number;
+  description: string;
+  strategicObjectiveId: number;
+  completionPercentage: number;
+  assignedBudget: number;
+  executedBudget: number;
+  isDeleted: boolean;
+  isCustom?: boolean;
 }
-
-const initialEstrategiasList: Estrategia[] = [
-  { id: "est1", name: "Estrategia de crecimiento", number: 1 },
-  { id: "est2", name: "Estrategia de innovación", number: 2 },
-  { id: "est3", name: "Estrategia de expansión", number: 3 },
-  { id: "est4", name: "Estrategia de diversificación", number: 4 },
-  { id: "est5", name: "Estrategia de optimización", number: 5 },
-  // ... add more predefined strategies as needed
-]
 
 interface EstrategiasSelectorProps {
   selectedEstrategias: string[];
   onSelectEstrategia: (estrategias: string[]) => void;
+  strategicObjectiveId: number;
 }
 
-export function EstrategiasSelectorComponent({ selectedEstrategias, onSelectEstrategia }: EstrategiasSelectorProps) {
-  const [estrategiasList, setEstrategiasList] = useState<Estrategia[]>(initialEstrategiasList)
-  //const [selectedEstrategias, setSelectedEstrategias] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
-  const [newEstrategia, setNewEstrategia] = useState("")
-  const [isAddingNew, setIsAddingNew] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const newEstrategiaInputRef = useRef<HTMLInputElement>(null)
+export function EstrategiasSelectorComponent({
+  selectedEstrategias,
+  onSelectEstrategia,
+  strategicObjectiveId,
+}: EstrategiasSelectorProps) {
+  const [estrategiasList, setEstrategiasList] = useState<Estrategia[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CreateStrategyInput>({
+    resolver: zodResolver(createStrategySchema),
+    defaultValues: {
+      description: "",
+      strategicObjectiveId: strategicObjectiveId,
+    },
+  });
+
+  useEffect(() => {
+    const fetchEstrategias = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategies`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          throw new Error(`Error al fetch estrategias: ${response.statusText}`);
+        }
+        const data: Estrategia[] = await response.json();
+        setEstrategiasList(data);
+      } catch (error) {
+        console.error("Error al obtener estrategias:", error);
+      }
+    };
+
+    fetchEstrategias();
+  }, [strategicObjectiveId]);
 
   const filteredEstrategias = useMemo(() => {
-    return estrategiasList.filter(est => 
-      est.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [estrategiasList, searchTerm])
+    return estrategiasList.filter((est) =>
+      est.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [estrategiasList, searchTerm]);
 
   const handleSelectEstrategia = (estrategiaId: string) => {
     const updatedEstrategias = selectedEstrategias.includes(estrategiaId)
-      ? selectedEstrategias.filter(id => id !== estrategiaId)
+      ? selectedEstrategias.filter((id) => id !== estrategiaId)
       : [...selectedEstrategias, estrategiaId];
     onSelectEstrategia(updatedEstrategias);
-  }
-
-  const handleAddNewEstrategia = () => {
-    if (newEstrategia.trim() !== "") {
-      const newEstrategiaObj: Estrategia = {
-        id: `custom-${Date.now()}`,
-        name: newEstrategia.trim(),
-        number: estrategiasList.length + 1,
-        isCustom: true
-      }
-      setEstrategiasList(prev => [...prev, newEstrategiaObj])
-      onSelectEstrategia([...selectedEstrategias, newEstrategiaObj.id])
-      setNewEstrategia("")
-      setIsAddingNew(false)
-    }
-  }
+  };
 
   const handleRemoveEstrategia = (id: string) => {
-    onSelectEstrategia(selectedEstrategias.filter(estId => estId !== id))
-  }
+    onSelectEstrategia(selectedEstrategias.filter((estId) => estId !== id));
+  };
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus()
+      searchInputRef.current.focus();
     }
-  }, [isOpen])
-
-  useEffect(() => {
-    if (isAddingNew && newEstrategiaInputRef.current) {
-      newEstrategiaInputRef.current.focus()
-    }
-  }, [isAddingNew])
+  }, [isOpen]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full max-w-md">
       <div className="flex flex-wrap gap-2 mb-2">
-        {selectedEstrategias.map(id => {
-          const estrategia = estrategiasList.find(est => est.id === id)
-          if (!estrategia) return null
+        {selectedEstrategias.map((id) => {
+          const estrategia = estrategiasList.find(
+            (est) => est.strategyId.toString() === id
+          );
+          if (!estrategia) return null;
           return (
             <TooltipProvider key={id}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {estrategia.isCustom ? `E${estrategia.number}` : estrategia.number}
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 p-0 flex items-center">
+                    <span className="text-green-500 font-bold text-xs mr-1">
+                      {estrategia.strategyId}
+                    </span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="ml-1 h-4 w-4 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
+                      className="h-5 w-5 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
                       onClick={() => handleRemoveEstrategia(id)}
                     >
                       <X className="h-3 w-3" />
@@ -115,29 +132,30 @@ export function EstrategiasSelectorComponent({ selectedEstrategias, onSelectEstr
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{estrategia.name}</p>
+                  <p>{estrategia.description}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )
+          );
         })}
       </div>
-      <Select 
-        onValueChange={handleSelectEstrategia} 
-        open={isOpen} 
+
+      <Select
+        onValueChange={handleSelectEstrategia}
+        open={isOpen}
         onOpenChange={(open) => {
-          setIsOpen(open)
+          setIsOpen(open);
           if (!open) {
-            setSearchTerm("")
+            setSearchTerm("");
           }
         }}
       >
-        <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-0 focus:border-green-600">
+        <SelectTrigger className="w-[300px] border-green-500 focus:ring-green-500">
           <SelectValue placeholder="Selecciona estrategias" />
         </SelectTrigger>
         <SelectContent>
           <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
-            <Search className="mr-2 h-4 w-4 shrink-0 text-green-500" />
+            <Search className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
             <Input
               ref={searchInputRef}
               placeholder="Buscar estrategia..."
@@ -149,19 +167,32 @@ export function EstrategiasSelectorComponent({ selectedEstrategias, onSelectEstr
           <ScrollArea className="h-[200px]">
             <SelectGroup>
               {filteredEstrategias.map((est) => (
-                <SelectItem 
-                  key={est.id} 
-                  value={est.id} 
-                  className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
+                <SelectItem
+                  key={est.strategyId}
+                  value={est.strategyId.toString()}
+                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-green-50"
                 >
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedEstrategias.includes(est.id)}
-                      onChange={() => handleSelectEstrategia(est.id)}
-                      className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
+                  <div className="flex items-start w-full">
+                    <Checkbox
+                      checked={selectedEstrategias.includes(est.strategyId.toString())}
+                      onCheckedChange={() => handleSelectEstrategia(est.strategyId.toString())}
+                      className="mr-2 mt-1 h-4 w-4 rounded border-green-500 text-green-500 focus:ring-green-500"
                     />
-                    {est.isCustom ? `E${est.number}: ${est.name}` : `${est.number}: ${est.name}`}
+                    <div className="flex-shrink-0 w-6 h-6 rounded bg-green-500 text-white font-bold flex items-center justify-center mr-2">
+                      {est.strategyId}
+                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex-grow">
+                            <p className="text-sm leading-tight truncate">{est.description}</p>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{est.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </SelectItem>
               ))}
@@ -169,53 +200,6 @@ export function EstrategiasSelectorComponent({ selectedEstrategias, onSelectEstr
           </ScrollArea>
         </SelectContent>
       </Select>
-      <div className="flex items-center space-x-2">
-        {isAddingNew ? (
-          <>
-            <Input
-              ref={newEstrategiaInputRef}
-              placeholder="Nueva estrategia..."
-              value={newEstrategia}
-              onChange={(e) => setNewEstrategia(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddNewEstrategia()
-                }
-              }}
-              className="h-8 w-[240px] border border-green-300 focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none"
-            />
-            <Button 
-              onClick={handleAddNewEstrategia} 
-              size="sm" 
-              variant="ghost"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button 
-              onClick={() => {
-                setIsAddingNew(false)
-                setNewEstrategia("")
-              }} 
-              size="sm" 
-              variant="ghost"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </>
-        ) : (
-          <Button 
-            onClick={() => setIsAddingNew(true)} 
-            size="sm" 
-            variant="ghost" 
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Agregar nueva estrategia
-          </Button>
-        )}
-      </div>
     </div>
-  )
+  );
 }

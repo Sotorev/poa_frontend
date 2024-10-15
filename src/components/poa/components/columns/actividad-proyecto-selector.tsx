@@ -1,28 +1,50 @@
-'use client'
+'use client';
 
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { X } from "lucide-react"
 
 interface ActividadProyectoSelectorProps {
   selectedOption: "actividad" | "proyecto";
   onSelectOption: (tipo: "actividad" | "proyecto") => void;
+  onChange: (data: {
+    tipoEvento: "actividad" | "proyecto";
+    fechas: DatePair[];
+  }) => void;
 }
 
-export function ActividadProyectoSelector({ selectedOption, onSelectOption }: ActividadProyectoSelectorProps) {
-  const [dates, setDates] = useState<Date[]>([])
+interface DatePair {
+  start: Date;
+  end: Date;
+}
 
-  const handleDateSelect = (date: Date) => {
-    setDates(prev => [...prev, date])
-  }
+export function ActividadProyectoSelector({ selectedOption, onSelectOption, onChange }: ActividadProyectoSelectorProps) {
+  const [actividadDatePair, setActividadDatePair] = useState<DatePair>({ start: new Date(), end: new Date() })
+  const [proyectoDatePair, setProyectoDatePair] = useState<DatePair>({ start: new Date(), end: new Date() })
 
-  const handleRemoveDate = (dateToRemove: Date) => {
-    setDates(prev => prev.filter(date => date !== dateToRemove))
+  useEffect(() => {
+    if (selectedOption === "actividad") {
+      onChange({
+        tipoEvento: "actividad",
+        fechas: [actividadDatePair],
+      });
+    } else {
+      onChange({
+        tipoEvento: "proyecto",
+        fechas: [proyectoDatePair],
+      });
+    }
+  }, [selectedOption, actividadDatePair, proyectoDatePair, onChange]);
+
+  const handleDateSelect = (type: 'start' | 'end', date: Date) => {
+    if (selectedOption === "actividad") {
+      setActividadDatePair(prev => ({ ...prev, [type]: date }));
+    } else {
+      setProyectoDatePair(prev => ({ ...prev, [type]: date }));
+    }
   }
 
   return (
@@ -42,38 +64,33 @@ export function ActividadProyectoSelector({ selectedOption, onSelectOption }: Ac
         </div>
       </RadioGroup>
 
-      {selectedOption === "actividad" && (
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {dates.map((date, index) => (
-              <div
-                key={index}
-                className="flex items-center bg-green-100 text-green-800 text-xs font-semibold rounded-full px-2 py-1"
-              >
-                {format(date, "dd/MM", { locale: es })}
-                <button
-                  onClick={() => handleRemoveDate(date)}
-                  className="ml-1 text-green-600 hover:text-green-800"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div>
-            <Input
-              type="date"
-              className="w-auto max-w-[200px] border-green-300 text-green-700 focus:ring-green-500 text-sm px-2 py-1"
-              onChange={(e) => {
-                const date = new Date(e.target.value);
-                if (!isNaN(date.getTime())) {
-                  handleDateSelect(date);
-                }
-              }}
-            />
-          </div>
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Input
+            type="date"
+            value={format(selectedOption === "actividad" ? actividadDatePair.start : proyectoDatePair.start, "yyyy-MM-dd")}
+            className="w-auto max-w-[150px] border-green-300 text-green-700 focus:ring-green-500 text-sm px-2 py-1"
+            onChange={(e) => {
+              const date = new Date(e.target.value);
+              if (!isNaN(date.getTime())) {
+                handleDateSelect('start', date);
+              }
+            }}
+          />
+          <span className="text-green-700">-</span>
+          <Input
+            type="date"
+            value={format(selectedOption === "actividad" ? actividadDatePair.end : proyectoDatePair.end, "yyyy-MM-dd")}
+            className="w-auto max-w-[150px] border-green-300 text-green-700 focus:ring-green-500 text-sm px-2 py-1"
+            onChange={(e) => {
+              const date = new Date(e.target.value);
+              if (!isNaN(date.getTime())) {
+                handleDateSelect('end', date);
+              }
+            }}
+          />
         </div>
-      )}
+      </div>
     </div>
   )
 }
