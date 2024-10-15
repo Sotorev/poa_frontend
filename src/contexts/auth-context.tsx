@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			router.push('/')
 		} catch (error) {
 			console.error('Login error:', error)
-			router.push('/no-autorizado')
+			router.push('/iniciar-sesion') // Redirect to login page if login fails
 			throw error
 		} finally {
 			setLoading(false)

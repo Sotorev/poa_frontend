@@ -17,50 +17,57 @@ export function withAuth<P extends object>(
 	return function WithAuth(props: P) {
 		const { user, loading } = useAuth()
 		const router = useRouter()
-		const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
+		const [isAuthorized, setIsAuthorized] = useState(false)
 
 		useEffect(() => {
-			let isMounted = true
-
 			async function checkAuthorization() {
-				if (!user) {
-					if (isMounted) setIsAuthorized(false)
+				console.log('Checking authorization. User:', user, 'Loading:', loading)
+
+				if (!loading && !user) {
+					console.log('No user found, redirecting to login')
 					router.push('/iniciar-sesion')
 					return
 				}
 
-				let authorized = true
+				if (user) {
+					console.log('User found, checking permissions and roles')
+					let authorized = true
 
-				for (const { module, action } of requiredPermissions) {
-					const hasPermissionResult = await hasPermission(user, module, action)
-					if (!hasPermissionResult) {
-						authorized = false
-						break
+					for (const { module, action } of requiredPermissions) {
+						const hasPermissionResult = await hasPermission(user, module, action)
+						console.log(`Checking permission: ${module}:${action}. Result:`, hasPermissionResult)
+						if (!hasPermissionResult) {
+							authorized = false
+							break
+						}
 					}
-				}
 
-				if (authorized && requiredRoles.length > 0) {
-					authorized = await Promise.any(requiredRoles.map(role => hasRole(user, role)))
-				}
+					if (authorized) {
+						if (requiredRoles.length > 0) {
+							for (const role of requiredRoles) {
+								const hasRoleResult = await hasRole(user, role)
+								console.log(`Checking role: ${role}. Result:`, hasRoleResult)
+								if (hasRoleResult) {
+									break // If any required role is found, authorize and stop checking
+								}
+							}
+						}
+					}
 
-				if (isMounted) {
-					setIsAuthorized(authorized)
 					if (!authorized) {
+						console.log('Authorization failed, redirecting to unauthorized')
 						router.push('/no-autorizado')
+					} else {
+						console.log('Authorization successful')
+						setIsAuthorized(true)
 					}
 				}
 			}
 
-			if (!loading) {
-				checkAuthorization()
-			}
+			checkAuthorization()
+		}, [user, loading, router])
 
-			return () => {
-				isMounted = false
-			}
-		}, [user, loading, router, requiredPermissions, requiredRoles])
-
-		if (loading || isAuthorized === null) {
+		if (loading) {
 			return <div>Loading...</div>
 		}
 
