@@ -122,5 +122,5 @@ function PEIModule() {
 
 export default withAuth(PEIModule, {
 	requiredPermissions: [{ module: 'PEI', action: 'Edit' }],
-	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator']
+	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator', 'Administrador']
 })

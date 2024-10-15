@@ -1,9 +1,11 @@
+"use client";
 import { getServerSession } from '@/lib/server-auth'
 import { hasPermission } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { PoaDashboardMain } from '@/components/poa/poa-dashboard-main'
+import { withAuth } from '@/components/auth/with-auth'
 
-export default async function POAPage() {
+export function POAPage() {
   // const session = await getServerSession()
 
   // if (!session) {
@@ -16,3 +18,8 @@ export default async function POAPage() {
 
   return <PoaDashboardMain/>
 }
+
+export default withAuth(POAPage, {
+  requiredPermissions: [{ module: 'POA', action: 'View' }],
+  requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator', 'Administrador']
+})

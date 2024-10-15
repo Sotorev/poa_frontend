@@ -5,7 +5,8 @@ import PEIComponent from '@/components/pei/pei'
 
 export default async function PEIPage() {
 	// const session = await getServerSession()
-
+	// console.log('Session data:', session);
+	
 	// if (!session) {
 	// 	redirect('/iniciar-sesion')
 	// }

@@ -26,6 +26,8 @@ export interface UserPayload extends JWTPayload {
 export async function getServerSession(): Promise<UserPayload | null> {
 	console.log('getServerSession called')
 	const cookieStore = cookies()
+	console.log('Cookie store:', cookieStore);
+	
 	const token = cookieStore.get('auth-token')
 
 	console.log('Auth token:', token ? 'Found' : 'Not found')
@@ -44,4 +46,25 @@ export async function getServerSession(): Promise<UserPayload | null> {
 		console.error('Error verifying JWT:', error)
 		return null
 	}
+}
+
+export async function Login(username: string, password: string): Promise<UserPayload> {
+	const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ username, password }),
+		credentials: 'include',
+	})
+
+	if (!response.ok) {
+		throw new Error('Login failed')
+	}
+
+	const data = await getServerSession()
+	if (!data) {
+		throw new Error('Failed to get user session')
+	}
+	return data
 }
