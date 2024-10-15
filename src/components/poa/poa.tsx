@@ -13,5 +13,5 @@ function Users() {
 
 export default withAuth(Users, {
 	requiredPermissions: [{ module: 'POA', action: 'Create' }],
-	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator']
+	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator', 'Coordinador']
 })
