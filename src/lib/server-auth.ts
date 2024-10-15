@@ -1,9 +1,9 @@
-import { jwtVerify } from 'jose'
+import { jwtVerify, JWTPayload } from 'jose'
 import { cookies } from 'next/headers'
 
 const JWT_SECRET = process.env.JWT_SECRET!
 
-export interface UserPayload {
+export interface UserPayload extends JWTPayload {
 	userId: number
 	username: string
 	email: string
@@ -23,18 +23,24 @@ export interface UserPayload {
 }
 
 export async function getServerSession(): Promise<UserPayload | null> {
-	"use server";
+	console.log('getServerSession called')
 	const cookieStore = cookies()
 	const token = cookieStore.get('auth-token')
 
+	console.log('Auth token:', token ? 'Found' : 'Not found')
+
 	if (!token) {
+		console.log('No auth-token cookie, returning null')
 		return null
 	}
 
 	try {
+		console.log('Attempting to verify JWT')
 		const verified = await jwtVerify(token.value, new TextEncoder().encode(JWT_SECRET))
+		console.log('JWT verified successfully')
 		return verified.payload as unknown as UserPayload
-	} catch{
+	} catch (error) {
+		console.error('Error verifying JWT:', error)
 		return null
 	}
 }
