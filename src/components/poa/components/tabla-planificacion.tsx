@@ -50,7 +50,7 @@ const initialOptions: PurchaseType[] = [
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
-  estado: 'En revisión' | 'Aprobado' | 'Rechazado';
+  estado: 'planificado' | 'aprobado' | 'rechazado';
   comentarioDecano: string;
 }
 
@@ -160,7 +160,7 @@ export function TablaPlanificacionComponent() {
       tipoEvento: 'actividad',
       evento: '',
       objetivo: '',
-      estado: 'En revisión',
+      estado: 'planificado',
       costoTotal: 0,
       aporteUMES: [],
       aporteOtros: [],
@@ -342,7 +342,7 @@ export function TablaPlanificacionComponent() {
       // Opcional: Actualizar el estado de la fila, por ejemplo, cambiar el estado a 'aprobado'
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
-          filaItem.id === id ? { ...filaItem, estado: 'En revisión' } : filaItem
+          filaItem.id === id ? { ...filaItem, estado: 'aprobado' } : filaItem
         )
       );
 
