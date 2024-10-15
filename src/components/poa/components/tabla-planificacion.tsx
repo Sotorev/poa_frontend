@@ -32,6 +32,9 @@ import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'; // Asegúrate de importar el esquema actualizado
 
+// Importa useAuth para obtener el userId
+import { useAuth } from '@/contexts/auth-context';
+
 // Definir el tipo para las opciones de compra
 interface PurchaseType {
   id: number;
@@ -64,7 +67,7 @@ interface DatePair {
 }
 
 // Mapping of strategic objectives to strategic areas
-const objetivoToAreaMap: { [key: string]: string } = {
+const objetivoToAreaMapInitial: { [key: string]: string } = {
   "obj1": "Área Estratégica 1",
   "obj2": "Área Estratégica 2",
   "obj3": "Área Estratégica 3",
@@ -74,6 +77,9 @@ const objetivoToAreaMap: { [key: string]: string } = {
 }
 
 export function TablaPlanificacionComponent() {
+  const { user, loading: loadingAuth } = useAuth();
+  const userId = user?.userId;
+
   const [filas, setFilas] = useState<FilaPlanificacion[]>([]);
   const [strategicAreas, setStrategicAreas] = useState<{ strategicAreaId: number; name: string; peiId: number; isDeleted: boolean }[]>([]);
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([]);
@@ -81,6 +87,12 @@ export function TablaPlanificacionComponent() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filaErrors, setFilaErrors] = useState<{ [key: string]: FilaError }>({});
+
+  // Estados para facultyId y poaId
+  const [facultyId, setFacultyId] = useState<number | null>(null);
+  const [poaId, setPoaId] = useState<number | null>(null);
+  const [loadingPoa, setLoadingPoa] = useState<boolean>(false);
+  const [errorPoa, setErrorPoa] = useState<string | null>(null);
 
   // Fetch de áreas estratégicas y objetivos estratégicos al montar el componente
   useEffect(() => {
@@ -147,6 +159,61 @@ export function TablaPlanificacionComponent() {
 
     fetchData();
   }, []);
+
+  // Fetch del facultyId y poaId una vez que el userId está disponible
+  useEffect(() => {
+    const fetchFacultyAndPoa = async () => {
+      if (loadingAuth) return; // Espera a que la autenticación cargue
+      if (!userId) {
+        setErrorPoa("Usuario no autenticado.");
+        return;
+      }
+      try {
+        if (!process.env.NEXT_PUBLIC_API_URL) {
+          throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
+        }
+
+        // Fetch de la facultad del usuario
+        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        if (!responseUser.ok) {
+          throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
+        }
+        const dataUser = await responseUser.json();
+        const fetchedFacultyId = dataUser.facultyId;
+        setFacultyId(fetchedFacultyId);
+
+        // Obtener el año actual
+        const currentYear = new Date().getFullYear();
+
+        // Fetch del poaId
+        setLoadingPoa(true);
+        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        if (!responsePoa.ok) {
+          throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
+        }
+        const dataPoa = await responsePoa.json();
+        const fetchedPoaId = dataPoa.poaId; // Ajusta según la estructura de la respuesta
+        setPoaId(fetchedPoaId);
+      } catch (err) {
+        setErrorPoa((err as Error).message);
+        console.error(err);
+      } finally {
+        setLoadingPoa(false);
+      }
+    };
+
+    fetchFacultyAndPoa();
+  }, [userId, loadingAuth]);
 
   // Función para agregar una nueva fila
   const agregarFila = () => {
@@ -235,6 +302,21 @@ export function TablaPlanificacionComponent() {
 
   // Función para enviar una fila al backend
   const enviarActividad = async (id: string) => {
+    if (loadingPoa) {
+      toast.warn("Aún se está obteniendo el poaId. Por favor, espera un momento.");
+      return;
+    }
+
+    if (errorPoa) {
+      toast.error(`No se puede enviar la actividad debido a un error: ${errorPoa}`);
+      return;
+    }
+
+    if (!poaId) {
+      toast.error("poaId no está disponible.");
+      return;
+    }
+
     // Obtener la fila correspondiente
     const fila = filas.find(fila => fila.id === id);
     if (!fila) {
@@ -268,7 +350,7 @@ export function TablaPlanificacionComponent() {
       const eventData = {
         name: fila.evento.trim(),
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
-        poaId: 1, // Reemplaza con el ID de POA correspondiente
+        poaId: poaId, // Usar el poaId dinámico
         statusId: 1, // Reemplaza con el ID de estado correspondiente
         completionPercentage: 50, // Ajusta según tu lógica
         campusId: 1, // Reemplaza con el ID de campus correspondiente
@@ -355,8 +437,9 @@ export function TablaPlanificacionComponent() {
     }
   };
 
-  if (loading) return <div>Cargando áreas estratégicas y objetivos estratégicos...</div>;
+  if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
+  if (errorPoa) return <div className="text-red-500">Error al obtener poaId: {errorPoa}</div>;
 
   return (
     <div className="container mx-auto p-4">
