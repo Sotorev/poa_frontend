@@ -28,7 +28,7 @@ export async function getServerSession(): Promise<UserPayload | null> {
 	const token = cookieStore.get('auth-token')
 
 	console.log('Auth token:', token ? 'Found' : 'Not found')
-
+	console.log('Auth token value:', token?.value)
 	if (!token) {
 		console.log('No auth-token cookie, returning null')
 		return null
