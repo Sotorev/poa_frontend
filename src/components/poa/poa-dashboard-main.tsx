@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
-import { VisualizarIntervencionesSection } from './sections/visualizar-intervenciones-section'
+import { EventViewerComponent } from './sections/event-viewer'
 import { useAuth } from '@/contexts/auth-context'
 
 export interface SectionProps {
@@ -32,7 +32,7 @@ const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
-  { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
+  { name: "Visualizar intervenciones", icon: ListTodo, component: EventViewerComponent }
 ]
 
 export function PoaDashboardMain() {
