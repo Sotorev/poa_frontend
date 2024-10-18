@@ -35,6 +35,9 @@ import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'; // 
 // Importa useAuth para obtener el userId
 import { useAuth } from '@/contexts/auth-context';
 
+// Importa CampusSelector
+import { CampusSelector } from './columns/campus-selector';
+
 // Definir el tipo para las opciones de compra
 interface PurchaseType {
   id: number;
@@ -55,6 +58,7 @@ type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   comentarioDecano: string;
+  campusId: string; // Añadido para el CampusSelector
 }
 
 interface FilaError {
@@ -101,6 +105,7 @@ const getColumnName = (field: string): string => {
     fechas: "Fechas",
     detalleProceso: "Detalle del Proceso",
     comentarioDecano: "Comentario Decano",
+    campusId: "Campus", // Añadido para CampusSelector
   };
   return columnMap[field] || field;
 };
@@ -277,6 +282,7 @@ export function TablaPlanificacionComponent() {
       detalleProceso: null,
       comentarioDecano: '',
       fechas: [{ start: new Date(), end: new Date() }], // Inicializar con una fecha
+      campusId: '', // Inicializado como cadena vacía
     };
     setFilas([...filas, nuevaFila]);
     toast.info("Nueva fila agregada."); // Notificación opcional al agregar una fila
@@ -407,7 +413,7 @@ export function TablaPlanificacionComponent() {
         poaId: poaId, // Usar el poaId dinámico
         statusId: 1, // Reemplaza con el ID de estado correspondiente
         completionPercentage: 50, // Ajusta según tu lógica
-        campusId: 1, // Reemplaza con el ID de campus correspondiente
+        campusId: parseInt(fila.campusId, 10), // Usar el campusId seleccionado
         objective: fila.objetivo.trim(),
         eventNature: 'Planificado', // Ajusta según tu lógica
         isDelayed: false, // Ajusta según tu lógica
@@ -421,12 +427,12 @@ export function TablaPlanificacionComponent() {
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje,
+            porcentaje: aporte.porcentaje,
             amount: aporte.amount,
           })),
           ...fila.aporteOtros.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje,
+            porcentaje: aporte.porcentaje,
             amount: aporte.amount,
           })),
         ],
@@ -534,6 +540,7 @@ export function TablaPlanificacionComponent() {
             <TableHead>Aporte Otros</TableHead>
             <TableHead>Tipo de Compra</TableHead>
             <TableHead>Detalle</TableHead>
+            <TableHead>Campus</TableHead> {/* Nueva columna para CampusSelector */}
             <TableHead>Responsables</TableHead>
             <TableHead>Recursos</TableHead>
             <TableHead>Indicador de Logro</TableHead>
@@ -681,6 +688,14 @@ export function TablaPlanificacionComponent() {
                   {/* Mostrar advertencia si 'detalle' está vacío */}
                   {!fila.detalle && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <CampusSelector
+                    onSelectCampus={(campusId) => actualizarFila(fila.id, 'campusId', campusId)}
+                  />
+                  {filaErrors[fila.id]?.campusId && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].campusId}</span>
                   )}
                 </TableCell>
                 <TableCell>
