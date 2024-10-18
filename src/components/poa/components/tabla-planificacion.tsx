@@ -58,7 +58,6 @@ type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   comentarioDecano: string;
-  campusId: string; // Añadido para el CampusSelector
 }
 
 interface FilaError {
@@ -97,6 +96,7 @@ const getColumnName = (field: string): string => {
     aporteOtros: "Aporte Otros",
     tipoCompra: "Tipo de Compra",
     detalle: "Detalle",
+    campusId: "Campus", // Añadido para CampusSelector
     responsablePlanificacion: "Responsable de Planificación",
     responsableEjecucion: "Responsable de Ejecución",
     responsableSeguimiento: "Responsable de Seguimiento",
@@ -105,7 +105,6 @@ const getColumnName = (field: string): string => {
     fechas: "Fechas",
     detalleProceso: "Detalle del Proceso",
     comentarioDecano: "Comentario Decano",
-    campusId: "Campus", // Añadido para CampusSelector
   };
   return columnMap[field] || field;
 };
