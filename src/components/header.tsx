@@ -69,7 +69,8 @@ export default function Header() {
 						{canAccessUsers && <NavLink href="/usuarios/gestion">Usuarios</NavLink>}
 						{canAccessPEI && <NavLink href="/pei">PEI</NavLink>}
 						{canAccessPOA && <NavLink href="/poa">POA</NavLink>}
-						<NavLink href="/poa/eventos">Crear Evento</NavLink>
+						<NavLink href="/poa/eventosForms">Crear Evento Formulario</NavLink>
+						<NavLink href="/poa/eventosTable">Crear Evento Tabla</NavLink>
 						{canAccessReports && <NavLink href="/reportes">Reportes</NavLink>}
 					</nav>
 					<div className="flex items-center space-x-4">

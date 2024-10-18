@@ -38,6 +38,7 @@ export const filaPlanificacionSchema = z.object({
   indicadorLogro: z.string().nonempty("El indicador de logro es requerido"),
   detalleProceso: z.any().nullable(),
   fechas: z.array(datePairSchema).nonempty("Debe haber al menos una fecha."),
+  campusId: z.string().nonempty("Campus es requerido"), // Añadido para CampusSelector
 }).refine((data) => {
   // Validación personalizada: proyectos deben tener exactamente una fecha
   if (data.tipoEvento === "proyecto") {

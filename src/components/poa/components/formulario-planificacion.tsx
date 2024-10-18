@@ -1,0 +1,665 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from 'react-toastify'
+import { z } from 'zod'
+
+import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector'
+import { EstrategiasSelectorComponent } from './columns/estrategias-selector'
+import { IntervencionesSelectorComponent } from './columns/intervenciones-selector'
+import { OdsSelector } from './columns/ods-selector'
+import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector'
+import CurrencyInput from './columns/currency-input'
+import { AporteUmes } from './columns/aporte-umes'
+import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes'
+import { TipoDeCompraComponent } from './columns/tipo-de-compra'
+import { RecursosSelectorComponent } from './columns/recursos-selector'
+import { DetalleComponent } from './columns/detalle'
+import { AreaEstrategicaComponent } from './columns/area-estrategica'
+import { EventoComponent } from './columns/evento'
+import { ObjetivoComponent } from './columns/objetivo'
+import { EstadoComponent } from './columns/estado'
+import { ResponsablesComponent } from './columns/responsables'
+import { IndicadorLogroComponent } from './columns/indicador-logro'
+import { ComentarioDecanoComponent } from './columns/comentario-decano'
+import { CampusSelector } from './columns/campus-selector'
+
+import { useAuth } from '@/contexts/auth-context'
+import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
+import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema'
+import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'
+
+type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>
+
+interface FilaPlanificacion extends FilaPlanificacionForm {
+  estado: 'planificado' | 'aprobado' | 'rechazado'
+  comentarioDecano: string
+}
+
+interface FilaError {
+  [key: string]: string
+}
+
+interface DatePair {
+  start: Date
+  end: Date
+}
+
+const getColumnName = (field: string): string => {
+  const columnMap: { [key: string]: string } = {
+    areaEstrategica: "Área Estratégica",
+    objetivoEstrategico: "Objetivo Estratégico",
+    estrategias: "Estrategias",
+    intervencion: "Intervención",
+    ods: "ODS",
+    tipoEvento: "Tipo de Evento",
+    evento: "Evento",
+    objetivo: "Objetivo",
+    estado: "Estado",
+    costoTotal: "Costo Total",
+    aporteUMES: "Aporte UMES",
+    aporteOtros: "Aporte Otros",
+    tipoCompra: "Tipo de Compra",
+    detalle: "Detalle",
+    campusId: "Campus",
+    responsablePlanificacion: "Responsable de Planificación",
+    responsableEjecucion: "Responsable de Ejecución",
+    responsableSeguimiento: "Responsable de Seguimiento",
+    recursos: "Recursos",
+    indicadorLogro: "Indicador de Logro",
+    fechas: "Fechas",
+    detalleProceso: "Detalle del Proceso",
+    comentarioDecano: "Comentario Decano",
+  }
+  return columnMap[field] || field
+}
+
+export default function PlanificacionFormComponent() {
+  const { user, loading: loadingAuth } = useAuth()
+  const userId = user?.userId
+
+  const [fila, setFila] = useState<FilaPlanificacion>({
+    id: Date.now().toString(),
+    areaEstrategica: '',
+    objetivoEstrategico: '',
+    estrategias: [],
+    intervencion: [],
+    ods: [],
+    tipoEvento: 'actividad',
+    evento: '',
+    objetivo: '',
+    estado: 'planificado',
+    costoTotal: 0,
+    aporteUMES: [],
+    aporteOtros: [],
+    tipoCompra: '',
+    detalle: null,
+    responsablePlanificacion: '',
+    responsableEjecucion: '',
+    responsableSeguimiento: '',
+    recursos: [],
+    indicadorLogro: '',
+    detalleProceso: null,
+    comentarioDecano: '',
+    fechas: [{ start: new Date(), end: new Date() }],
+    campusId: '',
+  })
+
+  const [strategicAreas, setStrategicAreas] = useState<{ strategicAreaId: number; name: string; peiId: number; isDeleted: boolean }[]>([])
+  const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([])
+  const [objetivoToAreaMap, setObjetivoToAreaMap] = useState<{ [key: string]: string }>({})
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+  const [filaErrors, setFilaErrors] = useState<FilaError>({})
+
+  const [facultyId, setFacultyId] = useState<number | null>(null)
+  const [poaId, setPoaId] = useState<number | null>(null)
+  const [loadingPoa, setLoadingPoa] = useState<boolean>(false)
+  const [errorPoa, setErrorPoa] = useState<string | null>(null)
+
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false)
+  const [modalErrorList, setModalErrorList] = useState<{ column: string, message: string }[]>([])
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        if (!process.env.NEXT_PUBLIC_API_URL) {
+          throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.")
+        }
+
+        const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, {
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        })
+        if (!responseAreas.ok) {
+          throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`)
+        }
+        const dataAreas = await responseAreas.json()
+        const parsedAreas = strategicAreasSchema.parse(dataAreas)
+        const activeAreas = parsedAreas.filter((area) => !area.isDeleted)
+        setStrategicAreas(activeAreas)
+
+        const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        })
+        if (!responseObjectives.ok) {
+          throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`)
+        }
+        const dataObjectives = await responseObjectives.json()
+        const parsedObjectives = dataObjectives.map((obj: any) => StrategicObjectiveSchema.parse(obj)).filter((obj: StrategicObjective) => !obj.isDeleted)
+        setStrategicObjectives(parsedObjectives)
+
+        const map: { [key: string]: string } = {}
+        parsedObjectives.forEach((obj: StrategicObjective) => {
+          const areaMatched = activeAreas.find(area => area.strategicAreaId === obj.strategicAreaId)
+          if (areaMatched) {
+            map[obj.strategicObjectiveId.toString()] = areaMatched.name
+          } else {
+            console.warn(`No se encontró Área Estratégica para el Objetivo Estratégico ID: ${obj.strategicObjectiveId}`)
+          }
+        })
+        setObjetivoToAreaMap(map)
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          setError("Error en la validación de datos de áreas estratégicas u objetivos estratégicos.")
+          console.error(err.errors)
+        } else {
+          setError((err as Error).message)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  useEffect(() => {
+    const fetchFacultyAndPoa = async () => {
+      if (loadingAuth) return
+      if (!userId) {
+        setErrorPoa("Usuario no autenticado.")
+        return
+      }
+      try {
+        if (!process.env.NEXT_PUBLIC_API_URL) {
+          throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.")
+        }
+
+        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        })
+        if (!responseUser.ok) {
+          throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`)
+        }
+        const dataUser = await responseUser.json()
+        const fetchedFacultyId = dataUser.facultyId
+        setFacultyId(fetchedFacultyId)
+
+        const currentYear = new Date().getFullYear()
+
+        setLoadingPoa(true)
+        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        })
+        if (!responsePoa.ok) {
+          throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`)
+        }
+        const dataPoa = await responsePoa.json()
+        const fetchedPoaId = dataPoa.poaId
+        setPoaId(fetchedPoaId)
+      } catch (err) {
+        setErrorPoa((err as Error).message)
+        console.error(err)
+      } finally {
+        setLoadingPoa(false)
+      }
+    }
+
+    fetchFacultyAndPoa()
+  }, [userId, loadingAuth])
+
+  const actualizarFila = (campo: keyof FilaPlanificacion, valor: any | null) => {
+    setFila(prevFila => {
+      const updatedFila = { ...prevFila, [campo]: valor }
+      if (campo === 'objetivoEstrategico') {
+        updatedFila.areaEstrategica = objetivoToAreaMap[valor] || ''
+      }
+      return updatedFila
+    })
+  }
+
+  const addStrategicObjective = (createdObjetivo: StrategicObjective) => {
+    setStrategicObjectives(prev => [...prev, createdObjetivo])
+    const area = strategicAreas.find(area => area.strategicAreaId === createdObjetivo.strategicAreaId)
+    if (area) {
+      setObjetivoToAreaMap(prevMap => ({
+        ...prevMap,
+        [createdObjetivo.strategicObjectiveId.toString()]: area.name,
+      }))
+    } else {
+      console.warn(`No se encontró Área Estratégica para el nuevo Objetivo Estratégico ID: ${createdObjetivo.strategicObjectiveId}`)
+    }
+    toast.success("Nuevo objetivo estratégico agregado.")
+  }
+
+  const manejarCambioFechas = (data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
+    // Implementar si es necesario
+  }
+
+  const enviarActividad = async () => {
+    if (loadingPoa) {
+      toast.warn("Aún se está obteniendo el poaId. Por favor, espera un momento.")
+      return
+    }
+
+    if (errorPoa) {
+      toast.error(`No se puede enviar la actividad debido a un error: ${errorPoa}`)
+      return
+    }
+
+    if (!poaId) {
+      toast.error("poaId no está disponible.")
+      return
+    }
+
+    const validation = filaPlanificacionSchema.safeParse(fila)
+
+    if (!validation.success) {
+      const errors: FilaError = {}
+      const errorsList: { column: string, message: string }[] = []
+
+      validation.error.errors.forEach(err => {
+        const field = err.path[0] as string
+        const message = err.message
+        errors[field] = message
+        errorsList.push({
+          column: getColumnName(field),
+          message: message,
+        })
+      })
+      setFilaErrors(errors)
+      setModalErrorList(errorsList)
+      setIsErrorModalOpen(true)
+      toast.error("Hay errores en el formulario. Por favor, revisa los campos.")
+      console.error("Error de validación:", validation.error.errors)
+      return
+    }
+
+    if (!fila.detalle) {
+      setIsConfirmModalOpen(true)
+      return
+    }
+
+    await enviarAlBackend()
+  }
+
+  const enviarAlBackend = async () => {
+    try {
+      if (!process.env.NEXT_PUBLIC_API_URL) {
+        throw new Error("La URL de la API no está definida.")
+      }
+
+      const eventData = {
+        name: fila.evento.trim(),
+        type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
+        poaId: poaId,
+        statusId: 1,
+        completionPercentage: 50,
+        campusId: parseInt(fila.campusId, 10),
+        objective: fila.objetivo.trim(),
+        eventNature: 'Planificado',
+        isDelayed: false,
+        achievementIndicator: fila.indicadorLogro.trim(),
+        purchaseType: fila.tipoCompra,
+        totalCost: fila.costoTotal,
+        dates: fila.fechas.map(pair => ({
+          startDate: pair.start.toISOString().split('T')[0],
+          endDate: pair.end.toISOString().split('T')[0],
+        })),
+        financings: [
+          ...fila.aporteUMES.map(aporte => ({
+            financingSourceId: aporte.financingSourceId,
+            percentage: aporte.porcentaje,
+            amount: aporte.amount,
+          })),
+          ...fila.aporteOtros.map(aporte => ({
+            financingSourceId:  aporte.financingSourceId,
+            percentage: aporte.porcentaje,
+            amount: aporte.amount,
+          })),
+        ],
+        approvals: [],
+        responsibles: [
+          {
+            responsibleRole: 'Principal',
+            name: fila.responsablePlanificacion.trim(),
+          },
+          {
+            responsibleRole: 'Ejecución',
+            name: fila.responsableEjecucion.trim(),
+          },
+          {
+            responsibleRole: 'Seguimiento',
+            name: fila.responsableSeguimiento.trim(),
+          },
+        ],
+        interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+      }
+
+      console.log('Datos a enviar:', eventData)
+
+      const formData = new FormData()
+      formData.append('data', JSON.stringify(eventData))
+
+      if (fila.detalle) {
+        formData.append('costDetailDocuments', fila.detalle)
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`Error al enviar la actividad: ${errorData.message || response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log(`Actividad enviada exitosamente:`, result)
+
+      toast.success("Actividad enviada exitosamente.")
+
+      setFila(prevFila => ({ ...prevFila, estado: 'aprobado' }))
+
+      setFilaErrors({})
+    } catch (err) {
+      console.error(err)
+      toast.error(`Error al enviar la actividad: ${(err as Error).message}`)
+    }
+  }
+
+  const confirmarEnvioSinDetalle = async () => {
+    await enviarAlBackend()
+    setIsConfirmModalOpen(false)
+  }
+
+  if (loading || loadingAuth || loadingPoa) return <div className="flex justify-center items-center h-screen">Cargando datos...</div>
+  if (error) return <div className="text-red-500 text-center">Error: {error}</div>
+  if (errorPoa) return <div className="text-red-500 text-center">Error al obtener poaId: {errorPoa}</div>
+
+  const strategicObjective = strategicObjectives.find(
+    (obj) => obj.strategicObjectiveId.toString() === fila.objetivoEstrategico
+  )
+
+  const strategicObjectiveId = strategicObjective
+    ? strategicObjective.strategicObjectiveId
+    : 0
+
+  return (
+    <div className="container mx-auto p-4">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Evento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block font-medium mb-2">Área Estratégica</label>
+              <AreaEstrategicaComponent
+                areaEstrategica={fila.areaEstrategica}
+                error={filaErrors?.areaEstrategica}
+              />
+              {filaErrors?.areaEstrategica && (
+                <span className="text-red-500 text-sm">{filaErrors.areaEstrategica}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Objetivo Estratégico</label>
+              <ObjetivosEstrategicosSelectorComponent
+                selectedObjetivos={[fila.objetivoEstrategico]}
+                onSelectObjetivo={(objetivo) => actualizarFila('objetivoEstrategico', objetivo)}
+                strategicObjectives={strategicObjectives}
+                addStrategicObjective={addStrategicObjective}
+              />
+              {filaErrors?.objetivoEstrategico && (
+                <span className="text-red-500 text-sm">{filaErrors.objetivoEstrategico}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Estrategias</label>
+              <EstrategiasSelectorComponent
+                selectedEstrategias={fila.estrategias}
+                onSelectEstrategia={(estrategias) => actualizarFila('estrategias', estrategias)}
+                strategicObjectiveId={strategicObjectiveId}
+              />
+              {filaErrors?.estrategias && (
+                <span className="text-red-500 text-sm">{filaErrors.estrategias}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Intervención</label>
+              <IntervencionesSelectorComponent
+                selectedIntervenciones={fila.intervencion}
+                onSelectIntervencion={(intervenciones) => actualizarFila('intervencion', intervenciones)}
+              />
+              {filaErrors?.intervencion && (
+                <span className="text-red-500 text-sm">{filaErrors.intervencion}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">ODS</label>
+              <OdsSelector
+                selectedODS={fila.ods}
+                onSelectODS={(ods) => actualizarFila('ods', ods)}
+              />
+              {filaErrors?.ods && (
+                <span className="text-red-500 text-sm">{filaErrors.ods}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Tipo de Evento</label>
+              <ActividadProyectoSelector
+                selectedOption={fila.tipoEvento}
+                onSelectOption={(tipo) => actualizarFila('tipoEvento', tipo)}
+                onChange={(data) => manejarCambioFechas(data)}
+              />
+              {filaErrors?.tipoEvento && (
+                <span className="text-red-500 text-sm">{filaErrors.tipoEvento}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Evento</label>
+              <EventoComponent
+                value={fila.evento}
+                onChange={(value) => actualizarFila('evento', value)}
+              />
+              {filaErrors?.evento && (
+                <span className="text-red-500 text-sm">{filaErrors.evento}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Objetivo</label>
+              <ObjetivoComponent
+                value={fila.objetivo}
+                onChange={(value) => actualizarFila('objetivo', value)}
+              />
+              {filaErrors?.objetivo && (
+                <span className="text-red-500 text-sm">{filaErrors.objetivo}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Estado</label>
+              <EstadoComponent estado={fila.estado} />
+              {filaErrors?.estado && (
+                <span className="text-red-500 text-sm">{filaErrors.estado}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Costo Total</label>
+              <CurrencyInput
+                value={fila.costoTotal}
+                onChange={(valor: number | undefined) => actualizarFila('costoTotal', valor ?? 0)}
+              />
+              {filaErrors?.costoTotal && (
+                <span className="text-red-500 text-sm">{filaErrors.costoTotal}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Aporte UMES</label>
+              <AporteUmes
+                aportes={fila.aporteUMES}
+                onChangeAportes={(aportes) => actualizarFila('aporteUMES', aportes)}
+              />
+              {filaErrors?.aporteUMES && (
+                <span className="text-red-500 text-sm">{filaErrors.aporteUMES}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Aporte Otros</label>
+              <AporteOtrasFuentesComponent
+                aportes={fila.aporteOtros}
+                onChangeAportes={(aportes) => actualizarFila('aporteOtros', aportes)}
+              />
+              {filaErrors?.aporteOtros && (
+                <span className="text-red-500 text-sm">{filaErrors.aporteOtros}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Tipo de Compra</label>
+              <TipoDeCompraComponent
+                selectedType={fila.tipoCompra}
+                onSelectType={(tipo: string) => actualizarFila('tipoCompra', tipo)}
+              />
+              {filaErrors?.tipoCompra && (
+                <span className="text-red-500 text-sm">{filaErrors.tipoCompra}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Detalle</label>
+              <DetalleComponent
+                file={fila.detalle}
+                onFileChange={(file) => actualizarFila('detalle', file)}
+              />
+              {!fila.detalle && (
+                <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Campus</label>
+              <CampusSelector
+                onSelectCampus={(campusId) => actualizarFila('campusId', campusId)}
+              />
+              {filaErrors?.campusId && (
+                <span className="text-red-500 text-sm">{filaErrors.campusId}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Responsables</label>
+              <ResponsablesComponent
+                responsablePlanificacion={fila.responsablePlanificacion}
+                responsableEjecucion={fila.responsableEjecucion}
+                responsableSeguimiento={fila.responsableSeguimiento}
+                onChangeResponsablePlanificacion={(value: string) => actualizarFila('responsablePlanificacion', value)}
+                onChangeResponsableEjecucion={(value: string) => actualizarFila('responsableEjecucion', value)}
+                onChangeResponsableSeguimiento={(value: string) => actualizarFila('responsableSeguimiento', value)}
+              />
+              {filaErrors?.responsablePlanificacion && (
+                <span className="text-red-500 text-sm">{filaErrors.responsablePlanificacion}</span>
+              )}
+              {filaErrors?.responsableEjecucion && (
+                <span className="text-red-500 text-sm">{filaErrors.responsableEjecucion}</span>
+              )}
+              {filaErrors?.responsableSeguimiento && (
+                <span className="text-red-500 text-sm">{filaErrors.responsableSeguimiento}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Recursos</label>
+              <RecursosSelectorComponent
+                selectedRecursos={fila.recursos}
+                onSelectRecursos={(recursos) => actualizarFila('recursos', recursos)}
+              />
+              {filaErrors?.recursos && (
+                <span className="text-red-500 text-sm">{filaErrors.recursos}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Indicador de Logro</label>
+              <IndicadorLogroComponent
+                value={fila.indicadorLogro}
+                onChange={(value: string) => actualizarFila('indicadorLogro', value)}
+              />
+              {filaErrors?.indicadorLogro && (
+                <span className="text-red-500 text-sm">{filaErrors.indicadorLogro}</span>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium mb-2">Comentario Decano</label>
+              <ComentarioDecanoComponent comentario={fila.comentarioDecano} />
+              {filaErrors?.comentarioDecano && (
+                <span className="text-red-500 text-sm">{filaErrors.comentarioDecano}</span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <div className="flex justify-center">
+        <Button onClick={enviarActividad} className="px-8 py-2">Enviar Evento</Button>
+      </div>
+
+      {isErrorModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Errores en el Formulario</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-disc list-inside">
+                {modalErrorList.map((error, index) => (
+                  <li key={index} className="mb-2">
+                    <strong>{error.column}:</strong> {error.message}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+            <div className="p-4 flex justify-end">
+              <Button onClick={() => setIsErrorModalOpen(false)}>Cerrar</Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Confirmar Envío</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>¿Estás seguro de que deseas enviar la actividad sin el detalle de costos?</p>
+            </CardContent>
+            <div className="p-4 flex justify-end space-x-4">
+              <Button variant="outline" onClick={() => setIsConfirmModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmarEnvioSinDetalle}>
+                Enviar
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
