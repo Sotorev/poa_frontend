@@ -426,15 +426,16 @@ export function TablaPlanificacionComponent() {
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            porcentaje: aporte.porcentaje,
+            percentage: aporte.porcentaje, // Correcto
             amount: aporte.amount,
           })),
           ...fila.aporteOtros.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            porcentaje: aporte.porcentaje,
+            percentage: aporte.porcentaje, // Correcto
             amount: aporte.amount,
           })),
-        ],
+        ],   
+        approvals: [],     
         responsibles: [
           {
             responsibleRole: 'Principal',
