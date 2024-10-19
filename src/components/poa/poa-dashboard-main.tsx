@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
+import { FodaSection } from './sections/foda-section'
 import { EventViewerComponent } from './sections/event-viewer'
 import { useAuth } from '@/contexts/auth-context'
 
@@ -32,7 +33,8 @@ const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
-  { name: "Visualizar intervenciones", icon: ListTodo, component: EventViewerComponent }
+  { name: "Agregar/confirmar FODA", icon: BarChart2, component: FodaSection },
+  { name: "Aprobacion de eventos del POA", icon: ListTodo, component: EventViewerComponent }
 ]
 
 export function PoaDashboardMain() {
@@ -147,11 +149,27 @@ export function PoaDashboardMain() {
 
   const handleCreatePoa = async () => {
     try {
+      // Obtener el peiId desde la ruta proporcionada
+      const peiResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pei/current`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+  
+      if (!peiResponse.ok) {
+        throw new Error('Error al obtener el PEI.');
+      }
+  
+      const peiData = await peiResponse.json();
+      const peiId = peiData.peiId; // Obtener el peiId del response
+  
       const currentYear = new Date().getFullYear();
       const payload = {
         facultyId: facultyId,
         year: currentYear,
-        peiId: 1,
+        peiId: peiId, // Usar el peiId obtenido dinámicamente
       };
   
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
@@ -164,23 +182,21 @@ export function PoaDashboardMain() {
       });
   
       const responseData = await response.json();
-      // Mostrar respuesta en la consola
-   
   
       if (!response.ok) {
         throw new Error(responseData.message || 'Error al crear el POA.');
       }
   
       alert("POA creado exitosamente.");
-      
+  
       const newPoaId = responseData.poaId; // Obtener el poaId del response
       setPoaId(newPoaId); // Guardar el poaId en el estado
   
     } catch (error: any) {
-      console.error("Error al crear el POA:", error);
-      alert("Ya creaste el POA para este año.");
+      alert("Error al crear el POA: " + error.message);
     }
   };
+  
 
   return (
     <main className="flex bg-green-50 min-h-screen">

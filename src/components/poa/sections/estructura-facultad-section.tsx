@@ -306,7 +306,7 @@ export function FacultyStructureSection({ name, isActive, facultyId }: SectionPr
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-800 hover:bg-green-100">
               <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancelar" : "Editar"}
+              {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-800 hover:bg-green-100">
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}

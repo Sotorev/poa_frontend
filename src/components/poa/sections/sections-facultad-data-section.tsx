@@ -6,79 +6,92 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChevronDown, ChevronUp, Edit } from 'lucide-react'
-import { useAuth } from '@/contexts/auth-context'
 
 interface SectionProps {
   name: string
   isActive: boolean
-  disableEditButton?: boolean,
-  poaId: number;
+  disableEditButton?: boolean
+  poaId: number
+  facultyId: number
 }
 
-export function FacultadDataSection({ name, isActive, disableEditButton = false }: SectionProps) {
+interface FacultadData {
+  name: string
+  deanName: string
+  submissionDate: string
+}
+
+export function FacultadDataSection({ name, isActive, facultyId, poaId, disableEditButton = false }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [facultadData, setFacultadData] = useState({
-    nombreFacultad: "",
-    nombreDecano: "",
-    fechaPresentacion: ""
+  const [facultadData, setFacultadData] = useState<FacultadData>({
+    name: "",
+    deanName: "",
+    submissionDate: ""
   })
 
-  const [tempFacultadData, setTempFacultadData] = useState(facultadData)
-  const { user, loading } = useAuth()
+  const [tempFacultadData, setTempFacultadData] = useState<FacultadData>({
+    name: "",
+    deanName: "",
+    submissionDate: ""
+  })
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const fetchFacultadData = async () => {
+      try {
+        const facultyResponse = await fetch(`${API_URL}/api/faculties/${facultyId}`, {
+          credentials: 'include',
+          headers: {
+          'Content-Type': 'application/json',
+        },
+        })
 
-    if (!loading && user) {
-      const fetchUserData = async () => {
-        try {
-          const userId = user.userId
-
-          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          })
-          if (!userResponse.ok) {
-            throw new Error('Error al obtener datos del usuario')
-          }
-          const userData = await userResponse.json()
-
-          const faculty = userData.faculty
-
-          if (!faculty) {
-            throw new Error('El usuario no tiene una facultad asignada')
-          }
-
-          setFacultadData({
-            nombreFacultad: faculty.name,
-            nombreDecano: faculty.deanName,
-            fechaPresentacion: faculty.fechaPresentacion || today
-          })
-          setTempFacultadData({
-            nombreFacultad: faculty.name,
-            nombreDecano: faculty.deanName,
-            fechaPresentacion: faculty.fechaPresentacion || today
-          })
-        } catch (error) {
-          console.error(error)
+        if (!facultyResponse.ok) {
+          throw new Error('Error al obtener datos de la facultad')
         }
-      }
 
-      fetchUserData()
-    } else {
-      setFacultadData((prevData) => ({
-        ...prevData,
-        fechaPresentacion: today
-      }))
-      setTempFacultadData((prevData) => ({
-        ...prevData,
-        fechaPresentacion: today
-      }))
+        const facultyData: {
+          name: string
+          deanName: string
+        } = await facultyResponse.json()
+
+        const poaResponse = await fetch(`${API_URL}/api/poas/${poaId}`, {
+          credentials: 'include',
+          headers: {
+          'Content-Type': 'application/json',
+        },
+        })
+
+        if (!poaResponse.ok) {
+          throw new Error('Error al obtener la fecha de presentación del POA')
+        }
+
+        const poaData: {
+          submissionDate: string
+        } = await poaResponse.json()
+
+        setFacultadData({
+          name: facultyData.name,
+          deanName: facultyData.deanName,
+          submissionDate: poaData.submissionDate
+        })
+
+        setTempFacultadData({
+          name: facultyData.name,
+          deanName: facultyData.deanName,
+          submissionDate: poaData.submissionDate
+        })
+      } catch (error) {
+        console.error(error)
+      }
     }
-  }, [user, loading])
+
+    if (facultyId && poaId) {
+      fetchFacultadData()
+    }
+  }, [API_URL, facultyId, poaId])
 
   const handleEdit = () => {
     if (isEditing) {
@@ -89,46 +102,28 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
 
   const handleSave = async () => {
     try {
-      const userId = user?.userId
-
-      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      if (!userResponse.ok) {
-        throw new Error('Error al obtener datos del usuario')
-      }
-      const userData = await userResponse.json()
-      const faculty = userData.faculty
-
-      if (!faculty) {
-        throw new Error('El usuario no tiene una facultad asignada')
-      }
-
-      const facultyId = faculty.facultyId
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
+      const response = await fetch(`${API_URL}/api/faculties/${facultyId}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: tempFacultadData.nombreFacultad,
-          deanName: tempFacultadData.nombreDecano,
-          fechaPresentacion: tempFacultadData.fechaPresentacion
+          name: tempFacultadData.name,
+          deanName: tempFacultadData.deanName
+          // No enviamos submissionDate ya que no es editable
         })
       })
+
       if (!response.ok) {
         throw new Error('Error al actualizar datos de la facultad')
       }
+
       const data = await response.json()
       setFacultadData({
-        nombreFacultad: data.name,
-        nombreDecano: data.deanName,
-        fechaPresentacion: data.fechaPresentacion || new Date().toISOString().split('T')[0]
+        name: data.name,
+        deanName: data.deanName,
+        submissionDate: facultadData.submissionDate // Mantener la fecha existente
       })
       setIsEditing(false)
     } catch (error) {
@@ -157,7 +152,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
             {!disableEditButton && (
               <Button variant="ghost" size="sm" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
-                {isEditing ? "Cancelar" : "Editar"}
+                {isEditing ? "Finalizar edición" : "Editar"}
               </Button>
             )}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
@@ -169,34 +164,33 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
           <div className="p-4 bg-white">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="nombreFacultad">Nombre de la Facultad</Label>
+                <Label htmlFor="name">Nombre de la Facultad</Label>
                 <Input
-                  id="nombreFacultad"
-                  name="nombreFacultad"
-                  value={isEditing ? tempFacultadData.nombreFacultad : facultadData.nombreFacultad}
+                  id="name"
+                  name="name"
+                  value={isEditing ? tempFacultadData.name : facultadData.name}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                 />
               </div>
               <div>
-                <Label htmlFor="nombreDecano">Nombre del Decano</Label>
+                <Label htmlFor="deanName">Nombre del Decano</Label>
                 <Input
-                  id="nombreDecano"
-                  name="nombreDecano"
-                  value={isEditing ? tempFacultadData.nombreDecano : facultadData.nombreDecano}
+                  id="deanName"
+                  name="deanName"
+                  value={isEditing ? tempFacultadData.deanName : facultadData.deanName}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                 />
               </div>
               <div>
-                <Label htmlFor="fechaPresentacion">Fecha de Presentación del POA</Label>
+                <Label htmlFor="submissionDate">Fecha de Presentación del POA</Label>
                 <Input
-                  id="fechaPresentacion"
-                  name="fechaPresentacion"
+                  id="submissionDate"
+                  name="submissionDate"
                   type="date"
-                  value={isEditing ? tempFacultadData.fechaPresentacion : facultadData.fechaPresentacion}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
+                  value={facultadData.submissionDate}
+                  disabled // Hacer que el campo sea de solo lectura
                 />
               </div>
               {isEditing && (
