@@ -27,7 +27,6 @@ export interface SectionProps {
 }
 
 const sections = [
-  { name: "Bienvenida", icon: Home, component: WelcomeVicechancellor },
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
@@ -167,7 +166,6 @@ export function PoaAcademicApproval() {
             userId={userId}
             rolId={rolId}
             isEditable={false}
-            onSelectFaculty={handleSelectFaculty}
           />
         ))}
       </div>
