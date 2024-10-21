@@ -34,17 +34,6 @@ import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
 
 import { CampusSelector } from './columns/campus-selector';
 
-interface PurchaseType {
-  id: number;
-  name: string;
-}
-
-const initialOptions: PurchaseType[] = [
-  { id: 1, name: 'Compra Directa' },
-  { id: 2, name: 'Licitación Pública' },
-  { id: 3, name: 'Concurso de Proveedores' },
-];
-
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
@@ -414,6 +403,7 @@ export function TablaPlanificacionComponent() {
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
         ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+        recursos: fila.recursos, // Array de strings
         userId: userId,
       };
 
@@ -515,7 +505,7 @@ export function TablaPlanificacionComponent() {
             <TableHead>Aporte UMES</TableHead>
             <TableHead>Aporte Otros</TableHead>
             <TableHead>Tipo de Compra</TableHead>
-            <TableHead>Detalle</TableHead>
+            <TableHead>Detalle de costos</TableHead>
             <TableHead>Campus</TableHead>
             <TableHead>Responsables</TableHead>
             <TableHead>Recursos</TableHead>
@@ -737,6 +727,7 @@ export function TablaPlanificacionComponent() {
       </Table>
       <Button onClick={agregarFila} className="mt-4">Agregar Fila</Button>
 
+      {/* Modal de Errores */}
       {isErrorModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full">
@@ -753,6 +744,7 @@ export function TablaPlanificacionComponent() {
         </div>
       )}
 
+      {/* Modal de Confirmación */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">
