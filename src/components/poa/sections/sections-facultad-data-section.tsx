@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChevronDown, ChevronUp, Edit } from 'lucide-react'
-import { useAuth } from '@/contexts/auth-context'
+import { useSession } from 'next-auth/react'
 
 interface SectionProps {
   name: string
@@ -25,12 +25,13 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
   })
 
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
-  const { user, loading } = useAuth()
+  const { data: session } = useSession()
+  const user = session?.user
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
 
-    if (!loading && user) {
+    if (user) {
       const fetchUserData = async () => {
         try {
           const userId = user.userId
@@ -78,7 +79,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false 
         fechaPresentacion: today
       }))
     }
-  }, [user, loading])
+  }, [user])
 
   const handleEdit = () => {
     if (isEditing) {

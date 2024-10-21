@@ -19,7 +19,7 @@ import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { VisualizarIntervencionesSection } from './sections/visualizar-intervenciones-section'
-import { useAuth } from '@/contexts/auth-context'
+import { useSession } from 'next-auth/react'
 
 export interface SectionProps {
   name: string
@@ -41,26 +41,20 @@ export function PoaDashboardMain() {
   const [isSidebarFixed, setIsSidebarFixed] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
-
-  const { user, loading } = useAuth()
-
   const [facultyId, setFacultyId] = useState<number>() // Estado para almacenar el facultyId
   const [poaId, setPoaId] = useState<number>(); // Estado para almacenar el poaId
+  const { data: session} = useSession()
+
 
   // useEffect para obtener el facultyId cuando el componente se monta
   useEffect(() => {
+    const user = session?.user
+    if (!user) {
+      console.log("No estás autenticado.");
+      alert("No estás autenticado.");
+      return;
+    }
     const fetchFacultyId = async () => {
-      if (loading) {
-        console.log("Cargando información del usuario...");
-        return;
-      }
-    
-      if (!user) {
-        console.log("No estás autenticado.");
-        alert("No estás autenticado.");
-        return;
-      }
-    
       try {
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
           credentials: 'include',
@@ -94,7 +88,7 @@ export function PoaDashboardMain() {
     }
 
     fetchFacultyId()
-  }, [user, loading])
+  }, [session])
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -257,7 +251,7 @@ export function PoaDashboardMain() {
       >
         {/* Botón para crear POA */}
         <div className="mb-4">
-          <Button onClick={handleCreatePoa} disabled={loading || !facultyId}>
+          <Button onClick={handleCreatePoa} disabled={!facultyId}>
             Iniciar nuevo POA
           </Button>
         </div>

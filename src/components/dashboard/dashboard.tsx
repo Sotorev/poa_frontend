@@ -1,8 +1,4 @@
-'use client'
-
-import { withAuth } from '../auth/with-auth'
 import React from 'react'
-import { useAuth } from '@/contexts/auth-context'
 import {
 	BarChart,
 	CheckCircle,
@@ -13,9 +9,13 @@ import {
 	FileText,
 	TrendingUp
 } from 'lucide-react'
+import { auth } from '@/auth'
 
-export  function Dashboard() {
-	const { user } = useAuth()
+export default async function Dashboard() {
+	const session = await auth();
+	console.log(session)
+	if (!session) return null
+	const user = session.user
 
 	// Placeholder data - replace with actual data from your backend
 	const stats = {
@@ -115,8 +115,3 @@ function QuickActionButton({ icon, title }: { icon: React.ReactNode, title: stri
 		</button>
 	)
 }
-
-export default withAuth(Dashboard, {
-	requiredPermissions: [{ module: 'PEI', action: 'Edit' }],
-	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator']
-})

@@ -10,10 +10,10 @@ import { ChevronDown, ChevronUp, Edit, Trash2, PlusCircle, Pencil, Save } from '
 import { Label } from "@/components/ui/label"
 import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from "@/components/ui/checkbox"
-import { departmentApi, Department } from '@/api/department'
-import { campusApi, Campus } from '@/api/campus'
-import { programApi, Program } from '@/api/program'
-import { facultyApi } from '@/api/faculty'
+import { departmentApi, Department } from '@/lib/department'
+import { campusApi, Campus } from '@/lib/campus'
+import { programApi, Program } from '@/lib/program'
+import { facultyApi } from '@/lib/faculty'
 import { SectionProps } from '../poa-dashboard-main'
 
 export function FacultyStructureSection({ name, isActive, facultyId }: SectionProps) {

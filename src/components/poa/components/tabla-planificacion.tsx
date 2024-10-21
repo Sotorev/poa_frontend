@@ -31,9 +31,7 @@ import { AccionesComponent } from './columns/acciones';
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'; // Asegúrate de importar el esquema actualizado
-
-// Importa useAuth para obtener el userId
-import { useAuth } from '@/contexts/auth-context';
+import { useSession } from 'next-auth/react';
 
 // Definir el tipo para las opciones de compra
 interface PurchaseType {
@@ -77,7 +75,9 @@ const objetivoToAreaMapInitial: { [key: string]: string } = {
 }
 
 export function TablaPlanificacionComponent() {
-  const { user, loading: loadingAuth } = useAuth();
+  const { data: session } = useSession();
+  const loadingAuth = session === null;
+  const user = session?.user;
   const userId = user?.userId;
 
   const [filas, setFilas] = useState<FilaPlanificacion[]>([]);
