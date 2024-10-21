@@ -15,14 +15,14 @@ interface SectionProps {
 export function FacultadDataSection({ name, isActive, disableEditButton = false, poaId, facultyId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [facultadData, setFacultadData] = useState<FacultadData>({
-    name: "",
-    deanName: "",
-    submissionDate: ""
+  const [facultadData, setFacultadData] = useState({
+    nombreFacultad: "",
+    nombreDecano: "",
+    fechaPresentacion: ""
   })
 
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
-  const [cantidadEstudiantes, setCantidadEstudiantes] = useState<number | ''>('') 
+  const [cantidadEstudiantes, setCantidadEstudiantes] = useState<number | ''>('') // Estado para la cantidad de estudiantes
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -68,6 +68,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
         }
         const poaData = await response.json()
 
+        // Actualiza la fecha de presentación con el submissionDate del POA
         setFacultadData(prevData => ({
           ...prevData,
           fechaPresentacion: poaData.submissionDate || today
@@ -100,6 +101,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
         throw new Error('Cantidad de estudiantes no es un número válido')
       }
 
+      // Actualizar la información de la facultad
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
         method: 'PUT',
         credentials: 'include',
@@ -107,16 +109,14 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: tempFacultadData.name,
-          deanName: tempFacultadData.deanName
-          // No enviamos submissionDate ya que no es editable
+          name: tempFacultadData.nombreFacultad,
+          deanName: tempFacultadData.nombreDecano,
+          fechaPresentacion: tempFacultadData.fechaPresentacion
         })
       })
-
       if (!response.ok) {
         throw new Error('Error al actualizar datos de la facultad')
       }
-
 
       const data = await response.json()
       setFacultadData({
@@ -170,7 +170,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
             {!disableEditButton && (
               <Button variant="ghost" size="sm" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
-                {isEditing ? "Finalizar edición" : "Editar"}
+                {isEditing ? "Cancelar" : "Editar"}
               </Button>
             )}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
@@ -182,30 +182,30 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
           <div className="p-4 bg-white">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Nombre de la Facultad</Label>
+                <Label htmlFor="nombreFacultad">Nombre de la Facultad</Label>
                 <Input
-                  id="name"
-                  name="name"
-                  value={isEditing ? tempFacultadData.name : facultadData.name}
+                  id="nombreFacultad"
+                  name="nombreFacultad"
+                  value={isEditing ? tempFacultadData.nombreFacultad : facultadData.nombreFacultad}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                 />
               </div>
               <div>
-                <Label htmlFor="deanName">Nombre del Decano</Label>
+                <Label htmlFor="nombreDecano">Nombre del Decano</Label>
                 <Input
-                  id="deanName"
-                  name="deanName"
-                  value={isEditing ? tempFacultadData.deanName : facultadData.deanName}
+                  id="nombreDecano"
+                  name="nombreDecano"
+                  value={isEditing ? tempFacultadData.nombreDecano : facultadData.nombreDecano}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                 />
               </div>
               <div>
-                <Label htmlFor="submissionDate">Fecha de Presentación del POA</Label>
+                <Label htmlFor="fechaPresentacion">Fecha de Presentación del POA</Label>
                 <Input
-                  id="submissionDate"
-                  name="submissionDate"
+                  id="fechaPresentacion"
+                  name="fechaPresentacion"
                   type="date"
                   value={facultadData.fechaPresentacion} 
                   disabled
