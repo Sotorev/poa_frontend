@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Label } from "@/components/ui/label";
 import { saveAs } from 'file-saver';
+import { SectionProps } from '../poa-dashboard-main';
 
 interface DateInterval {
   inicio: string;
@@ -97,7 +98,7 @@ const fetchAportesPEI = async (eventId: string): Promise<PlanningEvent['aportesP
   };
 };
 
-export default function EventsViewerComponent() {
+export default function EventsViewerComponent({ name, isActive, poaId, facultyId, isEditable }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [eventsInReview, setEventsInReview] = useState<PlanningEvent[]>(
     sampleEvents.filter(event => event.estado === 'revision')
@@ -556,6 +557,7 @@ export default function EventsViewerComponent() {
   );
 
   return (
+    <div id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
     <div className="mb-6">
       <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
         <div className="p-4 bg-green-50 flex justify-between items-center">
@@ -590,5 +592,6 @@ export default function EventsViewerComponent() {
         )}
       </div>
     </div>
+  </div>
   );
 }
