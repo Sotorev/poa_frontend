@@ -372,7 +372,7 @@ export function TablaPlanificacionComponent() {
       if (!process.env.NEXT_PUBLIC_API_URL) {
         throw new Error("La URL de la API no está definida.");
       }
-
+  
       const eventData = {
         name: fila.evento.trim(),
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
@@ -418,52 +418,53 @@ export function TablaPlanificacionComponent() {
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
         ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
-        recursos: fila.recursos.map((recurso: string) => parseInt(recurso, 10)), // Array de ints (IDs)
+        resources: fila.recursos.map((recurso: string) => ({
+          resourceId: parseInt(recurso, 10),
+        })), // Cambiado aquí
         userId: userId,
       };
-
+  
       console.log('Enviando datos:', eventData);
-
+  
       const formData = new FormData();
       formData.append('data', JSON.stringify(eventData));
-
+  
       if (fila.detalle) {
         formData.append('costDetailDocuments', fila.detalle);
       }
-
+  
       if (fila.processDocument) {
         formData.append('processDocument', fila.processDocument);
       }
-
-     
-
+  
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`Error al enviar la actividad: ${errorData.message || response.statusText}`);
       }
-
+  
       const result = await response.json();
-
+  
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
           filaItem.id === fila.id ? { ...filaItem, entityId: result.eventId, estado: 'aprobado' } : filaItem
         )
       );
-
+  
       toast.success("Actividad enviada exitosamente.");
-
+  
       setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
       console.error(err);
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
+  
 
   const confirmarEnvioSinDetalle = async () => {
     if (!pendingSendId) return;
