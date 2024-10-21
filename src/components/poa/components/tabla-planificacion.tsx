@@ -20,6 +20,7 @@ import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes';
 import { TipoDeCompraComponent } from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleComponent } from './columns/detalle';
+import { DetalleProcesoComponent } from './columns/detalle-proceso'; // Nuevo componente
 import { AreaEstrategicaComponent } from './columns/area-estrategica';
 import { EventoComponent } from './columns/evento';
 import { ObjetivoComponent } from './columns/objetivo';
@@ -39,6 +40,7 @@ type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   entityId: number | null;
+  processDocument?: File; // Campo opcional añadido
 }
 
 interface FilaError {
@@ -75,6 +77,7 @@ const getColumnName = (field: string): string => {
     fechas: "Fechas",
     detalleProceso: "Detalle del Proceso",
     comentarioDecano: "Comentario Decano",
+    processDocument: "Documento de Proceso", // Añadido para processDocument
   };
   return columnMap[field] || field;
 };
@@ -246,6 +249,7 @@ export function TablaPlanificacionComponent() {
       fechas: [{ start: new Date(), end: new Date() }],
       campusId: '',
       entityId: null,
+      // processDocument no se establece al agregar la fila
     };
     setFilas([...filas, nuevaFila]);
     toast.info("Nueva fila agregada.");
@@ -271,6 +275,17 @@ export function TablaPlanificacionComponent() {
           }
 
           return updatedFila;
+        }
+        return fila;
+      })
+    );
+  };
+
+  const actualizarProcessDocument = (id: string, file: File | null) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, processDocument: file || undefined };
         }
         return fila;
       })
@@ -414,6 +429,12 @@ export function TablaPlanificacionComponent() {
         formData.append('costDetailDocuments', fila.detalle);
       }
 
+      if (fila.processDocument) {
+        formData.append('processDocument', fila.processDocument);
+      }
+
+      console.log("Enviando actividad:", formData);
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
         credentials: 'include',
@@ -511,6 +532,7 @@ export function TablaPlanificacionComponent() {
             <TableHead>Recursos</TableHead>
             <TableHead>Indicador de Logro</TableHead>
             <TableHead>Comentario Decano</TableHead>
+            <TableHead>Detalle del Proceso</TableHead> {/* Añadido */}
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -523,7 +545,6 @@ export function TablaPlanificacionComponent() {
             const strategicObjectiveId = strategicObjective
               ? strategicObjective.strategicObjectiveId
               : 0;
-
             return (
               <TableRow key={fila.id}>
                 <TableCell>
@@ -713,6 +734,15 @@ export function TablaPlanificacionComponent() {
                   >
                     Mostrar Comentarios
                   </Button>
+                </TableCell>
+                <TableCell>
+                  <DetalleProcesoComponent
+                    file={fila.processDocument || null}
+                    onFileChange={(file) => actualizarProcessDocument(fila.id, file)}
+                  />
+                  {!fila.processDocument && (
+                    <span className="text-yellow-500 text-sm">Detalle del Proceso no agregado.</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <AccionesComponent
