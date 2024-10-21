@@ -195,6 +195,7 @@ export function PoaDashboardMain() {
         facultyId: facultyId,
         year: currentYear,
         peiId: peiId, // Usar el peiId obtenido dinámicamente
+        userId: userId,
       };
   
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
@@ -218,7 +219,7 @@ export function PoaDashboardMain() {
       setPoaId(newPoaId); // Guardar el poaId en el estado
   
     } catch (error: any) {
-      alert("Error al crear el POA: " + error.message);
+      alert("Ya creaste el POA para este año");
     }
   };
   
