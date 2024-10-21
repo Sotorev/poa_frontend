@@ -25,7 +25,7 @@ import { ObjetivoComponent } from './columns/objetivo';
 import { EstadoComponent } from './columns/estado';
 import { ResponsablesComponent } from './columns/responsables';
 import { IndicadorLogroComponent } from './columns/indicador-logro';
-import { ComentarioDecanoComponent } from './columns/comentario-decano';
+import { CommentThread } from './columns/comment-thread';
 import { AccionesComponent } from './columns/acciones';
 
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
@@ -57,7 +57,6 @@ type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
-  comentarioDecano: string;
 }
 
 interface FilaError {
@@ -133,6 +132,9 @@ export function TablaPlanificacionComponent() {
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [pendingSendId, setPendingSendId] = useState<string | null>(null);
+
+  // Estado para mostrar el hilo de comentarios
+  const [showCommentThread, setShowCommentThread] = useState(false);
 
   // Fetch de áreas estratégicas y objetivos estratégicos al montar el componente
   useEffect(() => {
@@ -279,7 +281,6 @@ export function TablaPlanificacionComponent() {
       recursos: [],
       indicadorLogro: '',
       detalleProceso: null,
-      comentarioDecano: '',
       fechas: [{ start: new Date(), end: new Date() }], // Inicializar con una fecha
       campusId: '', // Inicializado como cadena vacía
     };
@@ -519,12 +520,22 @@ export function TablaPlanificacionComponent() {
     setPendingSendId(null);
   };
 
+
+
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
   if (errorPoa) return <div className="text-red-500">Error al obtener poaId: {errorPoa}</div>;
 
   return (
     <div className="container mx-auto p-4">
+      {showCommentThread && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <CommentThread 
+            isOpen={showCommentThread} 
+            onClose={() => setShowCommentThread(false)}
+          />
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
@@ -542,7 +553,7 @@ export function TablaPlanificacionComponent() {
             <TableHead>Aporte Otros</TableHead>
             <TableHead>Tipo de Compra</TableHead>
             <TableHead>Detalle</TableHead>
-            <TableHead>Campus</TableHead> {/* Nueva columna para CampusSelector */}
+            <TableHead>Campus</TableHead>
             <TableHead>Responsables</TableHead>
             <TableHead>Recursos</TableHead>
             <TableHead>Indicador de Logro</TableHead>
@@ -738,10 +749,9 @@ export function TablaPlanificacionComponent() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <ComentarioDecanoComponent comentario={fila.comentarioDecano} />
-                  {filaErrors[fila.id]?.comentarioDecano && (
-                    <span className="text-red-500 text-sm">{filaErrors[fila.id].comentarioDecano}</span>
-                  )}
+                <Button onClick={() => setShowCommentThread(true)}>
+                    Mostrar Comentarios
+                  </Button>
                 </TableCell>
                 <TableCell>
                   <AccionesComponent
