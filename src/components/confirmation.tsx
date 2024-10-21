@@ -18,7 +18,7 @@ type ComponentProps = {
   buttonText?: string
 }
 
-export function CommentThread({ buttonText = "Enviar comentario" }: ComponentProps) {
+export function ConfirmationComponent({ buttonText = "Enviar comentario" }: ComponentProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [comments, setComments] = useState<Comment[]>([
     { id: 0, author: "Juan Pérez", content: "Primer comentario", timestamp: "19 de octubre de 2024, 18:20" },
