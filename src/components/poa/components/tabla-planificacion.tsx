@@ -34,17 +34,6 @@ import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
 
 import { CampusSelector } from './columns/campus-selector';
 
-interface PurchaseType {
-  id: number;
-  name: string;
-}
-
-const initialOptions: PurchaseType[] = [
-  { id: 1, name: 'Compra Directa' },
-  { id: 2, name: 'Licitación Pública' },
-  { id: 3, name: 'Concurso de Proveedores' },
-];
-
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
@@ -60,14 +49,6 @@ interface DatePair {
   start: Date;
   end: Date;
 }
-
-const objetivoToAreaMapInitial: { [key: string]: string } = {
-  "obj1": "Área Estratégica 1",
-  "obj2": "Área Estratégica 2",
-  "obj3": "Área Estratégica 3",
-  "obj4": "Área Estratégica 4",
-  "obj5": "Área Estratégica 5",
-};
 
 const getColumnName = (field: string): string => {
   const columnMap: { [key: string]: string } = {
@@ -123,7 +104,6 @@ export function TablaPlanificacionComponent() {
 
   const [showCommentThread, setShowCommentThread] = useState(false);
   const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
-  const [currentRowId, setCurrentRowId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -442,13 +422,14 @@ export function TablaPlanificacionComponent() {
       }
 
       const result = await response.json();
-      toast.success("Actividad enviada exitosamente.");
 
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
-          filaItem.id === fila.id ? { ...filaItem, estado: 'aprobado' } : filaItem
+          filaItem.id === fila.id ? { ...filaItem, entityId: result.eventId, estado: 'aprobado' } : filaItem
         )
       );
+
+      toast.success("Actividad enviada exitosamente.");
 
       setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
@@ -474,38 +455,25 @@ export function TablaPlanificacionComponent() {
     setPendingSendId(null);
   };
 
-  const handleEntityIdCreated = (newEntityId: number) => {
-    if (currentRowId) {
-      setFilas(prevFilas =>
-        prevFilas.map(fila =>
-          fila.id === currentRowId ? { ...fila, entityId: newEntityId } : fila
-        )
-      );
-      setCurrentEntityId(newEntityId);
-      setShowCommentThread(false);
-      toast.success("Comentario enviado y entityId creado.");
-    }
-  };
-
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
   if (errorPoa) return <div className="text-red-500">Error al obtener poaId: {errorPoa}</div>;
 
   return (
     <div className="container mx-auto p-4">
-      {showCommentThread && (
+      {showCommentThread && currentEntityId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <CommentThread 
             isOpen={showCommentThread} 
             onClose={() => setShowCommentThread(false)}
             entityId={currentEntityId}
-            onEntityIdCreated={handleEntityIdCreated}
           />
         </div>
       )}
       <Table>
         <TableHeader>
           <TableRow>
+            {/* Encabezados de la tabla */}
             <TableHead>Área Estratégica</TableHead>
             <TableHead>Objetivo Estratégico</TableHead>
             <TableHead>Estrategias</TableHead>
@@ -715,10 +683,10 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <Button
                     onClick={() => {
-                      setCurrentEntityId(fila.entityId);
-                      setCurrentRowId(fila.id);
+                      setCurrentEntityId(fila.entityId as number);
                       setShowCommentThread(true);
                     }}
+                    disabled={!fila.entityId}
                   >
                     Mostrar Comentarios
                   </Button>
@@ -736,6 +704,7 @@ export function TablaPlanificacionComponent() {
       </Table>
       <Button onClick={agregarFila} className="mt-4">Agregar Fila</Button>
 
+      {/* Modal de Errores */}
       {isErrorModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full">
@@ -752,6 +721,7 @@ export function TablaPlanificacionComponent() {
         </div>
       )}
 
+      {/* Modal de Confirmación */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">

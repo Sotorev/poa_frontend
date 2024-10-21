@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 const commentSchema = z.object({
   entityType: z.string(),
-  entityId: z.number().nullable(),
+  entityId: z.number(),
   userId: z.number(),
   comment: z.string().min(1, "El comentario no puede estar vacío"),
 });
@@ -35,16 +35,15 @@ type Comment = {
 interface CommentThreadProps {
   isOpen: boolean;
   onClose: () => void;
-  entityId: number | null;
-  onEntityIdCreated?: (newEntityId: number) => void;
+  entityId: number;
 }
 
-export function CommentThread({ isOpen, onClose, entityId, onEntityIdCreated }: CommentThreadProps) {
+export function CommentThread({ isOpen, onClose, entityId }: CommentThreadProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const currentUserId = 1; // Obtener dinámicamente desde el contexto de autenticación
+  const currentUserId = 1; // Reemplaza con el userId real
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentInput>({
     resolver: zodResolver(commentSchema),
@@ -57,7 +56,6 @@ export function CommentThread({ isOpen, onClose, entityId, onEntityIdCreated }: 
   });
 
   const fetchComments = async () => {
-    if (!entityId) return;
     setLoading(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/entity/Event/${entityId}`);
@@ -74,10 +72,10 @@ export function CommentThread({ isOpen, onClose, entityId, onEntityIdCreated }: 
   };
 
   useEffect(() => {
-    if (isOpen && entityId) {
+    if (isOpen) {
       fetchComments();
     }
-  }, [isOpen, entityId]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -100,21 +98,14 @@ export function CommentThread({ isOpen, onClose, entityId, onEntityIdCreated }: 
       if (!response.ok) {
         throw new Error(`Error al enviar el comentario: ${response.statusText}`);
       }
-      const responseData = await response.json();
-      if (!entityId && onEntityIdCreated) {
-        onEntityIdCreated(responseData.entityId);
-      }
       reset();
-      if (entityId) {
-        fetchComments();
-      }
+      fetchComments();
     } catch (err) {
       setError((err as Error).message);
     }
   };
 
   const handleDeleteComment = (commentId: number) => {
-    // Implementar eliminación real si es necesario
     setComments(comments.filter(comment => comment.commentId !== commentId));
   };
 
@@ -137,7 +128,7 @@ export function CommentThread({ isOpen, onClose, entityId, onEntityIdCreated }: 
           </Button>
         </div>
         <div className="text-sm text-[#0f766e] px-4 py-2 bg-[#e6f7f1] bg-opacity-50">
-          Evento predeterminado
+          Evento ID: {entityId}
         </div>
         <ScrollArea className="h-[300px] w-full" ref={scrollAreaRef}>
           <div className="p-3 space-y-3">
