@@ -15,10 +15,10 @@ interface SectionProps {
 export function FacultadDataSection({ name, isActive, disableEditButton = false, poaId, facultyId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [facultadData, setFacultadData] = useState({
-    nombreFacultad: "",
-    nombreDecano: "",
-    fechaPresentacion: ""
+  const [facultadData, setFacultadData] = useState<FacultadData>({
+    name: "",
+    deanName: "",
+    submissionDate: ""
   })
 
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
@@ -107,14 +107,16 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: tempFacultadData.nombreFacultad,
-          deanName: tempFacultadData.nombreDecano,
-          fechaPresentacion: tempFacultadData.fechaPresentacion
+          name: tempFacultadData.name,
+          deanName: tempFacultadData.deanName
+          // No enviamos submissionDate ya que no es editable
         })
       })
+
       if (!response.ok) {
         throw new Error('Error al actualizar datos de la facultad')
       }
+
 
       const data = await response.json()
       setFacultadData({
@@ -168,7 +170,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
             {!disableEditButton && (
               <Button variant="ghost" size="sm" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
-                {isEditing ? "Cancelar" : "Editar"}
+                {isEditing ? "Finalizar edición" : "Editar"}
               </Button>
             )}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
@@ -180,30 +182,30 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
           <div className="p-4 bg-white">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="nombreFacultad">Nombre de la Facultad</Label>
+                <Label htmlFor="name">Nombre de la Facultad</Label>
                 <Input
-                  id="nombreFacultad"
-                  name="nombreFacultad"
-                  value={isEditing ? tempFacultadData.nombreFacultad : facultadData.nombreFacultad}
+                  id="name"
+                  name="name"
+                  value={isEditing ? tempFacultadData.name : facultadData.name}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                 />
               </div>
               <div>
-                <Label htmlFor="nombreDecano">Nombre del Decano</Label>
+                <Label htmlFor="deanName">Nombre del Decano</Label>
                 <Input
-                  id="nombreDecano"
-                  name="nombreDecano"
-                  value={isEditing ? tempFacultadData.nombreDecano : facultadData.nombreDecano}
+                  id="deanName"
+                  name="deanName"
+                  value={isEditing ? tempFacultadData.deanName : facultadData.deanName}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                 />
               </div>
               <div>
-                <Label htmlFor="fechaPresentacion">Fecha de Presentación del POA</Label>
+                <Label htmlFor="submissionDate">Fecha de Presentación del POA</Label>
                 <Input
-                  id="fechaPresentacion"
-                  name="fechaPresentacion"
+                  id="submissionDate"
+                  name="submissionDate"
                   type="date"
                   value={facultadData.fechaPresentacion} 
                   disabled
