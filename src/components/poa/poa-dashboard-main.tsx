@@ -11,14 +11,16 @@ import {
   BarChart2, 
   FilePlus, 
   ListTodo,
-  Pin
+  Pin,
+  CheckCheck
 } from 'lucide-react'
 import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
-import { EventViewerComponent } from './sections/event-viewer'
+import EventsViewerComponent from './sections/events-viewer'
+import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useAuth } from '@/contexts/auth-context'
 
 export interface SectionProps {
@@ -26,13 +28,16 @@ export interface SectionProps {
   isActive: boolean
   poaId: number
   facultyId: number
+  userId: number
+  rolId: number
 }
 
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
-  { name: "Visualizar intervenciones", icon: ListTodo, component: EventViewerComponent }
+  { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
+  { name: "Aprobar POA", icon: CheckCheck, component: PoaApproval }
 ]
 
 export function PoaDashboardMain() {
@@ -46,6 +51,8 @@ export function PoaDashboardMain() {
 
   const [facultyId, setFacultyId] = useState<number>() // Estado para almacenar el facultyId
   const [poaId, setPoaId] = useState<number>(); // Estado para almacenar el poaId
+  const [userId, setUserId] = useState<number>(); // Estado para almacenar el userId
+  const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
 
   // useEffect para obtener el facultyId cuando el componente se monta
   useEffect(() => {
@@ -75,6 +82,8 @@ export function PoaDashboardMain() {
     
         const userData = await userResponse.json();
         const faculty = userData.faculty;
+        const userId = userData.userId;
+        const rolId = userData.roleId;
     
         if (!faculty) {
           throw new Error('El usuario no tiene una facultad asignada');
@@ -82,6 +91,8 @@ export function PoaDashboardMain() {
     
         const fetchedFacultyId = faculty.facultyId; // Obtener el facultyId
         setFacultyId(fetchedFacultyId); // Guardar el facultyId en el estado
+        setUserId(userId);  // Guardar userId
+        setRolId(rolId);  // Guardar rolId
 
         // Asegurarse de que facultyId no sea null antes de llamar a getPoaByFacultyAndYear
         if (fetchedFacultyId) {
@@ -270,6 +281,8 @@ export function PoaDashboardMain() {
             isActive={activeSection === section.name}
             poaId={poaId} // Pasar el poaId a cada sección
             facultyId={facultyId} // Pasar el facultyId a cada sección
+            userId={userId ?? 0} // Pasar el userId a cada sección
+            rolId={rolId ?? 0} // Pasar el rolId a cada sección
           />
         ))}
         <div className="mb-32"></div>
