@@ -16,7 +16,7 @@ import { programApi, Program } from '@/api/program'
 import { facultyApi } from '@/api/faculty'
 import { SectionProps } from '../poa-dashboard-main'
 
-export function FacultyStructureSection({ name, isActive, facultyId }: SectionProps) {
+export function FacultyStructureSection({ name, isActive, facultyId, isEditable }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -304,10 +304,12 @@ export function FacultyStructureSection({ name, isActive, facultyId }: SectionPr
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-green-800">{name}</h2>
           <div className="flex items-center space-x-2">
+          {isEditable && (
             <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-800 hover:bg-green-100">
               <Edit className="h-4 w-4 mr-2" />
               {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
+          )}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-800 hover:bg-green-100">
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>

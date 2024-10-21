@@ -31,6 +31,7 @@ export interface SectionProps {
   facultyId: number
   userId: number
   rolId: number
+  isEditable: boolean
 }
 
 const sections = [
@@ -55,8 +56,8 @@ export function PoaDashboardMain() {
   const [poaId, setPoaId] = useState<number>(); // Estado para almacenar el poaId
   const [userId, setUserId] = useState<number>(); // Estado para almacenar el userId
   const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
+  const [isEditable, setIsEditable] = useState<boolean>(false); // Estado para habilitar o deshabilitar el botón
 
-  // useEffect para obtener el facultyId cuando el componente se monta
   useEffect(() => {
     const fetchFacultyId = async () => {
       if (loading) {
@@ -148,13 +149,18 @@ export function PoaDashboardMain() {
       }
   
       const poaData = await response.json();
-      
-      // Aquí puedes manejar los datos recibidos (ej. almacenarlos en el estado)
-      setPoaId(poaData.poaId); // Guardar el poaId en el estado
+      setPoaId(poaData.poaId); 
+
+      // Verificar el estado del POA y actualizar la habilitación del botón
+      const status = poaData.status;
+      if (status === "Abierto") {
+        setIsEditable(true); // Habilitar edición
+      } else {
+        setIsEditable(false); // Deshabilitar edición
+      }
   
     } catch (error: any) {
       console.error('Error al realizar la consulta del POA:', error);
-      //alert(`Error: ${error.message}`);
     }
   };
 
@@ -299,6 +305,7 @@ export function PoaDashboardMain() {
             facultyId={facultyId} // Pasar el facultyId a cada sección
             userId={userId ?? 0} // Pasar el userId a cada sección
             rolId={rolId ?? 0} // Pasar el rolId a cada sección
+            isEditable={isEditable} // Pasar la prop isEditable
           />
         ))}
         <div className="mb-32"></div>

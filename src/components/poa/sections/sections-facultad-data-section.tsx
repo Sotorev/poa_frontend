@@ -7,12 +7,12 @@ import { ChevronDown, ChevronUp, Edit } from 'lucide-react'
 interface SectionProps {
   name: string
   isActive: boolean
-  disableEditButton?: boolean,
-  poaId: number;
-  facultyId: number;
+  isEditable: boolean
+  poaId: number
+  facultyId: number
 }
 
-export function FacultadDataSection({ name, isActive, disableEditButton = false, poaId, facultyId }: SectionProps) {
+export function FacultadDataSection({ name, isActive, isEditable, poaId, facultyId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [facultadData, setFacultadData] = useState({
@@ -135,8 +135,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
         body: JSON.stringify({
           facultyId: facultyId,
           year: today.split('-')[0],
-          studentCount: cantidadEstudiantesNumero,
-          annualVariation: 0
+          studentCount: cantidadEstudiantesNumero
         })
       })
       if (!responseStudents.ok) {
@@ -167,7 +166,7 @@ export function FacultadDataSection({ name, isActive, disableEditButton = false,
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <div className="flex items-center space-x-2">
-            {!disableEditButton && (
+            {isEditable && ( // Aquí se cambia la lógica para mostrar el botón de editar solo si isEditable es true
               <Button variant="ghost" size="sm" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
                 {isEditing ? "Cancelar" : "Editar"}

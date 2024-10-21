@@ -9,6 +9,7 @@ interface SectionProps {
   name: string
   isActive: boolean
   facultyId: number 
+  isEditable: boolean
 }
 
 interface FODAItem {
@@ -24,7 +25,7 @@ interface FODAData {
   amenazas: FODAItem[]
 }
 
-export function FodaSection({ name, isActive, facultyId }: SectionProps) {
+export function FodaSection({ name, isActive, facultyId, isEditable }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [fodaData, setFodaData] = useState<FODAData>({
@@ -289,10 +290,12 @@ export function FodaSection({ name, isActive, facultyId }: SectionProps) {
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <div className="flex items-center space-x-2">
+          {isEditable && (
             <Button variant="ghost" size="sm" onClick={handleEdit}>
               <Edit className="h-4 w-4 mr-2" />
               {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
+          )}
             <Button 
               variant="ghost" 
               size="icon" 
