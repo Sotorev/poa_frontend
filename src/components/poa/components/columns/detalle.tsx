@@ -51,9 +51,6 @@ export function DetalleComponent({ file, onFileChange }: DetalleProps) {
 
   return (
     <div className="space-y-4">
-      <Label htmlFor="file-upload" className="block text-sm font-medium text-gray-700">
-        Detalle de Costos
-      </Label>
       <div
         className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
         onDragOver={handleDragOver}
