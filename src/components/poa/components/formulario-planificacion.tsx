@@ -1,3 +1,5 @@
+// src/components/poa/components/PlanificacionFormComponent.tsx
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -17,13 +19,14 @@ import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes'
 import { TipoDeCompraComponent } from './columns/tipo-de-compra'
 import { RecursosSelectorComponent } from './columns/recursos-selector'
 import { DetalleComponent } from './columns/detalle'
+import { DetalleProcesoComponent } from './columns/detalle-proceso' // Importamos el componente
 import { AreaEstrategicaComponent } from './columns/area-estrategica'
 import { EventoComponent } from './columns/evento'
 import { ObjetivoComponent } from './columns/objetivo'
 import { EstadoComponent } from './columns/estado'
 import { ResponsablesComponent } from './columns/responsables'
 import { IndicadorLogroComponent } from './columns/indicador-logro'
-import { ComentarioDecanoComponent } from './columns/comentario-decano'
+import { CommentThread } from './columns/comment-thread'
 import { CampusSelector } from './columns/campus-selector'
 
 import { useAuth } from '@/contexts/auth-context'
@@ -36,6 +39,7 @@ type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado'
   comentarioDecano: string
+  detalleProceso: File | null // Añadido para manejar el archivo
 }
 
 interface FilaError {
@@ -62,7 +66,7 @@ const getColumnName = (field: string): string => {
     aporteUMES: "Aporte UMES",
     aporteOtros: "Aporte Otros",
     tipoCompra: "Tipo de Compra",
-    detalle: "Detalle",
+    detalle: "Detalle de Costos",
     campusId: "Campus",
     responsablePlanificacion: "Responsable de Planificación",
     responsableEjecucion: "Responsable de Ejecución",
@@ -101,7 +105,7 @@ export default function PlanificacionFormComponent() {
     responsableSeguimiento: '',
     recursos: [],
     indicadorLogro: '',
-    detalleProceso: null,
+    detalleProceso: null, // Inicializamos detalleProceso
     comentarioDecano: '',
     fechas: [{ start: new Date(), end: new Date() }],
     campusId: '',
@@ -313,7 +317,7 @@ export default function PlanificacionFormComponent() {
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
         poaId: poaId,
         statusId: 1,
-        completionPercentage: 50,
+        completionPercentage: 0,
         campusId: parseInt(fila.campusId, 10),
         objective: fila.objetivo.trim(),
         eventNature: 'Planificado',
@@ -332,7 +336,7 @@ export default function PlanificacionFormComponent() {
             amount: aporte.amount,
           })),
           ...fila.aporteOtros.map(aporte => ({
-            financingSourceId:  aporte.financingSourceId,
+            financingSourceId: aporte.financingSourceId,
             percentage: aporte.porcentaje,
             amount: aporte.amount,
           })),
@@ -353,20 +357,20 @@ export default function PlanificacionFormComponent() {
           },
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
-              // **Añadir el campo `ods` aquí**
         ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+        recursos: fila.recursos,
         userId: userId,
       }
-
-      console.log('ods:', eventData.ods)
-
-      console.log('Datos a enviar:', eventData)
 
       const formData = new FormData()
       formData.append('data', JSON.stringify(eventData))
 
       if (fila.detalle) {
         formData.append('costDetailDocuments', fila.detalle)
+      }
+
+      if (fila.detalleProceso) {
+        formData.append('processDocument', fila.detalleProceso) // Enviamos el archivo como 'processDocument'
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
@@ -551,13 +555,16 @@ export default function PlanificacionFormComponent() {
               )}
             </div>
             <div>
-              <label className="block font-medium mb-2">Detalle</label>
+              <label className="block font-medium mb-2">Detalle de Costos</label>
               <DetalleComponent
                 file={fila.detalle}
                 onFileChange={(file) => actualizarFila('detalle', file)}
               />
               {!fila.detalle && (
                 <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
+              )}
+              {filaErrors?.detalle && (
+                <span className="text-red-500 text-sm">{filaErrors.detalle}</span>
               )}
             </div>
             <div>
@@ -610,10 +617,16 @@ export default function PlanificacionFormComponent() {
               )}
             </div>
             <div>
-              <label className="block font-medium mb-2">Comentario Decano</label>
-              <ComentarioDecanoComponent comentario={fila.comentarioDecano} />
-              {filaErrors?.comentarioDecano && (
-                <span className="text-red-500 text-sm">{filaErrors.comentarioDecano}</span>
+              <label className="block font-medium mb-2">Detalle del Proceso</label>
+              <DetalleProcesoComponent
+                file={fila.detalleProceso}
+                onFileChange={(file) => actualizarFila('detalleProceso', file)}
+              />
+              {!fila.detalleProceso && (
+                <span className="text-yellow-500 text-sm">Detalle del proceso no agregado.</span>
+              )}
+              {filaErrors?.detalleProceso && (
+                <span className="text-red-500 text-sm">{filaErrors.detalleProceso}</span>
               )}
             </div>
           </div>
@@ -623,6 +636,7 @@ export default function PlanificacionFormComponent() {
         <Button onClick={enviarActividad} className="px-8 py-2">Enviar Evento</Button>
       </div>
 
+      {/* Modal de Errores */}
       {isErrorModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md">
@@ -645,6 +659,7 @@ export default function PlanificacionFormComponent() {
         </div>
       )}
 
+      {/* Modal de Confirmación */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md">
