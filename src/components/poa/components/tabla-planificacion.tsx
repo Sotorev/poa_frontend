@@ -451,6 +451,8 @@ export function TablaPlanificacionComponent() {
           },
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+        ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+        userId: userId, 
       };
 
       console.log('Datos a enviar:', eventData);
