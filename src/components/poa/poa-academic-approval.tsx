@@ -4,7 +4,15 @@ import React, { useState, useEffect, useRef } from 'react'
 import { WelcomeVicechancellor } from './sections/welcome-vicechancellor'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Home, Building2, LayoutDashboard, UserCog, BarChart2, ListTodo, Pin } from 'lucide-react'
+import { 
+  Building2, 
+  LayoutDashboard, 
+  UserCog, 
+  BarChart2, 
+  ListTodo,
+  Pin,
+  CheckCheck
+} from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
@@ -19,11 +27,11 @@ import { useAuth } from '@/contexts/auth-context'
 export interface SectionProps {
   name: string
   isActive: boolean
+  poaId: number
+  facultyId: number
   userId: number
   rolId: number
   isEditable: boolean
-  poaId: number
-  facultyId: number
 }
 
 const sections = [
@@ -32,12 +40,12 @@ const sections = [
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FodaSection },
   { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
-  { name: "Acciones", icon: Pin, component: PoaActions },
+  { name: "Acciones", icon: CheckCheck, component: PoaActions },
 ]
 
 export function PoaAcademicApproval() {
   const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false)
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true) // Siempre visible para depuración
   const [isSidebarFixed, setIsSidebarFixed] = useState(false)
   const [poaId, setPoaId] = useState<number | null>(null)
   const [facultyId, setFacultyId] = useState<number | null>(null)
@@ -87,6 +95,85 @@ export function PoaAcademicApproval() {
     fetchUserData()
   }, [user, loading])
 
+  // Fetch para obtener el facultyId y poaId
+  useEffect(() => {
+    const fetchFacultyAndPoa = async () => {
+      if (loading) {
+        console.log("Cargando información del usuario...")
+        return
+      }
+
+      if (!user) {
+        console.log("No estás autenticado.")
+        alert("No estás autenticado.")
+        return
+      }
+
+      try {
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!userResponse.ok) {
+          throw new Error('Error al obtener datos del usuario')
+        }
+
+        const userData = await userResponse.json()
+        const faculty = userData.faculty
+        const userId = userData.userId
+        const rolId = userData.roleId
+
+        if (!faculty) {
+          throw new Error('El usuario no tiene una facultad asignada')
+        }
+
+        const fetchedFacultyId = faculty.facultyId // Obtener el facultyId
+        setFacultyId(fetchedFacultyId) // Guardar el facultyId en el estado
+        setUserId(userId)  // Guardar userId
+        setRolId(rolId)  // Guardar rolId
+
+        // Obtener POA por facultyId y año actual
+        if (fetchedFacultyId) {
+          await getPoaByFacultyAndYear(fetchedFacultyId)
+        }
+
+      } catch (error: any) {
+        console.error("Error al obtener el facultyId y poaId:", error)
+      }
+    }
+
+    fetchFacultyAndPoa()
+  }, [user, loading])
+
+  // Obtener el POA actual si ya fue creado
+  const getPoaByFacultyAndYear = async (facultyId: number) => {
+    const currentYear = new Date().getFullYear()
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${facultyId}/${currentYear}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al obtener el POA para la facultad y año especificado.')
+      }
+
+      const poaData = await response.json()
+      setPoaId(poaData.poaId)
+
+
+    } catch (error: any) {
+      console.error('Error al realizar la consulta del POA:', error)
+    }
+  }
+
+  // Manejar la activación de una sección
   const handleSetActive = (to: string) => {
     setActiveSection(to)
     setTimeout(() => {
@@ -94,10 +181,38 @@ export function PoaAcademicApproval() {
     }, 1000)
   }
 
+  // Manejar la selección de una facultad
   const handleSelectFaculty = (selectedFacultyId: number, selectedPoaId: number) => {
     setFacultyId(selectedFacultyId)
     setPoaId(selectedPoaId)
   }
+
+  // Manejar el movimiento del mouse para mostrar/ocultar el sidebar
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (sidebarRef.current && !isSidebarFixed) {
+        const sidebarWidth = sidebarRef.current.offsetWidth
+        const shouldShow = event.clientX <= sidebarWidth + 20
+        setIsSidebarVisible(shouldShow)
+        console.log(`MouseX: ${event.clientX}, SidebarWidth: ${sidebarWidth}, Show: ${shouldShow}`)
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [isSidebarFixed])
+
+  // Verificación de estados
+  useEffect(() => {
+    console.log("Estados actuales:")
+    console.log("facultyId:", facultyId)
+    console.log("poaId:", poaId)
+    console.log("userId:", userId)
+    console.log("rolId:", rolId)
+  }, [facultyId, poaId, userId, rolId])
 
   return (
     <main className="flex bg-green-50 min-h-screen">
@@ -144,6 +259,26 @@ export function PoaAcademicApproval() {
               ))}
             </nav>
           </ScrollArea>
+          <div className="p-2 flex justify-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSidebarFixed(!isSidebarFixed)}
+                  className={`w-8 h-8 rounded-lg hover:bg-green-800 transition-colors duration-200 ${
+                    isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <Pin className={`h-4 w-4 ${isSidebarFixed ? 'text-green-400' : 'text-green-300'}`} />
+                  <span className="sr-only">Fijar barra lateral</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-green-800 text-white py-1 px-2 text-sm rounded">
+                <p>{isSidebarFixed ? 'Desfijar barra lateral' : 'Fijar barra lateral'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </aside>
       </TooltipProvider>
       <div 
@@ -156,18 +291,22 @@ export function PoaAcademicApproval() {
         <WelcomeVicechancellor onSelectFaculty={handleSelectFaculty} />
 
         {/* Renderizar las secciones solo si facultyId y poaId no son null */}
-        {(facultyId !== null && poaId !== null && userId !== undefined && rolId !== undefined) && sections.map((section) => (
-          <section.component
-            key={section.name}
-            name={section.name}
-            isActive={activeSection === section.name}
-            poaId={poaId}
-            facultyId={facultyId}
-            userId={userId}
-            rolId={rolId}
-            isEditable={false}
-          />
-        ))}
+        {(facultyId !== null && poaId !== null && userId !== undefined && rolId !== undefined) && (
+          <div className="space-y-8">
+            {sections.map((section) => (
+              <section.component
+                key={section.name}
+                name={section.name}
+                isActive={activeSection === section.name}
+                poaId={poaId}
+                facultyId={facultyId}
+                userId={userId}
+                rolId={rolId}
+                isEditable={false}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </main>
   )
