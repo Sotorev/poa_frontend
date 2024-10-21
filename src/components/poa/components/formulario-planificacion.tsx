@@ -84,7 +84,7 @@ export default function PlanificacionFormComponent() {
   const { user, loading: loadingAuth } = useAuth()
   const userId = user?.userId
 
-  const [fila, setFila] = useState<FilaPlanificacion>({
+  const initialFila: FilaPlanificacion = {
     id: Date.now().toString(),
     areaEstrategica: '',
     objetivoEstrategico: '',
@@ -109,7 +109,9 @@ export default function PlanificacionFormComponent() {
     comentarioDecano: '',
     fechas: [{ start: new Date(), end: new Date() }],
     campusId: '',
-  })
+  }
+
+  const [fila, setFila] = useState<FilaPlanificacion>(initialFila)
 
   const [strategicAreas, setStrategicAreas] = useState<{ strategicAreaId: number; name: string; peiId: number; isDeleted: boolean }[]>([])
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([])
@@ -392,6 +394,9 @@ export default function PlanificacionFormComponent() {
       setFila(prevFila => ({ ...prevFila, estado: 'aprobado' }))
 
       setFilaErrors({})
+
+      // Restablecer el formulario a sus valores iniciales
+      setFila(initialFila)
     } catch (err) {
       console.error(err)
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`)
