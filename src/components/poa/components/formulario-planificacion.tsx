@@ -353,7 +353,12 @@ export default function PlanificacionFormComponent() {
           },
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+              // **Añadir el campo `ods` aquí**
+        ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+        userId: userId,
       }
+
+      console.log('ods:', eventData.ods)
 
       console.log('Datos a enviar:', eventData)
 
