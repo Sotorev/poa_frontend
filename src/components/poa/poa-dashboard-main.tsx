@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -32,6 +32,7 @@ export interface SectionProps {
   userId: number
   rolId: number
   isEditable: boolean
+  onStatusChange?: () => void // Nueva prop opcional
 }
 
 const sections = [
@@ -131,6 +132,13 @@ export function PoaDashboardMain() {
       setActiveSection(null)
     }, 1000)
   }
+
+
+  const handleReloadData = useCallback(() => {
+    if (facultyId) {
+      getPoaByFacultyAndYear(facultyId.toString());
+    }
+  }, [facultyId]);
 
   // Obtener el POA actual si ya fue creado
   const getPoaByFacultyAndYear = async (facultyId: string) => {
@@ -306,6 +314,7 @@ export function PoaDashboardMain() {
             userId={userId ?? 0} // Pasar el userId a cada sección
             rolId={rolId ?? 0} // Pasar el rolId a cada sección
             isEditable={isEditable} // Pasar la prop isEditable
+            onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
           />
         ))}
         <div className="mb-32"></div>
