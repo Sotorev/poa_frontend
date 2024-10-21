@@ -418,9 +418,11 @@ export function TablaPlanificacionComponent() {
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
         ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
-        recursos: fila.recursos, // Array de strings
+        recursos: fila.recursos.map((recurso: string) => parseInt(recurso, 10)), // Array de ints (IDs)
         userId: userId,
       };
+
+      console.log('Enviando datos:', eventData);
 
       const formData = new FormData();
       formData.append('data', JSON.stringify(eventData));
@@ -433,7 +435,7 @@ export function TablaPlanificacionComponent() {
         formData.append('processDocument', fila.processDocument);
       }
 
-      console.log("Enviando actividad:", formData);
+     
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
