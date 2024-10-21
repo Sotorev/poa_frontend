@@ -34,6 +34,17 @@ import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
 
 import { CampusSelector } from './columns/campus-selector';
 
+interface PurchaseType {
+  id: number;
+  name: string;
+}
+
+const initialOptions: PurchaseType[] = [
+  { id: 1, name: 'Compra Directa' },
+  { id: 2, name: 'Licitación Pública' },
+  { id: 3, name: 'Concurso de Proveedores' },
+];
+
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
@@ -104,6 +115,8 @@ export function TablaPlanificacionComponent() {
 
   const [showCommentThread, setShowCommentThread] = useState(false);
   const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
+  const [currentRowId, setCurrentRowId] = useState<string | null>(null);
+  const [currentEntityName, setCurrentEntityName] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -342,6 +355,8 @@ export function TablaPlanificacionComponent() {
     if (!fila.detalle) {
       setPendingSendId(id);
       setIsConfirmModalOpen(true);
+      setCurrentRowId(id);
+      setCurrentEntityName(fila.evento);
       return;
     }
 
@@ -359,7 +374,7 @@ export function TablaPlanificacionComponent() {
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
         poaId: poaId,
         statusId: 1,
-        completionPercentage: 50,
+        completionPercentage: 0,
         campusId: parseInt(fila.campusId, 10),
         objective: fila.objetivo.trim(),
         eventNature: 'Planificado',
@@ -383,7 +398,6 @@ export function TablaPlanificacionComponent() {
             amount: aporte.amount,
           })),
         ],
-        approvals: [],
         responsibles: [
           {
             responsibleRole: 'Principal',
@@ -455,6 +469,19 @@ export function TablaPlanificacionComponent() {
     setPendingSendId(null);
   };
 
+  const handleEntityIdCreated = (newEntityId: number) => {
+    if (currentRowId) {
+      setFilas(prevFilas =>
+        prevFilas.map(fila =>
+          fila.id === currentRowId ? { ...fila, entityId: newEntityId } : fila
+        )
+      );
+      setCurrentEntityId(newEntityId);
+      setShowCommentThread(false);
+      toast.success("Comentario enviado y entityId creado.");
+    }
+  };
+
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
   if (errorPoa) return <div className="text-red-500">Error al obtener poaId: {errorPoa}</div>;
@@ -467,6 +494,7 @@ export function TablaPlanificacionComponent() {
             isOpen={showCommentThread} 
             onClose={() => setShowCommentThread(false)}
             entityId={currentEntityId}
+            entityName={currentEntityName}
           />
         </div>
       )}
@@ -683,8 +711,13 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <Button
                     onClick={() => {
-                      setCurrentEntityId(fila.entityId as number);
-                      setShowCommentThread(true);
+                      if (fila.entityId !== null) {
+                        setCurrentEntityId(fila.entityId);
+                        setCurrentEntityName(fila.evento);
+                        setShowCommentThread(true);
+                      } else {
+                        toast.warn("Debe enviar la actividad primero para poder mostrar comentarios.");
+                      }
                     }}
                     disabled={!fila.entityId}
                   >
@@ -704,7 +737,6 @@ export function TablaPlanificacionComponent() {
       </Table>
       <Button onClick={agregarFila} className="mt-4">Agregar Fila</Button>
 
-      {/* Modal de Errores */}
       {isErrorModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full">
@@ -721,7 +753,6 @@ export function TablaPlanificacionComponent() {
         </div>
       )}
 
-      {/* Modal de Confirmación */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">

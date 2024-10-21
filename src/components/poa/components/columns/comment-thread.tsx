@@ -10,6 +10,7 @@ import { Trash2, X, Send } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from 'react-toastify';
 
 const commentSchema = z.object({
   entityType: z.string(),
@@ -36,9 +37,10 @@ interface CommentThreadProps {
   isOpen: boolean;
   onClose: () => void;
   entityId: number;
+  entityName: string;
 }
 
-export function CommentThread({ isOpen, onClose, entityId }: CommentThreadProps) {
+export function CommentThread({ isOpen, onClose, entityId, entityName }: CommentThreadProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -96,7 +98,8 @@ export function CommentThread({ isOpen, onClose, entityId }: CommentThreadProps)
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error(`Error al enviar el comentario: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(`Error al enviar el comentario: ${errorData.message || response.statusText}`);
       }
       reset();
       fetchComments();
@@ -105,8 +108,21 @@ export function CommentThread({ isOpen, onClose, entityId }: CommentThreadProps)
     }
   };
 
-  const handleDeleteComment = (commentId: number) => {
-    setComments(comments.filter(comment => comment.commentId !== commentId));
+  const handleDeleteComment = async (commentId: number) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/${commentId}`, {
+        method: "DELETE",
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Error al eliminar el comentario: ${errorData.message || response.statusText}`);
+      }
+      setComments(comments.filter(comment => comment.commentId !== commentId));
+      toast.success("Comentario eliminado exitosamente.");
+    } catch (err) {
+      setError((err as Error).message);
+    }
   };
 
   if (!isOpen) return null;
@@ -128,7 +144,7 @@ export function CommentThread({ isOpen, onClose, entityId }: CommentThreadProps)
           </Button>
         </div>
         <div className="text-sm text-[#0f766e] px-4 py-2 bg-[#e6f7f1] bg-opacity-50">
-          Evento ID: {entityId}
+          Evento: {entityName}
         </div>
         <ScrollArea className="h-[300px] w-full" ref={scrollAreaRef}>
           <div className="p-3 space-y-3">
