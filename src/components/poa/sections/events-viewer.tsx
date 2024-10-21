@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,154 +20,174 @@ import {
 } from "@/components/ui/tooltip"
 import { Label } from "@/components/ui/label";
 import { saveAs } from 'file-saver';
-import { SectionProps } from '../poa-dashboard-main';
+// import { SectionProps } from '../poa-dashboard-main'; // Asegúrate de mantener esta importación si es necesaria
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { SectionProps } from '../poa-dashboard-main';
 
-// Zod schemas
-const EventDateSchema = z.object({
-  eventDateId: z.number(),
-  eventId: z.number(),
-  startDate: z.string(),
-  endDate: z.string(),
-  isDeleted: z.boolean()
-});
+// Interfaces para los datos de la API
+interface ApiEventDate {
+  eventDateId: number;
+  eventId: number;
+  startDate: string;
+  endDate: string;
+  isDeleted: boolean;
+}
 
-const EventFinancingSchema = z.object({
-  eventFinancingId: z.number(),
-  eventId: z.number(),
-  financingSourceId: z.number(),
-  amount: z.number(),
-  percentage: z.number(),
-  isDeleted: z.boolean()
-});
+interface ApiEventFinancing {
+  eventFinancingId: number;
+  eventId: number;
+  financingSourceId: number;
+  amount: number;
+  percentage: number;
+  isDeleted: boolean;
+}
 
-const EventResourceSchema = z.object({
-  eventResourceId: z.number(),
-  eventId: z.number(),
-  resourceId: z.number(),
-  isDeleted: z.boolean()
-});
+interface ApiEventResource {
+  eventResourceId: number;
+  eventId: number;
+  resourceId: number;
+  isDeleted: boolean;
+}
 
-const EventResponsibleSchema = z.object({
-  eventResponsibleId: z.number(),
-  eventId: z.number(),
-  responsibleRole: z.string(),
-  isDeleted: z.boolean(),
-  name: z.string()
-});
+interface ApiEventResponsible {
+  eventResponsibleId: number;
+  eventId: number;
+  responsibleRole: string;
+  isDeleted: boolean;
+  name: string;
+}
 
-const EventSchema = z.object({
-  eventId: z.number(),
-  name: z.string(),
-  type: z.string(),
-  poaId: z.number(),
-  completionPercentage: z.number(),
-  campusId: z.number(),
-  eventNature: z.string(),
-  isDeleted: z.boolean(),
-  objective: z.string(),
-  isDelayed: z.boolean(),
-  achievementIndicator: z.string(),
-  purchaseType: z.string(),
-  totalCost: z.number(),
-  processDocumentPath: z.string().nullable(),
-  costDetailDocumentPath: z.string().nullable().optional(), // Assuming this field exists
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
-  userId: z.number(),
-  dates: z.array(EventDateSchema),
-  financings: z.array(EventFinancingSchema),
-  resources: z.array(EventResourceSchema),
-  responsibles: z.array(EventResponsibleSchema),
-  costDetails: z.array(z.any()), // Adjust as per actual data
-  campus: z.object({
-    campusId: z.number(),
-    name: z.string(),
-    city: z.string(),
-    department: z.string(),
-    isDeleted: z.boolean(),
-    currentStudentCount: z.number().nullable()
-  }),
-  interventions: z.array(z.object({
-    interventionId: z.number(),
-    name: z.string(),
-    isDeleted: z.boolean(),
-    strategyId: z.number(),
-    eventIntervention: z.object({
-      eventId: z.number(),
-      interventionId: z.number(),
-      isDeleted: z.boolean()
-    }),
-    strategy: z.object({
-      strategyId: z.number(),
-      description: z.string(),
-      strategicObjectiveId: z.number(),
-      completionPercentage: z.number(),
-      assignedBudget: z.number(),
-      executedBudget: z.number().nullable(),
-      isDeleted: z.boolean(),
-      strategicObjective: z.object({
-        strategicObjectiveId: z.number(),
-        description: z.string(),
-        strategicAreaId: z.number(),
-        isDeleted: z.boolean(),
-        strategicArea: z.object({
-          strategicAreaId: z.number(),
-          name: z.string(),
-          peiId: z.number(),
-          isDeleted: z.boolean()
-        })
-      })
-    })
-  })),
-  ods: z.array(z.object({
-    odsId: z.number(),
-    name: z.string(),
-    description: z.string().nullable(),
-    isDeleted: z.boolean(),
-    sortNo: z.number(),
-    colorHex: z.string(),
-    event_ods: z.object({
-      eventId: z.number(),
-      odsId: z.number(),
-      isDeleted: z.boolean()
-    })
-  })),
-  eventApprovals: z.array(z.object({
-    approvalId: z.number(),
-    eventId: z.number(),
-    approverUserId: z.number(),
-    approverRoleId: z.number(),
-    approvalStageId: z.number().nullable(),
-    approvalStatusId: z.number(),
-    comments: z.string(),
-    approvalDate: z.string(),
-    isDeleted: z.boolean(),
-    approvalStage: z.any().nullable(),
-    approvalStatus: z.object({
-      statusId: z.number(),
-      name: z.string(),
-      description: z.string(),
-      isDeleted: z.boolean()
-    })
-  })),
-  user: z.object({
-    userId: z.number(),
-    firstName: z.string(),
-    lastName: z.string(),
-    email: z.string(),
-    username: z.string(),
-    password: z.string(),
-    roleId: z.number(),
-    facultyId: z.number(),
-    isDeleted: z.boolean()
-  })
-});
+interface ApiCampus {
+  campusId: number;
+  name: string;
+  city: string;
+  department: string;
+  isDeleted: boolean;
+  currentStudentCount: number | null;
+}
 
-const EventsResponseSchema = z.array(EventSchema);
+interface ApiStrategicArea {
+  strategicAreaId: number;
+  name: string;
+  peiId: number;
+  isDeleted: boolean;
+}
 
-// Interfaces
+interface ApiStrategicObjective {
+  strategicObjectiveId: number;
+  description: string;
+  strategicAreaId: number;
+  isDeleted: boolean;
+  strategicArea: ApiStrategicArea;
+}
+
+interface ApiStrategy {
+  strategyId: number;
+  description: string;
+  strategicObjectiveId: number;
+  completionPercentage: number;
+  assignedBudget: number;
+  executedBudget: number | null;
+  isDeleted: boolean;
+  strategicObjective: ApiStrategicObjective;
+}
+
+interface ApiInterventionEventIntervention {
+  eventId: number;
+  interventionId: number;
+  isDeleted: boolean;
+}
+
+interface ApiIntervention {
+  interventionId: number;
+  name: string;
+  isDeleted: boolean;
+  strategyId: number;
+  eventIntervention: ApiInterventionEventIntervention;
+  strategy: ApiStrategy;
+}
+
+interface ApiOdsEventOds {
+  eventId: number;
+  odsId: number;
+  isDeleted: boolean;
+}
+
+interface ApiOds {
+  odsId: number;
+  name: string;
+  description: string | null;
+  isDeleted: boolean;
+  sortNo: number;
+  colorHex: string;
+  event_ods: ApiOdsEventOds;
+}
+
+interface ApiApprovalStatus {
+  statusId: number;
+  name: string;
+  description: string;
+  isDeleted: boolean;
+}
+
+interface ApiEventApproval {
+  approvalId: number;
+  eventId: number;
+  approverUserId: number | null;
+  approverRoleId: number;
+  approvalStageId: number | null;
+  approvalStatusId: number;
+  comments: string;
+  approvalDate: string;
+  isDeleted: boolean;
+  approvalStage: any | null;
+  approvalStatus: ApiApprovalStatus;
+}
+
+interface ApiUser {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  password: string;
+  roleId: number;
+  facultyId: number;
+  isDeleted: boolean;
+}
+
+interface ApiEvent {
+  eventId: number;
+  name: string;
+  type: string;
+  poaId: number;
+  completionPercentage: number;
+  campusId: number;
+  eventNature: string;
+  isDeleted: boolean;
+  objective: string;
+  isDelayed: boolean;
+  achievementIndicator: string;
+  purchaseType: string;
+  totalCost: number;
+  processDocumentPath: string | null;
+  costDetailDocumentPath?: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  userId: number;
+  dates: ApiEventDate[];
+  financings: ApiEventFinancing[];
+  resources: ApiEventResource[];
+  responsibles: ApiEventResponsible[];
+  costDetails: any[]; // Ajusta según los datos reales
+  campus: ApiCampus;
+  interventions: ApiIntervention[];
+  ods: ApiOds[];
+  eventApprovals: ApiEventApproval[];
+  user: ApiUser;
+}
+
+// Interfaces existentes
 interface DateInterval {
   inicio: string;
   fin: string;
@@ -228,8 +248,8 @@ interface PlanningEvent {
   naturalezaEvento: string;
 }
 
-// Map API data to PlanningEvent
-function mapApiEventToPlanningEvent(apiEvent: z.infer<typeof EventSchema>): PlanningEvent {
+// Función para mapear datos de la API a PlanningEvent
+function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
   const estadoMap: { [key: string]: 'revision' | 'aprobado' | 'rechazado' | 'correccion' } = {
     'Pendiente': 'revision',
     'Aprobado': 'aprobado',
@@ -257,16 +277,16 @@ function mapApiEventToPlanningEvent(apiEvent: z.infer<typeof EventSchema>): Plan
     aporteUMES: apiEvent.financings.find(f => f.financingSourceId === 1)?.amount || 0,
     aporteOtros: apiEvent.financings.filter(f => f.financingSourceId !== 1).reduce((sum, f) => sum + f.amount, 0),
     tipoCompra: apiEvent.purchaseType,
-    detalle: apiEvent.costDetailDocumentPath || '', // Adjust field name as per actual data
+    detalle: apiEvent.costDetailDocumentPath || '', // Ajusta el nombre del campo según los datos reales
     responsables: {
       principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
       ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
       seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
     },
-    recursos: apiEvent.resources.map(r => `Recurso ${r.resourceId}`).join(', '), // Adjust as per actual data
+    recursos: apiEvent.resources.map(r => `Recurso ${r.resourceId}`).join(', '), // Ajusta según los datos reales
     indicadorLogro: apiEvent.achievementIndicator,
     detalleProceso: apiEvent.processDocumentPath || '',
-    comentarioDecano: '', // Adjust as per actual data
+    comentarioDecano: '', // Ajusta según los datos reales
     propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
     fechaCreacion: apiEvent.createdAt,
     fechaEdicion: apiEvent.updatedAt || '',
@@ -319,15 +339,14 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
           headers: {
             'Content-Type': 'application/json'
-            // Include authentication headers if necessary
+            // Incluye encabezados de autenticación si es necesario
           }
         });
-        const data = await response.json();
-        const eventsData = EventsResponseSchema.parse(data);
+        const data: ApiEvent[] = await response.json();
 
-        const mappedEvents = eventsData.map(event => mapApiEventToPlanningEvent(event));
+        const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
 
-        // Separate events into different statuses
+        // Separar eventos en diferentes estados
         const eventsInReviewData = mappedEvents.filter(event => event.estado === 'revision');
         const approvedEventsData = mappedEvents.filter(event => event.estado === 'aprobado');
         const rejectedEventsData = mappedEvents.filter(event => event.estado === 'rechazado');
@@ -346,24 +365,30 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
     fetchData();
   }, [poaId]);
 
-  // The following functions are placeholders; approval functionality is pending implementation
+  // Las siguientes funciones son marcadores de posición; la funcionalidad de aprobación está pendiente de implementación
   const approveEvent = (id: string) => {
-    // Leave this pending
+    // Deja esto pendiente
   };
 
   const rejectEvent = (id: string) => {
-    // Leave this pending
+    // Deja esto pendiente
   };
 
   const requestCorrection = (id: string) => {
-    // Leave this pending
+    // Deja esto pendiente
   };
 
   const cancelEvent = (id: string) => {
-    // Leave this pending
+    // Deja esto pendiente
   };
 
-  const renderEventTable = (events: PlanningEvent[], isPending: boolean, approveEvent: (id: string) => void, showCorrectionsButton: boolean = false, showComments: boolean = true) => (
+  const renderEventTable = (
+    events: PlanningEvent[], 
+    isPending: boolean, 
+    approveEvent: (id: string) => void, 
+    showCorrectionsButton: boolean = false, 
+    showComments: boolean = true
+  ) => (
     <div className="overflow-x-auto">
       <Table className="w-full table-auto min-w-[1000px]">
         <TableHeader>
@@ -545,7 +570,7 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
                             onClick={() => {
                               fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadCostDetailDocument/${selectedFinancialDetails.id}`, {
                                 headers: {
-                                  // Include authentication headers if necessary
+                                  // Incluye encabezados de autenticación si es necesario
                                 }
                               })
                                 .then(response => response.blob())
@@ -618,7 +643,7 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
                   onClick={() => {
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadProcessDocument/${event.id}`, {
                       headers: {
-                        // Include authentication headers if necessary
+                        // Incluye encabezados de autenticación si es necesario
                       }
                     })
                       .then(response => response.blob())
@@ -694,11 +719,11 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
               <TableCell className="whitespace-normal break-words">
                 {isPending ? (
                   <>
-                    {/* Approval functionality pending implementation */}
+                    {/* Funcionalidad de aprobación pendiente de implementación */}
                   </>
                 ) : (
                   <>
-                    {/* Action buttons for non-pending events */}
+                    {/* Botones de acción para eventos no pendientes */}
                   </>
                 )}
               </TableCell>
