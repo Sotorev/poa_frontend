@@ -1,11 +1,13 @@
 // src/components/poa/components/tabla-planificacion.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { z } from 'zod';
-import { toast } from 'react-toastify'; // Importa toast de react-toastify
+import { toast } from 'react-toastify';
+import { useAuth } from '@/contexts/auth-context';
 
 import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector';
 import { EstrategiasSelectorComponent } from './columns/estrategias-selector';
@@ -18,7 +20,6 @@ import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes';
 import { TipoDeCompraComponent } from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleComponent } from './columns/detalle';
-
 import { AreaEstrategicaComponent } from './columns/area-estrategica';
 import { EventoComponent } from './columns/evento';
 import { ObjetivoComponent } from './columns/objetivo';
@@ -27,36 +28,28 @@ import { ResponsablesComponent } from './columns/responsables';
 import { IndicadorLogroComponent } from './columns/indicador-logro';
 import { CommentThread } from './columns/comment-thread';
 import { AccionesComponent } from './columns/acciones';
-
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
-import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'; // Asegúrate de importar el esquema actualizado
+import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
 
-// Importa useAuth para obtener el userId
-import { useAuth } from '@/contexts/auth-context';
-
-// Importa CampusSelector
 import { CampusSelector } from './columns/campus-selector';
 
-// Definir el tipo para las opciones de compra
 interface PurchaseType {
   id: number;
   name: string;
 }
 
-// Definir initialOptions con tipos explícitos
 const initialOptions: PurchaseType[] = [
   { id: 1, name: 'Compra Directa' },
   { id: 2, name: 'Licitación Pública' },
   { id: 3, name: 'Concurso de Proveedores' },
-  // Añade más opciones según tus necesidades
 ];
 
-// Definir el esquema de las filas para validación con Zod (actualizado)
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
+  entityId: number | null;
 }
 
 interface FilaError {
@@ -68,17 +61,14 @@ interface DatePair {
   end: Date;
 }
 
-// Mapping of strategic objectives to strategic areas
 const objetivoToAreaMapInitial: { [key: string]: string } = {
   "obj1": "Área Estratégica 1",
   "obj2": "Área Estratégica 2",
   "obj3": "Área Estratégica 3",
   "obj4": "Área Estratégica 4",
   "obj5": "Área Estratégica 5",
-  // Add more mappings as needed
-}
+};
 
-// Mapeo de campos a nombres de columnas para el modal de errores
 const getColumnName = (field: string): string => {
   const columnMap: { [key: string]: string } = {
     areaEstrategica: "Área Estratégica",
@@ -95,7 +85,7 @@ const getColumnName = (field: string): string => {
     aporteOtros: "Aporte Otros",
     tipoCompra: "Tipo de Compra",
     detalle: "Detalle",
-    campusId: "Campus", // Añadido para CampusSelector
+    campusId: "Campus",
     responsablePlanificacion: "Responsable de Planificación",
     responsableEjecucion: "Responsable de Ejecución",
     responsableSeguimiento: "Responsable de Seguimiento",
@@ -120,23 +110,21 @@ export function TablaPlanificacionComponent() {
   const [error, setError] = useState<string | null>(null);
   const [filaErrors, setFilaErrors] = useState<{ [key: string]: FilaError }>({});
 
-  // Estados para facultyId y poaId
   const [facultyId, setFacultyId] = useState<number | null>(null);
   const [poaId, setPoaId] = useState<number | null>(null);
   const [loadingPoa, setLoadingPoa] = useState<boolean>(false);
   const [errorPoa, setErrorPoa] = useState<string | null>(null);
 
-  // Estados para los modales
   const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false);
   const [modalErrorList, setModalErrorList] = useState<{ column: string, message: string }[]>([]);
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [pendingSendId, setPendingSendId] = useState<string | null>(null);
 
-  // Estado para mostrar el hilo de comentarios
   const [showCommentThread, setShowCommentThread] = useState(false);
+  const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
+  const [currentRowId, setCurrentRowId] = useState<string | null>(null);
 
-  // Fetch de áreas estratégicas y objetivos estratégicos al montar el componente
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -145,7 +133,6 @@ export function TablaPlanificacionComponent() {
           throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
         }
 
-        // Fetch strategic areas
         const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, {
           headers: {
             'Content-Type': 'application/json',
@@ -160,7 +147,6 @@ export function TablaPlanificacionComponent() {
         const activeAreas = parsedAreas.filter((area) => !area.isDeleted);
         setStrategicAreas(activeAreas);
 
-        // Fetch strategic objectives
         const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
           headers: {
             'Content-Type': 'application/json',
@@ -172,11 +158,10 @@ export function TablaPlanificacionComponent() {
         }
         const dataObjectives = await responseObjectives.json();
         const parsedObjectives = dataObjectives.map((obj: any) => {
-          return StrategicObjectiveSchema.parse(obj); // Usar el esquema de Zod para parsear
+          return StrategicObjectiveSchema.parse(obj);
         }).filter((obj: StrategicObjective) => !obj.isDeleted);
         setStrategicObjectives(parsedObjectives);
 
-        // Build objetivoToAreaMap
         const map: { [key: string]: string } = {};
         parsedObjectives.forEach((obj: StrategicObjective) => {
           const areaMatched = activeAreas.find(area => area.strategicAreaId === obj.strategicAreaId);
@@ -202,10 +187,9 @@ export function TablaPlanificacionComponent() {
     fetchData();
   }, []);
 
-  // Fetch del facultyId y poaId una vez que el userId está disponible
   useEffect(() => {
     const fetchFacultyAndPoa = async () => {
-      if (loadingAuth) return; // Espera a que la autenticación cargue
+      if (loadingAuth) return;
       if (!userId) {
         setErrorPoa("Usuario no autenticado.");
         return;
@@ -215,7 +199,6 @@ export function TablaPlanificacionComponent() {
           throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
         }
 
-        // Fetch de la facultad del usuario
         const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -229,10 +212,8 @@ export function TablaPlanificacionComponent() {
         const fetchedFacultyId = dataUser.facultyId;
         setFacultyId(fetchedFacultyId);
 
-        // Obtener el año actual
         const currentYear = new Date().getFullYear();
 
-        // Fetch del poaId
         setLoadingPoa(true);
         const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
           headers: {
@@ -244,7 +225,7 @@ export function TablaPlanificacionComponent() {
           throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
         }
         const dataPoa = await responsePoa.json();
-        const fetchedPoaId = dataPoa.poaId; // Ajusta según la estructura de la respuesta
+        const fetchedPoaId = dataPoa.poaId;
         setPoaId(fetchedPoaId);
       } catch (err) {
         setErrorPoa((err as Error).message);
@@ -257,14 +238,13 @@ export function TablaPlanificacionComponent() {
     fetchFacultyAndPoa();
   }, [userId, loadingAuth]);
 
-  // Función para agregar una nueva fila
   const agregarFila = () => {
     const nuevaFila: FilaPlanificacion = {
       id: Date.now().toString(),
       areaEstrategica: '',
       objetivoEstrategico: '',
-      estrategias: [], // Inicializado como array vacío
-      intervencion: [], // Inicializado como array vacío
+      estrategias: [],
+      intervencion: [],
       ods: [],
       tipoEvento: 'actividad',
       evento: '',
@@ -273,7 +253,7 @@ export function TablaPlanificacionComponent() {
       costoTotal: 0,
       aporteUMES: [],
       aporteOtros: [],
-      tipoCompra: '', // Inicializado como cadena vacía
+      tipoCompra: '',
       detalle: null,
       responsablePlanificacion: '',
       responsableEjecucion: '',
@@ -281,31 +261,28 @@ export function TablaPlanificacionComponent() {
       recursos: [],
       indicadorLogro: '',
       detalleProceso: null,
-      fechas: [{ start: new Date(), end: new Date() }], // Inicializar con una fecha
-      campusId: '', // Inicializado como cadena vacía
+      fechas: [{ start: new Date(), end: new Date() }],
+      campusId: '',
+      entityId: null,
     };
     setFilas([...filas, nuevaFila]);
-    toast.info("Nueva fila agregada."); // Notificación opcional al agregar una fila
+    toast.info("Nueva fila agregada.");
   };
 
-  // Función para eliminar una fila
   const eliminarFila = (id: string) => {
     setFilas(filas.filter(fila => fila.id !== id));
-    // Eliminar errores asociados a la fila eliminada
     const updatedErrors = { ...filaErrors };
     delete updatedErrors[id];
     setFilaErrors(updatedErrors);
-    toast.success("Fila eliminada exitosamente."); // Notificación al eliminar una fila
+    toast.success("Fila eliminada exitosamente.");
   };
 
-  // Función para actualizar una fila
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
     setFilas(prevFilas =>
       prevFilas.map(fila => {
         if (fila.id === id) {
           const updatedFila = { ...fila, [campo]: valor };
 
-          // Si el campo actualizado es objetivoEstrategico, actualizar areaEstrategica
           if (campo === 'objetivoEstrategico') {
             const nuevaArea = objetivoToAreaMap[valor] || '';
             updatedFila.areaEstrategica = nuevaArea;
@@ -318,10 +295,8 @@ export function TablaPlanificacionComponent() {
     );
   };
 
-  // Función para agregar un nuevo objetivo estratégico desde el formulario hijo
   const addStrategicObjective = (createdObjetivo: StrategicObjective) => {
     setStrategicObjectives(prev => [...prev, createdObjetivo]);
-    // Actualizar objetivoToAreaMap con el nuevo objetivo
     const area = strategicAreas.find(area => area.strategicAreaId === createdObjetivo.strategicAreaId);
     if (area) {
       setObjetivoToAreaMap(prevMap => ({
@@ -331,15 +306,13 @@ export function TablaPlanificacionComponent() {
     } else {
       console.warn(`No se encontró Área Estratégica para el nuevo Objetivo Estratégico ID: ${createdObjetivo.strategicObjectiveId}`);
     }
-    toast.success("Nuevo objetivo estratégico agregado."); // Notificación al agregar un objetivo estratégico
+    toast.success("Nuevo objetivo estratégico agregado.");
   };
 
-  // Función para manejar cambios en fechas desde ActividadProyectoSelector
   const manejarCambioFechas = (id: string, data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
-    // Puedes implementar esta función si es necesario
+    // Implementar si es necesario
   };
 
-  // Función para enviar una fila al backend
   const enviarActividad = async (id: string) => {
     if (loadingPoa) {
       toast.warn("Aún se está obteniendo el poaId. Por favor, espera un momento.");
@@ -356,15 +329,13 @@ export function TablaPlanificacionComponent() {
       return;
     }
 
-    // Obtener la fila correspondiente
     const fila = filas.find(fila => fila.id === id);
     if (!fila) {
       console.error(`Fila con ID ${id} no encontrada.`);
-      toast.error("La fila no se encontró."); // Notificación de error
+      toast.error("La fila no se encontró.");
       return;
     }
 
-    // Validar la fila antes de enviar
     const validation = filaPlanificacionSchema.safeParse(fila);
 
     if (!validation.success) {
@@ -383,42 +354,38 @@ export function TablaPlanificacionComponent() {
       setFilaErrors(prevErrors => ({ ...prevErrors, [id]: errors }));
       setModalErrorList(errorsList);
       setIsErrorModalOpen(true);
-      toast.error("Hay errores en la fila. Por favor, revisa los campos."); // Notificación de error
+      toast.error("Hay errores en la fila. Por favor, revisa los campos.");
       console.error("Error de validación:", validation.error.errors);
       return;
     }
 
-    // Verificar si 'detalle' está vacío
     if (!fila.detalle) {
       setPendingSendId(id);
       setIsConfirmModalOpen(true);
       return;
     }
 
-    // Si todo está bien, proceder a enviar
     await enviarAlBackend(fila);
   };
 
-  // Función para proceder con el envío al backend
   const enviarAlBackend = async (fila: FilaPlanificacion) => {
     try {
       if (!process.env.NEXT_PUBLIC_API_URL) {
         throw new Error("La URL de la API no está definida.");
       }
 
-      // Construir el objeto de datos para enviar al backend
       const eventData = {
         name: fila.evento.trim(),
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
-        poaId: poaId, // Usar el poaId dinámico
-        statusId: 1, // Reemplaza con el ID de estado correspondiente
-        completionPercentage: 50, // Ajusta según tu lógica
-        campusId: parseInt(fila.campusId, 10), // Usar el campusId seleccionado
+        poaId: poaId,
+        statusId: 1,
+        completionPercentage: 50,
+        campusId: parseInt(fila.campusId, 10),
         objective: fila.objetivo.trim(),
-        eventNature: 'Planificado', // Ajusta según tu lógica
-        isDelayed: false, // Ajusta según tu lógica
+        eventNature: 'Planificado',
+        isDelayed: false,
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseType: fila.tipoCompra, // Ahora es una cadena
+        purchaseType: fila.tipoCompra,
         totalCost: fila.costoTotal,
         dates: fila.fechas.map(pair => ({
           startDate: pair.start.toISOString().split('T')[0],
@@ -427,16 +394,16 @@ export function TablaPlanificacionComponent() {
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje, // Correcto
+            percentage: aporte.porcentaje,
             amount: aporte.amount,
           })),
           ...fila.aporteOtros.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje, // Correcto
+            percentage: aporte.porcentaje,
             amount: aporte.amount,
           })),
-        ],   
-        approvals: [],     
+        ],
+        approvals: [],
         responsibles: [
           {
             responsibleRole: 'Principal',
@@ -453,16 +420,12 @@ export function TablaPlanificacionComponent() {
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
         ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
-        userId: userId, 
+        userId: userId,
       };
 
-      console.log('Datos a enviar:', eventData);
-
-      // Crear un FormData para enviar archivos
       const formData = new FormData();
       formData.append('data', JSON.stringify(eventData));
 
-      // Adjuntar archivos si existen
       if (fila.detalle) {
         formData.append('costDetailDocuments', fila.detalle);
       }
@@ -479,28 +442,21 @@ export function TablaPlanificacionComponent() {
       }
 
       const result = await response.json();
-      console.log(`Actividad enviada exitosamente:`, result);
-
-      // Notificar éxito al usuario
       toast.success("Actividad enviada exitosamente.");
 
-      // Opcional: Actualizar el estado de la fila, por ejemplo, cambiar el estado a 'aprobado'
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
           filaItem.id === fila.id ? { ...filaItem, estado: 'aprobado' } : filaItem
         )
       );
 
-      // Limpiar errores si la actividad se envió correctamente
       setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
       console.error(err);
-      // Notificar error al usuario
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
 
-  // Función para manejar la confirmación de envío sin detalle de costos
   const confirmarEnvioSinDetalle = async () => {
     if (!pendingSendId) return;
 
@@ -512,15 +468,24 @@ export function TablaPlanificacionComponent() {
       return;
     }
 
-    // Proceder a enviar al backend sin el detalle de costos
     await enviarAlBackend(fila);
 
-    // Cerrar el modal de confirmación y limpiar el ID pendiente
     setIsConfirmModalOpen(false);
     setPendingSendId(null);
   };
 
-
+  const handleEntityIdCreated = (newEntityId: number) => {
+    if (currentRowId) {
+      setFilas(prevFilas =>
+        prevFilas.map(fila =>
+          fila.id === currentRowId ? { ...fila, entityId: newEntityId } : fila
+        )
+      );
+      setCurrentEntityId(newEntityId);
+      setShowCommentThread(false);
+      toast.success("Comentario enviado y entityId creado.");
+    }
+  };
 
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
@@ -533,6 +498,8 @@ export function TablaPlanificacionComponent() {
           <CommentThread 
             isOpen={showCommentThread} 
             onClose={() => setShowCommentThread(false)}
+            entityId={currentEntityId}
+            onEntityIdCreated={handleEntityIdCreated}
           />
         </div>
       )}
@@ -569,7 +536,7 @@ export function TablaPlanificacionComponent() {
 
             const strategicObjectiveId = strategicObjective
               ? strategicObjective.strategicObjectiveId
-              : 0; // Ajusta según tu lógica
+              : 0;
 
             return (
               <TableRow key={fila.id}>
@@ -597,7 +564,7 @@ export function TablaPlanificacionComponent() {
                   <EstrategiasSelectorComponent
                     selectedEstrategias={fila.estrategias}
                     onSelectEstrategia={(estrategias) => actualizarFila(fila.id, 'estrategias', estrategias)}
-                    strategicObjectiveId={strategicObjectiveId} // Asegurado
+                    strategicObjectiveId={strategicObjectiveId}
                   />
                   {filaErrors[fila.id]?.estrategias && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].estrategias}</span>
@@ -673,7 +640,6 @@ export function TablaPlanificacionComponent() {
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteUMES}</span>
                   )}
                 </TableCell>
-
                 <TableCell>
                   <AporteOtrasFuentesComponent
                     aportes={fila.aporteOtros}
@@ -683,11 +649,10 @@ export function TablaPlanificacionComponent() {
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteOtros}</span>
                   )}
                 </TableCell>
-
                 <TableCell>
                   <TipoDeCompraComponent
-                    selectedType={fila.tipoCompra} // Ahora es una cadena
-                    onSelectType={(tipo: string) => actualizarFila(fila.id, 'tipoCompra', tipo)} // Cambiado a string
+                    selectedType={fila.tipoCompra}
+                    onSelectType={(tipo: string) => actualizarFila(fila.id, 'tipoCompra', tipo)}
                   />
                   {filaErrors[fila.id]?.tipoCompra && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoCompra}</span>
@@ -698,7 +663,6 @@ export function TablaPlanificacionComponent() {
                     file={fila.detalle}
                     onFileChange={(file) => actualizarFila(fila.id, 'detalle', file)}
                   />
-                  {/* Mostrar advertencia si 'detalle' está vacío */}
                   {!fila.detalle && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
                   )}
@@ -715,10 +679,10 @@ export function TablaPlanificacionComponent() {
                   <ResponsablesComponent
                     responsablePlanificacion={fila.responsablePlanificacion}
                     responsableEjecucion={fila.responsableEjecucion}
-                    responsableSeguimiento={fila.responsableSeguimiento} // Cambio aquí
+                    responsableSeguimiento={fila.responsableSeguimiento}
                     onChangeResponsablePlanificacion={(value: string) => actualizarFila(fila.id, 'responsablePlanificacion', value)}
                     onChangeResponsableEjecucion={(value: string) => actualizarFila(fila.id, 'responsableEjecucion', value)}
-                    onChangeResponsableSeguimiento={(value: string) => actualizarFila(fila.id, 'responsableSeguimiento', value)} // Cambio aquí
+                    onChangeResponsableSeguimiento={(value: string) => actualizarFila(fila.id, 'responsableSeguimiento', value)}
                   />
                   {filaErrors[fila.id]?.responsablePlanificacion && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].responsablePlanificacion}</span>
@@ -749,7 +713,13 @@ export function TablaPlanificacionComponent() {
                   )}
                 </TableCell>
                 <TableCell>
-                <Button onClick={() => setShowCommentThread(true)}>
+                  <Button
+                    onClick={() => {
+                      setCurrentEntityId(fila.entityId);
+                      setCurrentRowId(fila.id);
+                      setShowCommentThread(true);
+                    }}
+                  >
                     Mostrar Comentarios
                   </Button>
                 </TableCell>
@@ -766,7 +736,6 @@ export function TablaPlanificacionComponent() {
       </Table>
       <Button onClick={agregarFila} className="mt-4">Agregar Fila</Button>
 
-      {/* Modal de Errores */}
       {isErrorModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full">
@@ -783,7 +752,6 @@ export function TablaPlanificacionComponent() {
         </div>
       )}
 
-      {/* Modal de Confirmación para Envío sin Detalle de Costos */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">

@@ -1,69 +1,124 @@
-'use client'
+// src/components/columns/comment-thread.tsx
 
-import { useEffect, useRef, useState } from "react"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Trash2, X, Send } from "lucide-react"
+'use client';
+
+import { useEffect, useRef, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Trash2, X, Send } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const commentSchema = z.object({
+  entityType: z.string(),
+  entityId: z.number().nullable(),
+  userId: z.number(),
+  comment: z.string().min(1, "El comentario no puede estar vacío"),
+});
+
+type CommentInput = z.infer<typeof commentSchema>;
 
 type Comment = {
-  id: number
-  author: string
-  content: string
-  timestamp: string
-}
+  commentId: number;
+  entityType: string;
+  entityId: number;
+  userId: number;
+  comment: string;
+  timestamp: string;
+  parentCommentId: number | null;
+  isDeleted: boolean;
+  Replies: Comment[];
+};
 
 interface CommentThreadProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  entityId: number | null;
+  onEntityIdCreated?: (newEntityId: number) => void;
 }
 
-export function CommentThread({ isOpen, onClose }: CommentThreadProps) {
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const [comments, setComments] = useState<Comment[]>([
-    { id: 0, author: "Juan Pérez", content: "Primer comentario", timestamp: "19 de octubre de 2024, 18:20" },
-    { id: 1, author: "María García", content: "Segundo comentario", timestamp: "19 de octubre de 2024, 18:25" },
-    { id: 2, author: "Carlos López", content: "Tercer comentario", timestamp: "19 de octubre de 2024, 18:30" },
-    { id: 3, author: "Ana Martínez", content: "Cuarto comentario", timestamp: "19 de octubre de 2024, 18:35" },
-    { id: 4, author: "Usuario Actual", content: "Quinto comentario", timestamp: "19 de octubre de 2024, 18:40" },
-  ])
-  const [newComment, setNewComment] = useState("")
-  const currentUser = "Usuario Actual" // Simulamos un usuario actual
+export function CommentThread({ isOpen, onClose, entityId, onEntityIdCreated }: CommentThreadProps) {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const currentUserId = 1; // Obtener dinámicamente desde el contexto de autenticación
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentInput>({
+    resolver: zodResolver(commentSchema),
+    defaultValues: {
+      entityType: "Event",
+      entityId: entityId,
+      userId: currentUserId,
+      comment: "",
+    },
+  });
+
+  const fetchComments = async () => {
+    if (!entityId) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/entity/Event/${entityId}`);
+      if (!response.ok) {
+        throw new Error(`Error al obtener comentarios: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setComments(data.comments);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && entityId) {
+      fetchComments();
+    }
+  }, [isOpen, entityId]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [comments])
+  }, [comments]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newComment.trim()) {
-      const newCommentObj: Comment = {
-        id: comments.length + 1,
-        author: currentUser,
-        content: newComment,
-        timestamp: new Date().toLocaleString('es-ES', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
+  const onSubmit = async (data: CommentInput) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`Error al enviar el comentario: ${response.statusText}`);
       }
-      setComments([...comments, newCommentObj])
-      setNewComment("")
+      const responseData = await response.json();
+      if (!entityId && onEntityIdCreated) {
+        onEntityIdCreated(responseData.entityId);
+      }
+      reset();
+      if (entityId) {
+        fetchComments();
+      }
+    } catch (err) {
+      setError((err as Error).message);
     }
-  }
+  };
 
-  const handleDeleteComment = (id: number) => {
-    setComments(comments.filter(comment => comment.id !== id))
-  }
+  const handleDeleteComment = (commentId: number) => {
+    // Implementar eliminación real si es necesario
+    setComments(comments.filter(comment => comment.commentId !== commentId));
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="relative w-[600px] mx-auto">
@@ -81,48 +136,66 @@ export function CommentThread({ isOpen, onClose }: CommentThreadProps) {
             <X size={24} />
           </Button>
         </div>
-        <div className="text-sm text-[#0f766e] px-4 py-2 bg-[#e6f7f1] bg-opacity-50">Evento predeterminado</div>
+        <div className="text-sm text-[#0f766e] px-4 py-2 bg-[#e6f7f1] bg-opacity-50">
+          Evento predeterminado
+        </div>
         <ScrollArea className="h-[300px] w-full" ref={scrollAreaRef}>
           <div className="p-3 space-y-3">
-            {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className={`p-2 rounded-lg shadow ${
-                  comment.author === currentUser
-                    ? "bg-[#e6f7f1] bg-opacity-70 border-l-4 border-[#0f766e]"
-                    : "bg-white bg-opacity-70 border border-gray-200"
-                }`}
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <span className={`font-semibold ${
-                    comment.author === currentUser ? "text-[#0f766e]" : "text-gray-700"
-                  }`}>
-                    {comment.author}
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">{comment.timestamp}</span>
-                    <button
-                      onClick={() => handleDeleteComment(comment.id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                      aria-label={`Eliminar comentario de ${comment.author}`}
+            {loading ? (
+              <p>Cargando comentarios...</p>
+            ) : error ? (
+              <p className="text-red-500">Error: {error}</p>
+            ) : comments.length === 0 ? (
+              <p>No hay comentarios disponibles.</p>
+            ) : (
+              comments.map((comment) => (
+                <div
+                  key={comment.commentId}
+                  className={`p-2 rounded-lg shadow ${
+                    comment.userId === currentUserId
+                      ? "bg-[#e6f7f1] bg-opacity-70 border-l-4 border-[#0f766e]"
+                      : "bg-white bg-opacity-70 border border-gray-200"
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span
+                      className={`font-semibold ${
+                        comment.userId === currentUserId ? "text-[#0f766e]" : "text-gray-700"
+                      }`}
                     >
-                      <Trash2 size={16} />
-                    </button>
+                      {comment.userId === currentUserId ? "Usuario Actual" : `Usuario ${comment.userId}`}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500">
+                        {new Date(comment.timestamp).toLocaleString("es-ES")}
+                      </span>
+                      {comment.userId === currentUserId && (
+                        <button
+                          onClick={() => handleDeleteComment(comment.commentId)}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          aria-label={`Eliminar comentario de Usuario ${comment.userId}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
+                  <p className="text-gray-700 break-words overflow-hidden word-break break-all">
+                    {comment.comment}
+                  </p>
                 </div>
-                <p className="text-gray-700 break-words overflow-hidden word-break break-all">{comment.content}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </ScrollArea>
-        <form onSubmit={handleSubmit} className="p-3 bg-gray-50 bg-opacity-70 border-t border-gray-200">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-3 bg-gray-50 bg-opacity-70 border-t border-gray-200">
           <div className="flex flex-col space-y-2">
             <Textarea
               placeholder="Escribe un comentario..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              {...register("comment")}
               className="flex-grow bg-white bg-opacity-70 min-h-[60px] resize-y"
             />
+            {errors.comment && <span className="text-red-500 text-sm">{errors.comment.message}</span>}
             <Button type="submit" className="bg-[#0f766e] hover:bg-[#0a5c54] text-white self-end">
               <Send size={18} className="mr-2" />
               Enviar comentario
@@ -131,5 +204,5 @@ export function CommentThread({ isOpen, onClose }: CommentThreadProps) {
         </form>
       </div>
     </div>
-  )
+  );
 }
