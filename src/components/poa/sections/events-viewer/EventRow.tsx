@@ -124,7 +124,7 @@ const EventRow: React.FC<EventRowProps> = ({
           aportesPEI={event.aportesPEI} 
         />
       </TableCell>
-      <TableCell className="whitespace-normal break-words">${event.costoTotal.toLocaleString()}</TableCell>
+      <TableCell className="whitespace-normal break-words">Q{event.costoTotal.toLocaleString()}</TableCell>
       <TableCell className="whitespace-normal break-words">
         <Button 
           variant="outline" 
@@ -189,7 +189,7 @@ const EventRow: React.FC<EventRowProps> = ({
           variant="outline" 
           size="sm"
           className="bg-gray-100 text-gray-800 hover:bg-gray-200"
-          onClick={() => handleDownload(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadProcessDocument/${event.id}`, `detalle_planificacion_${event.id}.pdf`)}
+          onClick={() => handleDownload(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadProcessDocument/${event.id}`, `detalle_planificacion_${event.id}`)}
         >
           <Download className="w-4 h-4 mr-2" />
           Descargar

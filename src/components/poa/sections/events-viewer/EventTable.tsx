@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CommentThread } from '../../components/columns/comment-thread';
 import EventRow from './EventRow';
 import { PlanningEvent } from '@/types/interfaces';
@@ -24,7 +22,6 @@ const EventTable: React.FC<EventTableProps> = ({
   onReject,
   onRequestCorrection,
   onRevert,
-  showCorrectionsButton = true,
   showComments = false
 }) => {
   const [showCommentThread, setShowCommentThread] = useState(false);
