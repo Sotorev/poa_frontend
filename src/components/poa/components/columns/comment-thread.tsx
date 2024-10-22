@@ -60,7 +60,9 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
   const fetchComments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/entity/Event/${entityId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/entity/Event/${entityId}`, {
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error(`Error al obtener comentarios: ${response.statusText}`);
       }
@@ -92,6 +94,7 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment`, {
         method: "POST",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
         },

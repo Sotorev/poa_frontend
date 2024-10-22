@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/tooltip"
 import { Label } from "@/components/ui/label";
 import { saveAs } from 'file-saver';
-// import { SectionProps } from '../poa-dashboard-main'; // Asegúrate de mantener esta importación si es necesaria
 import { useForm } from 'react-hook-form';
+import { CommentThread } from '../components/columns/comment-thread';
 
 // Interfaces para los datos de la API
 interface ApiEventDate {
@@ -257,76 +257,6 @@ interface SectionProps {
   userId: number; // Añadido para manejar las actualizaciones de estado
 }
 
-// Función para mapear datos de la API a PlanningEvent
-function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
-  const estadoMap: { [key: string]: 'revision' | 'aprobado' | 'rechazado' | 'correccion' } = {
-    'Pendiente': 'revision',
-    'Aprobado': 'aprobado',
-    'Rechazado': 'rechazado',
-    'Aprobado con Correcciones': 'correccion'
-  };
-
-  const estado = estadoMap[apiEvent.eventApprovals[0]?.approvalStatus?.name || 'Pendiente'] || 'revision';
-
-  return {
-    id: String(apiEvent.eventId),
-    areaEstrategica: apiEvent.interventions[0]?.strategy?.strategicObjective?.strategicArea?.name || '',
-    objetivoEstrategico: apiEvent.interventions[0]?.strategy?.strategicObjective?.description || '',
-    estrategias: apiEvent.interventions[0]?.strategy?.description || '',
-    intervencion: apiEvent.interventions[0]?.name || '',
-    ods: apiEvent.ods.map(ods => ods.name).join(', '),
-    tipoEvento: apiEvent.type === 'Actividad' ? 'actividad' : 'proyecto',
-    evento: apiEvent.name,
-    objetivo: apiEvent.objective,
-    fechas: apiEvent.dates.map(date => ({
-      inicio: date.startDate,
-      fin: date.endDate
-    })),
-    costoTotal: apiEvent.totalCost,
-    aporteUMES: apiEvent.financings.find(f => f.financingSourceId === 1)?.amount || 0,
-    aporteOtros: apiEvent.financings.filter(f => f.financingSourceId !== 1).reduce((sum, f) => sum + f.amount, 0),
-    tipoCompra: apiEvent.purchaseType,
-    detalle: apiEvent.costDetailDocumentPath || '', // Ajusta el nombre del campo según los datos reales
-    responsables: {
-      principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
-      ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
-      seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
-    },
-    recursos: apiEvent.resources.map(r => `Recurso ${r.resourceId}`).join(', '), // Ajusta según los datos reales
-    indicadorLogro: apiEvent.achievementIndicator,
-    detalleProceso: apiEvent.processDocumentPath || '',
-    comentarioDecano: '', // Ajusta según los datos reales
-    propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
-    fechaCreacion: apiEvent.createdAt,
-    fechaEdicion: apiEvent.updatedAt || '',
-    estado: estado,
-    aportesPEI: {
-      event: {
-        eventId: apiEvent.eventId,
-        name: apiEvent.name,
-        interventions: apiEvent.interventions.map(intervention => ({
-          interventionId: intervention.interventionId,
-          name: intervention.name,
-          strategies: [{
-            strategyId: intervention.strategy.strategyId,
-            description: intervention.strategy.description,
-            strategicObjective: {
-              strategicObjectiveId: intervention.strategy.strategicObjective.strategicObjectiveId,
-              description: intervention.strategy.strategicObjective.description,
-              strategicArea: {
-                strategicAreaId: intervention.strategy.strategicObjective.strategicArea.strategicAreaId,
-                name: intervention.strategy.strategicObjective.strategicArea.name
-              }
-            }
-          }]
-        }))
-      }
-    },
-    campus: apiEvent.campus.name,
-    naturalezaEvento: apiEvent.eventNature
-  };
-}
-
 export default function EventsViewerComponent({ name, isActive, poaId, facultyId, isEditable, userId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [eventsInReview, setEventsInReview] = useState<PlanningEvent[]>([]);
@@ -342,15 +272,88 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
   const [isProponentDialogOpen, setIsProponentDialogOpen] = useState(false);
   const [selectedProponentDetails, setSelectedProponentDetails] = useState<PlanningEvent | null>(null);
 
+  const [showCommentThread, setShowCommentThread] = useState(false);
+  const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
+  const [currentEntityName, setCurrentEntityName] = useState<string>("");
+
+  // Función para mapear datos de la API a PlanningEvent
+  function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
+    const estadoMap: { [key: string]: 'revision' | 'aprobado' | 'rechazado' | 'correccion' } = {
+      'Pendiente': 'revision',
+      'Aprobado': 'aprobado',
+      'Rechazado': 'rechazado',
+      'Aprobado con Correcciones': 'correccion'
+    };
+
+    const estado = estadoMap[apiEvent.eventApprovals[0]?.approvalStatus?.name || 'Pendiente'] || 'revision';
+
+    return {
+      id: String(apiEvent.eventId),
+      areaEstrategica: apiEvent.interventions[0]?.strategy?.strategicObjective?.strategicArea?.name || '',
+      objetivoEstrategico: apiEvent.interventions[0]?.strategy?.strategicObjective?.description || '',
+      estrategias: apiEvent.interventions[0]?.strategy?.description || '',
+      intervencion: apiEvent.interventions[0]?.name || '',
+      ods: apiEvent.ods.map(ods => ods.name).join(', '),
+      tipoEvento: apiEvent.type === 'Actividad' ? 'actividad' : 'proyecto',
+      evento: apiEvent.name,
+      objetivo: apiEvent.objective,
+      fechas: apiEvent.dates.map(date => ({
+        inicio: date.startDate,
+        fin: date.endDate
+      })),
+      costoTotal: apiEvent.totalCost,
+      aporteUMES: apiEvent.financings.find(f => f.financingSourceId === 1)?.amount || 0,
+      aporteOtros: apiEvent.financings.filter(f => f.financingSourceId !== 1).reduce((sum, f) => sum + f.amount, 0),
+      tipoCompra: apiEvent.purchaseType,
+      detalle: apiEvent.costDetailDocumentPath || '', // Ajusta el nombre del campo según los datos reales
+      responsables: {
+        principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
+        ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
+        seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
+      },
+      recursos: apiEvent.resources.map(r => `Recurso ${r.resourceId}`).join(', '), // Ajusta según los datos reales
+      indicadorLogro: apiEvent.achievementIndicator,
+      detalleProceso: apiEvent.processDocumentPath || '',
+      comentarioDecano: '', // Ajusta según los datos reales
+      propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
+      fechaCreacion: apiEvent.createdAt,
+      fechaEdicion: apiEvent.updatedAt || '',
+      estado: estado,
+      aportesPEI: {
+        event: {
+          eventId: apiEvent.eventId,
+          name: apiEvent.name,
+          interventions: apiEvent.interventions.map(intervention => ({
+            interventionId: intervention.interventionId,
+            name: intervention.name,
+            strategies: [{
+              strategyId: intervention.strategy.strategyId,
+              description: intervention.strategy.description,
+              strategicObjective: {
+                strategicObjectiveId: intervention.strategy.strategicObjective.strategicObjectiveId,
+                description: intervention.strategy.strategicObjective.description,
+                strategicArea: {
+                  strategicAreaId: intervention.strategy.strategicObjective.strategicArea.strategicAreaId,
+                  name: intervention.strategy.strategicObjective.strategicArea.name
+                }
+              }
+            }]
+          }))
+        }
+      },
+      campus: apiEvent.campus.name,
+      naturalezaEvento: apiEvent.eventNature
+    };
+  }
+
   // Función para actualizar el estado del evento
   const updateEventStatus = async (eventId: number, approvalStatusId: number, comments: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/event/${eventId}`, {
-        method: 'PATCH', // Asumiendo que es POST; ajusta si es PUT
+        method: 'PATCH', // Asumiendo que es PATCH; ajusta si es PUT
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          
           // Incluye encabezados de autenticación si es necesario
         },
         body: JSON.stringify({
@@ -366,6 +369,7 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
       }
 
       toast.success('Estado del evento actualizado correctamente');
+
       // Refrescar los datos
       const fetchData = async () => {
         try {
@@ -513,6 +517,16 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
     showComments: boolean = true
   ) => (
     <div className="overflow-x-auto">
+      {showCommentThread && currentEntityId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <CommentThread 
+            isOpen={showCommentThread} 
+            onClose={() => setShowCommentThread(false)}
+            entityId={currentEntityId}
+            entityName={currentEntityName}
+          />
+        </div>
+      )}
       <Table className="w-full table-auto min-w-[1000px]">
         <TableHeader>
           <TableRow>
@@ -628,7 +642,6 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
                                 </div>
                                 <div className="ml-4">
                                   <p><strong>Intervención:</strong> {intervention.name}</p>
-                                
                                 </div>
                               </div>
                             </div>
@@ -688,17 +701,22 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
                           <h3 className="font-semibold">Detalle de Presupuesto:</h3>
                           <Button 
                             variant="outline" 
-                            size="sm"
+                            size="sm" 
                             className="bg-gray-100 text-gray-800 hover:bg-gray-200"
                             onClick={() => {
-                              fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadCostDetailDocument/${selectedFinancialDetails.id}`, {
+                              fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadCostDetailDocument/${event.id}`, {
                                 headers: {
                                   // Incluye encabezados de autenticación si es necesario
                                 }
                               })
-                                .then(response => response.blob())
+                                .then(response => {
+                                  if (!response.ok) {
+                                    throw new Error('Network response was not ok');
+                                  }
+                                  return response.blob();
+                                })
                                 .then(blob => {
-                                  saveAs(blob, `presupuesto_${selectedFinancialDetails.id}.pdf`);
+                                  saveAs(blob, `presupuesto_${event.id}.pdf`);
                                 })
                                 .catch(error => {
                                   console.error('Error al descargar el archivo:', error);
@@ -765,11 +783,17 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
                   className="bg-gray-100 text-gray-800 hover:bg-gray-200"
                   onClick={() => {
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadProcessDocument/${event.id}`, {
+                      credentials: 'include',
                       headers: {
                         // Incluye encabezados de autenticación si es necesario
                       }
                     })
-                      .then(response => response.blob())
+                      .then(response => {
+                        if (!response.ok) {
+                          throw new Error('Network response was not ok');
+                        }
+                        return response.blob();
+                      })
                       .then(blob => {
                         saveAs(blob, `detalle_planificacion_${event.id}.pdf`);
                       })
@@ -830,12 +854,20 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
               </TableCell>
               {showComments && (
                 <TableCell className="whitespace-normal break-words">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-[#014A2D] text-white hover:bg-opacity-90"
+                  <Button
+                    onClick={() => {
+                      const eventId = Number(event.id); // Convertir id de string a number
+                      if (!isNaN(eventId)) { // Verificar que el id sea válido
+                        setCurrentEntityId(eventId);
+                        setCurrentEntityName(event.evento);
+                        setShowCommentThread(true);
+                      } else {
+                        toast.warn("Debe enviar la actividad primero para poder mostrar comentarios.");
+                      }
+                    }}
+                    disabled={!event.id} // Deshabilitar si no hay id
                   >
-                    Abrir
+                    Mostrar Comentarios
                   </Button>
                 </TableCell>
               )}
