@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X, Download } from 'lucide-react';
+import { X } from 'lucide-react';
 import ActionButtons from './ActionButtons';
 import AportesPEIDialog from './AportesPEIDialog';
 import FinancialDetailsDialog from './FinancialDetailsDialog';
 import ProponentDetailsDialog from './ProponentDetailsDialog';
 import { PlanningEvent } from '@/types/interfaces';
 import { toast } from 'react-toastify';
+import DownloadButton from './DownloadButton'; // Asegúrate de importar DownloadButton
 
 interface EventRowProps {
   event: PlanningEvent;
@@ -39,36 +40,6 @@ const EventRow: React.FC<EventRowProps> = ({
   const [isAportesPEIOpen, setIsAportesPEIOpen] = useState(false);
   const [isFinancialDetailsOpen, setIsFinancialDetailsOpen] = useState(false);
   const [isProponentDetailsOpen, setIsProponentDetailsOpen] = useState(false);
-
-  const handleDownload = (url: string, filename: string) => {
-    fetch(url, {
-      credentials: 'include',
-      headers: {
-        // Incluye encabezados de autenticación si es necesario
-      }
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.blob();
-      })
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-        toast.success(`Descarga iniciada: ${filename}`);
-      })
-      .catch(error => {
-        console.error('Error al descargar el archivo:', error);
-        toast.error('Error al descargar el archivo. Por favor, intenta de nuevo.');
-      });
-  };
 
   return (
     <TableRow>
@@ -154,7 +125,7 @@ const EventRow: React.FC<EventRowProps> = ({
           aportesPEI={event.aportesPEI} 
         />
       </TableCell>
-      <TableCell className="whitespace-normal break-words">${event.costoTotal.toLocaleString()}</TableCell>
+      <TableCell className="whitespace-normal break-words">Q{event.costoTotal.toLocaleString()}</TableCell>
       <TableCell className="whitespace-normal break-words">
         <Button 
           variant="outline" 
@@ -214,15 +185,7 @@ const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell className="whitespace-normal break-words">{event.recursos}</TableCell>
       <TableCell className="whitespace-normal break-words">
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="bg-gray-100 text-gray-800 hover:bg-gray-200"
-          onClick={() => handleDownload(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadProcessDocument/${event.id}`, `detalle_planificacion_${event.id}.pdf`)}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Descargar
-        </Button>
+        <DownloadButton eventId={Number(event.id)} />
       </TableCell>
       <TableCell className="whitespace-normal break-words">
         <Button 

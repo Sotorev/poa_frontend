@@ -1,9 +1,8 @@
 // components/FinancialDetailsDialog.tsx
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { X, Download } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import DownloadButton from './DownloadButton'; // Importa el componente
+import { X } from 'lucide-react';
+import DownloadButton from './DownloadButton';
 import { PlanningEvent } from '@/types/interfaces';
 
 interface FinancialDetailsDialogProps {
@@ -21,7 +20,7 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
           className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
         >
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">Cerrar</span>
         </button>
         <DialogHeader className="bg-[#014A2D] text-white p-4 rounded-t-lg">
           <DialogTitle>Detalles Financieros</DialogTitle>
