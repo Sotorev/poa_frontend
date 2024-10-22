@@ -20,7 +20,7 @@ import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { FodaSection } from './sections/foda-section'
-import EventsViewerComponent from './sections/events-viewer'
+import EventsViewerComponent from './sections/events-viewer/events-viewer'
 import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useAuth } from '@/contexts/auth-context'
 
