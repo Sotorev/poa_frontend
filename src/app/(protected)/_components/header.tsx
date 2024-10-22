@@ -17,19 +17,17 @@ export default function Header() {
 	const [canAccessReports, setCanAccessReports] = useState(false)
 	const { data: session, status } = useSession()
 	const pathname = usePathname()
-	const router = useRouter()
-
 	useEffect(() => {
+		console.log({ session, status })
+
 		if (status === 'authenticated' && session?.user) {
 			const role = session.user.role?.roleName
 			setCanAccessUsers(role === "Administrador")
 			setCanAccessPEI(["Administrador", "Vice Rector"].includes(role))
 			setCanAccessPOA(["Administrador", "Vice Rector", "Dean"].includes(role))
 			setCanAccessReports(["Administrador", "Vice Rector", "Pedagogical Coordinator"].includes(role))
-		} else if (status === 'unauthenticated') {
-			router.push('/iniciar-sesion')
 		}
-	}, [session, status, router])
+	}, [session, status])
 
 	const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
 		const isActive = pathname === href
