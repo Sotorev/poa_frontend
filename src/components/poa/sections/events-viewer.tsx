@@ -346,7 +346,7 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
   const updateEventStatus = async (eventId: number, approvalStatusId: number, comments: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/event/${eventId}`, {
-        method: 'PUT', // Asumiendo que es POST; ajusta si es PUT
+        method: 'PATCH', // Asumiendo que es POST; ajusta si es PUT
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -370,6 +370,7 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
       const fetchData = async () => {
         try {
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
+            credentials: 'include',
             headers: {
               'Content-Type': 'application/json'
               // Incluye encabezados de autenticación si es necesario
@@ -435,6 +436,7 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
     const fetchData = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json'
             // Incluye encabezados de autenticación si es necesario
