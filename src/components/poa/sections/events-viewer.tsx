@@ -22,7 +22,6 @@ import { Label } from "@/components/ui/label";
 import { saveAs } from 'file-saver';
 // import { SectionProps } from '../poa-dashboard-main'; // Asegúrate de mantener esta importación si es necesaria
 import { useForm } from 'react-hook-form';
-import { SectionProps } from '../poa-dashboard-main';
 
 // Interfaces para los datos de la API
 interface ApiEventDate {
@@ -248,13 +247,23 @@ interface PlanningEvent {
   naturalezaEvento: string;
 }
 
+// Props del componente
+interface SectionProps {
+  name: string;
+  isActive: boolean;
+  poaId: number;
+  facultyId: number;
+  isEditable: boolean;
+  userId: number; // Añadido para manejar las actualizaciones de estado
+}
+
 // Función para mapear datos de la API a PlanningEvent
 function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
   const estadoMap: { [key: string]: 'revision' | 'aprobado' | 'rechazado' | 'correccion' } = {
     'Pendiente': 'revision',
     'Aprobado': 'aprobado',
     'Rechazado': 'rechazado',
-    'Corrección': 'correccion'
+    'Aprobado con Correcciones': 'correccion'
   };
 
   const estado = estadoMap[apiEvent.eventApprovals[0]?.approvalStatus?.name || 'Pendiente'] || 'revision';
@@ -318,7 +327,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
   };
 }
 
-export default function EventsViewerComponent({ name, isActive, poaId, facultyId, isEditable }: SectionProps) {
+export default function EventsViewerComponent({ name, isActive, poaId, facultyId, isEditable, userId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [eventsInReview, setEventsInReview] = useState<PlanningEvent[]>([]);
   const [approvedEvents, setApprovedEvents] = useState<PlanningEvent[]>([]);
@@ -332,6 +341,95 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
 
   const [isProponentDialogOpen, setIsProponentDialogOpen] = useState(false);
   const [selectedProponentDetails, setSelectedProponentDetails] = useState<PlanningEvent | null>(null);
+
+  // Función para actualizar el estado del evento
+  const updateEventStatus = async (eventId: number, approvalStatusId: number, comments: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/event/${eventId}`, {
+        method: 'PUT', // Asumiendo que es POST; ajusta si es PUT
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          
+          // Incluye encabezados de autenticación si es necesario
+        },
+        body: JSON.stringify({
+          eventId,
+          userId,
+          approvalStatusId,
+          comments
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al actualizar el estado del evento: ${response.statusText}`);
+      }
+
+      toast.success('Estado del evento actualizado correctamente');
+      // Refrescar los datos
+      const fetchData = async () => {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
+            headers: {
+              'Content-Type': 'application/json'
+              // Incluye encabezados de autenticación si es necesario
+            }
+          });
+          const data: ApiEvent[] = await response.json();
+
+          const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
+
+          // Separar eventos en diferentes estados
+          const eventsInReviewData = mappedEvents.filter(event => event.estado === 'revision');
+          const approvedEventsData = mappedEvents.filter(event => event.estado === 'aprobado');
+          const rejectedEventsData = mappedEvents.filter(event => event.estado === 'rechazado');
+          const eventsWithCorrectionsData = mappedEvents.filter(event => event.estado === 'correccion');
+
+          setEventsInReview(eventsInReviewData);
+          setApprovedEvents(approvedEventsData);
+          setRejectedEvents(rejectedEventsData);
+          setEventsWithCorrections(eventsWithCorrectionsData);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          toast.error('Error al cargar los eventos');
+        }
+      };
+
+      fetchData();
+    } catch (error) {
+      console.error('Error al actualizar el estado del evento:', error);
+      toast.error('Error al actualizar el estado del evento. Por favor, intente de nuevo.');
+    }
+  };
+
+  // Funciones para manejar acciones de estado
+  const approveEvent = (id: string) => {
+    const confirmation = window.confirm('¿Estás seguro de aprobar este evento?');
+    if (confirmation) {
+      updateEventStatus(Number(id), 1, 'Evento aprobado');
+    }
+  };
+
+  const rejectEvent = (id: string) => {
+    const comments = window.prompt('Ingrese los comentarios para el rechazo del evento:', 'Evento rechazado');
+    if (comments !== null) {
+      updateEventStatus(Number(id), 2, comments);
+    }
+  };
+
+  const requestCorrection = (id: string) => {
+    const comments = window.prompt('Ingrese los comentarios para solicitar correcciones:', 'Evento aprobado con correcciones');
+    if (comments !== null) {
+      updateEventStatus(Number(id), 3, comments);
+    }
+  };
+
+  const revertToPending = (id: string) => {
+    const confirmation = window.confirm('¿Estás seguro de regresar este evento a pendiente?');
+    if (confirmation) {
+      updateEventStatus(Number(id), 4, 'Regresado a pendiente');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -365,21 +463,44 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
     fetchData();
   }, [poaId]);
 
-  // Las siguientes funciones son marcadores de posición; la funcionalidad de aprobación está pendiente de implementación
-  const approveEvent = (id: string) => {
-    // Deja esto pendiente
-  };
-
-  const rejectEvent = (id: string) => {
-    // Deja esto pendiente
-  };
-
-  const requestCorrection = (id: string) => {
-    // Deja esto pendiente
-  };
-
-  const cancelEvent = (id: string) => {
-    // Deja esto pendiente
+  const renderActionButtons = (event: PlanningEvent, isPending: boolean) => {
+    if (isPending) {
+      return (
+        <div className="flex space-x-2">
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={() => approveEvent(event.id)}
+          >
+            Aprobado
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={() => rejectEvent(event.id)}
+          >
+            Rechazado
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => requestCorrection(event.id)}
+          >
+            Aprobado con Correcciones
+          </Button>
+        </div>
+      );
+    } else {
+      return (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => revertToPending(event.id)}
+        >
+          Regresar a Pendiente
+        </Button>
+      );
+    }
   };
 
   const renderEventTable = (
@@ -717,15 +838,7 @@ export default function EventsViewerComponent({ name, isActive, poaId, facultyId
                 </TableCell>
               )}
               <TableCell className="whitespace-normal break-words">
-                {isPending ? (
-                  <>
-                    {/* Funcionalidad de aprobación pendiente de implementación */}
-                  </>
-                ) : (
-                  <>
-                    {/* Botones de acción para eventos no pendientes */}
-                  </>
-                )}
+                {renderActionButtons(event, isPending)}
               </TableCell>
             </TableRow>
           ))}
