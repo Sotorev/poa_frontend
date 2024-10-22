@@ -40,7 +40,10 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
           </div>
           <div>
             <h3 className="font-semibold">Detalle de Presupuesto:</h3>
-            <DownloadButton eventId={Number(event.id)} />
+            <DownloadButton 
+              eventId={Number(event.id)} 
+              path="downloadCostDetailDocument" // Especificar la ruta personalizada
+            />
           </div>
         </div>
       </DialogContent>

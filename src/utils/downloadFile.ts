@@ -1,7 +1,7 @@
 // utils/downloadFile.ts
 import { toast } from 'react-toastify';
 
-export const downloadFile = async (eventId: number): Promise<void> => {
+export const downloadFile = async (eventId: number, path: string = 'downloadProcessDocument'): Promise<void> => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
     toast.error('La URL de la API no está configurada.');
@@ -9,7 +9,7 @@ export const downloadFile = async (eventId: number): Promise<void> => {
   }
 
   try {
-    const response = await fetch(`${apiUrl}/api/fullevent/downloadProcessDocument/${eventId}`, {
+    const response = await fetch(`${apiUrl}/api/fullevent/${path}/${eventId}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/pdf', // Asegúrate de aceptar el tipo de contenido adecuado
@@ -19,7 +19,7 @@ export const downloadFile = async (eventId: number): Promise<void> => {
     });
 
     if (!response.ok) {
-      throw new Error(`Error al descargar el archivo: ${response.statusText}`);
+      throw new Error(`Error al abrir el archivo: ${response.statusText}`);
     }
 
     // Obtener el blob del archivo
@@ -29,21 +29,20 @@ export const downloadFile = async (eventId: number): Promise<void> => {
       throw new Error('No se recibió ningún archivo.');
     }
 
-    // Crear un enlace temporal para descargar el archivo
+    // Crear un objeto URL para el blob
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    // No se establece el atributo download para dejar que el navegador maneje el nombre del archivo
-    document.body.appendChild(a);
-    a.click();
 
-    // Limpiar
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    // Abrir el archivo en una nueva ventana o pestaña
+    window.open(url, '_blank');
 
-    toast.success('Descarga iniciada.');
+    // Limpiar el objeto URL después de un tiempo para liberar memoria
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 1000);
+
+    toast.success('Archivo abierto en una nueva ventana.');
   } catch (error: any) {
-    console.error('Error al descargar el archivo:', error);
-    toast.error(error.message || 'Error al descargar el archivo. Por favor, intenta de nuevo.');
+    console.error('Error al abrir el archivo:', error);
+    toast.error(error.message || 'Error al abrir el archivo. Por favor, intenta de nuevo.');
   }
 };

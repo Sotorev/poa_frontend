@@ -7,14 +7,15 @@ import { downloadFile } from '@/utils/downloadFile';
 interface DownloadButtonProps {
   eventId: number;
   className?: string;
+  path?: string; // Nueva propiedad opcional para especificar la ruta de descarga
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ eventId, className }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ eventId, className, path }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownload = async () => {
     setIsLoading(true);
-    await downloadFile(eventId);
+    await downloadFile(eventId, path); // Pasar la ruta personalizada si se proporciona
     setIsLoading(false);
   };
 
@@ -27,7 +28,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ eventId, className }) =
       disabled={isLoading}
     >
       <Download className="w-4 h-4 mr-2" />
-      {isLoading ? 'Descargando...' : 'Descargar Documento'}
+      {isLoading ? 'Abriendo...' : 'Abrir Documento'}
     </Button>
   );
 };
