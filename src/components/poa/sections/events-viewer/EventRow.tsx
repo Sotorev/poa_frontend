@@ -1,10 +1,9 @@
+// components/EventsViewer/EventRow.tsx
 import React, { useState } from 'react';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { X, Download } from 'lucide-react';
-import { saveAs } from 'file-saver';
 import ActionButtons from './ActionButtons';
 import AportesPEIDialog from './AportesPEIDialog';
 import FinancialDetailsDialog from './FinancialDetailsDialog';
@@ -43,18 +42,31 @@ const EventRow: React.FC<EventRowProps> = ({
 
   const handleDownload = (url: string, filename: string) => {
     fetch(url, {
+      credentials: 'include',
       headers: {
         // Incluye encabezados de autenticación si es necesario
       }
     })
       .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         return response.blob();
       })
-      .then(blob => saveAs(blob, filename))
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success(`Descarga iniciada: ${filename}`);
+      })
       .catch(error => {
         console.error('Error al descargar el archivo:', error);
-        toast.error('Error al descargar el archivo. Por favor, intente de nuevo.');
+        toast.error('Error al descargar el archivo. Por favor, intenta de nuevo.');
       });
   };
 
@@ -88,10 +100,19 @@ const EventRow: React.FC<EventRowProps> = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="cursor-help">I: {new Date(intervalo.inicio).toLocaleDateString('es-ES')}</span>
+                  <span className="cursor-help">
+                    I: {new Date(intervalo.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Inicio: {new Date(intervalo.inicio).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p>
+                    Inicio: {new Date(intervalo.inicio).toLocaleDateString('es-ES', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -99,10 +120,19 @@ const EventRow: React.FC<EventRowProps> = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="cursor-help">F: {new Date(intervalo.fin).toLocaleDateString('es-ES')}</span>
+                  <span className="cursor-help">
+                    F: {new Date(intervalo.fin).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Fin: {new Date(intervalo.fin).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p>
+                    Fin: {new Date(intervalo.fin).toLocaleDateString('es-ES', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -124,7 +154,7 @@ const EventRow: React.FC<EventRowProps> = ({
           aportesPEI={event.aportesPEI} 
         />
       </TableCell>
-      <TableCell className="whitespace-normal break-words">Q{event.costoTotal.toLocaleString()}</TableCell>
+      <TableCell className="whitespace-normal break-words">${event.costoTotal.toLocaleString()}</TableCell>
       <TableCell className="whitespace-normal break-words">
         <Button 
           variant="outline" 
@@ -138,7 +168,6 @@ const EventRow: React.FC<EventRowProps> = ({
           isOpen={isFinancialDetailsOpen} 
           onClose={() => setIsFinancialDetailsOpen(false)} 
           event={event}
-          handleDownload={handleDownload}
         />
       </TableCell>
       <TableCell className="whitespace-normal break-words">
@@ -189,7 +218,7 @@ const EventRow: React.FC<EventRowProps> = ({
           variant="outline" 
           size="sm"
           className="bg-gray-100 text-gray-800 hover:bg-gray-200"
-          onClick={() => handleDownload(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadProcessDocument/${event.id}`, `detalle_planificacion_${event.id}`)}
+          onClick={() => handleDownload(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadProcessDocument/${event.id}`, `detalle_planificacion_${event.id}.pdf`)}
         >
           <Download className="w-4 h-4 mr-2" />
           Descargar

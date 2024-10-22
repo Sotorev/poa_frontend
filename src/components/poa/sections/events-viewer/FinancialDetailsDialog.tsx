@@ -1,17 +1,18 @@
+// components/FinancialDetailsDialog.tsx
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { X, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import DownloadButton from './DownloadButton'; // Importa el componente
 import { PlanningEvent } from '@/types/interfaces';
 
 interface FinancialDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   event: PlanningEvent;
-  handleDownload: (url: string, filename: string) => void;
 }
 
-const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen, onClose, event, handleDownload }) => {
+const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen, onClose, event }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
@@ -40,15 +41,7 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
           </div>
           <div>
             <h3 className="font-semibold">Detalle de Presupuesto:</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-gray-100 text-gray-800 hover:bg-gray-200"
-              onClick={() => handleDownload(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/downloadCostDetailDocument/${event.id}`, `presupuesto_${event.id}.pdf`)}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Descargar Documento
-            </Button>
+            <DownloadButton eventId={Number(event.id)} />
           </div>
         </div>
       </DialogContent>
