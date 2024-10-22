@@ -1,3 +1,5 @@
+// events-viewer.tsx
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from "@/components/ui/button";
