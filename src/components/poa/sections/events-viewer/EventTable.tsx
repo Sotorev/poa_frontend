@@ -15,6 +15,7 @@ interface EventTableProps {
   onRevert: (id: string) => void;
   showCorrectionsButton?: boolean;
   showComments?: boolean;
+  showActions?: boolean; // Nueva propiedad
 }
 
 const EventTable: React.FC<EventTableProps> = ({
@@ -24,7 +25,8 @@ const EventTable: React.FC<EventTableProps> = ({
   onReject,
   onRequestCorrection,
   onRevert,
-  showComments = false
+  showComments = false,
+  showActions = true
 }) => {
   const [showCommentThread, setShowCommentThread] = useState(false);
   const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
@@ -60,7 +62,7 @@ const EventTable: React.FC<EventTableProps> = ({
             <TableHead className="whitespace-normal break-words">Detalle de Planificación</TableHead>
             <TableHead className="whitespace-normal break-words">Detalles del Proponente</TableHead>
             {showComments && <TableHead className="whitespace-normal break-words">Comentarios</TableHead>}
-            <TableHead className="whitespace-normal break-words">Acciones</TableHead>
+            {showActions && <TableHead className="whitespace-normal break-words">Acciones</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -74,6 +76,7 @@ const EventTable: React.FC<EventTableProps> = ({
               onRequestCorrection={onRequestCorrection}
               onRevert={onRevert}
               showComments={showComments}
+              showActions={showActions} 
               setShowCommentThread={setShowCommentThread}
               setCurrentEntityId={setCurrentEntityId}
               setCurrentEntityName={setCurrentEntityName}

@@ -20,7 +20,7 @@ import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { FodaSection } from './sections/foda-section'
-import EventsViewerComponent from './sections/events-viewer/events-viewer'
+import EventsViewerViceChancellorComponent from './sections/events-viewer/events-viewer-vicechancellor'
 import PoaActions from './sections/poa-actions'
 import { useAuth } from '@/contexts/auth-context'
 
@@ -39,7 +39,7 @@ const sections = [
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FodaSection },
-  { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
+  { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerViceChancellorComponent },
   { name: "Acciones", icon: CheckCheck, component: PoaActions },
 ]
 

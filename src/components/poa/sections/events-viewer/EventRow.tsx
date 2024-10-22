@@ -20,6 +20,7 @@ interface EventRowProps {
   onRequestCorrection: (id: string) => void;
   onRevert: (id: string) => void;
   showComments: boolean;
+  showActions: boolean;
   setShowCommentThread: (show: boolean) => void;
   setCurrentEntityId: (id: number | null) => void;
   setCurrentEntityName: (name: string) => void;
@@ -34,6 +35,7 @@ const EventRow: React.FC<EventRowProps> = ({
   onRevert,
   showComments,
   setShowCommentThread,
+  showActions,
   setCurrentEntityId,
   setCurrentEntityName
 }) => {
@@ -221,6 +223,7 @@ const EventRow: React.FC<EventRowProps> = ({
           </Button>
         </TableCell>
       )}
+      {showActions && (
       <TableCell className="whitespace-normal break-words">
         <ActionButtons 
           event={event} 
@@ -231,6 +234,7 @@ const EventRow: React.FC<EventRowProps> = ({
           onRevert={onRevert}
         />
       </TableCell>
+      )}
     </TableRow>
   );
 };

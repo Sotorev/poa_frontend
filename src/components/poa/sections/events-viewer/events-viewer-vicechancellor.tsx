@@ -1,4 +1,5 @@
-//events-viewer-vicechancellor.tsx
+// events-viewer-vicechancellor.tsx
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from "@/components/ui/button";
@@ -76,12 +77,9 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
   };
 }
 
-const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId }) => {
+const EventsViewerViceChancellorComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId }) => {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [eventsInReview, setEventsInReview] = useState<PlanningEvent[]>([]);
   const [approvedEvents, setApprovedEvents] = useState<PlanningEvent[]>([]);
-  const [rejectedEvents, setRejectedEvents] = useState<PlanningEvent[]>([]);
-  const [eventsWithCorrections, setEventsWithCorrections] = useState<PlanningEvent[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,11 +91,8 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
         const data: ApiEvent[] = await response.json();
         const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
 
-        // Separar eventos en diferentes estados
-        setEventsInReview(mappedEvents.filter(event => event.estado === 'revision'));
+        // Filtrar solo los eventos aprobados
         setApprovedEvents(mappedEvents.filter(event => event.estado === 'aprobado'));
-        setRejectedEvents(mappedEvents.filter(event => event.estado === 'rechazado'));
-        setEventsWithCorrections(mappedEvents.filter(event => event.estado === 'correccion'));
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Error al cargar los eventos');
@@ -106,62 +101,6 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
 
     fetchData();
   }, [poaId]);
-
-  const updateEventStatus = async (eventId: number, approvalStatusId: number, comments: string) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/event/${eventId}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId, userId, approvalStatusId, comments })
-      });
-
-      if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-
-      toast.success('Estado del evento actualizado correctamente');
-      // Refrescar los datos después de la actualización
-      const refreshedData = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const refreshedEvents: ApiEvent[] = await refreshedData.json();
-      const mappedRefreshedEvents = refreshedEvents.map(event => mapApiEventToPlanningEvent(event));
-
-      setEventsInReview(mappedRefreshedEvents.filter(event => event.estado === 'revision'));
-      setApprovedEvents(mappedRefreshedEvents.filter(event => event.estado === 'aprobado'));
-      setRejectedEvents(mappedRefreshedEvents.filter(event => event.estado === 'rechazado'));
-      setEventsWithCorrections(mappedRefreshedEvents.filter(event => event.estado === 'correccion'));
-    } catch (error) {
-      console.error('Error al actualizar el estado del evento:', error);
-      toast.error('Error al actualizar el estado del evento. Por favor, intente de nuevo.');
-    }
-  };
-
-  const approveEvent = (id: string) => {
-    if (window.confirm('¿Estás seguro de aprobar este evento?')) {
-      updateEventStatus(Number(id), 1, 'Evento aprobado');
-    }
-  };
-
-  const rejectEvent = (id: string) => {
-    const comments = window.prompt('Ingrese los comentarios para el rechazo del evento:', 'Evento rechazado');
-    if (comments !== null) {
-      updateEventStatus(Number(id), 2, comments);
-    }
-  };
-
-  const requestCorrection = (id: string) => {
-    const comments = window.prompt('Ingrese los comentarios para solicitar correcciones:', 'Evento aprobado con correcciones');
-    if (comments !== null) {
-      updateEventStatus(Number(id), 3, comments);
-    }
-  };
-
-  const revertToPending = (id: string) => {
-    if (window.confirm('¿Estás seguro de regresar este evento a pendiente?')) {
-      updateEventStatus(Number(id), 4, 'Regresado a pendiente');
-    }
-  };
 
   return (
     <div id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
@@ -179,51 +118,15 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
             <div className="p-4 bg-white">
               <div className="container mx-auto space-y-8">
                 <div>
-                  <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Pendientes</h2>
-                  <EventTable
-                    events={eventsInReview}
-                    isPending={true}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                  />
-                </div>
-                <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Aprobados</h2>
                   <EventTable
                     events={approvedEvents}
                     isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                  />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Rechazados</h2>
-                  <EventTable
-                    events={rejectedEvents}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                    showCorrectionsButton={false}
-                    showComments={true}
-                  />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos con Solicitud de Correcciones</h2>
-                  <EventTable
-                    events={eventsWithCorrections}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                    showCorrectionsButton={false}
-                    showComments={true}
+                    showActions={false} // Ocultar la columna de acciones
+                    onApprove={() => {}}
+                    onReject={() => {}}
+                    onRequestCorrection={() => {}}
+                    onRevert={() => {}}
                   />
                 </div>
               </div>
@@ -235,4 +138,4 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
   );
 };
 
-export default EventsViewerComponent;
+export default EventsViewerViceChancellorComponent;
