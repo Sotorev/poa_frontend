@@ -19,9 +19,10 @@ interface SectionProps {
   isActive: boolean
   poaId: number
   facultyId: number
+  onStatusChange?: () => void // Nueva prop opcional
 }
 
-export function PoaApproval({ name, isActive, poaId, facultyId }: SectionProps) {
+export function PoaApproval({ name, isActive, poaId, facultyId, onStatusChange }: SectionProps) {
   const [open, setOpen] = useState(false)
   const [openCancel, setOpenCancel] = useState(false)
 
@@ -49,6 +50,11 @@ export function PoaApproval({ name, isActive, poaId, facultyId }: SectionProps) 
       console.log(`POA con ID ${poaId} de la facultad ${facultyId} enviado con estado ${status} y fecha ${currentDate}`);
       setOpen(false);
       setOpenCancel(false);
+
+      if (onStatusChange) {
+        onStatusChange();
+      }
+
     } catch (error: any) {
       console.error("Error al actualizar el POA:", error);
       alert("Ocurrió un error al actualizar el POA.");
