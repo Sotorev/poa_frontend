@@ -34,7 +34,7 @@ import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategi
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
 
 import { CampusSelector } from './columns/campus-selector';
-import EventsViewerViceChancellorComponent from '../sections/events-viewer/events-viewer-vicechancellor';
+import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent';
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
@@ -797,7 +797,7 @@ export function TablaPlanificacionComponent() {
       )}
 
 {poaId && facultyId && userId ? (
-        <EventsViewerViceChancellorComponent
+        <EventsCorrectionsComponent
           name="Revisión de eventos"
           isActive={false}
           poaId={poaId}

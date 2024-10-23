@@ -28,7 +28,7 @@ import { ResponsablesComponent } from './columns/responsables'
 import { IndicadorLogroComponent } from './columns/indicador-logro'
 import { CommentThread } from './columns/comment-thread'
 import { CampusSelector } from './columns/campus-selector'
-import EventsViewerViceChancellorComponent from '../sections/events-viewer/events-viewer-vicechancellor'
+import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent'
 
 import { useAuth } from '@/contexts/auth-context'
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
@@ -688,7 +688,7 @@ export default function PlanificacionFormComponent() {
       )}
 
 {poaId && facultyId && userId ? (
-        <EventsViewerViceChancellorComponent
+        <EventsCorrectionsComponent
           name="Revisión de eventos"
           isActive={false}
           poaId={poaId}
