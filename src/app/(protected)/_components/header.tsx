@@ -1,158 +1,231 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
-import { Bell, ChevronDown, LogOut, User, Settings, FileText } from 'lucide-react'
+import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Bell, ChevronDown, LogOut, User, Settings, FileText, Menu } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
-import Logo from '@/assets/images/logo.png'
-import QuetzalIcon from '@/assets/images/quetzal-icon.png'
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+	NavigationMenu,
+	NavigationMenuContent,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
+	NavigationMenuTrigger,
+	navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+
+import Logo from "@/assets/images/logo.png"
+import QuetzalIcon from "@/assets/icons/quetzal.svg"
+import Image from "next/image"
+
+const poaItems = [
+	{ title: "Panel de Control", href: "/poa" },
+	{ title: "Proyectos", href: "/poa/proyectos" },
+	{ title: "Informes", href: "/poa/informes" },
+	{ title: "Calendario", href: "/poa/calendario" },
+]
+
+const peiItems = [
+	{ title: "Visión General", href: "/pei" },
+	{ title: "Objetivos Estratégicos", href: "/pei/objetivos" },
+	{ title: "Indicadores", href: "/pei/indicadores" },
+	{ title: "Evaluación", href: "/pei/evaluacion" },
+]
 
 export default function Header() {
-	const [dropdownOpen, setDropdownOpen] = useState(false)
-	const [canAccessUsers, setCanAccessUsers] = useState(false)
-	const [canAccessPEI, setCanAccessPEI] = useState(false)
-	const [canAccessPOA, setCanAccessPOA] = useState(false)
-	const [canAccessReports, setCanAccessReports] = useState(false)
-	const { data: session, status } = useSession()
 	const pathname = usePathname()
-	useEffect(() => {
-		if (status === 'authenticated' && session?.user) {
-			const role = session.user.role?.roleName
-			setCanAccessUsers(role === "Administrador")
-			setCanAccessPEI(["Administrador", "Vice Rector"].includes(role))
-			setCanAccessPOA(["Administrador", "Vice Rector", "Dean"].includes(role))
-			setCanAccessReports(["Administrador", "Vice Rector", "Pedagogical Coordinator"].includes(role))
-		}
-	}, [session, status])
+	const { data: session, status } = useSession()
 
-	const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
-		const isActive = pathname === href
-		return (
-			<Link
-				href={href}
-				className={`relative text-[#007041] hover:text-white hover:bg-[#007041] transition duration-150 ease-in-out px-4 py-2 rounded-md text-sm font-medium ${isActive ? 'bg-[#007041] text-white' : ''
-					}`}
-			>
-				{children}
-				{isActive && (
-					<Image
-						src={QuetzalIcon}
-						alt="Active"
-						className="absolute -top-2 -right-2 w-6 h-6"
-						width={24}
-						height={24}
-					/>
-				)}
-			</Link>
-		)
-	}
-
-	if (status === 'loading') {
+	if (status === "loading") {
 		return <div className="h-16 bg-white shadow-md flex items-center justify-center">Cargando...</div>
 	}
 
 	return (
-		<header className="bg-white shadow-md" role="banner">
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-				<div className="flex justify-between items-center py-4">
-					<div className="flex items-center">
-						<Link href="/inicio" className="flex items-center">
-							<Image src={Logo} alt="Logo" className="h-auto w-28 mr-3" width={112} height={40} priority={true} />
-						</Link>
-					</div>
-					{status === 'authenticated' && (
-						<nav className="hidden md:flex space-x-1" aria-label="Main Navigation">
-							<NavLink href="/inicio">Dashboard</NavLink>
-							{canAccessUsers && <NavLink href="/usuarios/gestion">Usuarios</NavLink>}
-							{canAccessPEI && <NavLink href="/pei">PEI</NavLink>}
-							{canAccessPOA && <NavLink href="/poa">POA</NavLink>}
-							<NavLink href="/poa/eventos">Crear Evento</NavLink>
-							{canAccessReports && <NavLink href="/reportes">Reportes</NavLink>}
-						</nav>
-					)}
-					<div className="flex items-center space-x-4">
-						{status === 'authenticated' && session?.user && (
-							<>
-								<button
-									className="text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out relative p-2 rounded-full hover:bg-green-50"
-									aria-label="Notificaciones"
-								>
-									<Bell className="h-6 w-6" />
-									<span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-										3
-									</span>
-								</button>
-								<div className="relative">
-									<button
-										className="flex items-center space-x-3 text-[#007041] hover:text-[#2e8f66] transition duration-150 ease-in-out bg-green-50 rounded-full px-4 py-2"
-										onClick={() => setDropdownOpen(!dropdownOpen)}
-										aria-expanded={dropdownOpen}
-										aria-haspopup="true"
-									>
-										<div className="w-8 h-8 rounded-full bg-[#007041] text-white flex items-center justify-center">
-											<span className="text-sm font-semibold">{session.user.username.charAt(0).toUpperCase()}</span>
-										</div>
-										<span className="font-medium">{session.user.username}</span>
-										<ChevronDown className="h-4 w-4" />
-									</button>
-									{dropdownOpen && (
-										<div
-											className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-10"
-											role="menu"
-											aria-orientation="vertical"
-											aria-labelledby="user-menu"
-										>
-											<Link
-												href="/perfil"
-												className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-green-50 w-full transition duration-150 ease-in-out"
-												role="menuitem"
-												onClick={() => setDropdownOpen(false)}
-											>
-												<User className="h-5 w-5 mr-3 text-[#007041]" />
-												Perfil
-											</Link>
-											{session.user.role?.roleName === "Administrador" && (
-												<Link
-													href="/configuracion"
-													className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-green-50 w-full transition duration-150 ease-in-out"
-													role="menuitem"
-													onClick={() => setDropdownOpen(false)}
+		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+			<div className="container flex h-14 items-center">
+				<div className="mr-4 hidden md:flex">
+					<Link href="/inicio" className="mr-6 flex items-center space-x-2">
+						<Image src={Logo} alt="UMES Logo" className="h-8 w-auto" />
+						<span className="hidden font-bold sm:inline-block">UMES Gestión POA</span>
+					</Link>
+					<NavigationMenu>
+						<NavigationMenuList>
+							<NavigationMenuItem>
+								<NavigationMenuTrigger>POA</NavigationMenuTrigger>
+								<NavigationMenuContent>
+									<ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+										<li className="row-span-3">
+											<NavigationMenuLink asChild>
+												<a
+													className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+													href="/poa"
 												>
-													<Settings className="h-5 w-5 mr-3 text-[#007041]" />
-													Configuración
-												</Link>
-											)}
-											<Link
-												href="/mis-actividades"
-												className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-green-50 w-full transition duration-150 ease-in-out"
-												role="menuitem"
-												onClick={() => setDropdownOpen(false)}
-											>
-												<FileText className="h-5 w-5 mr-3 text-[#007041]" />
-												Mis Actividades
-											</Link>
-											<button
-												onClick={() => {
-													setDropdownOpen(false);
-													signOut();
-												}}
-												className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-green-50 w-full transition duration-150 ease-in-out"
-												role="menuitem"
-											>
-												<LogOut className="h-5 w-5 mr-3 text-[#007041]" />
-												Cerrar sesión
-											</button>
-										</div>
-									)}
-								</div>
-							</>
-						)}
+													<div className="mb-2 mt-4 text-lg font-medium">POA</div>
+													<p className="text-sm leading-tight text-muted-foreground">
+														Plan Operativo Anual de la Universidad Mesoamericana
+													</p>
+												</a>
+											</NavigationMenuLink>
+										</li>
+										{poaItems.map((item) => (
+											<ListItem key={item.title} title={item.title} href={item.href}>
+												{item.description}
+											</ListItem>
+										))}
+									</ul>
+								</NavigationMenuContent>
+							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<NavigationMenuTrigger>PEI</NavigationMenuTrigger>
+								<NavigationMenuContent>
+									<ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+										{peiItems.map((item) => (
+											<ListItem key={item.title} title={item.title} href={item.href}>
+												{item.description}
+											</ListItem>
+										))}
+									</ul>
+								</NavigationMenuContent>
+							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<Link href="/reportes" legacyBehavior passHref>
+									<NavigationMenuLink className={navigationMenuTriggerStyle()}>
+										Reportes
+									</NavigationMenuLink>
+								</Link>
+							</NavigationMenuItem>
+						</NavigationMenuList>
+					</NavigationMenu>
+				</div>
+				<Sheet>
+					<SheetTrigger asChild>
+						<Button variant="ghost" className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden">
+							<Menu className="h-5 w-5" />
+							<span className="sr-only">Toggle Menu</span>
+						</Button>
+					</SheetTrigger>
+					<SheetContent side="left" className="pr-0">
+						<MobileNav />
+					</SheetContent>
+				</Sheet>
+				<div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+					<div className="w-full flex-1 md:w-auto md:flex-none">
+						{/* Add search functionality here if needed */}
 					</div>
+					<nav className="flex items-center space-x-2">
+						<Button variant="ghost" size="icon" className="relative">
+							<Bell className="h-5 w-5" />
+							<span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-600" />
+							<span className="sr-only">Notifications</span>
+						</Button>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="ghost" className="relative h-8 w-8 rounded-full">
+									{/* <Image
+										src={session?.user?.image || "/placeholder-avatar.png"}
+										alt={session?.user?.name || "User"}
+										className="h-8 w-8 rounded-full"
+									/> */}
+									<User className="h-8 w-8 rounded-full" />
+									<span className="text-sm font-semibold">{session.user.username.charAt(0).toUpperCase()}</span>
+
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent className="w-56" align="end" forceMount>
+								<DropdownMenuItem asChild>
+									<Link href="/perfil">
+										<User className="mr-2 h-4 w-4" />
+										<span>Perfil</span>
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link href="/configuracion">
+										<Settings className="mr-2 h-4 w-4" />
+										<span>Configuración</span>
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link href="/mis-actividades">
+										<FileText className="mr-2 h-4 w-4" />
+										<span>Mis Actividades</span>
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									className="cursor-pointer"
+									onSelect={(event) => {
+										event.preventDefault()
+										signOut()
+									}}
+								>
+									<LogOut className="mr-2 h-4 w-4" />
+									<span>Cerrar sesión</span>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</nav>
 				</div>
 			</div>
-			<div className="h-1 bg-gradient-to-r from-[#007041] via-[#2e8f66] to-[#007041]"></div>
 		</header>
 	)
 }
+
+function MobileNav() {
+	return (
+		<div className="flex flex-col space-y-3">
+			<Link href="/" className="flex items-center space-x-2">
+				<Image src={Logo} alt="UMES Logo" className="h-8 w-auto" />
+				<span className="font-bold">UMES POA System</span>
+			</Link>
+			<div className="space-y-1">
+				<Button variant="ghost" className="w-full justify-start" asChild>
+					<Link href="/poa">POA</Link>
+				</Button>
+				<Button variant="ghost" className="w-full justify-start" asChild>
+					<Link href="/pei">PEI</Link>
+				</Button>
+				<Button variant="ghost" className="w-full justify-start" asChild>
+					<Link href="/reportes">Reportes</Link>
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+const ListItem = React.forwardRef<
+	React.ElementRef<"a">,
+	React.ComponentPropsWithoutRef<"a">
+>(({ className, title, children, ...props }, ref) => {
+	return (
+		<li>
+			<NavigationMenuLink asChild>
+				<a
+					ref={ref}
+					className={cn(
+						"block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+						className
+					)}
+					{...props}
+				>
+					<div className="text-sm font-medium leading-none">{title}</div>
+					<p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+						{children}
+					</p>
+				</a>
+			</NavigationMenuLink>
+		</li>
+	)
+})
+ListItem.displayName = "ListItem"
