@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createStrategySchema, CreateStrategyInput } from "@/schemas/strategySchema";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface Estrategia {
   strategyId: number;
@@ -46,6 +47,7 @@ export function EstrategiasSelectorComponent({
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const user = useCurrentUser();
 
   const {
     register,
@@ -66,8 +68,8 @@ export function EstrategiasSelectorComponent({
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategies`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
           },
-          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al fetch estrategias: ${response.statusText}`);

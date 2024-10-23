@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FinancingSource } from "@/types/FinancingSource";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 const aporteOtrasFuentesSchema = z.object({
   financingSourceId: z.number({
@@ -56,6 +57,7 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
   const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const user = useCurrentUser();
 
   const {
     register,
@@ -79,8 +81,8 @@ export function AporteOtrasFuentesComponent({ aportes, onChangeAportes }: Aporte
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
-          credentials: 'include',
         });
 
         if (!response.ok) {

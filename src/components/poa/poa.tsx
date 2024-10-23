@@ -1,8 +1,7 @@
 "use client";
-import { withAuth } from '../auth/with-auth'
 import PoaPage from './poa-page'
 
-function Users() {
+export default function POAUsers() {
 
 	return (
 		<div className='mt-20'>
@@ -10,8 +9,3 @@ function Users() {
 		</div>
 	)
 }
-
-export default withAuth(Users, {
-	requiredPermissions: [{ module: 'POA', action: 'Create' }],
-	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator', 'Coordinador']
-})

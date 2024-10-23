@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createInterventionSchema, CreateInterventionInput } from "@/schemas/interventionSchema";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface Intervencion {
   interventionId: number;
@@ -40,6 +41,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
   const [isAddingNew, setIsAddingNew] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const newIntervencionInputRef = useRef<HTMLInputElement>(null);
+  const user = useCurrentUser();
 
   const {
     register,
@@ -60,8 +62,8 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interventions`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
           },
-          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al obtener intervenciones: ${response.statusText}`);
@@ -104,9 +106,9 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interventions`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
-        credentials: 'include',
         body: JSON.stringify(data),
       });
 
@@ -194,9 +196,9 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
           <ScrollArea className="h-[200px]">
             <SelectGroup>
               {filteredIntervenciones.map((int) => (
-                <SelectItem 
-                  key={int.interventionId} 
-                  value={int.interventionId.toString()} 
+                <SelectItem
+                  key={int.interventionId}
+                  value={int.interventionId.toString()}
                   className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
                 >
                   <div className="flex items-center">
@@ -205,7 +207,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
                       onCheckedChange={() => handleSelectIntervencion(int.interventionId.toString())}
                       className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
                     />
-                    <div 
+                    <div
                       className="w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold bg-green-500"
                     >
                       {int.isCustom ? `E${int.interventionId}` : int.interventionId}

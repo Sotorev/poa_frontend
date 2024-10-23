@@ -7,8 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { z } from 'zod';
 import { toast } from 'react-toastify';
-import { useAuth } from '@/contexts/auth-context';
-
 import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector';
 import { EstrategiasSelectorComponent } from './columns/estrategias-selector';
 import { IntervencionesSelectorComponent } from './columns/intervenciones-selector';
@@ -32,8 +30,10 @@ import { AccionesComponent } from './columns/acciones';
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
+import { useSession } from 'next-auth/react';
 
 import { CampusSelector } from './columns/campus-selector';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
@@ -83,7 +83,8 @@ const getColumnName = (field: string): string => {
 };
 
 export function TablaPlanificacionComponent() {
-  const { user, loading: loadingAuth } = useAuth();
+  const user = useCurrentUser();
+  const loadingAuth = user === null;
   const userId = user?.userId;
 
   const [filas, setFilas] = useState<FilaPlanificacion[]>([]);
@@ -121,8 +122,8 @@ export function TablaPlanificacionComponent() {
         const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
-          credentials: 'include',
         });
         if (!responseAreas.ok) {
           throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`);
@@ -135,8 +136,8 @@ export function TablaPlanificacionComponent() {
         const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
-          credentials: 'include',
         });
         if (!responseObjectives.ok) {
           throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`);
@@ -187,8 +188,8 @@ export function TablaPlanificacionComponent() {
         const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
-          credentials: 'include',
         });
         if (!responseUser.ok) {
           throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
@@ -203,8 +204,8 @@ export function TablaPlanificacionComponent() {
         const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
-          credentials: 'include',
         });
         if (!responsePoa.ok) {
           throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
@@ -372,7 +373,7 @@ export function TablaPlanificacionComponent() {
       if (!process.env.NEXT_PUBLIC_API_URL) {
         throw new Error("La URL de la API no está definida.");
       }
-  
+
       const eventData = {
         name: fila.evento.trim(),
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
@@ -423,48 +424,51 @@ export function TablaPlanificacionComponent() {
         })), // Cambiado aquí
         userId: userId,
       };
-  
+
       console.log('Enviando datos:', eventData);
-  
+
       const formData = new FormData();
       formData.append('data', JSON.stringify(eventData));
-  
+
       if (fila.detalle) {
         formData.append('costDetailDocuments', fila.detalle);
       }
-  
+
       if (fila.processDocument) {
         formData.append('processDocument', fila.processDocument);
       }
-  
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
         body: formData,
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`Error al enviar la actividad: ${errorData.message || response.statusText}`);
       }
-  
+
       const result = await response.json();
-  
+
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
           filaItem.id === fila.id ? { ...filaItem, entityId: result.eventId, estado: 'aprobado' } : filaItem
         )
       );
-  
+
       toast.success("Actividad enviada exitosamente.");
-  
+
       setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
       console.error(err);
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
-  
+
 
   const confirmarEnvioSinDetalle = async () => {
     if (!pendingSendId) return;
@@ -504,8 +508,8 @@ export function TablaPlanificacionComponent() {
     <div className="container mx-auto p-4">
       {showCommentThread && currentEntityId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <CommentThread 
-            isOpen={showCommentThread} 
+          <CommentThread
+            isOpen={showCommentThread}
             onClose={() => setShowCommentThread(false)}
             entityId={currentEntityId}
             entityName={currentEntityName}
@@ -654,7 +658,7 @@ export function TablaPlanificacionComponent() {
                   <AporteOtrasFuentesComponent
                     aportes={fila.aporteOtros}
                     onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
-                  /> 
+                  />
                   {filaErrors[fila.id]?.aporteOtros && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteOtros}</span>
                   )}

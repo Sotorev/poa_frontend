@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PlanningEvent, SectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 // Función para mapear datos de la API a PlanningEvent
 function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
@@ -80,13 +81,17 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
 const EventsViewerViceChancellorComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [approvedEvents, setApprovedEvents] = useState<PlanningEvent[]>([]);
+  const user = useCurrentUser();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
+
         });
         const data: ApiEvent[] = await response.json();
         const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));

@@ -1,7 +1,9 @@
 // utils/downloadFile.ts
+import { currentUser } from '@/lib/auth';
 import { toast } from 'react-toastify';
 
 export const downloadFile = async (eventId: number, path: string = 'downloadProcessDocument'): Promise<void> => {
+  const user = await currentUser();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
     toast.error('La URL de la API no está configurada.');
@@ -12,10 +14,10 @@ export const downloadFile = async (eventId: number, path: string = 'downloadProc
     const response = await fetch(`${apiUrl}/api/fullevent/${path}/${eventId}`, {
       method: 'GET',
       headers: {
-        'Accept': 'application/pdf', // Asegúrate de aceptar el tipo de contenido adecuado
-        // Añade encabezados de autenticación si es necesario
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user?.token}`,
       },
-      credentials: 'include', // Incluye credenciales si es necesario
+
     });
 
     if (!response.ok) {

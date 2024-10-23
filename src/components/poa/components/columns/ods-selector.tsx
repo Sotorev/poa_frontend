@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createOdsSchema, CreateOdsInput } from "@/schemas/odsSchema";
 import { z } from "zod";
 import { ODS } from "@/types/ods";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface ODSWithFrontend extends ODS {
   id: string;
@@ -60,6 +61,7 @@ export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
   const [customOdsCounter, setCustomOdsCounter] = useState(1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const newOdsInputRef = useRef<HTMLInputElement>(null);
+  const user = useCurrentUser();
 
   // Configurar react-hook-form para agregar nuevos ODS
   const {
@@ -82,8 +84,8 @@ export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ods`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
           },
-          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al obtener ODS: ${response.statusText}`);
@@ -154,9 +156,9 @@ export function OdsSelector({ selectedODS, onSelectODS }: ODSSelectorProps) {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ods`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
-        credentials: 'include',
         body: JSON.stringify(data),
       });
 

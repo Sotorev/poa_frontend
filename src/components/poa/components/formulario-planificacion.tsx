@@ -28,11 +28,10 @@ import { ResponsablesComponent } from './columns/responsables'
 import { IndicadorLogroComponent } from './columns/indicador-logro'
 import { CommentThread } from './columns/comment-thread'
 import { CampusSelector } from './columns/campus-selector'
-
-import { useAuth } from '@/contexts/auth-context'
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema'
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>
 
@@ -81,7 +80,7 @@ const getColumnName = (field: string): string => {
 }
 
 export default function PlanificacionFormComponent() {
-  const { user, loading: loadingAuth } = useAuth()
+  const user = useCurrentUser();
   const userId = user?.userId
 
   const initialFila: FilaPlanificacion = {
@@ -139,8 +138,10 @@ export default function PlanificacionFormComponent() {
         }
 
         const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, {
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
+          },
         })
         if (!responseAreas.ok) {
           throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`)
@@ -151,8 +152,10 @@ export default function PlanificacionFormComponent() {
         setStrategicAreas(activeAreas)
 
         const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
+          },
         })
         if (!responseObjectives.ok) {
           throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`)
@@ -188,7 +191,6 @@ export default function PlanificacionFormComponent() {
 
   useEffect(() => {
     const fetchFacultyAndPoa = async () => {
-      if (loadingAuth) return
       if (!userId) {
         setErrorPoa("Usuario no autenticado.")
         return
@@ -199,8 +201,10 @@ export default function PlanificacionFormComponent() {
         }
 
         const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
+          },
         })
         if (!responseUser.ok) {
           throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`)
@@ -213,8 +217,10 @@ export default function PlanificacionFormComponent() {
 
         setLoadingPoa(true)
         const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
+          },
         })
         if (!responsePoa.ok) {
           throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`)
@@ -231,7 +237,7 @@ export default function PlanificacionFormComponent() {
     }
 
     fetchFacultyAndPoa()
-  }, [userId, loadingAuth])
+  }, [userId])
 
   const actualizarFila = (campo: keyof FilaPlanificacion, valor: any | null) => {
     setFila(prevFila => {
@@ -377,7 +383,10 @@ export default function PlanificacionFormComponent() {
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
         body: formData,
       })
 
@@ -408,7 +417,7 @@ export default function PlanificacionFormComponent() {
     setIsConfirmModalOpen(false)
   }
 
-  if (loading || loadingAuth || loadingPoa) return <div className="flex justify-center items-center h-screen">Cargando datos...</div>
+  if (loading || loadingPoa) return <div className="flex justify-center items-center h-screen">Cargando datos...</div>
   if (error) return <div className="text-red-500 text-center">Error: {error}</div>
   if (errorPoa) return <div className="text-red-500 text-center">Error al obtener poaId: {errorPoa}</div>
 
