@@ -93,6 +93,7 @@ export default {
 			return token;
 		},
 		async session({ session, token }) {
+			
 			return {
 				...session,
 				user: token.user,
