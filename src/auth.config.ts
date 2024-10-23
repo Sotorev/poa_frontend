@@ -12,12 +12,13 @@ declare module "next-auth" {
 				roleName: string;
 				roleId: number;
 			};
-			// permissions: {
-			// 	permissionId: number;
-			// 	moduleName: string;
-			// 	action: string;
-			// 	description: string;
-			// }[];
+			token: string;
+			permissions: {
+				permissionId: number;
+				moduleName: string;
+				action: string;
+				description: string;
+			}[];
 		}
 	}
 }
@@ -31,12 +32,13 @@ declare module "next-auth/jwt" {
 				roleName: string;
 				roleId: number;
 			};
-			// permissions: {
-			// 	permissionId: number;
-			// 	moduleName: string;
-			// 	action: string;
-			// 	description: string;
-			// }[];
+			token: string;
+			permissions: {
+				permissionId: number;
+				moduleName: string;
+				action: string;
+				description: string;
+			}[];
 		};
 	}
 }

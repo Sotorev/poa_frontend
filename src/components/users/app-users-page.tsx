@@ -14,6 +14,7 @@ import { z } from "zod"
 import { PlusCircle, Edit, Trash2, Users, ChevronUp, ChevronDown } from "lucide-react"
 import { Notification } from "@/components/users/components-notification"
 import { Pagination } from "@/components/users/components-pagination"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -199,6 +200,7 @@ function UserForm({
     } : {}
   })
 
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -315,6 +317,7 @@ export default function UserManagement() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [showDeletedUsers, setShowDeletedUsers] = useState(false)
+  const user = useCurrentUser()
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -336,7 +339,10 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       const response = await fetch(`${API_URL}/api/users`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
       })
       if (response.ok) {
         const data: User[] = await response.json()
@@ -359,7 +365,10 @@ export default function UserManagement() {
   const fetchDeletedUsers = async () => {
     try {
       const response = await fetch(`${API_URL}/api/users/deleted`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
       })
       if (response.ok) {
         const data: User[] = await response.json()
@@ -381,7 +390,10 @@ export default function UserManagement() {
   const fetchRoles = async () => {
     try {
       const response = await fetch(`${API_URL}/api/roles`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        }
       })
       if (response.ok) {
         const data: Role[] = await response.json()
@@ -401,7 +413,10 @@ export default function UserManagement() {
   const fetchFaculties = async () => {
     try {
       const response = await fetch(`${API_URL}/api/faculties`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        }
       })
       if (response.ok) {
         const data: Faculty[] = await response.json()
@@ -435,9 +450,9 @@ export default function UserManagement() {
     try {
       const response = await fetch(`${API_URL}/api/users`, {
         method: "POST",
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         body: JSON.stringify(data)
       })
@@ -462,9 +477,9 @@ export default function UserManagement() {
     try {
       const response = await fetch(`${API_URL}/api/users/${editingUser.userId}`, {
         method: "PUT",
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         body: JSON.stringify(data)
       })
@@ -493,7 +508,10 @@ export default function UserManagement() {
     try {
       const response = await fetch(`${API_URL}/api/users/${userId}`, {
         method: "DELETE",
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
       })
       if (response.ok) {
         if (showDeletedUsers) {
@@ -518,9 +536,9 @@ export default function UserManagement() {
     try {
       const response = await fetch(`${API_URL}/api/users/${userId}/restore`, {
         method: 'PUT',
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         // No es necesario enviar un cuerpo si la lógica de restauración está en el backend
         // body: JSON.stringify({ isDeleted: false })
