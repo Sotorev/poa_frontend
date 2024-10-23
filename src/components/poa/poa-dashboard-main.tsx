@@ -32,7 +32,7 @@ export interface SectionProps {
   userId: number
   rolId: number
   isEditable: boolean
-  onStatusChange?: () => void // Nueva prop opcional
+  onStatusChange?: () => void 
 }
 
 const sections = [
@@ -217,11 +217,11 @@ export function PoaDashboardMain() {
 
 
   return (
-    <main className="flex bg-green-50 min-h-screen">
+    <main className="flex bg-gray-100 min-h-screen">
       <TooltipProvider>
         <aside
           ref={sidebarRef}
-          className={`fixed left-0 top-0 h-full bg-green-900 shadow-lg transition-all duration-300 ease-in-out z-50 flex flex-col justify-between ${isSidebarFixed || isSidebarVisible ? 'w-16 opacity-100' : 'w-0 opacity-0'
+          className={`fixed left-0 top-0 h-full bg-primary shadow-lg transition-all duration-300 ease-in-out z-50 flex flex-col justify-between ${isSidebarFixed || isSidebarVisible ? 'w-16 opacity-100' : 'w-0 opacity-0'
             }`}
         >
           <ScrollArea className="flex-grow">
@@ -231,6 +231,7 @@ export function PoaDashboardMain() {
                   <TooltipTrigger asChild>
                     <div>
                       <Link
+                        className='text-white hover:text-primary'
                         to={section.name}
                         spy={true}
                         smooth={true}
@@ -244,7 +245,7 @@ export function PoaDashboardMain() {
                           className={cn(
                             "w-12 h-12 rounded-lg transition-colors duration-200",
                             isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0',
-                            activeSection === section.name ? 'bg-green-600 text-white' : 'text-green-300 hover:bg-green-800'
+                            activeSection === section.name ? 'bg-primary text-white' : 'text-white'
                           )}
                         >
                           {React.createElement(section.icon, { className: "h-6 w-6" })}
@@ -253,7 +254,7 @@ export function PoaDashboardMain() {
                       </Link>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-green-800 text-white py-1 px-2 text-sm rounded">
+                  <TooltipContent side="right" className="bg-primary text-white py-1 px-2 text-sm rounded">
                     <p>{section.name}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -267,14 +268,14 @@ export function PoaDashboardMain() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsSidebarFixed(!isSidebarFixed)}
-                  className={`w-8 h-8 rounded-lg hover:bg-green-800 transition-colors duration-200 ${isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0'
+                  className={`w-8 h-8 rounded-lg hover:bg-primary transition-colors duration-200 ${isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0'
                     }`}
                 >
-                  <Pin className={`h-4 w-4 ${isSidebarFixed ? 'text-green-400' : 'text-green-300'}`} />
+                  <Pin className={`h-4 w-4 text-white`} />
                   <span className="sr-only">Fijar barra lateral</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="bg-green-800 text-white py-1 px-2 text-sm rounded">
+              <TooltipContent side="right" className="bg-primary text-white py-1 px-2 text-sm rounded">
                 <p>{isSidebarFixed ? 'Desfijar barra lateral' : 'Fijar barra lateral'}</p>
               </TooltipContent>
             </Tooltip>

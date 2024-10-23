@@ -1,12 +1,14 @@
-"use client";
+'use client'
+
 import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronDown, ChevronUp, Edit } from 'lucide-react'
-import { useCurrentUser } from '@/hooks/use-current-user';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { ChevronDown, ChevronUp, Edit, Save } from 'lucide-react'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
-interface SectionProps {
+interface FacultadDataSectionProps {
   name: string
   isActive: boolean
   isEditable: boolean
@@ -14,82 +16,60 @@ interface SectionProps {
   facultyId: number
 }
 
-export function FacultadDataSection({ name, isActive, isEditable, poaId, facultyId }: SectionProps) {
+export function FacultadDataSection({ name, isActive, isEditable, poaId, facultyId }: FacultadDataSectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [facultadData, setFacultadData] = useState({
     nombreFacultad: "",
     nombreDecano: "",
-    fechaPresentacion: ""
+    fechaPresentacion: "",
+    cantidadEstudiantes: ""
   })
-
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
-  const [cantidadEstudiantes, setCantidadEstudiantes] = useState<number | ''>('') // Estado para la cantidad de estudiantes
-  const user = useCurrentUser();
+  const user = useCurrentUser()
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
-
-    const fetchFacultyData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
+        const [facultyResponse, poaResponse] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
+            headers: {
+              'Authorization': `Bearer ${user?.token}`,
+            },
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${poaId}`, {
+            headers: {
+              'Authorization': `Bearer ${user?.token}`,
+            },
+          })
+        ])
 
-        })
-        if (!response.ok) {
-          throw new Error('Error al obtener datos de la facultad')
+        if (!facultyResponse.ok || !poaResponse.ok) {
+          throw new Error('Error fetching data')
         }
-        const facultyData = await response.json()
+
+        const facultyData = await facultyResponse.json()
+        const poaData = await poaResponse.json()
 
         setFacultadData({
           nombreFacultad: facultyData.name,
           nombreDecano: facultyData.deanName,
-          fechaPresentacion: facultyData.fechaPresentacion || today
+          fechaPresentacion: poaData.submissionDate || new Date().toISOString().split('T')[0],
+          cantidadEstudiantes: facultyData.studentCount || ""
         })
         setTempFacultadData({
           nombreFacultad: facultyData.name,
           nombreDecano: facultyData.deanName,
-          fechaPresentacion: facultyData.fechaPresentacion || today
+          fechaPresentacion: poaData.submissionDate || new Date().toISOString().split('T')[0],
+          cantidadEstudiantes: facultyData.studentCount || ""
         })
       } catch (error) {
-        console.error(error)
+        console.error('Error fetching data:', error)
       }
     }
 
-    const fetchPoaData = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${poaId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-
-        })
-        if (!response.ok) {
-          throw new Error('Error al obtener datos del POA')
-        }
-        const poaData = await response.json()
-
-        // Actualiza la fecha de presentación con el submissionDate del POA
-        setFacultadData(prevData => ({
-          ...prevData,
-          fechaPresentacion: poaData.submissionDate || today
-        }))
-        setTempFacultadData(prevData => ({
-          ...prevData,
-          fechaPresentacion: poaData.submissionDate || today
-        }))
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    fetchFacultyData()
-    fetchPoaData()
-  }, [facultyId, poaId])
+    fetchData()
+  }, [facultyId, poaId, user])
 
   const handleEdit = () => {
     if (isEditing) {
@@ -100,58 +80,27 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
 
   const handleSave = async () => {
     try {
-      const cantidadEstudiantesNumero = Number(cantidadEstudiantes);
-
-      if (isNaN(cantidadEstudiantesNumero)) {
-        throw new Error('Cantidad de estudiantes no es un número válido')
-      }
-
-      // Actualizar la información de la facultad
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`,
         },
-
         body: JSON.stringify({
           name: tempFacultadData.nombreFacultad,
           deanName: tempFacultadData.nombreDecano,
-          fechaPresentacion: tempFacultadData.fechaPresentacion
+          studentCount: parseInt(tempFacultadData.cantidadEstudiantes)
         })
       })
+
       if (!response.ok) {
-        throw new Error('Error al actualizar datos de la facultad')
+        throw new Error('Error updating faculty data')
       }
 
-      const data = await response.json()
-      setFacultadData({
-        nombreFacultad: data.name,
-        nombreDecano: data.deanName,
-        fechaPresentacion: data.fechaPresentacion || new Date().toISOString().split('T')[0]
-      })
-
-      const today = new Date().toISOString().split('T')[0]
-      const responseStudents = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/facultystudenthistories/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
-        },
-
-        body: JSON.stringify({
-          facultyId: facultyId,
-          year: today.split('-')[0],
-          studentCount: cantidadEstudiantesNumero
-        })
-      })
-      if (!responseStudents.ok) {
-        throw new Error('Error al crear la cantidad de estudiantes')
-      }
-
+      setFacultadData(tempFacultadData)
       setIsEditing(false)
     } catch (error) {
-      console.error(error)
+      console.error('Error saving data:', error)
     }
   }
 
@@ -164,78 +113,78 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
   }
 
   return (
-    <div id={name} className="mb-6">
-      <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-green-400' : ''
-          }`}
-      >
-        <div className="p-4 bg-green-50 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
-          <div className="flex items-center space-x-2">
-            {isEditable && ( // Aquí se cambia la lógica para mostrar el botón de editar solo si isEditable es true
-              <Button variant="ghost" size="sm" onClick={handleEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                {isEditing ? "Cancelar" : "Editar"}
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
-              {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+    <Card className={`mb-6 ${isActive ? 'ring-2 ring-green-600' : ''}`}>
+      <CardHeader className="bg-green-50 flex flex-row items-center justify-between py-2">
+        <CardTitle className="text-xl font-semibold text-green-800">{name}</CardTitle>
+        <div className="flex items-center space-x-2">
+          {isEditable && (
+            <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-900">
+              <Edit className="h-4 w-4 mr-2" />
+              {isEditing ? "Cancelar" : "Editar"}
             </Button>
-          </div>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-900">
+            {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          </Button>
         </div>
-        {!isMinimized && (
-          <div className="p-4 bg-white">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="nombreFacultad">Nombre de la Facultad</Label>
-                <Input
-                  id="nombreFacultad"
-                  name="nombreFacultad"
-                  value={isEditing ? tempFacultadData.nombreFacultad : facultadData.nombreFacultad}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div>
-                <Label htmlFor="nombreDecano">Nombre del Decano</Label>
-                <Input
-                  id="nombreDecano"
-                  name="nombreDecano"
-                  value={isEditing ? tempFacultadData.nombreDecano : facultadData.nombreDecano}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div>
-                <Label htmlFor="fechaPresentacion">Fecha de Presentación del POA</Label>
-                <Input
-                  id="fechaPresentacion"
-                  name="fechaPresentacion"
-                  type="date"
-                  value={facultadData.fechaPresentacion}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label htmlFor="cantidadEstudiantes">Cantidad de Estudiantes</Label>
-                <Input
-                  id="cantidadEstudiantes"
-                  name="cantidadEstudiantes"
-                  type="number"
-                  value={cantidadEstudiantes}
-                  onChange={(e) => setCantidadEstudiantes(Number(e.target.value))}
-                  disabled={!isEditing}
-                />
-              </div>
-              {isEditing && (
-                <Button onClick={handleSave} className="mt-4">
-                  Guardar Cambios
-                </Button>
-              )}
+      </CardHeader>
+      {!isMinimized && (
+        <CardContent className="p-4 bg-white">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="nombreFacultad" className="text-sm font-medium text-gray-700">Nombre de la Facultad</Label>
+              <Input
+                id="nombreFacultad"
+                name="nombreFacultad"
+                value={isEditing ? tempFacultadData.nombreFacultad : facultadData.nombreFacultad}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="nombreDecano" className="text-sm font-medium text-gray-700">Nombre del Decano</Label>
+              <Input
+                id="nombreDecano"
+                name="nombreDecano"
+                value={isEditing ? tempFacultadData.nombreDecano : facultadData.nombreDecano}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="fechaPresentacion" className="text-sm font-medium text-gray-700">Fecha de Presentación del POA</Label>
+              <Input
+                id="fechaPresentacion"
+                name="fechaPresentacion"
+                type="date"
+                value={facultadData.fechaPresentacion}
+                disabled
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="cantidadEstudiantes" className="text-sm font-medium text-gray-700">Cantidad de Estudiantes</Label>
+              <Input
+                id="cantidadEstudiantes"
+                name="cantidadEstudiantes"
+                type="number"
+                value={isEditing ? tempFacultadData.cantidadEstudiantes : facultadData.cantidadEstudiantes}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1"
+              />
             </div>
           </div>
-        )}
-      </div>
-    </div>
+          {isEditing && (
+            <Button onClick={handleSave} className="mt-6 bg-green-600 hover:bg-green-700 text-white">
+              <Save className="h-4 w-4 mr-2" />
+              Guardar Cambios
+            </Button>
+          )}
+        </CardContent>
+      )}
+    </Card>
   )
 }
