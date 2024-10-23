@@ -47,7 +47,7 @@ const createUserSchema = z.object({
   facultyId: z.number().int().positive(),
 })
 
-export function EquipoResponsableSectionComponent({ name, isActive, poaId, facultyId }: SectionProps) {
+export function EquipoResponsableSectionComponent({ name, isActive, poaId, facultyId, isEditable }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [allUsers, setAllUsers] = useState<User[]>([])
@@ -273,10 +273,12 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
         <div className="p-4 bg-green-50 flex flex-wrap justify-between items-center">
           <h2 className="text-xl font-semibold text-green-800 mb-2 sm:mb-0">{name}</h2>
           <div className="flex items-center space-x-2">
+           {isEditable && (
             <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-800 hover:bg-green-100">
               <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancelar" : "Editar"}
+              {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-800 hover:bg-green-100">
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>

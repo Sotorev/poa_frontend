@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -11,14 +11,17 @@ import {
   BarChart2, 
   FilePlus, 
   ListTodo,
-  Pin
+  Pin,
+  CheckCheck
 } from 'lucide-react'
 import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
 import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
-import { VisualizarIntervencionesSection } from './sections/visualizar-intervenciones-section'
+import { FodaSection } from './sections/foda-section'
+import EventsViewerComponent from './sections/events-viewer/events-viewer'
+import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useSession } from 'next-auth/react'
 
 export interface SectionProps {
@@ -26,13 +29,19 @@ export interface SectionProps {
   isActive: boolean
   poaId: number
   facultyId: number
+  userId: number
+  rolId: number
+  isEditable: boolean
+  onStatusChange?: () => void // Nueva prop opcional
 }
 
 const sections = [
   { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
-  { name: "Visualizar intervenciones", icon: ListTodo, component: VisualizarIntervencionesSection }
+  { name: "Agregar/confirmar FODA", icon: BarChart2, component: FodaSection },
+  { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
+  { name: "Aprobar POA", icon: CheckCheck, component: PoaApproval }
 ]
 
 export function PoaDashboardMain() {
@@ -45,8 +54,10 @@ export function PoaDashboardMain() {
   const [poaId, setPoaId] = useState<number>(); // Estado para almacenar el poaId
   const { data: session} = useSession()
 
+  const [userId, setUserId] = useState<number>(); // Estado para almacenar el userId
+  const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
+  const [isEditable, setIsEditable] = useState<boolean>(false); // Estado para habilitar o deshabilitar el botón
 
-  // useEffect para obtener el facultyId cuando el componente se monta
   useEffect(() => {
     const user = session?.user
     if (!user) {
@@ -69,6 +80,8 @@ export function PoaDashboardMain() {
     
         const userData = await userResponse.json();
         const faculty = userData.faculty;
+        const userId = userData.userId;
+        const rolId = userData.roleId;
     
         if (!faculty) {
           throw new Error('El usuario no tiene una facultad asignada');
@@ -76,6 +89,8 @@ export function PoaDashboardMain() {
     
         const fetchedFacultyId = faculty.facultyId; // Obtener el facultyId
         setFacultyId(fetchedFacultyId); // Guardar el facultyId en el estado
+        setUserId(userId);  // Guardar userId
+        setRolId(rolId);  // Guardar rolId
 
         // Asegurarse de que facultyId no sea null antes de llamar a getPoaByFacultyAndYear
         if (fetchedFacultyId) {
@@ -112,6 +127,13 @@ export function PoaDashboardMain() {
     }, 1000)
   }
 
+
+  const handleReloadData = useCallback(() => {
+    if (facultyId) {
+      getPoaByFacultyAndYear(facultyId.toString());
+    }
+  }, [facultyId]);
+
   // Obtener el POA actual si ya fue creado
   const getPoaByFacultyAndYear = async (facultyId: string) => {
     const currentYear = new Date().getFullYear();
@@ -129,23 +151,45 @@ export function PoaDashboardMain() {
       }
   
       const poaData = await response.json();
-      
-      // Aquí puedes manejar los datos recibidos (ej. almacenarlos en el estado)
-      setPoaId(poaData.poaId); // Guardar el poaId en el estado
+      setPoaId(poaData.poaId); 
+
+      // Verificar el estado del POA y actualizar la habilitación del botón
+      const status = poaData.status;
+      if (status === "Abierto") {
+        setIsEditable(true); // Habilitar edición
+      } else {
+        setIsEditable(false); // Deshabilitar edición
+      }
   
     } catch (error: any) {
       console.error('Error al realizar la consulta del POA:', error);
-      //alert(`Error: ${error.message}`);
     }
   };
 
   const handleCreatePoa = async () => {
     try {
+      // Obtener el peiId desde la ruta proporcionada
+      const peiResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pei/current`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+  
+      if (!peiResponse.ok) {
+        throw new Error('Error al obtener el PEI.');
+      }
+  
+      const peiData = await peiResponse.json();
+      const peiId = peiData.peiId; // Obtener el peiId del response
+  
       const currentYear = new Date().getFullYear();
       const payload = {
         facultyId: facultyId,
         year: currentYear,
-        peiId: 1,
+        peiId: peiId, // Usar el peiId obtenido dinámicamente
+        userId: userId,
       };
   
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
@@ -158,23 +202,21 @@ export function PoaDashboardMain() {
       });
   
       const responseData = await response.json();
-      // Mostrar respuesta en la consola
-   
   
       if (!response.ok) {
         throw new Error(responseData.message || 'Error al crear el POA.');
       }
   
       alert("POA creado exitosamente.");
-      
+  
       const newPoaId = responseData.poaId; // Obtener el poaId del response
       setPoaId(newPoaId); // Guardar el poaId en el estado
   
     } catch (error: any) {
-      console.error("Error al crear el POA:", error);
-      alert("Ya creaste el POA para este año.");
+      alert("Ya creaste el POA para este año");
     }
   };
+  
 
   return (
     <main className="flex bg-green-50 min-h-screen">
@@ -264,6 +306,10 @@ export function PoaDashboardMain() {
             isActive={activeSection === section.name}
             poaId={poaId} // Pasar el poaId a cada sección
             facultyId={facultyId} // Pasar el facultyId a cada sección
+            userId={userId ?? 0} // Pasar el userId a cada sección
+            rolId={rolId ?? 0} // Pasar el rolId a cada sección
+            isEditable={isEditable} // Pasar la prop isEditable
+            onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
           />
         ))}
         <div className="mb-32"></div>
