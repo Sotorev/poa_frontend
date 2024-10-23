@@ -25,7 +25,7 @@ const EventTable: React.FC<EventTableProps> = ({
   onReject,
   onRequestCorrection,
   onRevert,
-  showComments = false,
+  showComments = true,
   showActions = true
 }) => {
   const [showCommentThread, setShowCommentThread] = useState(false);
