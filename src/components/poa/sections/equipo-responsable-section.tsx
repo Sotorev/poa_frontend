@@ -11,6 +11,7 @@ import { ChevronDown, ChevronUp, Trash2, PlusCircle, Save, Edit, Loader2, UserPl
 import { useToast } from "@/hooks/use-toast"
 import { z } from 'zod'
 import { SectionProps } from '../poa-dashboard-main';
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 
 interface TeamMember {
@@ -56,6 +57,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string>("")
+  const user = useCurrentUser();
   const [roles, setRoles] = useState<Role[]>([])
   const [newUser, setNewUser] = useState({
     firstName: '',
@@ -78,7 +80,10 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
   const fetchAllUsers = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to fetch users')
       const data = await response.json()
@@ -95,7 +100,10 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
   const fetchTeamMembers = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poateams/poa/${poaId}`, {
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to fetch team members')
       const data = await response.json()
@@ -112,7 +120,10 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
   const fetchRoles = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles`, {
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to fetch roles')
       const data = await response.json()
@@ -165,11 +176,11 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
       }
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poateams`, {
         method: 'POST',
+        body: JSON.stringify({ poaId, userId: parseInt(selectedUserId) }),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
-        body: JSON.stringify({ poaId, userId: parseInt(selectedUserId) }),
-        credentials: 'include'
       })
       if (!response.ok) throw new Error('Failed to add team member')
       await fetchTeamMembers() // Refresh the team members list
@@ -194,7 +205,10 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poateams/${poaId}/${userId}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to remove team member')
       await fetchTeamMembers() // Refresh the team members list
@@ -235,11 +249,11 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
       const validatedData = createUserSchema.parse(newUser)
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
         method: 'POST',
+        body: JSON.stringify(validatedData),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
-        body: JSON.stringify(validatedData),
-        credentials: 'include'
       })
       if (!response.ok) throw new Error('Failed to create new user')
       await fetchAllUsers() // Refresh the users list
@@ -273,11 +287,11 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
         <div className="p-4 bg-green-50 flex flex-wrap justify-between items-center">
           <h2 className="text-xl font-semibold text-green-800 mb-2 sm:mb-0">{name}</h2>
           <div className="flex items-center space-x-2">
-           {isEditable && (
-            <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-800 hover:bg-green-100">
-              <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Finalizar edición" : "Editar"}
-            </Button>
+            {isEditable && (
+              <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-800 hover:bg-green-100">
+                <Edit className="h-4 w-4 mr-2" />
+                {isEditing ? "Finalizar edición" : "Editar"}
+              </Button>
             )}
             <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-800 hover:bg-green-100">
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}

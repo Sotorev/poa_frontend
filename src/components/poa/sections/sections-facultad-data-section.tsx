@@ -1,9 +1,10 @@
+"use client";
 import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChevronDown, ChevronUp, Edit } from 'lucide-react'
-import { useSession } from 'next-auth/react'
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 interface SectionProps {
   name: string
@@ -24,8 +25,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
 
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
   const [cantidadEstudiantes, setCantidadEstudiantes] = useState<number | ''>('') // Estado para la cantidad de estudiantes
-  const { data: session } = useSession()
-  const user = session?.user
+  const user = useCurrentUser();
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -33,10 +33,11 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
     const fetchFacultyData = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
           },
+
         })
         if (!response.ok) {
           throw new Error('Error al obtener datos de la facultad')
@@ -61,10 +62,11 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
     const fetchPoaData = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${poaId}`, {
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
           },
+
         })
         if (!response.ok) {
           throw new Error('Error al obtener datos del POA')
@@ -107,10 +109,11 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
       // Actualizar la información de la facultad
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
         method: 'PUT',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
+
         body: JSON.stringify({
           name: tempFacultadData.nombreFacultad,
           deanName: tempFacultadData.nombreDecano,
@@ -131,10 +134,11 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
       const today = new Date().toISOString().split('T')[0]
       const responseStudents = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/facultystudenthistories/`, {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
+
         body: JSON.stringify({
           facultyId: facultyId,
           year: today.split('-')[0],
@@ -162,9 +166,8 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
   return (
     <div id={name} className="mb-6">
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
-          isActive ? 'ring-2 ring-green-400' : ''
-        }`}
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-green-400' : ''
+          }`}
       >
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
@@ -209,7 +212,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
                   id="fechaPresentacion"
                   name="fechaPresentacion"
                   type="date"
-                  value={facultadData.fechaPresentacion} 
+                  value={facultadData.fechaPresentacion}
                   disabled
                 />
               </div>

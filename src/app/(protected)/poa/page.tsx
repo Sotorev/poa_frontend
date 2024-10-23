@@ -1,7 +1,7 @@
 "use client";
 import { PoaDashboardMain } from '@/components/poa/poa-dashboard-main'
 
-function POAPage() {
+export default function POAPage() {
   return (
     <PoaDashboardMain />
   )

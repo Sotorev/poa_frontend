@@ -4,12 +4,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { 
-  Building2, 
-  LayoutDashboard, 
-  UserCog, 
-  BarChart2, 
-  FilePlus, 
+import {
+  Building2,
+  LayoutDashboard,
+  UserCog,
+  BarChart2,
+  FilePlus,
   ListTodo,
   Pin,
   CheckCheck
@@ -22,7 +22,7 @@ import { EquipoResponsableSectionComponent } from './sections/equipo-responsable
 import { FodaSection } from './sections/foda-section'
 import EventsViewerComponent from './sections/events-viewer/events-viewer'
 import { PoaApproval } from './sections/sections-dean-poa-approval'
-import { useSession } from 'next-auth/react'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 export interface SectionProps {
   name: string
@@ -52,14 +52,12 @@ export function PoaDashboardMain() {
   const mainRef = useRef<HTMLDivElement>(null)
   const [facultyId, setFacultyId] = useState<number>() // Estado para almacenar el facultyId
   const [poaId, setPoaId] = useState<number>(); // Estado para almacenar el poaId
-  const { data: session} = useSession()
-
+  const user = useCurrentUser();
   const [userId, setUserId] = useState<number>(); // Estado para almacenar el userId
   const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
   const [isEditable, setIsEditable] = useState<boolean>(false); // Estado para habilitar o deshabilitar el botón
 
   useEffect(() => {
-    const user = session?.user
     if (!user) {
       console.log("No estás autenticado.");
       alert("No estás autenticado.");
@@ -68,25 +66,25 @@ export function PoaDashboardMain() {
     const fetchFacultyId = async () => {
       try {
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
         });
-    
+
         if (!userResponse.ok) {
           throw new Error('Error al obtener datos del usuario');
         }
-    
+
         const userData = await userResponse.json();
         const faculty = userData.faculty;
         const userId = userData.userId;
         const rolId = userData.roleId;
-    
+
         if (!faculty) {
           throw new Error('El usuario no tiene una facultad asignada');
         }
-    
+
         const fetchedFacultyId = faculty.facultyId; // Obtener el facultyId
         setFacultyId(fetchedFacultyId); // Guardar el facultyId en el estado
         setUserId(userId);  // Guardar userId
@@ -96,14 +94,14 @@ export function PoaDashboardMain() {
         if (fetchedFacultyId) {
           getPoaByFacultyAndYear(fetchedFacultyId);
         }
-    
+
       } catch (error: any) {
         console.error("Error al obtener el facultyId:", error);
       }
     }
 
     fetchFacultyId()
-  }, [session])
+  }, [user])
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -142,16 +140,16 @@ export function PoaDashboardMain() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
-        credentials: 'include',
       });
-  
+
       if (!response.ok) {
         throw new Error('Error al obtener el POA para la facultad y año especificado.');
       }
-  
+
       const poaData = await response.json();
-      setPoaId(poaData.poaId); 
+      setPoaId(poaData.poaId);
 
       // Verificar el estado del POA y actualizar la habilitación del botón
       const status = poaData.status;
@@ -160,7 +158,7 @@ export function PoaDashboardMain() {
       } else {
         setIsEditable(false); // Deshabilitar edición
       }
-  
+
     } catch (error: any) {
       console.error('Error al realizar la consulta del POA:', error);
     }
@@ -173,17 +171,17 @@ export function PoaDashboardMain() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
-        credentials: 'include',
       });
-  
+
       if (!peiResponse.ok) {
         throw new Error('Error al obtener el PEI.');
       }
-  
+
       const peiData = await peiResponse.json();
       const peiId = peiData.peiId; // Obtener el peiId del response
-  
+
       const currentYear = new Date().getFullYear();
       const payload = {
         facultyId: facultyId,
@@ -191,41 +189,40 @@ export function PoaDashboardMain() {
         peiId: peiId, // Usar el peiId obtenido dinámicamente
         userId: userId,
       };
-  
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
-        credentials: 'include',
         body: JSON.stringify(payload),
       });
-  
+
       const responseData = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(responseData.message || 'Error al crear el POA.');
       }
-  
+
       alert("POA creado exitosamente.");
-  
+
       const newPoaId = responseData.poaId; // Obtener el poaId del response
       setPoaId(newPoaId); // Guardar el poaId en el estado
-  
+
     } catch (error: any) {
       alert("Ya creaste el POA para este año");
     }
   };
-  
+
 
   return (
     <main className="flex bg-green-50 min-h-screen">
       <TooltipProvider>
-        <aside 
+        <aside
           ref={sidebarRef}
-          className={`fixed left-0 top-0 h-full bg-green-900 shadow-lg transition-all duration-300 ease-in-out z-50 flex flex-col justify-between ${
-            isSidebarFixed || isSidebarVisible ? 'w-16 opacity-100' : 'w-0 opacity-0'
-          }`}
+          className={`fixed left-0 top-0 h-full bg-green-900 shadow-lg transition-all duration-300 ease-in-out z-50 flex flex-col justify-between ${isSidebarFixed || isSidebarVisible ? 'w-16 opacity-100' : 'w-0 opacity-0'
+            }`}
         >
           <ScrollArea className="flex-grow">
             <nav className="p-2 flex flex-col items-center space-y-4">
@@ -270,9 +267,8 @@ export function PoaDashboardMain() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsSidebarFixed(!isSidebarFixed)}
-                  className={`w-8 h-8 rounded-lg hover:bg-green-800 transition-colors duration-200 ${
-                    isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0'
-                  }`}
+                  className={`w-8 h-8 rounded-lg hover:bg-green-800 transition-colors duration-200 ${isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0'
+                    }`}
                 >
                   <Pin className={`h-4 w-4 ${isSidebarFixed ? 'text-green-400' : 'text-green-300'}`} />
                   <span className="sr-only">Fijar barra lateral</span>
@@ -285,11 +281,10 @@ export function PoaDashboardMain() {
           </div>
         </aside>
       </TooltipProvider>
-      <div 
+      <div
         ref={mainRef}
-        className={`flex-1 p-6 overflow-auto transition-all duration-300 ${
-          isSidebarFixed || isSidebarVisible ? 'ml-16' : 'ml-0'
-        }`}
+        className={`flex-1 p-6 overflow-auto transition-all duration-300 ${isSidebarFixed || isSidebarVisible ? 'ml-16' : 'ml-0'
+          }`}
       >
         {/* Botón para crear POA */}
         <div className="mb-4">

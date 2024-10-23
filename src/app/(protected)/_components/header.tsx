@@ -18,8 +18,6 @@ export default function Header() {
 	const { data: session, status } = useSession()
 	const pathname = usePathname()
 	useEffect(() => {
-		console.log({ session, status })
-
 		if (status === 'authenticated' && session?.user) {
 			const role = session.user.role?.roleName
 			setCanAccessUsers(role === "Administrador")

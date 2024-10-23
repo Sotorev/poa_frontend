@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 interface SectionProps {
   name: string
@@ -25,6 +26,7 @@ interface SectionProps {
 export function PoaApproval({ name, isActive, poaId, facultyId, onStatusChange }: SectionProps) {
   const [open, setOpen] = useState(false)
   const [openCancel, setOpenCancel] = useState(false)
+  const user = useCurrentUser();
 
   const handleConfirm = async (status: string) => {
     // Obtener la fecha actual en formato ISO
@@ -35,8 +37,9 @@ export function PoaApproval({ name, isActive, poaId, facultyId, onStatusChange }
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
-        credentials: 'include',
+
         body: JSON.stringify({
           status: status,
           fechaCierre: currentDate, // Enviar la fecha actual

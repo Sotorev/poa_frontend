@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import type { PEI } from '@/types/pei'
-import { withAuth } from '../auth/with-auth'
 import PeiManagement from './pei-management'
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Settings } from 'lucide-react'
 import { PoaRegistrationPeriodForm } from './poa-registration-period'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 type PoaRegistrationPeriod = {
 	year: number
@@ -17,9 +17,10 @@ type PoaRegistrationPeriod = {
 	peiId: number
 }
 
-function PEIModule() {
-	const [isSubmitting, setIsSubmitting] = useState(false)
-	const { toast } = useToast()
+export default function PEIModule() {
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const { toast } = useToast();
+	const user = useCurrentUser();
 
 	const handleSubmit = async (pei: PEI) => {
 		setIsSubmitting(true)
@@ -28,9 +29,9 @@ function PEIModule() {
 				method: 'POST',
 				body: JSON.stringify(pei),
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${user?.token}`
 				},
-				credentials: 'include'
 			})
 
 			if (!response.ok) {
@@ -60,9 +61,9 @@ function PEIModule() {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${user?.token}`
 			},
 			body: JSON.stringify(period),
-			credentials: 'include'
 		})
 
 		if (!response.ok) {
@@ -119,8 +120,3 @@ function PEIModule() {
 		</div>
 	)
 }
-
-export default withAuth(PEIModule, {
-	requiredPermissions: [{ module: 'PEI', action: 'Edit' }],
-	requiredRoles: ['Vice Chancellor', 'Pedagogical Coordinator', 'Administrador']
-})

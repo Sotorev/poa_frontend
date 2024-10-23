@@ -11,6 +11,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from 'react-toastify';
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 const commentSchema = z.object({
   entityType: z.string(),
@@ -45,6 +46,7 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const user = useCurrentUser();
   const currentUserId = 1; // Reemplaza con el userId real
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentInput>({
@@ -61,7 +63,10 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
     setLoading(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/entity/Event/${entityId}`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
       });
       if (!response.ok) {
         throw new Error(`Error al obtener comentarios: ${response.statusText}`);
@@ -94,9 +99,9 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment`, {
         method: "POST",
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         body: JSON.stringify(data),
       });
@@ -115,7 +120,10 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/${commentId}`, {
         method: "DELETE",
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -161,17 +169,15 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
               comments.map((comment) => (
                 <div
                   key={comment.commentId}
-                  className={`p-2 rounded-lg shadow ${
-                    comment.userId === currentUserId
+                  className={`p-2 rounded-lg shadow ${comment.userId === currentUserId
                       ? "bg-[#e6f7f1] bg-opacity-70 border-l-4 border-[#0f766e]"
                       : "bg-white bg-opacity-70 border border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span
-                      className={`font-semibold ${
-                        comment.userId === currentUserId ? "text-[#0f766e]" : "text-gray-700"
-                      }`}
+                      className={`font-semibold ${comment.userId === currentUserId ? "text-[#0f766e]" : "text-gray-700"
+                        }`}
                     >
                       {comment.userId === currentUserId ? "Usuario Actual" : `Usuario ${comment.userId}`}
                     </span>

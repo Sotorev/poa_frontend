@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { z } from 'zod';
 import { toast } from 'react-toastify';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 interface Campus {
   campusId: number;
@@ -35,6 +36,7 @@ export function CampusSelector({ onSelectCampus }: CampusSelectorProps) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCampus, setSelectedCampus] = useState<string>('');
+  const user = useCurrentUser();
 
   useEffect(() => {
     const fetchCampuses = async () => {
@@ -43,8 +45,8 @@ export function CampusSelector({ onSelectCampus }: CampusSelectorProps) {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/campus/`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
-          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al obtener campus: ${response.statusText}`);

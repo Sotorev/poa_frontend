@@ -4,11 +4,12 @@ import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, ChevronUp, Edit, X, Check } from 'lucide-react'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 interface SectionProps {
   name: string
   isActive: boolean
-  facultyId: number 
+  facultyId: number
   isEditable: boolean
 }
 
@@ -28,6 +29,7 @@ interface FODAData {
 export function FodaSection({ name, isActive, facultyId, isEditable }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const user = useCurrentUser();
   const [fodaData, setFodaData] = useState<FODAData>({
     fortalezas: [],
     oportunidades: [],
@@ -46,7 +48,7 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
 
   // Función para mapear categorías a tipos del backend
   const mapCategoryToType = (category: keyof FODAData): FODAItem['type'] => {
-    switch(category) {
+    switch (category) {
       case 'fortalezas':
         return 'Fortaleza'
       case 'oportunidades':
@@ -63,10 +65,10 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
     const fetchFodaData = async () => {
       try {
         const response = await fetch(`${API_URL}/api/facultyswots/faculty/${facultyId}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
         })
         if (!response.ok) {
           throw new Error('Error al obtener los datos FODA')
@@ -80,7 +82,7 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
           amenazas: [],
         }
         data.forEach(item => {
-          switch(item.type) {
+          switch (item.type) {
             case 'Fortaleza':
               groupedData.fortalezas.push(item)
               break
@@ -120,11 +122,12 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
     if (description) {
       try {
         const response = await fetch(`${API_URL}/api/facultyswots/`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
+
           body: JSON.stringify({
             facultyId,
             type: mapCategoryToType(category),
@@ -150,10 +153,11 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
     try {
       const response = await fetch(`${API_URL}/api/facultyswots/${swotId}`, {
         method: 'DELETE',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
+
       })
       if (!response.ok) {
         throw new Error('Error al eliminar el elemento FODA')
@@ -175,10 +179,11 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
     try {
       const response = await fetch(`${API_URL}/api/facultyswots/${swotId}`, {
         method: 'PUT',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
+
         body: JSON.stringify({
           description: newText,
         }),
@@ -189,7 +194,7 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
       const updatedItem: FODAItem = await response.json()
       setFodaData(prevData => ({
         ...prevData,
-        [category]: prevData[category].map(item => 
+        [category]: prevData[category].map(item =>
           item.swotId === swotId ? updatedItem : item
         ),
       }))
@@ -267,9 +272,9 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
             className="flex-grow"
             aria-label={`Agregar nuevo ${title}`}
           />
-          <Button 
-            onClick={() => handleAddItem(category)} 
-            size="icon" 
+          <Button
+            onClick={() => handleAddItem(category)}
+            size="icon"
             variant="ghost"
             aria-label={`Agregar ${title}`}
           >
@@ -283,22 +288,21 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
   return (
     <div id={name} className="mb-6">
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
-          isActive ? 'ring-2 ring-green-400' : ''
-        }`}
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-green-400' : ''
+          }`}
       >
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
           <div className="flex items-center space-x-2">
-          {isEditable && (
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Finalizar edición" : "Editar"}
-            </Button>
-          )}
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            {isEditable && (
+              <Button variant="ghost" size="sm" onClick={handleEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                {isEditing ? "Finalizar edición" : "Editar"}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsMinimized(!isMinimized)}
               aria-label={isMinimized ? "Expandir sección" : "Minimizar sección"}
             >

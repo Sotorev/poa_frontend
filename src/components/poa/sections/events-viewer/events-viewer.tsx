@@ -1,3 +1,5 @@
+"use client";
+
 // events-viewer.tsx
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PlanningEvent, SectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 // Función para mapear datos de la API a PlanningEvent
 function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
@@ -83,13 +86,17 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
   const [approvedEvents, setApprovedEvents] = useState<PlanningEvent[]>([]);
   const [rejectedEvents, setRejectedEvents] = useState<PlanningEvent[]>([]);
   const [eventsWithCorrections, setEventsWithCorrections] = useState<PlanningEvent[]>([]);
+  const user = useCurrentUser();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
+
         });
         const data: ApiEvent[] = await response.json();
         const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
@@ -112,8 +119,10 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/event/${eventId}`, {
         method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
         body: JSON.stringify({ eventId, userId, approvalStatusId, comments })
       });
 
@@ -122,8 +131,11 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
       toast.success('Estado del evento actualizado correctamente');
       // Refrescar los datos después de la actualización
       const refreshedData = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+
       });
       const refreshedEvents: ApiEvent[] = await refreshedData.json();
       const mappedRefreshedEvents = refreshedEvents.map(event => mapApiEventToPlanningEvent(event));

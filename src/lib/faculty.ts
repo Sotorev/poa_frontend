@@ -1,3 +1,6 @@
+"use server";
+import { currentUser } from "./auth";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface Faculty {
@@ -11,24 +14,32 @@ export interface Faculty {
 
 export const facultyApi = {
 	addProgramToFaculty: async (facultyId: number, programId: number): Promise<void> => {
+		const user = await currentUser();
+
 		if (!programId) throw new Error('Program ID is required');
 		if (!facultyId) throw new Error('Faculty ID is required');
 		const response = await fetch(`${API_BASE_URL}/api/faculties/${facultyId}/addProgram`, {
 			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ programId, facultyId }),
-			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${user?.token}`
+			},
 		});
 		if (!response.ok) throw new Error('Failed to add program to faculty');
 	},
 	addCampusToFaculty: async (facultyId: number, campusId: number): Promise<void> => {
+		const user = await currentUser();
+
 		if (!campusId) throw new Error('Program ID is required');
 		if (!facultyId) throw new Error('Faculty ID is required');
 		const response = await fetch(`${API_BASE_URL}/api/faculties/${facultyId}/addCampus`, {
 			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ campusId, facultyId }),
-			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${user?.token}`
+			},
 		});
 		if (!response.ok) throw new Error('Failed to add campus to faculty');
 	},
