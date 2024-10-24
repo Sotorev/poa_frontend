@@ -1,4 +1,3 @@
-"use server";
 import { currentUser } from "./auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
