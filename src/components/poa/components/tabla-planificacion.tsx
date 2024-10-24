@@ -16,7 +16,7 @@ import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes';
 import TipoDeCompraComponent from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleComponent } from './columns/detalle';
-import { DetalleProcesoComponent } from './columns/detalle-proceso'; // Nuevo componente
+import { DetalleProcesoComponent } from './columns/detalle-proceso';
 import { AreaEstrategicaComponent } from './columns/area-estrategica';
 import { EventoComponent } from './columns/evento';
 import { ObjetivoComponent } from './columns/objetivo';
@@ -38,7 +38,7 @@ type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   entityId: number | null;
-  processDocument?: File; // Campo opcional añadido
+  processDocument?: File;
 }
 
 interface FilaError {
@@ -48,6 +48,13 @@ interface FilaError {
 interface DatePair {
   start: Date;
   end: Date;
+}
+
+interface FinancingSource {
+  financingSourceId: number;
+  name: string;
+  category: string;
+  isDeleted: boolean;
 }
 
 const getColumnName = (field: string): string => {
@@ -75,7 +82,7 @@ const getColumnName = (field: string): string => {
     fechas: "Fechas",
     detalleProceso: "Detalle del Proceso",
     comentarioDecano: "Comentario Decano",
-    processDocument: "Documento de Proceso", // Añadido para processDocument
+    processDocument: "Documento de Proceso",
   };
   return columnMap[field] || field;
 };
@@ -89,6 +96,7 @@ export function TablaPlanificacionComponent() {
   const [strategicAreas, setStrategicAreas] = useState<{ strategicAreaId: number; name: string; peiId: number; isDeleted: boolean }[]>([]);
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([]);
   const [objetivoToAreaMap, setObjetivoToAreaMap] = useState<{ [key: string]: string }>({});
+  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filaErrors, setFilaErrors] = useState<{ [key: string]: FilaError }>({});
@@ -156,6 +164,43 @@ export function TablaPlanificacionComponent() {
           }
         });
         setObjetivoToAreaMap(map);
+
+        // Fetch financing sources
+        const financingSourcesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
+        });
+
+        if (!financingSourcesResponse.ok) {
+          throw new Error(`Error fetching financing sources: ${financingSourcesResponse.statusText}`);
+        }
+
+        const financingSourcesData: FinancingSource[] = await financingSourcesResponse.json();
+        setFinancingSources(financingSourcesData);
+
+        // Fetch events
+        const eventsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
+        });
+
+        if (!eventsResponse.ok) {
+          throw new Error(`Error fetching events: ${eventsResponse.statusText}`);
+        }
+
+        const eventsData = await eventsResponse.json();
+
+        // Map the data to 'filas' format
+        const mappedFilas = eventsData.map((event: any) => {
+          return mapEventToFilaPlanificacion(event, financingSourcesData);
+        });
+
+        setFilas(mappedFilas);
+
       } catch (err) {
         if (err instanceof z.ZodError) {
           setError("Error en la validación de datos de áreas estratégicas u objetivos estratégicos.");
@@ -248,7 +293,6 @@ export function TablaPlanificacionComponent() {
       fechas: [{ start: new Date(), end: new Date() }],
       campusId: '',
       entityId: null,
-      // processDocument no se establece al agregar la fila
     };
     setFilas([...filas, nuevaFila]);
     toast.info("Nueva fila agregada.");
@@ -407,7 +451,7 @@ export function TablaPlanificacionComponent() {
         eventNature: 'Planificado',
         isDelayed: false,
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseTypeId: parseInt(fila.tipoCompra, 10), // Verificar si el backend espera 'purchaseType' o 'purchaseTypeIds'
+        purchaseTypeId: parseInt(fila.tipoCompra, 10),
         totalCost: fila.costoTotal,
         dates: fila.fechas.map(pair => ({
           startDate: pair.start.toISOString().split('T')[0],
@@ -443,7 +487,7 @@ export function TablaPlanificacionComponent() {
         ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
         resources: fila.recursos.map((recurso: string) => ({
           resourceId: parseInt(recurso, 10),
-        })), // Cambiado aquí
+        })),
         userId: userId,
       };
 
@@ -463,7 +507,6 @@ export function TablaPlanificacionComponent() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
         headers: {
-          // 'Content-Type': 'application/json', // **Importante:** No establecer 'Content-Type' cuando se usa FormData
           'Authorization': `Bearer ${user?.token}`
         },
         body: formData,
@@ -561,7 +604,7 @@ export function TablaPlanificacionComponent() {
             <TableHead>Recursos</TableHead>
             <TableHead>Indicador de Logro</TableHead>
             <TableHead>Comentario Decano</TableHead>
-            <TableHead>Detalle del Proceso</TableHead> {/* Añadido */}
+            <TableHead>Detalle del Proceso</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -693,7 +736,7 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <TipoDeCompraComponent
                     selectedTipo={fila.tipoCompra}
-                    onSelectTipo={(tipo: string | null) => actualizarFila(fila.id, 'tipoCompra', tipo)} // **Corrección Realizada Aquí**
+                    onSelectTipo={(tipo: string | null) => actualizarFila(fila.id, 'tipoCompra', tipo)}
                   />
                   {filaErrors[fila.id]?.tipoCompra && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoCompra}</span>
@@ -714,6 +757,7 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <CampusSelector
                     onSelectCampus={(campusId) => actualizarFila(fila.id, 'campusId', campusId)}
+                    selectedCampusId={fila.campusId}
                   />
                   {filaErrors[fila.id]?.campusId && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].campusId}</span>
@@ -843,4 +887,112 @@ export function TablaPlanificacionComponent() {
       )}
     </div>
   );
+}
+
+function mapEventToFilaPlanificacion(event: any, financingSourcesData: FinancingSource[]): FilaPlanificacion {
+  const fila: FilaPlanificacion = {
+    id: event.eventId.toString(),
+    areaEstrategica: '',
+    objetivoEstrategico: '',
+    estrategias: [],
+    intervencion: [],
+    ods: [],
+    tipoEvento: event.type.toLowerCase() === 'actividad' ? 'actividad' : 'proyecto',
+    evento: event.name,
+    objetivo: event.objective,
+    estado: 'planificado',
+    costoTotal: event.totalCost,
+    aporteUMES: [],
+    aporteOtros: [],
+    tipoCompra: event.purchaseTypeId ? event.purchaseTypeId.toString() : '',
+    detalle: null,
+    responsablePlanificacion: '',
+    responsableEjecucion: '',
+    responsableSeguimiento: '',
+    recursos: [],
+    indicadorLogro: event.achievementIndicator,
+    detalleProceso: null,
+    fechas: event.dates.map((dateItem: any) => ({
+      start: new Date(dateItem.startDate),
+      end: new Date(dateItem.endDate),
+    })),
+    campusId: event.campusId.toString(),
+    entityId: event.eventId,
+  };
+
+  if (event.interventions && event.interventions.length > 0) {
+    const intervention = event.interventions[0];
+    const strategicObjectiveId = intervention.strategy.strategicObjectiveId.toString();
+    fila.objetivoEstrategico = strategicObjectiveId;
+
+    const strategicAreaName = intervention.strategy.strategicObjective.strategicArea.name;
+    fila.areaEstrategica = strategicAreaName;
+  }
+
+  if (event.interventions) {
+    const estrategiaIds = event.interventions.map((intervention: any) => intervention.strategy.strategyId.toString());
+    fila.estrategias = estrategiaIds;
+  }
+
+  if (event.interventions) {
+    const intervencionIds = event.interventions.map((intervention: any) => intervention.interventionId.toString());
+    fila.intervencion = intervencionIds;
+  }
+
+  if (event.ods) {
+    const odsIds = event.ods.map((odsItem: any) => odsItem.odsId.toString());
+    fila.ods = odsIds;
+  }
+
+  if (event.financings) {
+    const aporteUMES: any[] = [];
+    const aporteOtros: any[] = [];
+
+    event.financings.forEach((financing: any) => {
+      const financingSourceId = financing.financingSourceId;
+      const financingSource = financingSourcesData.find(fs => fs.financingSourceId === financingSourceId);
+      if (financingSource) {
+        const aporte = {
+          financingSourceId: financing.financingSourceId,
+          porcentaje: financing.percentage,
+          amount: financing.amount,
+        };
+
+        if (financingSource.category === 'UMES') {
+          aporteUMES.push(aporte);
+        } else if (financingSource.category === 'Otra') {
+          aporteOtros.push(aporte);
+        }
+      }
+    });
+
+    fila.aporteUMES = aporteUMES;
+    fila.aporteOtros = aporteOtros;
+  }
+
+  if (event.resources) {
+    const recursosIds = event.resources.map((resource: any) => resource.resourceId.toString());
+    fila.recursos = recursosIds;
+  }
+
+  if (event.responsibles) {
+    fila.responsablePlanificacion = event.responsibles.find((r: any) => r.responsibleRole === 'Principal')?.name || '';
+    fila.responsableEjecucion = event.responsibles.find((r: any) => r.responsibleRole === 'Ejecución')?.name || '';
+    fila.responsableSeguimiento = event.responsibles.find((r: any) => r.responsibleRole === 'Seguimiento')?.name || '';
+  }
+
+  if (event.eventApprovals && event.eventApprovals.length > 0) {
+    const approvalStatusName = event.eventApprovals[0].approvalStatus.name;
+    if (approvalStatusName === 'Aprobado') {
+      fila.estado = 'aprobado';
+    } else if (approvalStatusName === 'Rechazado') {
+      fila.estado = 'rechazado';
+    } else if (approvalStatusName === 'Aprobado con Correcciones') {
+      fila.estado = 'aprobado'; // Adjust as needed
+    } else {
+      fila.estado = 'planificado';
+    }
+  }
+
+  return fila;
 }
