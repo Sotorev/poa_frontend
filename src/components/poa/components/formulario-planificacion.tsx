@@ -16,7 +16,7 @@ import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector
 import CurrencyInput from './columns/currency-input'
 import { AporteUmes } from './columns/aporte-umes'
 import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes'
-import { TipoDeCompraComponent } from './columns/tipo-de-compra'
+import TipoDeCompraComponent from './columns/tipo-de-compra'
 import { RecursosSelectorComponent } from './columns/recursos-selector'
 import { DetalleComponent } from './columns/detalle'
 import { DetalleProcesoComponent } from './columns/detalle-proceso' // Importamos el componente
@@ -97,7 +97,7 @@ export default function PlanificacionFormComponent() {
     costoTotal: 0,
     aporteUMES: [],
     aporteOtros: [],
-    tipoCompra: '',
+    tipoCompra: [],
     detalle: null,
     responsablePlanificacion: '',
     responsableEjecucion: '',
@@ -247,7 +247,7 @@ export default function PlanificacionFormComponent() {
       }
       return updatedFila
     })
-  }
+  }  
 
   const addStrategicObjective = (createdObjetivo: StrategicObjective) => {
     setStrategicObjectives(prev => [...prev, createdObjetivo])
@@ -331,7 +331,7 @@ export default function PlanificacionFormComponent() {
         eventNature: 'Planificado',
         isDelayed: false,
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseType: fila.tipoCompra,
+        purchaseTypeId: fila.tipoCompra.map(id => parseInt(id, 10)),
         totalCost: fila.costoTotal,
         dates: fila.fechas.map(pair => ({
           startDate: pair.start.toISOString().split('T')[0],
@@ -370,6 +370,8 @@ export default function PlanificacionFormComponent() {
         userId: userId,
       }
 
+      console.log("Datos a enviar:", eventData)
+
       const formData = new FormData()
       formData.append('data', JSON.stringify(eventData))
 
@@ -384,7 +386,6 @@ export default function PlanificacionFormComponent() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`
         },
         body: formData,
@@ -561,8 +562,10 @@ export default function PlanificacionFormComponent() {
             <div>
               <label className="block font-medium mb-2">Tipo de Compra</label>
               <TipoDeCompraComponent
-                selectedType={fila.tipoCompra}
-                onSelectType={(tipo: string) => actualizarFila('tipoCompra', tipo)}
+                selectedTipos={fila.tipoCompra}
+                onSelectTipos={(tipos: string[]) => actualizarFila('tipoCompra', tipos)}
+                // selectedTypes={fila.tipoCompra}
+                // onSelectTypes={(tipos: string[]) => actualizarFila('tipoCompra', tipos)}
               />
               {filaErrors?.tipoCompra && (
                 <span className="text-red-500 text-sm">{filaErrors.tipoCompra}</span>

@@ -15,7 +15,7 @@ import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector
 import CurrencyInput from './columns/currency-input';
 import { AporteUmes } from './columns/aporte-umes';
 import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes';
-import { TipoDeCompraComponent } from './columns/tipo-de-compra';
+import TipoDeCompraComponent from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleComponent } from './columns/detalle';
 import { DetalleProcesoComponent } from './columns/detalle-proceso'; // Nuevo componente
@@ -30,7 +30,6 @@ import { AccionesComponent } from './columns/acciones';
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
-import { useSession } from 'next-auth/react';
 
 import { CampusSelector } from './columns/campus-selector';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -172,7 +171,7 @@ export function TablaPlanificacionComponent() {
     };
 
     fetchData();
-  }, []);
+  }, [user?.token]);
 
   useEffect(() => {
     const fetchFacultyAndPoa = async () => {
@@ -240,7 +239,7 @@ export function TablaPlanificacionComponent() {
       costoTotal: 0,
       aporteUMES: [],
       aporteOtros: [],
-      tipoCompra: '',
+      tipoCompra: [],
       detalle: null,
       responsablePlanificacion: '',
       responsableEjecucion: '',
@@ -386,7 +385,7 @@ export function TablaPlanificacionComponent() {
         eventNature: 'Planificado',
         isDelayed: false,
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseType: fila.tipoCompra,
+        purchaseType: fila.tipoCompra, // Verificar si el backend espera 'purchaseType' o 'purchaseTypeIds'
         totalCost: fila.costoTotal,
         dates: fila.fechas.map(pair => ({
           startDate: pair.start.toISOString().split('T')[0],
@@ -442,7 +441,7 @@ export function TablaPlanificacionComponent() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          // 'Content-Type': 'application/json', // **Importante:** No establecer 'Content-Type' cuando se usa FormData
           'Authorization': `Bearer ${user?.token}`
         },
         body: formData,
@@ -469,7 +468,6 @@ export function TablaPlanificacionComponent() {
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
-
 
   const confirmarEnvioSinDetalle = async () => {
     if (!pendingSendId) return;
@@ -666,8 +664,8 @@ export function TablaPlanificacionComponent() {
                 </TableCell>
                 <TableCell>
                   <TipoDeCompraComponent
-                    selectedType={fila.tipoCompra}
-                    onSelectType={(tipo: string) => actualizarFila(fila.id, 'tipoCompra', tipo)}
+                    selectedTipos={fila.tipoCompra}
+                    onSelectTipos={(tipos: string[]) => actualizarFila(fila.id, 'tipoCompra', tipos)} // **Corrección Realizada Aquí**
                   />
                   {filaErrors[fila.id]?.tipoCompra && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoCompra}</span>
@@ -800,7 +798,7 @@ export function TablaPlanificacionComponent() {
         </div>
       )}
 
-{poaId && facultyId && userId ? (
+      {poaId && facultyId && userId ? (
         <EventsCorrectionsComponent
           name="Revisión de eventos"
           isActive={false}
@@ -812,10 +810,6 @@ export function TablaPlanificacionComponent() {
       ) : (
         <div>Cargando datos de la tabla de eventos...</div>
       )}
-
-
     </div>
-
-
   );
 }
