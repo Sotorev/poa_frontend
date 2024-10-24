@@ -42,7 +42,7 @@ export function PoaApproval({ name, isActive, poaId, facultyId, onStatusChange }
 
         body: JSON.stringify({
           status: status,
-          fechaCierre: currentDate, // Enviar la fecha actual
+          submissionDate: currentDate, // Enviar la fecha actual
         }),
       });
 
