@@ -24,7 +24,7 @@ type Faculty = {
   name: string
   deanName: string
   additionalInfo: string
-  currentStudentCount: number
+  // currentStudentCount: number
   annualBudget: number
   isDeleted: boolean
 }
@@ -33,18 +33,18 @@ type FacultyFormData = {
   name: string
   deanName: string
   additionalInfo: string
-  currentStudentCount: number
+  // currentStudentCount: number
   annualBudget: number
 }
 
-type SortableFacultyKey = keyof Pick<Faculty, 'name' | 'deanName' | 'additionalInfo' | 'currentStudentCount' | 'annualBudget'>
+type SortableFacultyKey = keyof Pick<Faculty, 'name' | 'deanName' | 'additionalInfo' | 'annualBudget'>
 
 // Esquema Zod
 const facultyFormSchema = z.object({
   name: z.string().nonempty("El nombre es requerido"),
   deanName: z.string().nonempty("El nombre del decano es requerido"),
   additionalInfo: z.string().nonempty("La información adicional es requerida"),
-  currentStudentCount: z.number().int().nonnegative("La cantidad de estudiantes debe ser un número positivo"),
+  // currentStudentCount: z.number().int().nonnegative("La cantidad de estudiantes debe ser un número positivo"),
   annualBudget: z.number().nonnegative("El presupuesto anual debe ser un número positivo"),
 })
 
@@ -147,7 +147,7 @@ function FacultyForm({
       name: initialData.name,
       deanName: initialData.deanName,
       additionalInfo: initialData.additionalInfo,
-      currentStudentCount: initialData.currentStudentCount,
+      // currentStudentCount: initialData.currentStudentCount,
       annualBudget: initialData.annualBudget,
     } : {}
   })
@@ -169,7 +169,7 @@ function FacultyForm({
         <Input id="additionalInfo" {...register("additionalInfo")} />
         {errors.additionalInfo && <p className="text-red-500 text-sm">{errors.additionalInfo.message}</p>}
       </div>
-      <div>
+      {/* <div>
         <Label htmlFor="currentStudentCount">Cantidad Actual de Estudiantes</Label>
         <Input
           id="currentStudentCount"
@@ -177,7 +177,7 @@ function FacultyForm({
           {...register("currentStudentCount", { valueAsNumber: true })}
         />
         {errors.currentStudentCount && <p className="text-red-500 text-sm">{errors.currentStudentCount.message}</p>}
-      </div>
+      </div> */}
       <div>
         <Label htmlFor="annualBudget">Presupuesto Anual</Label>
         <Input
@@ -355,7 +355,7 @@ export default function FacultyManagement() {
   // Función para eliminar una Facultad
   const deleteFaculty = async (facultyId: number) => {
     try {
-      const response = await fetch(`${API_URL}/api/faculties/${facultyId}`, {
+      const response  = await fetch(`${API_URL}/api/faculties/${facultyId}`, {
         method: "DELETE",
         headers: {
           'Content-Type': 'application/json',
@@ -521,12 +521,12 @@ export default function FacultyManagement() {
                     sortConfig.direction === 'ascending' ? <ChevronUp className="inline ml-1" /> : <ChevronDown className="inline ml-1" />
                   )}
                 </TableHead>
-                <TableHead className="font-semibold cursor-pointer" onClick={() => requestSort('currentStudentCount')}>
+                {/* <TableHead className="font-semibold cursor-pointer" onClick={() => requestSort('currentStudentCount')}>
                   Estudiantes Actuales
                   {sortConfig?.key === 'currentStudentCount' && (
                     sortConfig.direction === 'ascending' ? <ChevronUp className="inline ml-1" /> : <ChevronDown className="inline ml-1" />
                   )}
-                </TableHead>
+                </TableHead> */}
                 <TableHead className="font-semibold cursor-pointer" onClick={() => requestSort('annualBudget')}>
                   Presupuesto Anual
                   {sortConfig?.key === 'annualBudget' && (
@@ -542,7 +542,7 @@ export default function FacultyManagement() {
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.deanName}</TableCell>
                   <TableCell>{item.additionalInfo}</TableCell>
-                  <TableCell>{item.currentStudentCount}</TableCell>
+                  {/* <TableCell>{item.currentStudentCount}</TableCell> */}
                   <TableCell>{item.annualBudget.toLocaleString('es-GT', { style: 'currency', currency: 'GTQ' })}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
