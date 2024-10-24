@@ -14,6 +14,7 @@ import { z } from "zod"
 import { PlusCircle, Edit, Trash2, Users, ChevronUp, ChevronDown } from "lucide-react"
 import { Notification } from "@/components/users/components-notification"
 import { Pagination } from "@/components/users/components-pagination"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -215,6 +216,7 @@ export default function FacultyManagement() {
   const [facultyToDelete, setFacultyToDelete] = useState<Faculty | null>(null)
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [showDeletedFaculties, setShowDeletedFaculties] = useState(false)
+  const user = useCurrentUser();
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -234,7 +236,10 @@ export default function FacultyManagement() {
   const fetchFaculties = async () => {
     try {
       const response = await fetch(`${API_URL}/api/faculties`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
       })
       if (response.ok) {
         const data: Faculty[] = await response.json()
@@ -257,8 +262,10 @@ export default function FacultyManagement() {
   const fetchDeletedFaculties = async () => {
     try {
       const response = await fetch(`${API_URL}/api/faculties/deleted/history`, {
-        credentials: 'include',
-      })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },      })
       if (response.ok) {
         const data: Faculty[] = await response.json()
         setFaculties(data)
@@ -292,9 +299,9 @@ export default function FacultyManagement() {
     try {
       const response = await fetch(`${API_URL}/api/faculties`, {
         method: "POST",
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         body: JSON.stringify(data)
       })
@@ -319,9 +326,9 @@ export default function FacultyManagement() {
     try {
       const response = await fetch(`${API_URL}/api/faculties/${editingFaculty.facultyId}`, {
         method: "PUT",
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         body: JSON.stringify(data)
       })
@@ -350,8 +357,10 @@ export default function FacultyManagement() {
     try {
       const response = await fetch(`${API_URL}/api/faculties/${facultyId}`, {
         method: "DELETE",
-        credentials: 'include'
-      })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },      })
       if (response.ok) {
         if (showDeletedFaculties) {
           await fetchDeletedFaculties()
@@ -375,10 +384,10 @@ export default function FacultyManagement() {
     try {
       const response = await fetch(`${API_URL}/api/faculties/${facultyId}/restore`, {
         method: 'PUT',
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
-        },
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },        
       });
 
       let responseData = null;

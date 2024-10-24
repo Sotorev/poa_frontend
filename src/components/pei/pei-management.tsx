@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 
 import type { PEI, Strategy, Intervention } from '@/types/pei';
+import { Textarea } from '../ui/textarea';
 
 const steps = ['Detalles del PEI', 'Áreas y Objetivos Estratégicos', 'Estrategias e Intervenciones', 'Revisión'];
 
@@ -299,14 +300,14 @@ export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: 
 											</div>
 										</TableCell>
 										<TableCell>
-											<Input
+											<Textarea
 												value={area.name}
 												onChange={(e) => updateStrategicPair(index, 'area', e.target.value)}
 												placeholder={`Ingrese Área Estratégica ${index + 1}`}
 											/>
 										</TableCell>
 										<TableCell>
-											<Input
+											<Textarea
 												value={area.strategicObjective.description}
 												onChange={(e) => updateStrategicPair(index, 'objective', e.target.value)}
 												placeholder={`Ingrese Objetivo Estratégico ${index + 1}`}
@@ -355,7 +356,7 @@ export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: 
 											{area.strategicObjective.strategies?.map((strategy, strategyIndex) => (
 												<TableRow key={strategy.strategyId || strategyIndex}>
 													<TableCell>
-														<Input
+														<Textarea
 															value={strategy.description}
 															onChange={(e) =>
 																updateStrategy(areaIndex, strategyIndex, 'description', e.target.value)
@@ -523,7 +524,7 @@ export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: 
 	};
 
 	return (
-		<Card className="w-full max-w-4xl mx-auto">
+		<Card className="w-full max-w-6xl mx-auto ">
 			<CardHeader>
 				<CardTitle>Registro de PEI</CardTitle>
 				<CardDescription>Crear un nuevo Plan Estratégico Institucional (PEI)</CardDescription>

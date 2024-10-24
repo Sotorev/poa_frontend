@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createResourceSchema, CreateResourceInput } from "@/schemas/resourcesSchema";
 import { z } from "zod";
 import { Resource } from "@/types/Resource";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface ResourceWithFrontend extends Resource {
   id: string;
@@ -60,6 +61,7 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [customRecursoCounter, setCustomRecursoCounter] = useState(1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const user = useCurrentUser();
   const newRecursoInputRef = useRef<HTMLInputElement>(null);
 
   // Configurar react-hook-form para agregar nuevos recursos
@@ -87,8 +89,8 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutionalResources`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
           },
-          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error(`Error al obtener recursos: ${response.statusText}`);
@@ -141,9 +143,9 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutionalResources`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
-        credentials: 'include',
         body: JSON.stringify(data),
       });
 

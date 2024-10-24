@@ -22,8 +22,7 @@ import { EquipoResponsableSectionComponent } from './sections/equipo-responsable
 import { FodaSection } from './sections/foda-section'
 import EventsViewerViceChancellorComponent from './sections/events-viewer/events-viewer-vicechancellor'
 import PoaActions from './sections/poa-actions'
-import { useAuth } from '@/contexts/auth-context'
-
+import { useCurrentUser } from '@/hooks/use-current-user'
 export interface SectionProps {
   name: string
   isActive: boolean
@@ -51,31 +50,19 @@ export function PoaAcademicApproval() {
   const [facultyId, setFacultyId] = useState<number | null>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
-
-  const { user, loading } = useAuth()
-
   const [userId, setUserId] = useState<number>()
   const [rolId, setRolId] = useState<number>()
+  const user = useCurrentUser();
 
   // Fetch para obtener el userId y rolId
   useEffect(() => {
     const fetchUserData = async () => {
-      if (loading) {
-        console.log("Cargando información del usuario...")
-        return
-      }
-
-      if (!user) {
-        console.log("No estás autenticado.")
-        alert("No estás autenticado.")
-        return
-      }
 
       try {
-        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
-          credentials: 'include',
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user?.userId}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
         })
 
@@ -93,27 +80,23 @@ export function PoaAcademicApproval() {
     }
 
     fetchUserData()
-  }, [user, loading])
+  }, [user])
 
   // Fetch para obtener el facultyId y poaId
   useEffect(() => {
     const fetchFacultyAndPoa = async () => {
-      if (loading) {
-        console.log("Cargando información del usuario...")
-        return
-      }
+
 
       if (!user) {
         console.log("No estás autenticado.")
-        alert("No estás autenticado.")
         return
       }
 
       try {
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
           },
         })
 
@@ -146,7 +129,7 @@ export function PoaAcademicApproval() {
     }
 
     fetchFacultyAndPoa()
-  }, [user, loading])
+  }, [user])
 
   // Obtener el POA actual si ya fue creado
   const getPoaByFacultyAndYear = async (facultyId: number) => {
@@ -156,8 +139,8 @@ export function PoaAcademicApproval() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
-        credentials: 'include',
       })
 
       if (!response.ok) {

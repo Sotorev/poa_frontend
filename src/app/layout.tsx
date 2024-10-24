@@ -2,10 +2,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/auth-context";
-import Header from "@/components/header";
+import { SessionProvider } from "next-auth/react";
+import { auth } from "@/auth";
 import { ToastContainer } from 'react-toastify'; // Importa ToastContainer
 import 'react-toastify/dist/ReactToastify.css'; // Importa los estilos de react-toastify
+import { NextAuthProvider } from "@/components/auth/providers";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -23,23 +24,24 @@ export const metadata: Metadata = {
   description: "Sistema de Planificación y Operación Administrativa",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
-      >
-        <AuthProvider>
-          <Header />
+    <SessionProvider session={session}>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        >
           <main className="flex-grow">
             {children}
           </main>
           {/* Configuración del contenedor de react-toastify */}
-          <ToastContainer 
+          <ToastContainer
             position="top-right"
             autoClose={5000}
             hideProgressBar={false}
@@ -51,8 +53,8 @@ export default function RootLayout({
             pauseOnHover
             theme="colored" // Puedes cambiar el tema según tus preferencias
           />
-        </AuthProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </SessionProvider>
   );
 }

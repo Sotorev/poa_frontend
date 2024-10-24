@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from 'lucide-react'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 type PoaRegistrationPeriod = {
 	year: number
@@ -46,13 +47,16 @@ export function PoaRegistrationPeriodForm({ onSubmit }: PoaRegistrationPeriodFor
 		registrationEndDate: '',
 		peiId: 0,
 	})
+	const user = useCurrentUser();
 
 	useEffect(() => {
 		const fetchCurrentPEI = async () => {
 			try {
 				const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pei/current`, {
-					credentials: 'include'
-				})
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${user?.token}`
+					},				})
 				if (!response.ok) {
 					throw new Error('Error al obtener el PEI actual')
 				}

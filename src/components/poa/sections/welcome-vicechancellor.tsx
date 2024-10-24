@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { z } from 'zod';
 import { toast } from 'react-toastify';
-import { useAuth } from '@/contexts/auth-context'
-
+import { useCurrentUser } from '@/hooks/use-current-user';
 interface FacultyData {
   poaId: number;
   year: number;
@@ -31,8 +30,8 @@ interface WelcomeVicechancellorProps {
 }
 
 export function WelcomeVicechancellor({ onSelectFaculty }: WelcomeVicechancellorProps) {
-  const { user, loading } = useAuth();
   const [fullName, setFullName] = useState("Usuario");
+  const user = useCurrentUser();
   const [faculties, setFaculties] = useState<FacultyData[]>([]);
   const [loadingFaculties, setLoadingFaculties] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,23 +40,19 @@ export function WelcomeVicechancellor({ onSelectFaculty }: WelcomeVicechancellor
   // Fetch para obtener el nombre del usuario
   useEffect(() => {
     const fetchUserData = async () => {
-      if (loading) {
-        console.log("Cargando información del usuario...");
-        return;
-      }
 
       if (!user) {
         console.log("No estás autenticado.");
-        alert("No estás autenticado.");
         return;
       }
 
       try {
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
-          credentials: 'include',
           headers: {
-            'Content-Type': 'application/json',
-          },
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      
         });
 
         if (!userResponse.ok) {
@@ -74,7 +69,7 @@ export function WelcomeVicechancellor({ onSelectFaculty }: WelcomeVicechancellor
     };
 
     fetchUserData();
-  }, [user, loading]);
+  }, [user]);
 
   // Fetch para obtener las facultades y el año del POA
   useEffect(() => {
@@ -84,8 +79,9 @@ export function WelcomeVicechancellor({ onSelectFaculty }: WelcomeVicechancellor
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/closed`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
           },
-          credentials: 'include',
+
         });
         if (!response.ok) {
           throw new Error(`Error al obtener facultades: ${response.statusText}`);

@@ -14,6 +14,7 @@ import { z } from "zod"
 import { PlusCircle, Edit, Trash2, Users, ChevronUp, ChevronDown } from "lucide-react"
 import { Notification } from "@/components/users/components-notification"
 import { Pagination } from "@/components/users/components-pagination"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -168,8 +169,9 @@ export default function OdsManagement() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [odsToDelete, setOdsToDelete] = useState<Ods | null>(null)
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
-  const [showDeletedOds, setShowDeletedOds] = useState(false)
-
+  const [showDeletedOds, setShowDeletedOds] = useState(false);
+  const user = useCurrentUser();
+  
   useEffect(() => {
     if (!isDialogOpen) {
       setEditingOds(null)
@@ -188,8 +190,10 @@ export default function OdsManagement() {
   const fetchOds = async () => {
     try {
       const response = await fetch(`${API_URL}/api/ods`, {
-        credentials: 'include',
-      })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },      })
       if (response.ok) {
         const data: Ods[] = await response.json()
         const activeOds = data.filter(item => !item.isDeleted)
@@ -211,8 +215,10 @@ export default function OdsManagement() {
   const fetchDeletedOds = async () => {
     try {
       const response = await fetch(`${API_URL}/api/ods/deleted/history`, {
-        credentials: 'include',
-      })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },      })
       if (response.ok) {
         const data: Ods[] = await response.json()
         setOds(data)
@@ -245,9 +251,9 @@ export default function OdsManagement() {
     try {
       const response = await fetch(`${API_URL}/api/ods`, {
         method: "POST",
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         body: JSON.stringify(data)
       })
@@ -272,9 +278,9 @@ export default function OdsManagement() {
     try {
       const response = await fetch(`${API_URL}/api/ods/${editingOds.odsId}`, {
         method: "PUT",
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
         body: JSON.stringify(data)
       })
@@ -303,8 +309,10 @@ export default function OdsManagement() {
     try {
       const response = await fetch(`${API_URL}/api/ods/${odsId}`, {
         method: "DELETE",
-        credentials: 'include'
-      })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },      })
       if (response.ok) {
         if (showDeletedOds) {
           await fetchDeletedOds()
@@ -328,9 +336,9 @@ export default function OdsManagement() {
     try {
       const response = await fetch(`${API_URL}/api/ods/${odsId}/restore`, {
         method: 'PUT',
-        credentials: 'include',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
         },
       });
 

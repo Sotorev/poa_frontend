@@ -1,29 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/contexts/auth-context'
 
 export default function NotFound() {
 	const router = useRouter()
-	const { user, loading } = useAuth()
-	const [isClient, setIsClient] = useState(false)
 
-	useEffect(() => {
-		setIsClient(true)
-		if (!loading && !user) {
-			router.push('/iniciar-sesion')
-		}
-	}, [user, loading, router])
-
-	if (loading || !isClient) {
-		return null // or a loading spinner
-	}
-
-	if (!user) {
-		return null // This will be handled by the useEffect hook
-	}
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -37,7 +19,7 @@ export default function NotFound() {
 					</p>
 				</div>
 				<div className="text-center">
-					<Link href="/" className="font-medium text-[#007041] hover:text-[#2e8f66]">
+					<Link href="/inicio" className="font-medium text-[#007041] hover:text-[#2e8f66]">
 						Volver a la página principal
 					</Link>
 				</div>

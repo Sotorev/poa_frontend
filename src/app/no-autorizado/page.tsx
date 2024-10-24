@@ -1,15 +1,9 @@
 'use client'
 import Link from 'next/link'
-import { useAuth } from '@/contexts/auth-context'
 import { AlertTriangle } from 'lucide-react'
 
 export default function Unauthorized() {
 	
-	const { loading } = useAuth()
-
-	if (loading) {
-		return null // or a loading spinner
-	}
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
