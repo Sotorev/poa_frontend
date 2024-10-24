@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/detalle.tsx
 'use client'
 
 import * as React from "react"

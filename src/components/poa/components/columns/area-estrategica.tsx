@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/area-estrategica.tsx
 'use client';
 
 import React from 'react';

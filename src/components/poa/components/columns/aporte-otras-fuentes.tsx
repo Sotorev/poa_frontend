@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/aporte-otras-fuentes.tsx
 'use client';
 
 import React, { useState, useEffect } from "react";

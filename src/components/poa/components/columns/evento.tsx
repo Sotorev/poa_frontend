@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/evento.tsx
 'use client';
 
 import React from 'react';

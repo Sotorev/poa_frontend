@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/currency-input.tsx
 import React, { useState } from 'react'
 import { NumericFormat } from 'react-number-format'
 
