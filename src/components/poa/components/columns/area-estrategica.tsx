@@ -11,6 +11,7 @@ interface AreaEstrategicaComponentProps {
 export function AreaEstrategicaComponent({ areaEstrategica, error }: AreaEstrategicaComponentProps) {
   return (
     <div className="w-64 h-full">
+      <p className="text-sm text-gray-500 mb-2">Auto-selección al elegir objetivo estratégico</p>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
