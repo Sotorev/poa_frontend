@@ -164,6 +164,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
                 className="mt-1"
               />
             </div>
+            {/* Commented out Cantidad de Estudiantes field
             <div>
               <Label htmlFor="cantidadEstudiantes" className="text-sm font-medium text-gray-700">Cantidad de Estudiantes</Label>
               <Input
@@ -176,6 +177,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
                 className="mt-1"
               />
             </div>
+            */}
           </div>
           {isEditing && (
             <Button onClick={handleSave} className="mt-6 bg-green-600 hover:bg-green-700 text-white">
