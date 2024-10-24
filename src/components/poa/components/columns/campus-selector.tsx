@@ -29,13 +29,14 @@ const campusesSchema = z.array(campusSchema);
 
 interface CampusSelectorProps {
   onSelectCampus: (campusId: string) => void;
+  selectedCampusId: string;
 }
 
-export function CampusSelector({ onSelectCampus }: CampusSelectorProps) {
+export function CampusSelector({ onSelectCampus, selectedCampusId }: CampusSelectorProps) {
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCampus, setSelectedCampus] = useState<string>('');
+  const [selectedCampus, setSelectedCampus] = useState<string>(selectedCampusId);
   const user = useCurrentUser();
 
   useEffect(() => {
