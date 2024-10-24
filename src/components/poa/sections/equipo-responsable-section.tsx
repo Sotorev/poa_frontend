@@ -247,12 +247,11 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
     setIsLoading(true)
     try {
       const validatedData = createUserSchema.parse(newUser)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/`, {
         method: 'POST',
         body: JSON.stringify(validatedData),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
         },
       })
       if (!response.ok) throw new Error('Failed to create new user')
