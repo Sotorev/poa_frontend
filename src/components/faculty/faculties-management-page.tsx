@@ -543,7 +543,7 @@ export default function FacultyManagement() {
                   <TableCell>{item.deanName}</TableCell>
                   <TableCell>{item.additionalInfo}</TableCell>
                   <TableCell>{item.currentStudentCount}</TableCell>
-                  <TableCell>{item.annualBudget.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</TableCell>
+                  <TableCell>{item.annualBudget.toLocaleString('es-GT', { style: 'currency', currency: 'GTQ' })}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       {!showDeletedFaculties && (
