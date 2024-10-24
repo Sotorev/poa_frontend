@@ -96,7 +96,6 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${user?.token}`,
           },
-
         });
         const data: ApiEvent[] = await response.json();
         const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
@@ -113,7 +112,7 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
     };
 
     fetchData();
-  }, [poaId]);
+  }, [poaId, user?.token]);
 
   const updateEventStatus = async (eventId: number, approvalStatusId: number, comments: string) => {
     try {
@@ -135,7 +134,6 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`,
         },
-
       });
       const refreshedEvents: ApiEvent[] = await refreshedData.json();
       const mappedRefreshedEvents = refreshedEvents.map(event => mapApiEventToPlanningEvent(event));
@@ -157,16 +155,14 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
   };
 
   const rejectEvent = (id: string) => {
-    const comments = window.prompt('Ingrese los comentarios para el rechazo del evento:', 'Evento rechazado');
-    if (comments !== null) {
-      updateEventStatus(Number(id), 2, comments);
+    if (window.confirm('¿Estás seguro de rechazar este evento?')) {
+      updateEventStatus(Number(id), 2, 'Evento rechazado');
     }
   };
 
   const requestCorrection = (id: string) => {
-    const comments = window.prompt('Ingrese los comentarios para solicitar correcciones:', 'Evento aprobado con correcciones');
-    if (comments !== null) {
-      updateEventStatus(Number(id), 3, comments);
+    if (window.confirm('¿Estás seguro de solicitar correcciones para este evento?')) {
+      updateEventStatus(Number(id), 3, 'Evento aprobado con correcciones');
     }
   };
 

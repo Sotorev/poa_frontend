@@ -460,7 +460,7 @@ export default function PlanificacionFormComponent() {
                 <span className="text-red-500 text-sm">{filaErrors.objetivoEstrategico}</span>
               )}
             </div>
-            <div>
+            <div className="pt-16">
               <label className="block font-medium mb-2">Estrategias</label>
               <EstrategiasSelectorComponent
                 selectedEstrategias={fila.estrategias}
@@ -471,7 +471,7 @@ export default function PlanificacionFormComponent() {
                 <span className="text-red-500 text-sm">{filaErrors.estrategias}</span>
               )}
             </div>
-            <div>
+            <div className="pt-16">
               <label className="block font-medium mb-2">Intervención</label>
               <IntervencionesSelectorComponent
                 selectedIntervenciones={fila.intervencion}
