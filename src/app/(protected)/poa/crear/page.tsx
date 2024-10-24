@@ -28,7 +28,7 @@ const CreatePOAPage = () => {
 	return (
 		<Card className="w-full max-w-7xl mx-auto">
 			<CardHeader>
-				<CardTitle>Create POA</CardTitle>
+				<CardTitle>Crear evento</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<div className="mb-6">

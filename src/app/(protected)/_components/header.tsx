@@ -75,7 +75,7 @@ const navItems: NavItem[] = [
 		requiredPermission: { module: "POA", action: "View" },
 		subItems: [
 			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredPermission: { module: "POA", action: "Edit" }, icon: Settings },
-			{ title: "Crear", href: "/poa/crear", description: "Crear nuevo POA", requiredPermission: { module: "POA", action: "Create" }, icon: FileText },
+			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredPermission: { module: "POA", action: "Create" }, icon: FileText },
 			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredPermission: { module: "POA", action: "Edit" }, icon: CheckSquare },
 		],
 	},
