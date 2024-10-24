@@ -1,4 +1,3 @@
-// src/components/poa/components/columns/tipo-de-compra.tsx
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -26,8 +25,8 @@ interface TipoDeCompra {
 }
 
 interface TipoDeCompraComponentProps {
-  selectedTipos: string[];
-  onSelectTipos: (tipos: string[]) => void;
+  selectedTipo: string | null;
+  onSelectTipo: (tipo: string | null) => void;
 }
 
 const predefinedColors: string[] = [
@@ -36,7 +35,7 @@ const predefinedColors: string[] = [
   "#064E3B", "#6B21A8", "#7E22CE", "#92400E", "#0F766E"
 ];
 
-export default function TipoDeCompraComponent({ selectedTipos, onSelectTipos }: TipoDeCompraComponentProps) {
+export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: TipoDeCompraComponentProps) {
   const user = useCurrentUser();
   const [tiposDeCompra, setTiposDeCompra] = useState<TipoDeCompra[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,18 +83,13 @@ export default function TipoDeCompraComponent({ selectedTipos, onSelectTipos }: 
   }, [tiposDeCompra, searchTerm]);
 
   const handleSelectTipo = (tipoId: string) => {
-    const newSelection = selectedTipos.includes(tipoId)
-      ? selectedTipos.filter(id => id !== tipoId)
-      : [...selectedTipos, tipoId];
-    onSelectTipos(newSelection);
-    // Refocus the search input
-    setTimeout(() => searchInputRef.current?.focus(), 0);
+    onSelectTipo(selectedTipo === tipoId ? null : tipoId);
+    setIsOpen(false);
   };
 
   const handleRemoveTipo = (tipoId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const updatedTipos = selectedTipos.filter(id => id !== tipoId);
-    onSelectTipos(updatedTipos);
+    onSelectTipo(null);
   };
 
   const handleAddNewTipo = () => {
@@ -106,7 +100,7 @@ export default function TipoDeCompraComponent({ selectedTipos, onSelectTipos }: 
         color: predefinedColors[tiposDeCompra.length % predefinedColors.length],
       };
       setTiposDeCompra([...tiposDeCompra, newTipo]);
-      onSelectTipos([...selectedTipos, newTipo.id]);
+      onSelectTipo(newTipo.id);
       setNewTipoName("");
       setIsAddingNew(false);
     }
@@ -126,41 +120,38 @@ export default function TipoDeCompraComponent({ selectedTipos, onSelectTipos }: 
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1 mb-2">
-        {selectedTipos.map(id => {
-          const tipo = tiposDeCompra.find(t => t.id === id);
-          if (!tipo) return null;
-          return (
-            <TooltipProvider key={tipo.id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="secondary"
-                    className="flex items-center justify-between px-2 py-1 rounded-md text-xs font-bold"
-                    style={{ backgroundColor: tipo.color, color: 'white' }}
-                  >
-                    <span className="flex items-center">
-                      {tipo.name}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-1 h-4 w-4 p-0 text-white hover:text-gray-200"
-                      onClick={(e) => handleRemoveTipo(tipo.id, e)}
-                      aria-label={`Eliminar ${tipo.name}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{tipo.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )
-        })}
-      </div>
+      {selectedTipo && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="secondary"
+                className="flex items-center justify-between px-2 py-1 rounded-md text-xs font-bold"
+                style={{ backgroundColor: tiposDeCompra.find(t => t.id === selectedTipo)?.color, color: 'white' }}
+              >
+                <span className="flex items-center">
+                  {tiposDeCompra.find(t => t.id === selectedTipo)?.name}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 h-4 w-4 p-0 text-white hover:text-gray-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectTipo(null);
+                  }}
+                  aria-label={`Eliminar ${tiposDeCompra.find(t => t.id === selectedTipo)?.name}`}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{tiposDeCompra.find(t => t.id === selectedTipo)?.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
 
       <Select
         open={isOpen}
@@ -207,7 +198,7 @@ export default function TipoDeCompraComponent({ selectedTipos, onSelectTipos }: 
                 >
                   <div className="flex items-center">
                     <Checkbox
-                      checked={selectedTipos.includes(tipo.id)}
+                      checked={selectedTipo === tipo.id}
                       onCheckedChange={() => handleSelectTipo(tipo.id)}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -216,7 +207,7 @@ export default function TipoDeCompraComponent({ selectedTipos, onSelectTipos }: 
                       className="mr-2 h-4 w-4 rounded border-2 focus:ring-offset-0"
                       style={{
                         borderColor: tipo.color,
-                        backgroundColor: selectedTipos.includes(tipo.id) ? tipo.color : 'transparent',
+                        backgroundColor: selectedTipo === tipo.id ? tipo.color : 'transparent',
                       }}
                     />
                     {tipo.name}

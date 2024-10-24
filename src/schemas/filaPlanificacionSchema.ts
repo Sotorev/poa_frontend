@@ -29,7 +29,7 @@ export const filaPlanificacionSchema = z.object({
     porcentaje: z.number().min(0).max(100),
     amount: z.number().nonnegative(),
   })).min(1, "Debe tener al menos un aporte de otras fuentes"),
-  tipoCompra: z.array(z.string()).min(1, "Tipo de Compra es requerido"), // Cambiado a arreglo
+  tipoCompra: z.string().nonempty("Tipo de Compra es requerido"),// Cambiado a arreglo
   detalle: z.any().nullable(),
   responsablePlanificacion: z.string().nonempty("Responsable de planificación es requerido"),
   responsableEjecucion: z.string().nonempty("Responsable de ejecución es requerido"),

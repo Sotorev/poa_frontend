@@ -97,7 +97,7 @@ export default function PlanificacionFormComponent() {
     costoTotal: 0,
     aporteUMES: [],
     aporteOtros: [],
-    tipoCompra: [],
+    tipoCompra: "",
     detalle: null,
     responsablePlanificacion: '',
     responsableEjecucion: '',
@@ -331,7 +331,7 @@ export default function PlanificacionFormComponent() {
         eventNature: 'Planificado',
         isDelayed: false,
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseTypeId: fila.tipoCompra.map(id => parseInt(id, 10)),
+        purchaseTypeId: parseInt(fila.tipoCompra, 10),
         totalCost: fila.costoTotal,
         dates: fila.fechas.map(pair => ({
           startDate: pair.start.toISOString().split('T')[0],
@@ -562,8 +562,8 @@ export default function PlanificacionFormComponent() {
             <div>
               <label className="block font-medium mb-2">Tipo de Compra</label>
               <TipoDeCompraComponent
-                selectedTipos={fila.tipoCompra}
-                onSelectTipos={(tipos: string[]) => actualizarFila('tipoCompra', tipos)}
+                selectedTipo={fila.tipoCompra}
+                onSelectTipo={(tipos: string | null) => actualizarFila('tipoCompra', tipos)}
                 // selectedTypes={fila.tipoCompra}
                 // onSelectTypes={(tipos: string[]) => actualizarFila('tipoCompra', tipos)}
               />

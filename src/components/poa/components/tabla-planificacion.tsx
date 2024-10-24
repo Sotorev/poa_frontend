@@ -239,7 +239,7 @@ export function TablaPlanificacionComponent() {
       costoTotal: 0,
       aporteUMES: [],
       aporteOtros: [],
-      tipoCompra: [],
+      tipoCompra: '',
       detalle: null,
       responsablePlanificacion: '',
       responsableEjecucion: '',
@@ -385,7 +385,7 @@ export function TablaPlanificacionComponent() {
         eventNature: 'Planificado',
         isDelayed: false,
         achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseType: fila.tipoCompra, // Verificar si el backend espera 'purchaseType' o 'purchaseTypeIds'
+        purchaseTypeId: parseInt(fila.tipoCompra, 10), // Verificar si el backend espera 'purchaseType' o 'purchaseTypeIds'
         totalCost: fila.costoTotal,
         dates: fila.fechas.map(pair => ({
           startDate: pair.start.toISOString().split('T')[0],
@@ -664,8 +664,8 @@ export function TablaPlanificacionComponent() {
                 </TableCell>
                 <TableCell>
                   <TipoDeCompraComponent
-                    selectedTipos={fila.tipoCompra}
-                    onSelectTipos={(tipos: string[]) => actualizarFila(fila.id, 'tipoCompra', tipos)} // **Corrección Realizada Aquí**
+                    selectedTipo={fila.tipoCompra}
+                    onSelectTipo={(tipo: string | null) => actualizarFila(fila.id, 'tipoCompra', tipo)} // **Corrección Realizada Aquí**
                   />
                   {filaErrors[fila.id]?.tipoCompra && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoCompra}</span>
