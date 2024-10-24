@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/objetivo.tsx
 'use client';
 
 import React from 'react';

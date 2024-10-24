@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/estrategias-selector.tsx
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from "react";

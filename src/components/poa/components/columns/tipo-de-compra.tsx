@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/tipo-de-compra.tsx
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from "react";

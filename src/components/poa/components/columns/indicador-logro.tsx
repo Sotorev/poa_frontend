@@ -1,3 +1,4 @@
+// src/components/poa/components/columns/indicador-logro.tsx
 'use client';
 
 import React from 'react';
