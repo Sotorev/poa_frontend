@@ -6,7 +6,6 @@ import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
 import { ToastContainer } from 'react-toastify'; // Importa ToastContainer
 import 'react-toastify/dist/ReactToastify.css'; // Importa los estilos de react-toastify
-import { NextAuthProvider } from "@/components/auth/providers";
 import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
@@ -38,7 +37,7 @@ export default async function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
         >
-          <main className="flex-grow">
+          <main className="flex-grow bg-gray-100">
             {children}
           </main>
           <Toaster />
