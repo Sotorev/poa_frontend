@@ -110,17 +110,17 @@ export default function RolesManagementPage() {
 	return (
 		<ProtectedRoute moduleName="Auth" action="View">
 			<div className="container mx-auto p-6">
-				<h1 className="text-3xl font-bold mb-6">Gestión de Roles y Permisos</h1>
+				<h1 className="text-3xl font-bold mb-6">Gestión de roles y permisos</h1>
 				<Tabs defaultValue="view" className="space-y-4">
 					<TabsList>
-						<TabsTrigger value="view">Ver Roles y Permisos</TabsTrigger>
-						<TabsTrigger value="manage">Gestionar Roles</TabsTrigger>
-						<TabsTrigger value="create">Crear Rol</TabsTrigger>
+						<TabsTrigger value="view">Ver roles y permisos</TabsTrigger>
+						<TabsTrigger value="manage">Gestionar roles</TabsTrigger>
+						<TabsTrigger value="create">Crear rol</TabsTrigger>
 					</TabsList>
 					<TabsContent value="view">
 						<Card>
 							<CardHeader>
-								<CardTitle>Roles y Permisos</CardTitle>
+								<CardTitle>Roles y permisos</CardTitle>
 								<CardDescription>Ver todos los roles y sus permisos</CardDescription>
 							</CardHeader>
 							<CardContent>
