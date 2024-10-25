@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { ToastContainer } from 'react-toastify'; // Importa ToastContainer
 import 'react-toastify/dist/ReactToastify.css'; // Importa los estilos de react-toastify
 import { NextAuthProvider } from "@/components/auth/providers";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -40,6 +41,8 @@ export default async function RootLayout({
           <main className="flex-grow">
             {children}
           </main>
+          <Toaster />
+
           {/* Configuración del contenedor de react-toastify */}
           <ToastContainer
             position="top-right"

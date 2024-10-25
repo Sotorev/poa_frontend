@@ -32,7 +32,7 @@ import Image from "next/image"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { usePermissions } from "@/hooks/use-permissions"
 import clsx from "clsx"
-import AccountButton from "../usuarios/_components/account-button"
+import AccountButton from "../autorizacion/_components/account-button"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete';
 
@@ -61,11 +61,15 @@ const navItems: NavItem[] = [
 		requiredPermission: { module: "Faculty", action: "View" }
 	},
 	{
-		title: "Usuarios",
-		href: "/usuarios/gestion",
+		title: "Autorización",
+		href: "/autorizacion",
 		icon: User,
 		description: "Gestión de usuarios",
-		requiredPermission: { module: "Auth", action: "View" }
+		requiredPermission: { module: "Auth", action: "View" },
+		subItems: [
+			{ title: "Usuarios", href: "/autorizacion/usuarios", description: "Gestión de usuarios", requiredPermission: { module: "Auth", action: "View" }, icon: User },
+			{ title: "Roles", href: "/autorizacion/roles", description: "Gestión de roles", requiredPermission: { module: "Auth", action: "View" }, icon: Settings },
+		],
 	},
 	{
 		title: "POA",
