@@ -17,13 +17,13 @@ export function ProtectedRoute({ children, moduleName, action }: ProtectedRouteP
 	const permissions = usePermissions()
 
 	useEffect(() => {
-		if (status === 'loading') return // Do nothing while loading
+		if (status === 'unauthenticated') return 
 		if (!session) {
-			router.push('/login') // Redirect to login if not authenticated
+			router.push('/iniciar-sesion') 
 		} else {
 			const hasPermission = permissions[`can${action}`](moduleName)
 			if (!hasPermission) {
-				router.push('/unauthorized') // Redirect to unauthorized page if no permission
+				router.push('/no-autorizado')
 			}
 		}
 	}, [session, status, router, permissions, moduleName, action])
