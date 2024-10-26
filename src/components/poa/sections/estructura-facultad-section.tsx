@@ -69,11 +69,6 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
 
   const handleEdit = () => setIsEditing(!isEditing);
 
-  const handleSave = () => {
-    setIsEditing(false);
-    fetchAllData();
-  };
-
   const handleAddDepartment = () => {
     setNewDepartment({ name: '', director: '', facultyId: Number(facultyId) });
     setEditMode('create');
@@ -99,6 +94,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       toast({
         title: editMode === 'create' ? "Departamento creado" : "Departamento actualizado",
         description: "La operación se completó con éxito.",
+        variant: "success",
       });
     } catch (error) {
       console.error('Failed to save department:', error);
@@ -117,6 +113,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       toast({
         title: "Departamento eliminado",
         description: "El departamento se eliminó con éxito.",
+        variant: "success",
       });
     } catch (error) {
       console.error('Failed to delete department:', error);
@@ -154,6 +151,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       toast({
         title: editMode === 'create' ? "Sede creada" : "Sede actualizada",
         description: "La operación se completó con éxito.",
+        variant: "success",
       });
     } catch (error) {
       console.error('Failed to save campus:', error);
@@ -171,6 +169,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       fetchAllData();
       toast({
         title: "Sede eliminada",
+        variant: "success",
         description: "La sede se eliminó con éxito.",
       });
     } catch (error) {
@@ -213,6 +212,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       toast({
         title: editMode === 'create' ? "Carrera creada" : "Carrera actualizada",
         description: "La operación se completó con éxito.",
+        variant: "success",
       });
     } catch (error) {
       console.error('Failed to save program:', error);
@@ -231,6 +231,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       toast({
         title: "Carrera eliminada",
         description: "La carrera se eliminó con éxito.",
+        variant: "success",
       });
     } catch (error) {
       console.error('Failed to delete program:', error);
@@ -258,6 +259,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       toast({
         title: "Sede agregada",
         description: "La sede se agregó con éxito a la facultad.",
+        variant: "success",
       });
     } catch (error) {
       console.error('Failed to add existing campus:', error);
@@ -287,6 +289,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       toast({
         title: "Carrera agregada",
         description: "La carrera se agregó con éxito a la facultad.",
+        variant: "success",
       });
     } catch (error) {
       console.error('Failed to add existing program:', error);
@@ -302,15 +305,15 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
     <div id={name} className="mb-6">
       <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
         <div className="p-4 bg-green-50 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-green-800">{name}</h2>
+          <h2 className="text-xl font-semibold text-primary">{name}</h2>
           <div className="flex items-center space-x-2">
           {isEditable && (
-            <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-800 hover:bg-green-100">
+            <Button variant="ghost" size="sm" onClick={handleEdit} className="text-primary hover:text-primary hover:bg-green-100">
               <Edit className="h-4 w-4 mr-2" />
               {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
           )}
-            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-800 hover:bg-green-100">
+            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-primary hover:text-primary hover:bg-green-100">
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
           </div>
@@ -320,13 +323,13 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
             <div className="space-y-6">
               {/* Departments Section */}
               <div>
-                <h3 className="text-lg font-medium mb-2 text-green-700">Departamentos de la Facultad</h3>
+                <h3 className="text-lg font-medium mb-2 text-primary">Departamentos de la Facultad</h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-green-700">Nombre</TableHead>
-                      <TableHead className="text-green-700">Director</TableHead>
-                      <TableHead className="text-green-700">Acciones</TableHead>
+                      <TableHead className="text-black">Nombre</TableHead>
+                      <TableHead className="text-black">Director</TableHead>
+                      <TableHead className="text-black">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -341,7 +344,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleEditDepartment(department)}
-                                className="text-green-700  hover:text-green-800 hover:bg-green-100"
+                                className="text-primary  hover:text-primary hover:bg-green-100"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -349,7 +352,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleDeleteDepartment(department.departmentId)}
-                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                className="text-primary hover:text-primary hover:bg-green-100"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -363,7 +366,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                 <Button
                   variant="outline"
                   onClick={handleAddDepartment}
-                  className={`mt-4 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${isEditing ? '' : 'hidden'}`}
+                  className={`mt-4 bg-green-50 text-primary hover:bg-green-100 hover:text-primary ${isEditing ? '' : 'hidden'}`}
                 >
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Agregar Departamento
@@ -372,15 +375,15 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
 
               {/* Campuses Section */}
               <div>
-                <h3 className="text-lg font-medium mb-2 text-green-700">Sedes de la Facultad</h3>
+                <h3 className="text-lg font-medium mb-2 text-primary">Sedes de la Facultad</h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-green-700">Nombre</TableHead>
-                      <TableHead className="text-green-700">Ciudad</TableHead>
-                      <TableHead className="text-green-700">Departamento</TableHead>
-                      <TableHead className="text-green-700">Estudiantes</TableHead>
-                      <TableHead className="text-green-700">Acciones</TableHead>
+                      <TableHead className="text-black">Nombre</TableHead>
+                      <TableHead className="text-black">Ciudad</TableHead>
+                      <TableHead className="text-black">Departamento</TableHead>
+                      <TableHead className="text-black">Estudiantes</TableHead>
+                      <TableHead className="text-black">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -397,7 +400,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleEditCampus(campus)}
-                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                className="text-primary hover:text-primary hover:bg-green-100"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -405,7 +408,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleDeleteCampus(campus.campusId)}
-                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                className="text-primary hover:text-primary hover:bg-green-100"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -420,7 +423,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                   <Button
                     variant="outline"
                     onClick={handleAddCampus}
-                    className={`bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${isEditing ? '' : 'hidden'}`}
+                    className={`bg-green-50 text-primary hover:bg-green-100 hover:text-primary ${isEditing ? '' : 'hidden'}`}
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Agregar nueva Sede
@@ -428,7 +431,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                   <Button
                     variant="outline"
                     onClick={handleAddExistingCampus}
-                    className={`bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${isEditing ? '' : 'hidden'}`}
+                    className={`bg-green-50 text-primary hover:bg-green-100 hover:text-primary ${isEditing ? '' : 'hidden'}`}
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Agregar Sede Existente
@@ -438,14 +441,14 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
 
               {/* Programs Section */}
               <div>
-                <h3 className="text-lg font-medium mb-2 text-green-700">Carreras de la Facultad</h3>
+                <h3 className="text-lg font-medium mb-2 text-primary">Carreras de la Facultad</h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-green-700">Nombre</TableHead>
-                      <TableHead className="text-green-700">Director</TableHead>
-                      <TableHead className="text-green-700">Sedes</TableHead>
-                      <TableHead className="text-green-700">Acciones</TableHead>
+                      <TableHead className="text-black">Nombre</TableHead>
+                      <TableHead className="text-black">Director</TableHead>
+                      <TableHead className="text-black">Sedes</TableHead>
+                      <TableHead className="text-black">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -463,7 +466,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleEditProgram(program)}
-                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                className="text-primary hover:text-primary hover:bg-green-100"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -471,7 +474,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleDeleteProgram(program.programId)}
-                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                className="text-primary hover:text-primary hover:bg-green-100"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -486,7 +489,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                   <Button
                     variant="outline"
                     onClick={handleAddProgram}
-                    className={`bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${isEditing ? '' : 'hidden'}`}
+                    className={`bg-green-50 text-primary hover:bg-green-100 hover:text-primary ${isEditing ? '' : 'hidden'}`}
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Agregar nueva carrera
@@ -494,21 +497,13 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                   <Button
                     variant="outline"
                     onClick={handleAddExistingProgram}
-                    className={`bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 ${isEditing ? '' : 'hidden'}`}
+                    className={`bg-green-50 text-primary hover:bg-green-100 hover:text-primary ${isEditing ? '' : 'hidden'}`}
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Agregar carrera existente
                   </Button>
                 </div>
               </div>
-
-              <Button
-                onClick={handleSave}
-                className={`mt-4 bg-green-600 text-white hover:bg-green-700 ${isEditing ? '' : 'hidden'}`}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Guardar Cambios
-              </Button>
             </div>
           </div>
         )}
@@ -518,33 +513,33 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       <Dialog open={isDepartmentDialogOpen} onOpenChange={setIsDepartmentDialogOpen}>
         <DialogContent className="bg-green-50">
           <DialogHeader>
-            <DialogTitle className="text-green-700">{editMode === 'create' ? "Agregar Departamento" : "Editar Departamento"}</DialogTitle>
+            <DialogTitle className="text-primary">{editMode === 'create' ? "Agregar Departamento" : "Editar Departamento"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="departmentName" className="text-right text-green-700">
+              <Label htmlFor="departmentName" className="text-right text-black">
                 Nombre
               </Label>
               <Input
                 id="departmentName"
                 value={newDepartment.name}
                 onChange={(e) => setNewDepartment({ ...newDepartment, name: e.target.value })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:border-primary"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="departmentDirector" className="text-right text-green-700">
+              <Label htmlFor="departmentDirector" className="text-right text-black">
                 Director
               </Label>
               <Input
                 id="departmentDirector"
                 value={newDepartment.director}
                 onChange={(e) => setNewDepartment({ ...newDepartment, director: e.target.value })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:border-primary"
               />
             </div>
           </div>
-          <Button onClick={handleConfirmDepartment} className="bg-green-600 text-white hover:bg-green-700">
+          <Button onClick={handleConfirmDepartment} className="bg-primary text-white hover:bg-green-700">
             {editMode === 'create' ? "Agregar Departamento" : "Guardar Cambios"}
           </Button>
         </DialogContent>
@@ -554,56 +549,56 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       <Dialog open={isCampusDialogOpen} onOpenChange={setIsCampusDialogOpen}>
         <DialogContent className="bg-green-50">
           <DialogHeader>
-            <DialogTitle className="text-green-700">{editMode === 'create' ? "Agregar Sede" : "Editar Sede"}</DialogTitle>
+            <DialogTitle className="text-primary">{editMode === 'create' ? "Agregar Sede" : "Editar Sede"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="campusName" className="text-right text-green-700">
+              <Label htmlFor="campusName" className="text-right text-black">
                 Nombre
               </Label>
               <Input
                 id="campusName"
                 value={newCampus.name}
                 onChange={(e) => setNewCampus({ ...newCampus, name: e.target.value })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:border-primary"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="campusCity" className="text-right text-green-700">
+              <Label htmlFor="campusCity" className="text-right text-black">
                 Ciudad
               </Label>
               <Input
                 id="campusCity"
                 value={newCampus.city}
                 onChange={(e) => setNewCampus({ ...newCampus, city: e.target.value })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:border-primary"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="campusDepartment" className="text-right text-green-700">
+              <Label htmlFor="campusDepartment" className="text-right text-black">
                 Departamento
               </Label>
               <Input
                 id="campusDepartment"
                 value={newCampus.department}
                 onChange={(e) => setNewCampus({ ...newCampus, department: e.target.value })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:border-primary"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="campusStudentCount" className="text-right text-green-700">
-                Estudiantes
+              <Label htmlFor="campusStudentCount" className="text-right text-black">
+                Cantidad de estudiantes
               </Label>
               <Input
                 id="campusStudentCount"
                 type="number"
                 value={newCampus.currentStudentCount}
                 onChange={(e) => setNewCampus({ ...newCampus, currentStudentCount: parseInt(e.target.value) || 0 })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:border-primary"
               />
             </div>
           </div>
-          <Button onClick={handleConfirmCampus} className="bg-green-600 text-white hover:bg-green-700">
+          <Button onClick={handleConfirmCampus} className="bg-primary text-white hover:bg-green-700">
             {editMode === 'create' ? "Agregar Sede" : "Guardar Cambios"}
           </Button>
         </DialogContent>
@@ -613,33 +608,33 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       <Dialog open={isProgramDialogOpen} onOpenChange={setIsProgramDialogOpen}>
         <DialogContent className="bg-green-50">
           <DialogHeader>
-            <DialogTitle className="text-green-700">{editMode === 'create' ? "Agregar carrera" : "Editar carrera"}</DialogTitle>
+            <DialogTitle className="text-primary">{editMode === 'create' ? "Agregar carrera" : "Editar carrera"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="programName" className="text-right text-green-700">
+              <Label htmlFor="programName" className="text-right text-black">
                 Nombre
               </Label>
               <Input
                 id="programName"
                 value={newProgram.name}
                 onChange={(e) => setNewProgram({ ...newProgram, name: e.target.value })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:border-primary"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="programDirector" className="text-right text-green-700">
+              <Label htmlFor="programDirector" className="text-right text-black">
                 Director
               </Label>
               <Input
                 id="programDirector"
                 value={newProgram?.director}
                 onChange={(e) => setNewProgram({ ...newProgram, director: e.target.value })}
-                className="col-span-3 border-green-300 focus:border-green-500"
+                className="col-span-3 border-black focus:borderprimary"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right text-green-700">
+              <Label className="text-right text-black">
                 Sedes
               </Label>
               <div className="col-span-3 space-y-2">
@@ -662,7 +657,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
               </div>
             </div>
           </div>
-          <Button onClick={handleConfirmProgram} className="bg-green-600 text-white hover:bg-green-700">
+          <Button onClick={handleConfirmProgram} className="bg-primary text-white hover:bg-green-700">
             {editMode === 'create' ? "Agregar carrera" : "Guardar Cambios"}
           </Button>
         </DialogContent>
@@ -672,11 +667,11 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       <Dialog open={isAddExistingCampusDialogOpen} onOpenChange={setIsAddExistingCampusDialogOpen}>
         <DialogContent className="bg-green-50">
           <DialogHeader>
-            <DialogTitle className="text-green-700">Agregar Sede Existente</DialogTitle>
+            <DialogTitle className="text-primary">Agregar Sede Existente</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="existingCampus" className="text-right text-green-700">
+              <Label htmlFor="existingCampus" className="text-right text-black">
                 Sede
               </Label>
               <Select onValueChange={(value) => setSelectedExistingCampusId(Number(value))}>
@@ -695,7 +690,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
               </Select>
             </div>
           </div>
-          <Button onClick={handleConfirmAddExistingCampus} className="bg-green-600 text-white hover:bg-green-700">
+          <Button onClick={handleConfirmAddExistingCampus} className="bg-primary text-white hover:bg-green-700">
             Agregar Sede
           </Button>
         </DialogContent>
@@ -705,12 +700,12 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       <Dialog open={isAddExistingProgramDialogOpen} onOpenChange={setIsAddExistingProgramDialogOpen}>
         <DialogContent className="bg-green-50">
           <DialogHeader>
-            <DialogTitle className="text-green-700">Agregar carrera Existente</DialogTitle>
+            <DialogTitle className="text-primary">Agregar carrera Existente</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="existingProgram" className="text-right text-green-700">
-                carrera
+              <Label htmlFor="existingProgram" className="text-right text-black">
+                Carrera
               </Label>
               <Select onValueChange={(value) => setSelectedExistingProgramId(Number(value))}>
                 <SelectTrigger className="col-span-3">
@@ -728,7 +723,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right text-green-700">
+              <Label className="text-right text-black">
                 Sedes
               </Label>
               <div className="col-span-3 space-y-2">
@@ -751,7 +746,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
               </div>
             </div>
           </div>
-          <Button onClick={handleConfirmAddExistingProgram} className="bg-green-600 text-white hover:bg-green-700">
+          <Button onClick={handleConfirmAddExistingProgram} className="bg-primary text-white hover:bg-green-700">
             Agregar carrera
           </Button>
         </DialogContent>

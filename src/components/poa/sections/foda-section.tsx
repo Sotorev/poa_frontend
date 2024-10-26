@@ -215,7 +215,6 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
                 value={item.description}
                 onChange={(e) => {
                   const updatedDescription = e.target.value
-                  // Actualizar temporalmente en el estado local
                   setFodaData(prevData => ({
                     ...prevData,
                     [category]: prevData[category].map(fodaItem =>
@@ -292,10 +291,10 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
           }`}
       >
         <div className="p-4 bg-green-50 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
+          <h2 className="text-xl font-semibold text-primary">{name}</h2>
           <div className="flex items-center space-x-2">
             {isEditable && (
-              <Button variant="ghost" size="sm" onClick={handleEdit}>
+              <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-green-100" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
                 {isEditing ? "Finalizar edición" : "Editar"}
               </Button>
@@ -303,6 +302,7 @@ export function FodaSection({ name, isActive, facultyId, isEditable }: SectionPr
             <Button
               variant="ghost"
               size="icon"
+              className="text-primary hover:text-primary hover:bg-green-100"
               onClick={() => setIsMinimized(!isMinimized)}
               aria-label={isMinimized ? "Expandir sección" : "Minimizar sección"}
             >
