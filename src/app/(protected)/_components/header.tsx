@@ -73,8 +73,8 @@ const navItems: NavItem[] = [
 		// requiredRoles: ['Vicerrector', 'Decano', 'Administrador'],
 		subItems: [
 			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: Settings },
-			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente"], icon: FileText },
-			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano'], icon: CheckSquare },
+			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente", "Administrador"], icon: FileText },
+			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: CheckSquare },
 		],
 	},
 	{
@@ -84,8 +84,8 @@ const navItems: NavItem[] = [
 		description: "Plan Estratégico Institucional",
 		requiredRoles: ['Vicerrector', "Decano", "Administrador"],
 		subItems: [
-			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector'], icon: FileText },
-			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ['Vicerrector'], icon: Settings },
+			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector', "Administrador"], icon: FileText },
+			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ['Vicerrector', "Administrador"], icon: Settings },
 		],
 	},
 ]
