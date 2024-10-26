@@ -17,9 +17,9 @@ export function ProtectedRoute({ children, moduleName, action }: ProtectedRouteP
 	const permissions = usePermissions()
 
 	useEffect(() => {
-		if (status === 'unauthenticated') return 
+		if (status === 'unauthenticated') return
 		if (!session) {
-			router.push('/iniciar-sesion') 
+			router.push('/iniciar-sesion')
 		} else {
 			const hasPermission = permissions[`can${action}`](moduleName)
 			if (!hasPermission) {
