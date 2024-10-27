@@ -141,28 +141,6 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
     setIsEditing(!isEditing)
   }
 
-  const handleSave = async () => {
-    setIsLoading(true)
-    try {
-      // Here you would typically send the updated team members to the backend
-      // For now, we'll just simulate an API call
-      // await new Promise(resolve => setTimeout(resolve, 1000))
-      setIsEditing(false)
-      toast({
-        title: "Éxito",
-        description: "Cambios guardados correctamente.",
-      })
-    } catch {
-      toast({
-        title: "Error",
-        description: "No se pudieron guardar los cambios.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleAddMember = () => {
     setIsDialogOpen(true)
     setSelectedUserId("")
@@ -188,6 +166,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
       toast({
         title: "Éxito",
         description: "Miembro agregado correctamente.",
+        variant: "success",
       })
     } catch {
       toast({
@@ -215,6 +194,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
       toast({
         title: "Éxito",
         description: "Miembro removido correctamente.",
+        variant: "success",
       })
     } catch {
       toast({
@@ -260,6 +240,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
       toast({
         title: "Éxito",
         description: "Usuario creado correctamente.",
+        variant: "success",
       })
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -284,15 +265,15 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
     <div id={name} className="mb-6">
       <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
         <div className="p-4 bg-green-50 flex flex-wrap justify-between items-center">
-          <h2 className="text-xl font-semibold text-green-800 mb-2 sm:mb-0">{name}</h2>
+          <h2 className="text-xl font-semibold text-primary mb-2 sm:mb-0">{name}</h2>
           <div className="flex items-center space-x-2">
             {isEditable && (
-              <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-800 hover:bg-green-100">
+              <Button variant="ghost" size="sm" onClick={handleEdit} className="text-primary hover:text-primary hover:bg-green-100">
                 <Edit className="h-4 w-4 mr-2" />
                 {isEditing ? "Finalizar edición" : "Editar"}
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-800 hover:bg-green-100">
+            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-primary hover:text-primary hover:bg-green-100">
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
           </div>
@@ -301,13 +282,13 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
           <div className="p-4 bg-white">
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium mb-2 text-green-700">Miembros del Equipo Responsable</h3>
+                <h3 className="text-lg font-medium mb-2 text-primary">Miembros del Equipo Responsable</h3>
                 {isEditing && (
                   <div className="flex flex-wrap gap-2 mb-4">
                     <Button
                       variant="outline"
                       onClick={handleAddMember}
-                      className="bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+                      className="bg-green-50 text-primary hover:bg-green-100 hover:text-primary"
                     >
                       <PlusCircle className="h-4 w-4 mr-2" />
                       Agregar Miembro
@@ -315,7 +296,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
                     <Button
                       variant="outline"
                       onClick={() => setIsNewUserDialogOpen(true)}
-                      className="bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+                      className="bg-green-50 text-primary hover:bg-green-100 hover:text-primary"
                     >
                       <UserPlus className="h-4 w-4 mr-2" />
                       Crear Nuevo Usuario
@@ -326,10 +307,10 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-green-700">Nombre</TableHead>
-                        <TableHead className="text-green-700">Correo electrónico</TableHead>
-                        <TableHead className="text-green-700">Nombre de usuario</TableHead>
-                        {isEditing && <TableHead className="text-green-700">Acciones</TableHead>}
+                        <TableHead className="text-black">Nombre</TableHead>
+                        <TableHead className="text-black">Correo electrónico</TableHead>
+                        <TableHead className="text-black">Nombre de usuario</TableHead>
+                        {isEditing && <TableHead className="text-black">Acciones</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -344,7 +325,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleRemoveMember(member.userId)}
-                                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                className="text-primary hover:text-primary hover:bg-green-100"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -356,16 +337,6 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
                   </Table>
                 </div>
               </div>
-              {isEditing && (
-                <Button
-                  onClick={handleSave}
-                  className="mt-4 bg-green-600 text-white hover:bg-green-700"
-                  disabled={isLoading}
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                  Guardar Cambios
-                </Button>
-              )}
             </div>
           </div>
         )}
@@ -374,15 +345,15 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="bg-green-50 sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-green-700">Agregar Miembro</DialogTitle>
+            <DialogTitle className="text-primary">Agregar Miembro</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="member" className="text-right text-green-700">
+              <Label htmlFor="member" className="text-right text-black">
                 Miembro
               </Label>
               <Select onValueChange={handleSelectChange} value={selectedUserId}>
-                <SelectTrigger className="w-[180px] border-green-300 focus:border-green-500">
+                <SelectTrigger className="w-[180px] border-primary focus:border-green-500">
                   <SelectValue placeholder="Selecciona un miembro" />
                 </SelectTrigger>
                 <SelectContent>
@@ -395,7 +366,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               </Select>
             </div>
           </div>
-          <Button onClick={handleConfirmAddMember} className="bg-green-600 text-white hover:bg-green-700" disabled={isLoading || !selectedUserId}>
+          <Button onClick={handleConfirmAddMember} className="bg-primary text-white hover:bg-green-700" disabled={isLoading || !selectedUserId}>
             {isLoading ? <Loader2 className="h-4  w-4 animate-spin" /> : "Agregar Miembro"}
           </Button>
         </DialogContent>
@@ -404,11 +375,11 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
       <Dialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen}>
         <DialogContent className="bg-green-50 sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-green-700">Crear Nuevo Usuario</DialogTitle>
+            <DialogTitle className="text-primary">Crear Nuevo Usuario</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="firstName" className="text-right text-green-700">
+              <Label htmlFor="firstName" className="text-right text-black">
                 Nombre
               </Label>
               <Input
@@ -420,7 +391,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="lastName" className="text-right text-green-700">
+              <Label htmlFor="lastName" className="text-right text-black">
                 Apellido
               </Label>
               <Input
@@ -432,7 +403,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right text-green-700">
+              <Label htmlFor="email" className="text-right text-black">
                 Correo electrónico
               </Label>
               <Input
@@ -445,7 +416,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="username" className="text-right text-green-700">
+              <Label htmlFor="username" className="text-right text-black">
                 Nombre de usuario
               </Label>
               <Input
@@ -457,7 +428,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="password" className="text-right text-green-700">
+              <Label htmlFor="password" className="text-right text-black">
                 Contraseña
               </Label>
               <Input
@@ -470,11 +441,11 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="roleId" className="text-right text-green-700">
+              <Label htmlFor="roleId" className="text-right text-black">
                 Rol
               </Label>
               <Select name="roleId" onValueChange={(value) => handleNewUserChange({ target: { name: 'roleId', value } } as React.ChangeEvent<HTMLSelectElement>)}>
-                <SelectTrigger className="w-[180px] border-green-300 focus:border-green-500">
+                <SelectTrigger className="w-[180px] border-black focus:border-primary">
                   <SelectValue placeholder="Selecciona un rol" />
                 </SelectTrigger>
                 <SelectContent>
@@ -487,7 +458,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               </Select>
             </div>
           </div>
-          <Button onClick={handleCreateNewUser} className="bg-green-600 text-white hover:bg-green-700" disabled={isLoading}>
+          <Button onClick={handleCreateNewUser} className="bg-primary text-white hover:bg-green-700" disabled={isLoading}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear Usuario"}
           </Button>
         </DialogContent>

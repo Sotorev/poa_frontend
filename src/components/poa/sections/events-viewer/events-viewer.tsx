@@ -38,14 +38,14 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     costoTotal: apiEvent.totalCost,
     aporteUMES: apiEvent.financings.find(f => f.financingSourceId === 1)?.amount || 0,
     aporteOtros: apiEvent.financings.filter(f => f.financingSourceId !== 1).reduce((sum, f) => sum + f.amount, 0),
-    tipoCompra: apiEvent.purchaseType,
+    tipoCompra: apiEvent.purchaseType?.name || '',
     detalle: apiEvent.costDetailDocumentPath || '', // Ajusta el nombre del campo según los datos reales
     responsables: {
       principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
       ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
       seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
     },
-    recursos: apiEvent.resources.map(r => `Recurso ${r.resourceId}`).join(', '), // Ajusta según los datos reales
+    recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
     indicadorLogro: apiEvent.achievementIndicator,
     detalleProceso: apiEvent.processDocumentPath || '',
     comentarioDecano: '', // Ajusta según los datos reales
@@ -177,9 +177,9 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
       <div className="mb-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
           <div className="p-4 bg-green-50 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">Revisión de eventos</h2>
+            <h2 className="text-xl font-semibold text-primary">Revisión de eventos</h2>
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
+              <Button variant="ghost" className="text-primary hover:text-primary hover:bg-green-100" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
                 {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
               </Button>
             </div>

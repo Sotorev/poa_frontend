@@ -18,6 +18,18 @@ export interface ApiEventFinancing {
   isDeleted: boolean;
 }
 
+export interface ApiPurchaseType {
+  purchaseTypeId: number;
+  name: string;
+  isDeleted: boolean;
+}
+
+export interface ApiInstitutionalResource {
+  resourceId: number;
+  name: string;
+  event_resource: ApiEventResource;
+}
+
 export interface ApiEventResource {
   eventResourceId: number;
   eventId: number;
@@ -144,7 +156,8 @@ export interface ApiEvent {
   objective: string;
   isDelayed: boolean;
   achievementIndicator: string;
-  purchaseType: string;
+  purchaseTypeId: number;
+  purchaseType: ApiPurchaseType;
   totalCost: number;
   processDocumentPath: string | null;
   costDetailDocumentPath?: string | null;
@@ -153,7 +166,6 @@ export interface ApiEvent {
   userId: number;
   dates: ApiEventDate[];
   financings: ApiEventFinancing[];
-  resources: ApiEventResource[];
   responsibles: ApiEventResponsible[];
   costDetails: any[];
   campus: ApiCampus;
@@ -161,6 +173,7 @@ export interface ApiEvent {
   ods: ApiOds[];
   eventApprovals: ApiEventApproval[];
   user: ApiUser;
+  institutionalResources: ApiInstitutionalResource[];
 }
 
 // Interfaces existentes

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ChevronDown, ChevronUp, Edit, Save } from 'lucide-react'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { useToast } from "@/hooks/use-toast"
 
 interface FacultadDataSectionProps {
   name: string
@@ -26,50 +27,90 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
     cantidadEstudiantes: ""
   })
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
+  const [studentCountExists, setStudentCountExists] = useState(false)
+  const [studentCountId, setStudentCountId] = useState<number | null>(null)
+  const currentYear = new Date().getFullYear() 
   const user = useCurrentUser()
+  const { toast } = useToast()
 
-  useEffect(() => {
-    const fetchData = async () => {
+  // Función para obtener los datos
+  const fetchData = async () => {
+    try {
+      const [facultyResponse, poaResponse] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
+          headers: {
+            'Authorization': `Bearer ${user?.token}`,
+          },
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${poaId}`, {
+          headers: {
+            'Authorization': `Bearer ${user?.token}`,
+          },
+        })
+      ])
+
+      if (!facultyResponse.ok || !poaResponse.ok) {
+        throw new Error('Error fetching data')
+      }
+
+      const facultyData = await facultyResponse.json()
+      const poaData = await poaResponse.json()
+
+      let studentCountData = null
+      let studentCountExists = false
+      let studentCountId = null
+
       try {
-        const [facultyResponse, poaResponse] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/faculties/${facultyId}`, {
-            headers: {
-              'Authorization': `Bearer ${user?.token}`,
-            },
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${poaId}`, {
-            headers: {
-              'Authorization': `Bearer ${user?.token}`,
-            },
-          })
-        ])
+        const studentCountResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/facultystudenthistories/count/${facultyId}/${currentYear}`, {
+          headers: {
+            'Authorization': `Bearer ${user?.token}`,
+          },
+        })
 
-        if (!facultyResponse.ok || !poaResponse.ok) {
-          throw new Error('Error fetching data')
+        if (!studentCountResponse.ok) {
+          throw new Error('Error fetching student count')
         }
 
-        const facultyData = await facultyResponse.json()
-        const poaData = await poaResponse.json()
+        studentCountData = await studentCountResponse.json()
+        
+        // Ajuste para acceder correctamente a studentCount e id
+        if (studentCountData.studentCount) {
+          studentCountExists = true
+          studentCountId = studentCountData.studentCount.id
+        } else {
+          studentCountExists = false
+        }
 
-        setFacultadData({
-          nombreFacultad: facultyData.name,
-          nombreDecano: facultyData.deanName,
-          fechaPresentacion: poaData.submissionDate || new Date().toISOString().split('T')[0],
-          cantidadEstudiantes: facultyData.studentCount || ""
-        })
-        setTempFacultadData({
-          nombreFacultad: facultyData.name,
-          nombreDecano: facultyData.deanName,
-          fechaPresentacion: poaData.submissionDate || new Date().toISOString().split('T')[0],
-          cantidadEstudiantes: facultyData.studentCount || ""
-        })
       } catch (error) {
-        console.error('Error fetching data:', error)
+        console.error('Error fetching student count:', error)
+        studentCountExists = false
       }
-    }
 
+      setFacultadData({
+        nombreFacultad: facultyData.name,
+        nombreDecano: facultyData.deanName,
+        fechaPresentacion: poaData.submissionDate, 
+        cantidadEstudiantes: studentCountData?.studentCount?.studentCount || ""
+      })
+
+      setTempFacultadData({
+        nombreFacultad: facultyData.name,
+        nombreDecano: facultyData.deanName,
+        fechaPresentacion: poaData.submissionDate, 
+        cantidadEstudiantes: studentCountData?.studentCount?.studentCount || ""
+      })
+
+      setStudentCountExists(studentCountExists)
+      setStudentCountId(studentCountId)
+
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    }
+  }
+
+  useEffect(() => {
     fetchData()
-  }, [facultyId, poaId, user])
+  }, [facultyId, poaId, user, currentYear])
 
   const handleEdit = () => {
     if (isEditing) {
@@ -89,7 +130,6 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
         body: JSON.stringify({
           name: tempFacultadData.nombreFacultad,
           deanName: tempFacultadData.nombreDecano,
-          studentCount: parseInt(tempFacultadData.cantidadEstudiantes)
         })
       })
 
@@ -97,10 +137,61 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
         throw new Error('Error updating faculty data')
       }
 
+      const studentCount = parseInt(tempFacultadData.cantidadEstudiantes)
+
+      if (studentCountExists && studentCountId !== null) {
+        const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/facultystudenthistories/${studentCountId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
+          body: JSON.stringify({
+            studentCount: studentCount,
+            facultyId: facultyId,
+            year: currentYear,
+          })
+        })
+
+        if (!updateResponse.ok) {
+          throw new Error('Error updating student count')
+        }
+
+      } else {
+        const createResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/facultystudenthistories/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`,
+          },
+          body: JSON.stringify({
+            studentCount: studentCount,
+            facultyId: facultyId,
+            year: currentYear,
+          })
+        })
+
+        if (!createResponse.ok) {
+          throw new Error('Error creating student count')
+        }
+      }
+
       setFacultadData(tempFacultadData)
       setIsEditing(false)
-    } catch (error) {
-      console.error('Error saving data:', error)
+
+      await fetchData()
+      toast({
+        title: "Exito",
+        description: "Cambios guardados correctamente.",
+        variant: "success",
+      })
+
+    } catch{
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -113,17 +204,17 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
   }
 
   return (
-    <Card className={`mb-6 ${isActive ? 'ring-2 ring-green-600' : ''}`}>
+    <Card id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-600' : ''}`}>
       <CardHeader className="bg-green-50 flex flex-row items-center justify-between py-2">
-        <CardTitle className="text-xl font-semibold text-green-800">{name}</CardTitle>
+        <CardTitle className="text-xl font-semibold text-primary">{name}</CardTitle>
         <div className="flex items-center space-x-2">
           {isEditable && (
-            <Button variant="ghost" size="sm" onClick={handleEdit} className="text-green-700 hover:text-green-900">
+            <Button variant="ghost" size="sm" onClick={handleEdit} className="text-primary hover:text-primary hover:bg-green-100">
               <Edit className="h-4 w-4 mr-2" />
               {isEditing ? "Cancelar" : "Editar"}
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-green-700 hover:text-green-900">
+          <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="text-primary hover:text-primary hover:bg-green-100">
             {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           </Button>
         </div>
@@ -132,7 +223,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
         <CardContent className="p-4 bg-white">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="nombreFacultad" className="text-sm font-medium text-gray-700">Nombre de la Facultad</Label>
+              <Label htmlFor="nombreFacultad" className="text-sm font-medium text-black">Nombre de la Facultad</Label>
               <Input
                 id="nombreFacultad"
                 name="nombreFacultad"
@@ -143,7 +234,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
               />
             </div>
             <div>
-              <Label htmlFor="nombreDecano" className="text-sm font-medium text-gray-700">Nombre del Decano</Label>
+              <Label htmlFor="nombreDecano" className="text-sm font-medium text-black">Nombre del Decano</Label>
               <Input
                 id="nombreDecano"
                 name="nombreDecano"
@@ -154,7 +245,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
               />
             </div>
             <div>
-              <Label htmlFor="fechaPresentacion" className="text-sm font-medium text-gray-700">Fecha de Presentación del POA</Label>
+              <Label htmlFor="fechaPresentacion" className="text-sm font-medium text-black">Fecha de Presentación del POA</Label>
               <Input
                 id="fechaPresentacion"
                 name="fechaPresentacion"
@@ -164,9 +255,8 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
                 className="mt-1"
               />
             </div>
-            {/* Commented out Cantidad de Estudiantes field
             <div>
-              <Label htmlFor="cantidadEstudiantes" className="text-sm font-medium text-gray-700">Cantidad de Estudiantes</Label>
+              <Label htmlFor="cantidadEstudiantes" className="text-sm font-medium text-black">Cantidad de Estudiantes</Label>
               <Input
                 id="cantidadEstudiantes"
                 name="cantidadEstudiantes"
@@ -177,10 +267,9 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
                 className="mt-1"
               />
             </div>
-            */}
           </div>
           {isEditing && (
-            <Button onClick={handleSave} className="mt-6 bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={handleSave} className="mt-6 bg-primary hover:bg-green-700 text-white">
               <Save className="h-4 w-4 mr-2" />
               Guardar Cambios
             </Button>

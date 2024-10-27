@@ -14,8 +14,7 @@ import { auth } from '@/auth'
 export default async function Dashboard() {
 	const session = await auth();
 	if (!session) return null
-	const user = session.user
-
+	const user = session.user	
 	// Placeholder data - replace with actual data from your backend
 	const stats = {
 		completedProjects: 12,

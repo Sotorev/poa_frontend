@@ -28,7 +28,7 @@ export default function Unauthorized() {
 					</div>
 					<div className="text-center">
 						<Link
-							href="/"
+							href="/inicio"
 							className="font-medium text-[#007041] hover:text-[#2e8f66]"
 						>
 							Ir a la página principal

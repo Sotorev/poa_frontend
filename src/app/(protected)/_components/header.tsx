@@ -17,33 +17,27 @@ import {
 	NavigationMenuTrigger,
 	navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 import Logo from "@/assets/images/logo.png"
-import QuetzalIcon from "@/assets/icons/quetzal.svg"
 import Image from "next/image"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { usePermissions } from "@/hooks/use-permissions"
 import clsx from "clsx"
-import AccountButton from "../usuarios/_components/account-button"
+import AccountButton from "../autorizacion/_components/account-button"
 
-type Action = 'Create' | 'Edit' | 'View' | 'Delete';
+type Action = 'Create' | 'Edit' | 'View' | 'Delete'
+type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente'
 
 type NavItem = {
-	title: string;
-	href: string;
-	icon: React.ElementType;
-	description: string;
-	requiredPermission: { module: string; action: Action };
-	subItems?: NavItem[];
-};
+	title: string
+	href: string
+	icon: React.ElementType
+	description: string
+	requiredPermission?: { module: string; action: Action }
+	requiredRoles?: Role[]
+	subItems?: NavItem[]
+}
 
 const navItems: NavItem[] = [
 	{
@@ -61,22 +55,26 @@ const navItems: NavItem[] = [
 		requiredPermission: { module: "Faculty", action: "View" }
 	},
 	{
-		title: "Usuarios",
-		href: "/usuarios/gestion",
+		title: "Autorización",
+		href: "/autorizacion",
 		icon: User,
 		description: "Gestión de usuarios",
-		requiredPermission: { module: "Auth", action: "View" }
+		requiredPermission: { module: "Auth", action: "Edit" },
+		subItems: [
+			{ title: "Usuarios", href: "/autorizacion/usuarios", description: "Gestión de usuarios", requiredPermission: { module: "Auth", action: "View" }, icon: User },
+			{ title: "Roles", href: "/autorizacion/roles", description: "Gestión de roles", requiredPermission: { module: "Auth", action: "View" }, icon: Settings },
+		],
 	},
 	{
 		title: "POA",
 		href: "/poa",
 		icon: ClipboardList,
 		description: "Plan Operativo Anual",
-		requiredPermission: { module: "POA", action: "View" },
+		// requiredRoles: ['Vicerrector', 'Decano', 'Administrador'],
 		subItems: [
-			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredPermission: { module: "POA", action: "Edit" }, icon: Settings },
-			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredPermission: { module: "POA", action: "Create" }, icon: FileText },
-			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredPermission: { module: "POA", action: "Edit" }, icon: CheckSquare },
+			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: Settings },
+			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente", "Administrador"], icon: FileText },
+			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: CheckSquare },
 		],
 	},
 	{
@@ -84,22 +82,31 @@ const navItems: NavItem[] = [
 		href: "/pei",
 		icon: BarChart2,
 		description: "Plan Estratégico Institucional",
-		requiredPermission: { module: "PEI", action: "View" },
+		requiredRoles: ['Vicerrector', "Decano", "Administrador"],
 		subItems: [
-			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredPermission: { module: "PEI", action: "Create" }, icon: FileText },
-			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredPermission: { module: "PEI", action: "Edit" }, icon: Settings },
+			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector', "Administrador"], icon: FileText },
+			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ['Vicerrector', "Administrador"], icon: Settings },
 		],
 	},
 ]
 
 export default function Header() {
-	const user = useCurrentUser();
-	const pathname = usePathname();
-	const permissions = usePermissions();
+	const user = useCurrentUser()
+	const pathname = usePathname()
+	const permissions = usePermissions()
 
-	const filteredNavItems = navItems.filter(item =>
-		permissions[`can${item.requiredPermission.action}` as keyof typeof permissions](item.requiredPermission.module)
-	);
+	const checkAccess = (item: NavItem): boolean => {
+		if (item.requiredPermission) {
+			const permissionKey = `can${item.requiredPermission.action}` as keyof typeof permissions;
+			return permissions[permissionKey](item.requiredPermission.module as any);
+		}
+		if (item.requiredRoles && item.requiredRoles.length > 0) {
+			return permissions.hasRole(item.requiredRoles)
+		}
+		return true
+	}
+
+	const filteredNavItems = navItems.filter(checkAccess)
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -118,9 +125,7 @@ export default function Header() {
 											<NavigationMenuTrigger className="bg-transparent">{item.title}</NavigationMenuTrigger>
 											<NavigationMenuContent>
 												<ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-													{item.subItems.filter(subItem =>
-														permissions[`can${subItem.requiredPermission.action}` as keyof typeof permissions](subItem.requiredPermission.module)
-													).map((subItem) => (
+													{item.subItems.filter(checkAccess).map((subItem) => (
 														<ListItem key={subItem.title} title={subItem.title} href={subItem.href}>
 															{subItem.description}
 														</ListItem>
@@ -164,6 +169,8 @@ export default function Header() {
 	)
 }
 
+// ... (MobileNav and ListItem components remain the same)
+
 type MobileNavProps = {
 	navItems: NavItem[];
 	permissions: ReturnType<typeof usePermissions>;
@@ -190,7 +197,7 @@ function MobileNav({ navItems, permissions }: MobileNavProps) {
 						{item.subItems && (
 							<div className="ml-4 space-y-1">
 								{item.subItems.filter(subItem =>
-									permissions[`can${subItem.requiredPermission.action}` as keyof typeof permissions](subItem.requiredPermission.module)
+									subItem.requiredPermission && permissions[`can${subItem.requiredPermission.action}` as keyof typeof permissions](subItem.requiredPermission.module as any)
 								).map((subItem) => (
 									<Button key={subItem.title} variant="ghost" className={clsx("w-full justify-start", pathname === subItem.href && "bg-muted")} asChild>
 										<Link href={subItem.href}>{subItem.title}</Link>
