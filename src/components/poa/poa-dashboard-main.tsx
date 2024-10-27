@@ -20,6 +20,7 @@ import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { FodaSection } from './sections/foda-section'
+import { OtrosDocumentos } from './sections/sections-otros-documentos'
 import EventsViewerComponent from './sections/events-viewer/events-viewer'
 import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useCurrentUser } from '@/hooks/use-current-user'
@@ -40,6 +41,7 @@ const sections = [
   { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
   { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FodaSection },
+  { name: "Agregar/confirmar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
   { name: "Aprobar POA", icon: CheckCheck, component: PoaApproval }
 ]
