@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { WelcomeVicechancellor } from './sections/welcome-vicechancellor'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -23,6 +23,7 @@ import { FodaSection } from './sections/foda-section'
 import EventsViewerViceChancellorComponent from './sections/events-viewer/events-viewer-vicechancellor'
 import PoaActions from './sections/poa-actions'
 import { useCurrentUser } from '@/hooks/use-current-user'
+
 export interface SectionProps {
   name: string
   isActive: boolean
@@ -31,20 +32,58 @@ export interface SectionProps {
   userId: number
   rolId: number
   isEditable: boolean
+  roleName: string
 }
 
-const sections = [
-  { name: "Agregar/confirmar datos de la facultad", icon: Building2, component: FacultadDataSection },
-  { name: "Agregar/confirmar Estructura de la facultad", icon: LayoutDashboard, component: FacultyStructureSection },
-  { name: "Agregar/confirmar equipo responsable POA", icon: UserCog, component: EquipoResponsableSectionComponent },
-  { name: "Agregar/confirmar FODA", icon: BarChart2, component: FodaSection },
-  { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerViceChancellorComponent },
-  { name: "Acciones", icon: CheckCheck, component: PoaActions },
+interface Section {
+  name: string
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  component: React.ComponentType<SectionProps>
+  roles: string[]
+}
+
+const allSections: Section[] = [
+  { 
+    name: "Datos de la facultad", 
+    icon: Building2, 
+    component: FacultadDataSection,
+    roles: ["Vicerrector académico", "Vicerrector financiero"]
+  },
+  { 
+    name: "Estructura de la facultad", 
+    icon: LayoutDashboard, 
+    component: FacultyStructureSection,
+    roles: ["Vicerrector académico"]
+  },
+  { 
+    name: "Equipo responsable POA", 
+    icon: UserCog, 
+    component: EquipoResponsableSectionComponent,
+    roles: ["Vicerrector académico"]
+  },
+  { 
+    name: "FODA", 
+    icon: BarChart2, 
+    component: FodaSection,
+    roles: ["Vicerrector académico"]
+  },
+  { 
+    name: "Eventos", 
+    icon: ListTodo, 
+    component: EventsViewerViceChancellorComponent,
+    roles: ["Vicerrector académico", "Vicerrector financiero"]
+  },
+  { 
+    name: "Acciones", 
+    icon: CheckCheck, 
+    component: PoaActions,
+    roles: ["Vicerrector académico", "Vicerrector financiero"]
+  },
 ]
 
 export function PoaAcademicApproval() {
   const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true) // Siempre visible para depuración
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true)
   const [isSidebarFixed, setIsSidebarFixed] = useState(false)
   const [poaId, setPoaId] = useState<number | null>(null)
   const [facultyId, setFacultyId] = useState<number | null>(null)
@@ -55,7 +94,6 @@ export function PoaAcademicApproval() {
   const [roleName, setRoleName] = useState<string>()
   const user = useCurrentUser();
 
-  // Fetch para obtener el userId y rolId
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -74,7 +112,6 @@ export function PoaAcademicApproval() {
         setUserId(userData.userId)
         setRolId(userData.roleId)
         setRoleName(userData.role.roleName)
-
       } catch (error: any) {
         console.error("Error al obtener los datos del usuario:", error)
       }
@@ -83,7 +120,6 @@ export function PoaAcademicApproval() {
     fetchUserData()
   }, [user])
 
-  // Manejar la activación de una sección
   const handleSetActive = (to: string) => {
     setActiveSection(to)
     setTimeout(() => {
@@ -91,13 +127,17 @@ export function PoaAcademicApproval() {
     }, 1000)
   }
 
-  // Manejar la selección de una facultad desde WelcomeVicechancellor
   const handleSelectFaculty = (selectedFacultyId: number, selectedPoaId: number) => {
     setFacultyId(selectedFacultyId)
     setPoaId(selectedPoaId)
   }
 
-  // Manejar el movimiento del mouse para mostrar/ocultar el sidebar
+  const availableSections = useMemo(() => {
+    if (!roleName) return []
+
+    return allSections.filter(section => section.roles.includes(roleName))
+  }, [roleName])
+
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (sidebarRef.current && !isSidebarFixed) {
@@ -115,16 +155,6 @@ export function PoaAcademicApproval() {
     }
   }, [isSidebarFixed])
 
-  // Verificación de estados
-  useEffect(() => {
-    console.log("Estados actuales:")
-    console.log("facultyId:", facultyId)
-    console.log("poaId:", poaId)
-    console.log("userId:", userId)
-    console.log("rolId:", rolId)
-    console.log("roleName:", roleName)
-  }, [facultyId, poaId, userId, rolId, roleName])
-
   return (
     <main className="flex bg-green-50 min-h-screen">
       <TooltipProvider>
@@ -136,7 +166,7 @@ export function PoaAcademicApproval() {
         >
           <ScrollArea className="flex-grow">
             <nav className="p-2 flex flex-col items-center space-y-4">
-              {sections.map((section) => (
+              {availableSections.map((section) => (
                 <Tooltip key={section.name}>
                   <TooltipTrigger asChild>
                     <div>
@@ -202,9 +232,9 @@ export function PoaAcademicApproval() {
         <WelcomeVicechancellor onSelectFaculty={handleSelectFaculty} />
 
         {/* Renderizar las secciones solo si facultyId y poaId no son null */}
-        {(facultyId !== null && poaId !== null && userId !== undefined && rolId !== undefined) && (
+        {(facultyId !== null && poaId !== null && userId !== undefined && rolId !== undefined && roleName) && (
           <div className="space-y-8">
-            {sections.map((section) => (
+            {availableSections.map((section) => (
               <section.component
                 key={section.name}
                 name={section.name}
@@ -214,6 +244,7 @@ export function PoaAcademicApproval() {
                 userId={userId}
                 rolId={rolId}
                 isEditable={false}
+                roleName={roleName}
               />
             ))}
           </div>
