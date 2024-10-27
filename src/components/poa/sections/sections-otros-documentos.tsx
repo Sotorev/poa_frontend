@@ -6,76 +6,205 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ChevronDown, ChevronUp, Edit, Plus, Trash2, Upload } from 'lucide-react'
 import Image from 'next/image'
+import { useCurrentUser } from '@/hooks/use-current-user'
+import { useToast } from "@/hooks/use-toast"
+import { AlertCircle } from 'lucide-react'
 
 interface SectionProps {
   name: string
   isActive: boolean
+  poaId: number
 }
 
 interface Document {
   id: string
+  attachmentId: string
+  poaId: number
   name: string
+  filePath: string
+  uploadDate: Date
+  isDeleted: boolean
   file: File
   previewUrl: string
 }
 
-export function OtrosDocumentos({ name, isActive }: SectionProps) {
+export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [documents, setDocuments] = useState<Document[]>([])
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const user = useCurrentUser();
+  const { toast } = useToast()
+
+  const fetchAttachments = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/poa/${poaId}/attachments`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Error al obtener los archivos');
+      
+      const attachments = await response.json();
+      setDocuments(attachments.map((attachment: any) => ({
+        id: attachment.attachmentId.toString(),
+        attachmentId: attachment.attachmentId,
+        poaId: attachment.poaId,
+        name: attachment.name,
+        filePath: attachment.filePath,
+        uploadDate: new Date(attachment.uploadDate),
+        isDeleted: attachment.isDeleted,
+        file: new File([], attachment.name),
+        previewUrl: `/uploads/${attachment.filePath}`
+      })));
+    } catch (error) {
+      console.error('Error fetching attachments:', error);
+    }
+  };
 
   useEffect(() => {
+    fetchAttachments();
+
     return () => {
       documents.forEach(doc => {
         if (doc.previewUrl) {
-          URL.revokeObjectURL(doc.previewUrl)
+          URL.revokeObjectURL(doc.previewUrl);
         }
-      })
-    }
-  }, [documents])
+      });
+    };
+  }, [poaId]);
 
   const handleEdit = () => {
     setIsEditing(!isEditing)
   }
 
-  const handleSave = () => {
-    setIsEditing(false)
-    console.log('Documentos guardados:', documents)
-  }
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
     if (files && files.length > 0) {
       const newDocuments = Array.from(files).map(file => {
-        const previewUrl = URL.createObjectURL(file)
-        console.log(`Created preview URL for ${file.name}:`, previewUrl)
+        const previewUrl = URL.createObjectURL(file);
         return {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          attachmentId: '',
+          poaId: poaId,
           name: file.name,
+          filePath: '',
+          uploadDate: new Date(),
+          isDeleted: false,
           file: file,
           previewUrl: previewUrl
+        };
+      });
+
+      setDocuments(prevDocs => [...prevDocs, ...newDocuments]);
+
+      try {
+        const formData = new FormData();
+        Array.from(files).forEach(file => {
+          formData.append('documents', file);
+        });
+        formData.append('poaId', poaId.toString());
+        formData.append('name', files[0].name);
+        formData.append('uploadDate', new Date().toISOString());
+        formData.append('isDeleted', 'false');
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${user?.token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al subir el archivo');
         }
-      })
-      setDocuments(prevDocs => [...prevDocs, ...newDocuments])
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const result = await response.json();
+          setDocuments(prevDocs => 
+            prevDocs.map(doc => 
+              doc.name === files[0].name ? { ...doc, attachmentId: result.attachmentId } : doc
+            )
+          );
+          toast({
+            title: "Éxito",
+            description: "Documento subido correctamente.",
+            variant: "success",
+          });
+        } else {
+          console.warn('La respuesta no es JSON:', await response.text());
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "No se pudo subir el documento.",
+          variant: "destructive",
+        });
+        fetchAttachments();
+      }
     }
   }
 
-  const handleRemoveDocument = (id: string) => {
-    setDocuments(prevDocs => {
-      const docToRemove = prevDocs.find(doc => doc.id === id)
-      if (docToRemove && docToRemove.previewUrl) {
-        URL.revokeObjectURL(docToRemove.previewUrl)
+  const handleRemoveDocument = async (attachmentId: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/${attachmentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Error al eliminar el archivo');
       }
-      return prevDocs.filter(doc => doc.id !== id)
-    })
+      setDocuments(prevDocs => {
+        const docToRemove = prevDocs.find(doc => doc.attachmentId === attachmentId);
+        if (docToRemove && docToRemove.previewUrl) {
+          URL.revokeObjectURL(docToRemove.previewUrl);
+        }
+        return prevDocs.filter(doc => doc.attachmentId !== attachmentId);
+      });
+      toast({
+        title: "Éxito",
+        description: "Documento eliminado correctamente.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el documento.",
+        variant: "destructive",
+      });
+    }
   }
 
-  const handleViewDocument = (document: Document) => {
-    window.open(document.previewUrl, '_blank')
-  }
+  const handleDownloadDocument = async (attachmentId: string, name: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/${attachmentId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Error al descargar el archivo');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+    }
+  };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click()
@@ -126,8 +255,7 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
     } else {
       return (
         <div className="p-4 bg-gray-100 rounded">
-          <p className="text-sm text-gray-600">Vista previa no disponible para este tipo de archivo.</p>
-          <p className="text-sm text-gray-600 mt-2">Haga clic para abrir en una nueva ventana.</p>
+          <p className="text-sm text-gray-600 mt-2">Haga clic para descargar.</p>
         </div>
       )
     }
@@ -141,13 +269,13 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
         }`}
       >
         <div className="p-4 bg-green-50 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
+          <h2 className="text-xl font-semibold text-primary">{name}</h2>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-green-100" onClick={handleEdit}>
               <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancelar" : "Editar"}
+              {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
+            <Button variant="ghost" size="icon" className="text-primary hover:text-primary hover:bg-green-100" onClick={() => setIsMinimized(!isMinimized)}>
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
           </div>
@@ -161,7 +289,7 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
                     <PopoverTrigger asChild>
                       <Button
                         variant="link"
-                        onClick={() => handleViewDocument(doc)}
+                        onClick={() => handleDownloadDocument(doc.attachmentId, doc.name)}
                         onMouseEnter={() => handleMouseEnter(doc.id)}
                         onMouseLeave={handleMouseLeave}
                         className="text-left"
@@ -177,7 +305,8 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleRemoveDocument(doc.id)}
+                      className="text-primary hover:text-primary hover:bg-green-100"
+                      onClick={() => handleRemoveDocument(doc.attachmentId)}
                       aria-label={`Eliminar ${doc.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -188,6 +317,8 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
             </ul>
             {isEditing && (
               <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2 flex items-center">
+                <AlertCircle className="mr-1 text-gray-600" />El tamaño máximo de los archivos puede ser 5MB.</p> 
                 <Input
                   type="file"
                   ref={fileInputRef}
@@ -195,16 +326,11 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
                   onChange={handleFileChange}
                   multiple
                 />
-                <Button onClick={triggerFileInput}>
+                <Button className="bg-primary text-white hover:bg-green-700" onClick={triggerFileInput}>
                   <Upload className="h-4 w-4 mr-2" />
                   Subir Documentos
                 </Button>
               </div>
-            )}
-            {isEditing && (
-              <Button onClick={handleSave} className="mt-4">
-                Guardar Cambios
-              </Button>
             )}
           </div>
         )}
