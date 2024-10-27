@@ -7,6 +7,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ChevronDown, ChevronUp, Edit, Plus, Trash2, Upload } from 'lucide-react'
 import Image from 'next/image'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { useToast } from "@/hooks/use-toast"
+import { AlertCircle } from 'lucide-react'
 
 interface SectionProps {
   name: string
@@ -34,6 +36,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const user = useCurrentUser();
+  const { toast } = useToast()
 
   const fetchAttachments = async () => {
     try {
@@ -43,7 +46,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
           'Authorization': `Bearer ${user?.token}`,
         },
       });
-      if (!response.ok) throw new Error('Error fetching attachments');
+      if (!response.ok) throw new Error('Error al obtener los archivos');
       
       const attachments = await response.json();
       setDocuments(attachments.map((attachment: any) => ({
@@ -117,7 +120,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
         });
 
         if (!response.ok) {
-          throw new Error('Error uploading document');
+          throw new Error('Error al subir el archivo');
         }
 
         const contentType = response.headers.get("content-type");
@@ -128,11 +131,20 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
               doc.name === files[0].name ? { ...doc, attachmentId: result.attachmentId } : doc
             )
           );
+          toast({
+            title: "Éxito",
+            description: "Documento subido correctamente.",
+            variant: "success",
+          });
         } else {
           console.warn('La respuesta no es JSON:', await response.text());
         }
       } catch (error) {
-        console.error('Error uploading document:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo subir el documento.",
+          variant: "destructive",
+        });
         fetchAttachments();
       }
     }
@@ -147,7 +159,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
         },
       });
       if (!response.ok) {
-        throw new Error('Error deleting document');
+        throw new Error('Error al eliminar el archivo');
       }
       setDocuments(prevDocs => {
         const docToRemove = prevDocs.find(doc => doc.attachmentId === attachmentId);
@@ -156,8 +168,17 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
         }
         return prevDocs.filter(doc => doc.attachmentId !== attachmentId);
       });
+      toast({
+        title: "Éxito",
+        description: "Documento eliminado correctamente.",
+        variant: "success",
+      });
     } catch (error) {
-      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el documento.",
+        variant: "destructive",
+      });
     }
   }
 
@@ -169,7 +190,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
         },
       });
 
-      if (!response.ok) throw new Error('Error downloading document');
+      if (!response.ok) throw new Error('Error al descargar el archivo');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -296,7 +317,8 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
             </ul>
             {isEditing && (
               <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">El tamaño máximo de los archivos es 5MB.</p> {/* Etiqueta agregada */}
+                <p className="text-sm text-gray-600 mb-2 flex items-center">
+                <AlertCircle className="mr-1 text-gray-600" />El tamaño máximo de los archivos puede ser 5MB.</p> 
                 <Input
                   type="file"
                   ref={fileInputRef}
