@@ -27,7 +27,7 @@ import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
-type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente'
+type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente' | 'Vicerrector académico' | 'Vicerrector financiero'
 
 type NavItem = {
 	title: string
@@ -74,7 +74,7 @@ const navItems: NavItem[] = [
 		subItems: [
 			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: Settings },
 			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente", "Administrador"], icon: FileText },
-			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: CheckSquare },
+			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: CheckSquare },
 		],
 	},
 	{

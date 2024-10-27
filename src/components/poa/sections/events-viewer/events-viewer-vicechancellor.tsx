@@ -112,7 +112,7 @@ const EventsViewerViceChancellorComponent: React.FC<SectionProps> = ({ name, isA
       <div className="mb-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
           <div className="p-4 bg-green-50 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">Revisión de eventos</h2>
+            <h2 className="text-xl font-semibold text-primary">Revisión de eventos</h2>
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
                 {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}

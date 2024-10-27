@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react"
 
 type Action = 'Crear' | 'Editar' | 'Ver' | 'Eliminar'
 
-type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente'
+type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente' | 'Vicerrector académico' | 'Vicerrector financiero'	
 
 type ModuleMapping = {
 	[key: string]: string;
