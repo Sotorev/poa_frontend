@@ -52,12 +52,12 @@ export function PoaAcademicApproval() {
   const mainRef = useRef<HTMLDivElement>(null)
   const [userId, setUserId] = useState<number>()
   const [rolId, setRolId] = useState<number>()
+  const [roleName, setRoleName] = useState<string>()
   const user = useCurrentUser();
 
   // Fetch para obtener el userId y rolId
   useEffect(() => {
     const fetchUserData = async () => {
-
       try {
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user?.userId}`, {
           headers: {
@@ -73,6 +73,7 @@ export function PoaAcademicApproval() {
         const userData = await userResponse.json()
         setUserId(userData.userId)
         setRolId(userData.roleId)
+        setRoleName(userData.role.roleName)
 
       } catch (error: any) {
         console.error("Error al obtener los datos del usuario:", error)
@@ -82,80 +83,6 @@ export function PoaAcademicApproval() {
     fetchUserData()
   }, [user])
 
-  // Fetch para obtener el facultyId y poaId
-  useEffect(() => {
-    const fetchFacultyAndPoa = async () => {
-
-
-      if (!user) {
-        console.log("No estás autenticado.")
-        return
-      }
-
-      try {
-        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        })
-
-        if (!userResponse.ok) {
-          throw new Error('Error al obtener datos del usuario')
-        }
-
-        const userData = await userResponse.json()
-        const faculty = userData.faculty
-        const userId = userData.userId
-        const rolId = userData.roleId
-
-        if (!faculty) {
-          throw new Error('El usuario no tiene una facultad asignada')
-        }
-
-        const fetchedFacultyId = faculty.facultyId // Obtener el facultyId
-        setFacultyId(fetchedFacultyId) // Guardar el facultyId en el estado
-        setUserId(userId)  // Guardar userId
-        setRolId(rolId)  // Guardar rolId
-
-        // Obtener POA por facultyId y año actual
-        if (fetchedFacultyId) {
-          await getPoaByFacultyAndYear(fetchedFacultyId)
-        }
-
-      } catch (error: any) {
-        console.error("Error al obtener el facultyId y poaId:", error)
-      }
-    }
-
-    fetchFacultyAndPoa()
-  }, [user])
-
-  // Obtener el POA actual si ya fue creado
-  const getPoaByFacultyAndYear = async (facultyId: number) => {
-    const currentYear = new Date().getFullYear()
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${facultyId}/${currentYear}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error('Error al obtener el POA para la facultad y año especificado.')
-      }
-
-      const poaData = await response.json()
-      setPoaId(poaData.poaId)
-
-
-    } catch (error: any) {
-      console.error('Error al realizar la consulta del POA:', error)
-    }
-  }
-
   // Manejar la activación de una sección
   const handleSetActive = (to: string) => {
     setActiveSection(to)
@@ -164,7 +91,7 @@ export function PoaAcademicApproval() {
     }, 1000)
   }
 
-  // Manejar la selección de una facultad
+  // Manejar la selección de una facultad desde WelcomeVicechancellor
   const handleSelectFaculty = (selectedFacultyId: number, selectedPoaId: number) => {
     setFacultyId(selectedFacultyId)
     setPoaId(selectedPoaId)
@@ -195,7 +122,8 @@ export function PoaAcademicApproval() {
     console.log("poaId:", poaId)
     console.log("userId:", userId)
     console.log("rolId:", rolId)
-  }, [facultyId, poaId, userId, rolId])
+    console.log("roleName:", roleName)
+  }, [facultyId, poaId, userId, rolId, roleName])
 
   return (
     <main className="flex bg-green-50 min-h-screen">
