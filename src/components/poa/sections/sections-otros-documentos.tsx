@@ -6,71 +6,166 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ChevronDown, ChevronUp, Edit, Plus, Trash2, Upload } from 'lucide-react'
 import Image from 'next/image'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 interface SectionProps {
   name: string
   isActive: boolean
+  poaId: number // Agregar el ID del POA como prop
 }
 
 interface Document {
   id: string
+  attachmentId: string // Incluir el attachmentId para eliminar correctamente
+  poaId: number
   name: string
+  filePath: string
+  uploadDate: Date
+  isDeleted: boolean
   file: File
   previewUrl: string
 }
 
-export function OtrosDocumentos({ name, isActive }: SectionProps) {
+export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [documents, setDocuments] = useState<Document[]>([])
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const user = useCurrentUser();
+
+  const fetchAttachments = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/poa/${poaId}/attachments`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Error fetching attachments');
+      
+      const attachments = await response.json();
+      setDocuments(attachments.map((attachment: any) => ({
+        id: attachment.attachmentId.toString(),
+        attachmentId: attachment.attachmentId, // Almacena el attachmentId
+        poaId: attachment.poaId,
+        name: attachment.name,
+        filePath: attachment.filePath,
+        uploadDate: new Date(attachment.uploadDate),
+        isDeleted: attachment.isDeleted,
+        file: new File([], attachment.name), // Crear un objeto File vacío
+        previewUrl: `/uploads/${attachment.filePath}`
+      })));
+    } catch (error) {
+      console.error('Error fetching attachments:', error);
+    }
+  };
 
   useEffect(() => {
+    fetchAttachments();
+
     return () => {
       documents.forEach(doc => {
         if (doc.previewUrl) {
-          URL.revokeObjectURL(doc.previewUrl)
+          URL.revokeObjectURL(doc.previewUrl);
         }
-      })
-    }
-  }, [documents])
+      });
+    };
+  }, [poaId]);
 
   const handleEdit = () => {
     setIsEditing(!isEditing)
   }
 
-  const handleSave = () => {
-    setIsEditing(false)
-    console.log('Documentos guardados:', documents)
-  }
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
     if (files && files.length > 0) {
       const newDocuments = Array.from(files).map(file => {
-        const previewUrl = URL.createObjectURL(file)
-        console.log(`Created preview URL for ${file.name}:`, previewUrl)
+        const previewUrl = URL.createObjectURL(file);
+        console.log(`Created preview URL for ${file.name}:`, previewUrl);
         return {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          attachmentId: '', // Asignará el ID correcto después del POST
+          poaId: poaId,
           name: file.name,
+          filePath: '',
+          uploadDate: new Date(),
+          isDeleted: false,
           file: file,
           previewUrl: previewUrl
+        };
+      });
+
+      setDocuments(prevDocs => [...prevDocs, ...newDocuments]);
+
+      // Enviar el archivo al servidor directamente al seleccionar
+      try {
+        const formData = new FormData();
+        Array.from(files).forEach(file => {
+          formData.append('documents', file);
+        });
+        formData.append('poaId', poaId.toString());
+        formData.append('name', files[0].name);
+        formData.append('uploadDate', new Date().toISOString());
+        formData.append('isDeleted', 'false');
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${user?.token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Error uploading document');
         }
-      })
-      setDocuments(prevDocs => [...prevDocs, ...newDocuments])
+
+        // Verificar que la respuesta sea JSON antes de intentar parsearla
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const result = await response.json();
+          console.log('Documento subido:', result);
+          // Actualiza el documento con el nuevo attachmentId
+          setDocuments(prevDocs => 
+            prevDocs.map(doc => 
+              doc.name === files[0].name ? { ...doc, attachmentId: result.attachmentId } : doc
+            )
+          );
+        } else {
+          console.warn('La respuesta no es JSON:', await response.text());
+        }
+      } catch (error) {
+        console.error('Error uploading document:', error);
+        fetchAttachments(); // Llamar a fetchAttachments en caso de error
+      }
     }
   }
 
-  const handleRemoveDocument = (id: string) => {
-    setDocuments(prevDocs => {
-      const docToRemove = prevDocs.find(doc => doc.id === id)
-      if (docToRemove && docToRemove.previewUrl) {
-        URL.revokeObjectURL(docToRemove.previewUrl)
+  const handleRemoveDocument = async (attachmentId: string) => {
+    try {
+      const poaattachmentId = Number(attachmentId);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/${poaattachmentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Error deleting document');
       }
-      return prevDocs.filter(doc => doc.id !== id)
-    })
+      setDocuments(prevDocs => {
+        const docToRemove = prevDocs.find(doc => doc.attachmentId === attachmentId);
+        if (docToRemove && docToRemove.previewUrl) {
+          URL.revokeObjectURL(docToRemove.previewUrl);
+        }
+        return prevDocs.filter(doc => doc.attachmentId !== attachmentId);
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+    }
   }
 
   const handleViewDocument = (document: Document) => {
@@ -177,7 +272,7 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleRemoveDocument(doc.id)}
+                      onClick={() => handleRemoveDocument(doc.attachmentId)}
                       aria-label={`Eliminar ${doc.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -200,11 +295,6 @@ export function OtrosDocumentos({ name, isActive }: SectionProps) {
                   Subir Documentos
                 </Button>
               </div>
-            )}
-            {isEditing && (
-              <Button onClick={handleSave} className="mt-4">
-                Guardar Cambios
-              </Button>
             )}
           </div>
         )}
