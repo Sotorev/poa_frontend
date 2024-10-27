@@ -204,7 +204,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
   }
 
   return (
-    <Card className={`mb-6 ${isActive ? 'ring-2 ring-green-600' : ''}`}>
+    <Card id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-600' : ''}`}>
       <CardHeader className="bg-green-50 flex flex-row items-center justify-between py-2">
         <CardTitle className="text-xl font-semibold text-primary">{name}</CardTitle>
         <div className="flex items-center space-x-2">
