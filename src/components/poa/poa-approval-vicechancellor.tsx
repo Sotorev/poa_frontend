@@ -21,7 +21,7 @@ import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { FodaSection } from './sections/foda-section'
 import EventsViewerViceChancellorComponent from './sections/events-viewer/events-viewer-vicechancellor'
-import PoaActions from './sections/poa-actions'
+import { PoaActions } from './sections/poa-actions'
 import { useCurrentUser } from '@/hooks/use-current-user'
 
 export interface SectionProps {
