@@ -11,12 +11,12 @@ import { useCurrentUser } from '@/hooks/use-current-user'
 interface SectionProps {
   name: string
   isActive: boolean
-  poaId: number // Agregar el ID del POA como prop
+  poaId: number
 }
 
 interface Document {
   id: string
-  attachmentId: string // Incluir el attachmentId para eliminar correctamente
+  attachmentId: string
   poaId: number
   name: string
   filePath: string
@@ -48,13 +48,13 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
       const attachments = await response.json();
       setDocuments(attachments.map((attachment: any) => ({
         id: attachment.attachmentId.toString(),
-        attachmentId: attachment.attachmentId, // Almacena el attachmentId
+        attachmentId: attachment.attachmentId,
         poaId: attachment.poaId,
         name: attachment.name,
         filePath: attachment.filePath,
         uploadDate: new Date(attachment.uploadDate),
         isDeleted: attachment.isDeleted,
-        file: new File([], attachment.name), // Crear un objeto File vacío
+        file: new File([], attachment.name),
         previewUrl: `/uploads/${attachment.filePath}`
       })));
     } catch (error) {
@@ -83,10 +83,9 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
     if (files && files.length > 0) {
       const newDocuments = Array.from(files).map(file => {
         const previewUrl = URL.createObjectURL(file);
-        console.log(`Created preview URL for ${file.name}:`, previewUrl);
         return {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          attachmentId: '', // Asignará el ID correcto después del POST
+          attachmentId: '',
           poaId: poaId,
           name: file.name,
           filePath: '',
@@ -99,7 +98,6 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
 
       setDocuments(prevDocs => [...prevDocs, ...newDocuments]);
 
-      // Enviar el archivo al servidor directamente al seleccionar
       try {
         const formData = new FormData();
         Array.from(files).forEach(file => {
@@ -122,12 +120,9 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
           throw new Error('Error uploading document');
         }
 
-        // Verificar que la respuesta sea JSON antes de intentar parsearla
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
           const result = await response.json();
-          console.log('Documento subido:', result);
-          // Actualiza el documento con el nuevo attachmentId
           setDocuments(prevDocs => 
             prevDocs.map(doc => 
               doc.name === files[0].name ? { ...doc, attachmentId: result.attachmentId } : doc
@@ -138,18 +133,16 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
         }
       } catch (error) {
         console.error('Error uploading document:', error);
-        fetchAttachments(); // Llamar a fetchAttachments en caso de error
+        fetchAttachments();
       }
     }
   }
 
   const handleRemoveDocument = async (attachmentId: string) => {
     try {
-      const poaattachmentId = Number(attachmentId);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/${poaattachmentId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/${attachmentId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`,
         },
       });
@@ -168,9 +161,29 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
     }
   }
 
-  const handleViewDocument = (document: Document) => {
-    window.open(document.previewUrl, '_blank')
-  }
+  const handleDownloadDocument = async (attachmentId: string, name: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaattachments/${attachmentId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Error downloading document');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+    }
+  };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click()
@@ -221,8 +234,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
     } else {
       return (
         <div className="p-4 bg-gray-100 rounded">
-          <p className="text-sm text-gray-600">Vista previa no disponible para este tipo de archivo.</p>
-          <p className="text-sm text-gray-600 mt-2">Haga clic para abrir en una nueva ventana.</p>
+          <p className="text-sm text-gray-600 mt-2">Haga clic para descargar.</p>
         </div>
       )
     }
@@ -236,13 +248,13 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
         }`}
       >
         <div className="p-4 bg-green-50 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">{name}</h2>
+          <h2 className="text-xl font-semibold text-primary">{name}</h2>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-green-100" onClick={handleEdit}>
               <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancelar" : "Editar"}
+              {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
+            <Button variant="ghost" size="icon" className="text-primary hover:text-primary hover:bg-green-100" onClick={() => setIsMinimized(!isMinimized)}>
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
           </div>
@@ -256,7 +268,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
                     <PopoverTrigger asChild>
                       <Button
                         variant="link"
-                        onClick={() => handleViewDocument(doc)}
+                        onClick={() => handleDownloadDocument(doc.attachmentId, doc.name)}
                         onMouseEnter={() => handleMouseEnter(doc.id)}
                         onMouseLeave={handleMouseLeave}
                         className="text-left"
@@ -272,6 +284,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="text-primary hover:text-primary hover:bg-green-100"
                       onClick={() => handleRemoveDocument(doc.attachmentId)}
                       aria-label={`Eliminar ${doc.name}`}
                     >
@@ -283,6 +296,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
             </ul>
             {isEditing && (
               <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">El tamaño máximo de los archivos es 5MB.</p> {/* Etiqueta agregada */}
                 <Input
                   type="file"
                   ref={fileInputRef}
@@ -290,7 +304,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
                   onChange={handleFileChange}
                   multiple
                 />
-                <Button onClick={triggerFileInput}>
+                <Button className="bg-primary text-white hover:bg-green-700" onClick={triggerFileInput}>
                   <Upload className="h-4 w-4 mr-2" />
                   Subir Documentos
                 </Button>
