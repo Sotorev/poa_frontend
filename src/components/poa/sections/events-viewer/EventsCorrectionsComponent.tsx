@@ -41,14 +41,14 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         aporteOtros: apiEvent.financings
             .filter(f => f.financingSourceId !== 1)
             .reduce((sum, f) => sum + f.amount, 0),
-        tipoCompra: apiEvent.purchaseType,
+        tipoCompra: apiEvent.purchaseType?.name || '',
         detalle: apiEvent.costDetailDocumentPath || '',
         responsables: {
             principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
             ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
             seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
         },
-        recursos: apiEvent.resources.map(r => r.resourceId).join(', '), // Ajustado aquí
+        recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
         indicadorLogro: apiEvent.achievementIndicator,
         detalleProceso: apiEvent.processDocumentPath || '',
         comentarioDecano: apiEvent.eventApprovals[0]?.comments || '', // Ajustado aquí
