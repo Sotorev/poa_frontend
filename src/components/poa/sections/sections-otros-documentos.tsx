@@ -14,6 +14,7 @@ interface SectionProps {
   name: string
   isActive: boolean
   poaId: number
+  isEditable: boolean
 }
 
 interface Document {
@@ -28,7 +29,7 @@ interface Document {
   previewUrl: string
 }
 
-export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
+export function OtrosDocumentos({ name, isActive, poaId, isEditable }: SectionProps) {
   const [isMinimized, setIsMinimized] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [documents, setDocuments] = useState<Document[]>([])
@@ -262,7 +263,7 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
   }
 
   return (
-    <div id={name} className="mb-6">
+    <div id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-600' : ''}`}>
       <div
         className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
           isActive ? 'ring-2 ring-green-400' : ''
@@ -271,10 +272,12 @@ export function OtrosDocumentos({ name, isActive, poaId }: SectionProps) {
         <div className="p-4 bg-green-50 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-primary">{name}</h2>
           <div className="flex items-center space-x-2">
+          {isEditable && (
             <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-green-100" onClick={handleEdit}>
               <Edit className="h-4 w-4 mr-2" />
               {isEditing ? "Finalizar edición" : "Editar"}
             </Button>
+          )}
             <Button variant="ghost" size="icon" className="text-primary hover:text-primary hover:bg-green-100" onClick={() => setIsMinimized(!isMinimized)}>
               {isMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
