@@ -13,22 +13,44 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { CheckCircle, XCircle, AlertCircle, RotateCcw, MessageCircle } from "lucide-react"
 import { useCurrentUser } from "@/hooks/use-current-user"
 
 interface SectionProps {
   name: string
   isActive: boolean
   poaId: number
-  facultyId: number
   onStatusChange?: () => void // Nueva prop opcional
 }
 
-export function PoaApproval({ name, isActive, poaId, facultyId, onStatusChange }: SectionProps) {
+export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionProps) {
   const [open, setOpen] = useState(false)
   const [openCancel, setOpenCancel] = useState(false)
   const user = useCurrentUser();
 
+  //ESTADO DE APROBACION
+  const [openApprove, setOpenApprove] = useState(false)
+  const [openReject, setOpenReject] = useState(false)
+  const [openCorrections, setOpenCorrections] = useState(false)
+  const [openReturn, setOpenReturn] = useState(false)
+  const [showComments, setShowComments] = useState(false)
+
+  const handleOpenComments = () => {
+    setShowComments(true)
+  }
+
+  const buttonClass = "w-64 h-12 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center"
+
   const handleConfirm = async (status: string) => {
+
+    ////ESTADO DE APROBACION
+    setOpenApprove(false)
+    setOpenReject(false)
+    setOpenCorrections(false)
+    setOpenReturn(false)
+
+
+    //CAMBIAR EL ESTADO DE CERRADO O ABIERTO
     // Obtener la fecha actual en formato ISO
     const currentDate = new Date().toISOString();
 
@@ -57,52 +79,25 @@ export function PoaApproval({ name, isActive, poaId, facultyId, onStatusChange }
       }
 
     } catch (error: any) {
-      alert("Ocurrió un error al actualizar el POA.");
+      alert("Ocurrió un error al actualizar el estado del POA.");
     }
   };
 
   return (
-    <div id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
-      <div className="flex justify-center space-x-4">
-        {/* Botón para cancelar y reabrir */}
-        <AlertDialog open={openCancel} onOpenChange={setOpenCancel}>
+    <div id={name} className= {`flex flex-wrap justify-center bg-gray-100 p-8 ${isActive ? 'ring-2 ring-green-400' : ''} `}>
+      <div className="flex flex-row flex-wrap justify-center gap-4 p-4">
+        <AlertDialog open={openApprove} onOpenChange={setOpenApprove}>
           <AlertDialogTrigger asChild>
-            <Button className="bg-red-700 hover:bg-red-800 text-white">
-              Cancelar y reabrir POA
+            <Button className={`${buttonClass} bg-green-500 hover:bg-green-600`}>
+              <CheckCircle className="mr-2 h-5 w-5" />
+              Aprobar el POA
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar cancelación</AlertDialogTitle>
+              <AlertDialogTitle>Confirmar aprobación</AlertDialogTitle>
               <AlertDialogDescription>
-                Se reabrirá el POA. ¿Estás seguro de que deseas continuar?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => handleConfirm("Abierto")}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Confirmar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <AlertDialog open={open} onOpenChange={setOpen}>
-          <AlertDialogTrigger asChild>
-            <Button className="bg-primary hover:bg-green-700 text-white">
-              Finalizar y enviar POA
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar envío</AlertDialogTitle>
-              <AlertDialogDescription>
-                Se enviará el POA a revisión. ¿Estás seguro de que deseas continuar?
+                ¿Estás seguro de que deseas aprobar este POA?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -111,14 +106,118 @@ export function PoaApproval({ name, isActive, poaId, facultyId, onStatusChange }
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => handleConfirm("Cerrado")}
-                className="bg-primary hover:bg-green-700 text-white"
+                className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Confirmar
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={openReject} onOpenChange={setOpenReject}>
+          <AlertDialogTrigger asChild>
+            <Button className={`${buttonClass} bg-red-500 hover:bg-red-600`}>
+              <XCircle className="mr-2 h-5 w-5" />
+              Rechazar el POA
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar rechazo</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Estás seguro de que deseas rechazar este POA?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleConfirm("Abierto")}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={openCorrections} onOpenChange={setOpenCorrections}>
+          <AlertDialogTrigger asChild>
+            <Button className={`${buttonClass} bg-yellow-500 hover:bg-yellow-600`}>
+              <AlertCircle className="mr-2 h-5 w-5" />
+              Solicitar correcciones
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar solicitud de correcciones</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Estás seguro de que deseas solicitar correcciones para este POA?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleConfirm("Abierto")}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white"
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={openReturn} onOpenChange={setOpenReturn}>
+          <AlertDialogTrigger asChild>
+            <Button className={`${buttonClass} bg-blue-500 hover:bg-blue-600`}>
+              <RotateCcw className="mr-2 h-5 w-5" />
+              Regresar a revisión
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar regreso a revisión</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Estás seguro de que deseas regresar este POA a revisión?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleConfirm("Abierto")}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/*<Button
+          onClick={handleOpenComments}
+          className="w-12 h-12 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-full transition duration-300 ease-in-out flex items-center justify-center"
+          aria-label="Abrir comentarios"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </Button>*/}
       </div>
+
+      {showComments && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Comentarios</h2>
+            <p>Aquí iría el componente de comentarios.</p>
+            <Button onClick={() => setShowComments(false)} className="mt-4">
+              Cerrar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
