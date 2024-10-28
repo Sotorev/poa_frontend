@@ -35,13 +35,13 @@ interface Estrategia {
 interface EstrategiasSelectorProps {
   selectedEstrategias: string[];
   onSelectEstrategia: (estrategias: string[]) => void;
-  strategicObjectiveId: number;
+  strategicObjectiveIds: number[]; // Cambio aquí
 }
 
 export function EstrategiasSelectorComponent({
   selectedEstrategias,
   onSelectEstrategia,
-  strategicObjectiveId,
+  strategicObjectiveIds,
 }: EstrategiasSelectorProps) {
   const [estrategiasList, setEstrategiasList] = useState<Estrategia[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,7 +58,7 @@ export function EstrategiasSelectorComponent({
     resolver: zodResolver(createStrategySchema),
     defaultValues: {
       description: "",
-      strategicObjectiveId: strategicObjectiveId,
+      strategicObjectiveId: 0, // Podrías ajustar esto si es necesario
     },
   });
 
@@ -75,14 +75,16 @@ export function EstrategiasSelectorComponent({
           throw new Error(`Error al fetch estrategias: ${response.statusText}`);
         }
         const data: Estrategia[] = await response.json();
-        setEstrategiasList(data);
+        // Filtrar estrategias que pertenezcan a cualquiera de los strategicObjectiveIds
+        const filteredData = data.filter(est => strategicObjectiveIds.includes(est.strategicObjectiveId) && !est.isDeleted);
+        setEstrategiasList(filteredData);
       } catch (error) {
         console.error("Error al obtener estrategias:", error);
       }
     };
 
     fetchEstrategias();
-  }, [strategicObjectiveId]);
+  }, [strategicObjectiveIds, user?.token]);
 
   const filteredEstrategias = useMemo(() => {
     return estrategiasList.filter((est) =>
