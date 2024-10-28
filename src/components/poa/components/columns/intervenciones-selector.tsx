@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Select,
   SelectContent,
@@ -10,18 +10,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, Check, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { createInterventionSchema, CreateInterventionInput } from "@/schemas/interventionSchema";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { getIntervenciones } from '@/services/apiService';
 
 interface Intervencion {
   interventionId: number;
@@ -47,39 +45,15 @@ export function IntervencionesSelectorComponent({
   strategyIds, // Nueva propiedad
 }: IntervencionesProps) {
   const [intervencionesList, setIntervencionesList] = useState<Intervencion[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [isAddingNew, setIsAddingNew] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const newIntervencionInputRef = useRef<HTMLInputElement>(null);
   const user = useCurrentUser();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<CreateInterventionInput>({
-    resolver: zodResolver(createInterventionSchema),
-    defaultValues: {
-      name: "",
-      strategyId: 0,
-    },
-  });
-
   useEffect(() => {
-    const fetchIntervenciones = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interventions`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`Error al obtener intervenciones: ${response.statusText}`);
-        }
-        const data: Intervencion[] = await response.json();
+        const data = await getIntervenciones(user?.token || '');
         // Filtrar intervenciones que no estén eliminadas y que pertenezcan a las estrategias seleccionadas
         const strategyIdsNum = strategyIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const filteredIntervenciones = data.filter(
@@ -87,12 +61,12 @@ export function IntervencionesSelectorComponent({
         );
         setIntervencionesList(filteredIntervenciones);
       } catch (error) {
-        console.error("Error al obtener intervenciones:", error);
+        console.error('Error al obtener intervenciones:', error);
       }
     };
 
     if (!disabled && strategyIds.length > 0) { // Solo fetch si no está deshabilitado y hay estrategias seleccionadas
-      fetchIntervenciones();
+      fetchData();
     } else {
       setIntervencionesList([]); // Limpiar la lista si está deshabilitado o no hay estrategias
     }
@@ -119,44 +93,11 @@ export function IntervencionesSelectorComponent({
     onSelectIntervencion(updatedIntervenciones);
   };
 
-  const onSubmit = async (data: CreateInterventionInput) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interventions`, {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al crear la intervención");
-      }
-
-      const createdIntervencion: Intervencion = await response.json();
-      const newIntervencion: Intervencion = { ...createdIntervencion, isCustom: true };
-      setIntervencionesList((prev) => [...prev, newIntervencion]);
-      onSelectIntervencion([...selectedIntervenciones, newIntervencion.interventionId.toString()]);
-      reset();
-      setIsAddingNew(false);
-    } catch (error) {
-      console.error("Error al agregar nueva intervención:", error);
-    }
-  };
-
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (isAddingNew && newIntervencionInputRef.current) {
-      newIntervencionInputRef.current.focus();
-    }
-  }, [isAddingNew]);
 
   return (
     <TooltipProvider>

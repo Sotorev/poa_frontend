@@ -1,7 +1,7 @@
 // src/components/poa/components/columns/estrategias-selector.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Select,
   SelectContent,
@@ -9,18 +9,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { createStrategySchema, CreateStrategyInput } from "@/schemas/strategySchema";
-import { useCurrentUser } from "@/hooks/use-current-user";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { getEstrategias } from '@/services/apiService';
 
 interface Estrategia {
   strategyId: number;
@@ -49,47 +47,26 @@ export function EstrategiasSelectorComponent({
   tooltipMessage = "Seleccione primero un objetivo estratégico.", // Mensaje por defecto
 }: EstrategiasSelectorProps) {
   const [estrategiasList, setEstrategiasList] = useState<Estrategia[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const user = useCurrentUser();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<CreateStrategyInput>({
-    resolver: zodResolver(createStrategySchema),
-    defaultValues: {
-      description: "",
-      strategicObjectiveId: 0,
-    },
-  });
-
   useEffect(() => {
-    const fetchEstrategias = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategies`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`Error al fetch estrategias: ${response.statusText}`);
-        }
-        const data: Estrategia[] = await response.json();
+        const data = await getEstrategias(user?.token || '');
+
         // Filtrar estrategias que pertenezcan a cualquiera de los strategicObjectiveIds y que no estén eliminadas
         const filteredData = data.filter(est => strategicObjectiveIds.includes(est.strategicObjectiveId) && !est.isDeleted);
         setEstrategiasList(filteredData);
       } catch (error) {
-        console.error("Error al obtener estrategias:", error);
+        console.error('Error al obtener estrategias:', error);
       }
     };
 
     if (!disabled) { // Solo fetch si no está deshabilitado
-      fetchEstrategias();
+      fetchData();
     } else {
       setEstrategiasList([]); // Limpiar la lista si está deshabilitado
     }

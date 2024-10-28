@@ -1,7 +1,7 @@
 // src/components/poa/components/columns/aporte-umes.tsx
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -9,35 +9,36 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { FinancingSource } from "@/types/FinancingSource";
-import { useCurrentUser } from "@/hooks/use-current-user";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { X } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { FinancingSource } from '@/types/FinancingSource';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { getFinancingSources } from '@/services/apiService';
 
 const aporteUmesSchema = z.object({
   financingSourceId: z.number({
-    required_error: "La fuente es requerida",
-    invalid_type_error: "La fuente debe ser un número",
+    required_error: 'La fuente es requerida',
+    invalid_type_error: 'La fuente debe ser un número',
   }),
   porcentaje: z
     .number({
-      required_error: "El porcentaje es requerido",
-      invalid_type_error: "El porcentaje debe ser un número",
+      required_error: 'El porcentaje es requerido',
+      invalid_type_error: 'El porcentaje debe ser un número',
     })
-    .min(0, "El porcentaje no puede ser negativo")
-    .max(100, "El porcentaje no puede superar 100"),
+    .min(0, 'El porcentaje no puede ser negativo')
+    .max(100, 'El porcentaje no puede superar 100'),
   amount: z
     .number({
-      required_error: "El monto es requerido",
-      invalid_type_error: "El monto debe ser un número",
+      required_error: 'El monto es requerido',
+      invalid_type_error: 'El monto debe ser un número',
     })
-    .nonnegative("El monto no puede ser negativo"),
+    .nonnegative('El monto no puede ser negativo'),
 });
 
 type AporteUmesForm = z.infer<typeof aporteUmesSchema>;
@@ -53,7 +54,7 @@ interface AporteUmesProps {
   onChangeAportes: (aportes: AporteUMES[]) => void;
 }
 
-export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
+export function AporteUmesComponent({ aportes, onChangeAportes }: AporteUmesProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -76,23 +77,13 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
   });
 
   useEffect(() => {
-    const fetchFinancingSources = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error al obtener fuentes de financiamiento: ${response.statusText}`);
-        }
-
-        const data: FinancingSource[] = await response.json();
-        const filteredData = data.filter(source => source.category === "UMES" && !source.isDeleted);
-
+        const data = await getFinancingSources(user?.token || '');
+        const filteredData = data.filter(
+          (source) => source.category === 'UMES' && !source.isDeleted
+        );
         setFinancingSources(filteredData);
       } catch (err) {
         console.error(err);
@@ -102,8 +93,8 @@ export function AporteUmes({ aportes, onChangeAportes }: AporteUmesProps) {
       }
     };
 
-    fetchFinancingSources();
-  }, []);
+    fetchData();
+  }, [user?.token]);
 
   const onSubmit = (data: AporteUmesForm) => {
     try {

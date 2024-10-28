@@ -11,7 +11,7 @@ import { IntervencionesSelectorComponent } from './columns/intervenciones-select
 import { OdsSelector } from './columns/ods-selector';
 import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector';
 import CurrencyInput from './columns/currency-input';
-import { AporteUmes } from './columns/aporte-umes';
+import { AporteUmesComponent } from './columns/aporte-umes';
 import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes';
 import TipoDeCompraComponent from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
@@ -716,7 +716,7 @@ export function TablaPlanificacionComponent() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <AporteUmes
+                  <AporteUmesComponent
                     aportes={fila.aporteUMES}
                     onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
                   />

@@ -14,7 +14,7 @@ import { IntervencionesSelectorComponent } from './columns/intervenciones-select
 import { OdsSelector } from './columns/ods-selector'
 import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector'
 import CurrencyInput from './columns/currency-input'
-import { AporteUmes } from './columns/aporte-umes'
+import { AporteUmesComponent } from './columns/aporte-umes'
 import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes'
 import TipoDeCompraComponent from './columns/tipo-de-compra'
 import { RecursosSelectorComponent } from './columns/recursos-selector'
@@ -28,10 +28,18 @@ import { ResponsablesComponent } from './columns/responsables'
 import { IndicadorLogroComponent } from './columns/indicador-logro'
 import { CampusSelector } from './columns/campus-selector'
 import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent'
-import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
-import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema'
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'
 import { useCurrentUser } from '@/hooks/use-current-user'
+
+import {
+  getStrategicAreas,
+  getStrategicObjectives,
+  getUserById,
+  getPoaByFacultyAndYear
+} from '@/services/apiService'
+
+import { StrategicArea } from '@/types/StrategicArea'
+import { StrategicObjective } from '@/schemas/strategicObjectiveSchema'
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>
 
@@ -112,7 +120,7 @@ export default function PlanificacionFormComponent() {
 
   const [fila, setFila] = useState<FilaPlanificacion>(initialFila)
 
-  const [strategicAreas, setStrategicAreas] = useState<{ strategicAreaId: number; name: string; peiId: number; isDeleted: boolean }[]>([])
+  const [strategicAreas, setStrategicAreas] = useState<StrategicArea[]>([])
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([])
   const [objetivoToAreaMap, setObjetivoToAreaMap] = useState<{ [key: string]: string }>({})
   const [loading, setLoading] = useState<boolean>(false)
@@ -137,39 +145,16 @@ export default function PlanificacionFormComponent() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        if (!process.env.NEXT_PUBLIC_API_URL) {
-          throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.")
-        }
-
-        const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        })
-        if (!responseAreas.ok) {
-          throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`)
-        }
-        const dataAreas = await responseAreas.json()
-        const parsedAreas = strategicAreasSchema.parse(dataAreas)
-        const activeAreas = parsedAreas.filter((area) => !area.isDeleted)
+        const areas = await getStrategicAreas(user?.token || '')
+        const activeAreas = areas.filter(area => !area.isDeleted)
         setStrategicAreas(activeAreas)
 
-        const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        })
-        if (!responseObjectives.ok) {
-          throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`)
-        }
-        const dataObjectives = await responseObjectives.json()
-        const parsedObjectives = dataObjectives.map((obj: any) => StrategicObjectiveSchema.parse(obj)).filter((obj: StrategicObjective) => !obj.isDeleted)
-        setStrategicObjectives(parsedObjectives)
+        const objectives = await getStrategicObjectives(user?.token || '')
+        const activeObjectives = objectives.filter(obj => !obj.isDeleted)
+        setStrategicObjectives(activeObjectives)
 
         const map: { [key: string]: string } = {}
-        parsedObjectives.forEach((obj: StrategicObjective) => {
+        activeObjectives.forEach(obj => {
           const areaMatched = activeAreas.find(area => area.strategicAreaId === obj.strategicAreaId)
           if (areaMatched) {
             map[obj.strategicObjectiveId.toString()] = areaMatched.name
@@ -200,37 +185,15 @@ export default function PlanificacionFormComponent() {
         return
       }
       try {
-        if (!process.env.NEXT_PUBLIC_API_URL) {
-          throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.")
-        }
-
-        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        })
-        if (!responseUser.ok) {
-          throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`)
-        }
-        const dataUser = await responseUser.json()
-        const fetchedFacultyId = dataUser.facultyId
+        const userData = await getUserById(userId, user?.token || '')
+        const fetchedFacultyId = userData.facultyId
         setFacultyId(fetchedFacultyId)
 
         const currentYear = new Date().getFullYear()
 
         setLoadingPoa(true)
-        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        })
-        if (!responsePoa.ok) {
-          throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`)
-        }
-        const dataPoa = await responsePoa.json()
-        const fetchedPoaId = dataPoa.poaId
+        const poaData = await getPoaByFacultyAndYear(fetchedFacultyId, currentYear, user?.token || '')
+        const fetchedPoaId = poaData.poaId
         setPoaId(fetchedPoaId)
       } catch (err) {
         setErrorPoa((err as Error).message)
@@ -581,7 +544,7 @@ export default function PlanificacionFormComponent() {
             </div>
             <div>
               <label className="block font-medium mb-2">Aporte UMES</label>
-              <AporteUmes
+              <AporteUmesComponent
                 aportes={fila.aporteUMES}
                 onChangeAportes={(aportes) => actualizarFila('aporteUMES', aportes)}
               />
@@ -625,6 +588,7 @@ export default function PlanificacionFormComponent() {
             <div>
               <label className="block font-medium mb-2">Campus</label>
               <CampusSelector
+                selectedCampusId={fila.campusId}
                 onSelectCampus={(campusId) => actualizarFila('campusId', campusId)}
               />
               {filaErrors?.campusId && (
