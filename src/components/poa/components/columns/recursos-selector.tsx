@@ -1,7 +1,7 @@
 // src/components/RecursosSelectorComponent.tsx
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -9,20 +9,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, Check, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { createResourceSchema, CreateResourceInput } from "@/schemas/resourcesSchema";
-import { z } from "zod";
-import { Resource } from "@/types/Resource";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Resource } from '@/types/Resource';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { getResources } from '@/services/apiService';
 
 interface ResourceWithFrontend extends Resource {
   id: string;
@@ -56,48 +53,19 @@ const predefinedColors: string[] = [
 
 export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }: RecursosSelectorProps) {
   const [recursosList, setRecursosList] = useState<ResourceWithFrontend[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [customRecursoCounter, setCustomRecursoCounter] = useState(1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const user = useCurrentUser();
-  const newRecursoInputRef = useRef<HTMLInputElement>(null);
-
-  // Configurar react-hook-form para agregar nuevos recursos
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<CreateResourceInput>({
-    resolver: zodResolver(createResourceSchema),
-    defaultValues: {
-      name: "",
-    },
-  });
-
-  // Asignar colores de forma circular para evitar quedarse sin colores
-  const getColor = (index: number): string => {
-    return predefinedColors[index % predefinedColors.length];
-  };
-
-  // Fetch de recursos desde el backend al montar el componente
+    // Asignar colores de forma circular para evitar quedarse sin colores
+    const getColor = (index: number): string => {
+      return predefinedColors[index % predefinedColors.length];
+    };
   useEffect(() => {
-    const fetchRecursos = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutionalResources`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`Error al obtener recursos: ${response.statusText}`);
-        }
-        const data: Resource[] = await response.json();
-        console.log("Recursos obtenidos del backend:", data); // Para depuración
-
+        const data = await getResources(user?.token || '');
         // Mapear los recursos obtenidos para añadir number y color
         const mappedRecursos: ResourceWithFrontend[] = data.map((rec, index) => ({
           ...rec,
@@ -107,81 +75,31 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
         }));
 
         setRecursosList(mappedRecursos);
-        setCustomRecursoCounter(mappedRecursos.length + 1);
       } catch (error) {
-        console.error("Error al obtener recursos:", error);
-        // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
+        console.error('Error al obtener recursos:', error);
       }
     };
 
-    fetchRecursos();
-  }, []);
+    fetchData();
+  }, [user?.token]);
 
   const filteredRecursos = useMemo(() => {
-    return recursosList.filter(rec =>
+    return recursosList.filter((rec) =>
       rec.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [recursosList, searchTerm]);
 
   const handleSelectRecurso = (recId: string) => {
     const newSelection = selectedRecursos.includes(recId)
-      ? selectedRecursos.filter(id => id !== recId)
+      ? selectedRecursos.filter((id) => id !== recId)
       : [...selectedRecursos, recId];
     onSelectRecursos(newSelection);
-    console.log("Recursos seleccionados:", newSelection); // Para depuración
   };
 
   const handleRemoveRecurso = (recId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const updatedRecursos = selectedRecursos.filter(id => id !== recId);
+    const updatedRecursos = selectedRecursos.filter((id) => id !== recId);
     onSelectRecursos(updatedRecursos);
-    console.log("Recursos después de remover:", updatedRecursos); // Para depuración
-  };
-
-  const onSubmit = async (data: CreateResourceInput) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutionalResources`, {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al crear el recurso");
-      }
-
-      const createdRecurso: Resource = await response.json();
-      console.log("Nuevo recurso creado:", createdRecurso); // Para depuración
-
-      // Asignar number y color para el nuevo recurso
-      const newNumber = recursosList.length + customRecursoCounter;
-      const newRecurso: ResourceWithFrontend = {
-        ...createdRecurso,
-        id: createdRecurso.resourceId.toString(),
-        number: newNumber,
-        color: getColor(newNumber - 1),
-        isCustom: true,
-      };
-
-      // Actualizar la lista de recursos
-      setRecursosList(prev => [...prev, newRecurso]);
-      setCustomRecursoCounter(prev => prev + 1);
-
-      // Seleccionar el nuevo recurso
-      onSelectRecursos([...selectedRecursos, newRecurso.id]);
-      console.log("Recursos seleccionados después de agregar nuevo:", [...selectedRecursos, newRecurso.id]); // Para depuración
-
-      // Resetear el formulario y cerrar el formulario de agregar
-      reset();
-      setIsAddingNew(false);
-    } catch (error) {
-      console.error("Error al agregar nuevo recurso:", error);
-      // Aquí puedes manejar errores, por ejemplo, mostrando una notificación al usuario
-    }
   };
 
   useEffect(() => {
@@ -189,12 +107,6 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
       searchInputRef.current.focus();
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (isAddingNew && newRecursoInputRef.current) {
-      newRecursoInputRef.current.focus();
-    }
-  }, [isAddingNew]);
 
   return (
     <div className="space-y-2">
@@ -298,7 +210,7 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
         </SelectContent>
       </Select>
 
-      {/* Agregar nuevo recurso */}
+      {/* Agregar nuevo recurso
       <div className="flex items-center space-x-2">
         {isAddingNew ? (
           <form onSubmit={handleSubmit(onSubmit)} className="flex items-center space-x-2">
@@ -346,12 +258,12 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
             Agregar nuevo recurso
           </Button>
         )}
-      </div>
+      </div> */}
 
       {/* Mostrar errores de validación */}
-      {errors.name && (
+      {/* {errors.name && (
         <span className="text-red-500 text-sm">{errors.name.message}</span>
-      )}
+      )} */}
     </div>
   );
 }
