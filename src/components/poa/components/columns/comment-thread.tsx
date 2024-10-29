@@ -47,7 +47,7 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const user = useCurrentUser();
-  const currentUserId = 1; // Reemplaza con el userId real
+  const currentUserId = user?.userId; // Reemplaza con el userId real
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentInput>({
     resolver: zodResolver(commentSchema),
