@@ -187,7 +187,7 @@ export default function PlanificacionFormComponent() {
     }
 
     fetchData()
-  }, [])
+  }, [user?.token])
 
   useEffect(() => {
     const fetchFacultyAndPoa = async () => {
@@ -465,7 +465,7 @@ export default function PlanificacionFormComponent() {
               <EstrategiasSelectorComponent
                 selectedEstrategias={fila.estrategias}
                 onSelectEstrategia={(estrategias) => actualizarFila('estrategias', estrategias)}
-                strategicObjectiveId={strategicObjectiveId}
+                strategicObjectiveIds={[strategicObjectiveId]} // Pasar como arreglo
               />
               {filaErrors?.estrategias && (
                 <span className="text-red-500 text-sm">{filaErrors.estrategias}</span>
@@ -564,8 +564,6 @@ export default function PlanificacionFormComponent() {
               <TipoDeCompraComponent
                 selectedTipo={fila.tipoCompra}
                 onSelectTipo={(tipos: string | null) => actualizarFila('tipoCompra', tipos)}
-                // selectedTypes={fila.tipoCompra}
-                // onSelectTypes={(tipos: string[]) => actualizarFila('tipoCompra', tipos)}
               />
               {filaErrors?.tipoCompra && (
                 <span className="text-red-500 text-sm">{filaErrors.tipoCompra}</span>
@@ -698,7 +696,7 @@ export default function PlanificacionFormComponent() {
         </div>
       )}
 
-{poaId && facultyId && userId ? (
+      {poaId && facultyId && userId ? (
         <EventsCorrectionsComponent
           name="Revisión de eventos"
           isActive={false}

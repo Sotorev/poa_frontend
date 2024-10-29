@@ -1,5 +1,3 @@
-// src/components/poa/components/tabla-planificacion.tsx
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -110,6 +108,8 @@ export function TablaPlanificacionComponent() {
   const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
   const [currentRowId, setCurrentRowId] = useState<string | null>(null);
   const [currentEntityName, setCurrentEntityName] = useState<string>("");
+
+  const [selectedStrategicObjectiveIds, setSelectedStrategicObjectiveIds] = useState<number[]>([]); // Nuevo estado
 
   useEffect(() => {
     const fetchData = async () => {
@@ -273,6 +273,13 @@ export function TablaPlanificacionComponent() {
           if (campo === 'objetivoEstrategico') {
             const nuevaArea = objetivoToAreaMap[valor] || '';
             updatedFila.areaEstrategica = nuevaArea;
+
+            // Actualizar selectedStrategicObjectiveIds
+            setSelectedStrategicObjectiveIds(prevIds => {
+              const newIds = new Set(prevIds);
+              newIds.add(Number(valor));
+              return Array.from(newIds);
+            });
           }
 
           return updatedFila;
@@ -515,6 +522,14 @@ export function TablaPlanificacionComponent() {
           />
         </div>
       )}
+      
+      {/* Selector Global de Estrategias */}
+      <EstrategiasSelectorComponent
+        selectedEstrategias={[]} // Define si necesitas un selector global
+        onSelectEstrategia={() => { /* Define el comportamiento */ }}
+        strategicObjectiveIds={selectedStrategicObjectiveIds}
+      />
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -577,7 +592,7 @@ export function TablaPlanificacionComponent() {
                   <EstrategiasSelectorComponent
                     selectedEstrategias={fila.estrategias}
                     onSelectEstrategia={(estrategias) => actualizarFila(fila.id, 'estrategias', estrategias)}
-                    strategicObjectiveId={strategicObjectiveId}
+                    strategicObjectiveIds={selectedStrategicObjectiveIds} // Cambio aquí
                   />
                   {filaErrors[fila.id]?.estrategias && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].estrategias}</span>
