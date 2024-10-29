@@ -109,8 +109,6 @@ export function TablaPlanificacionComponent() {
   const [currentRowId, setCurrentRowId] = useState<string | null>(null);
   const [currentEntityName, setCurrentEntityName] = useState<string>("");
 
-  const [selectedStrategicObjectiveIds, setSelectedStrategicObjectiveIds] = useState<number[]>([]); // Nuevo estado
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -274,12 +272,18 @@ export function TablaPlanificacionComponent() {
             const nuevaArea = objetivoToAreaMap[valor] || '';
             updatedFila.areaEstrategica = nuevaArea;
 
-            // Actualizar selectedStrategicObjectiveIds
-            setSelectedStrategicObjectiveIds(prevIds => {
-              const newIds = new Set(prevIds);
-              newIds.add(Number(valor));
-              return Array.from(newIds);
-            });
+            // Resetear estrategias e intervenciones si el objetivo estratégico cambia
+            if (!valor) {
+              updatedFila.estrategias = [];
+              updatedFila.intervencion = [];
+            }
+          }
+
+          if (campo === 'estrategias') {
+            // Si se deseleccionan todas las estrategias, limpiar intervenciones
+            if ((valor as string[]).length === 0) {
+              updatedFila.intervencion = [];
+            }
           }
 
           return updatedFila;
@@ -294,6 +298,17 @@ export function TablaPlanificacionComponent() {
       prevFilas.map(fila => {
         if (fila.id === id) {
           return { ...fila, processDocument: file || undefined };
+        }
+        return fila;
+      })
+    );
+  };
+
+  const actualizarIntervencion = (id: string, intervenciones: string[]) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, intervencion: intervenciones };
         }
         return fila;
       })
@@ -522,13 +537,6 @@ export function TablaPlanificacionComponent() {
           />
         </div>
       )}
-      
-      {/* Selector Global de Estrategias */}
-      <EstrategiasSelectorComponent
-        selectedEstrategias={[]} // Define si necesitas un selector global
-        onSelectEstrategia={() => { /* Define el comportamiento */ }}
-        strategicObjectiveIds={selectedStrategicObjectiveIds}
-      />
 
       <Table>
         <TableHeader>
@@ -592,7 +600,9 @@ export function TablaPlanificacionComponent() {
                   <EstrategiasSelectorComponent
                     selectedEstrategias={fila.estrategias}
                     onSelectEstrategia={(estrategias) => actualizarFila(fila.id, 'estrategias', estrategias)}
-                    strategicObjectiveIds={selectedStrategicObjectiveIds} // Cambio aquí
+                    strategicObjectiveIds={fila.objetivoEstrategico ? [Number(fila.objetivoEstrategico)] : []} // Cambio aquí
+                    disabled={!fila.objetivoEstrategico} // **Nueva Lógica para Deshabilitar**
+                    tooltipMessage="Por favor, seleccione primero un objetivo estratégico."
                   />
                   {filaErrors[fila.id]?.estrategias && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].estrategias}</span>
@@ -601,7 +611,10 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <IntervencionesSelectorComponent
                     selectedIntervenciones={fila.intervencion}
-                    onSelectIntervencion={(intervenciones) => actualizarFila(fila.id, 'intervencion', intervenciones)}
+                    onSelectIntervencion={(intervenciones) => actualizarIntervencion(fila.id, intervenciones)}
+                    disabled={fila.estrategias.length === 0} // Deshabilitar si no hay estrategias seleccionadas
+                    tooltipMessage="Por favor, seleccione primero al menos una estrategia."
+                    strategyIds={fila.estrategias} // Pasar las estrategias seleccionadas para filtrar intervenciones
                   />
                   {filaErrors[fila.id]?.intervencion && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].intervencion}</span>
@@ -693,6 +706,9 @@ export function TablaPlanificacionComponent() {
                   />
                   {!fila.detalle && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
+                  )}
+                  {filaErrors[fila.id]?.detalle && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].detalle}</span>
                   )}
                 </TableCell>
                 <TableCell>
