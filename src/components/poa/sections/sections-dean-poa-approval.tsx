@@ -228,13 +228,13 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
           </AlertDialogContent>
         </AlertDialog>
 
-        <Button
+        {/*<Button
           onClick={handleOpenComments}
           className="w-12 h-12 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-full transition duration-300 ease-in-out flex items-center justify-center"
           aria-label="Abrir comentarios"
         >
           <MessageCircle className="h-6 w-6" />
-        </Button>
+        </Button>*/}
       </div>
 
       {showComments && (
