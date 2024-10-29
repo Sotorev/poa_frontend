@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { CheckCircle, XCircle, AlertCircle, RotateCcw, MessageCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 import { useCurrentUser } from "@/hooks/use-current-user"
 
 interface SectionProps {
@@ -27,6 +28,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
   const [open, setOpen] = useState(false)
   const [openCancel, setOpenCancel] = useState(false)
   const user = useCurrentUser();
+  const { toast } = useToast(); // Mover la llamada al hook dentro del componente
 
   //ESTADO DE APROBACION
   const [openApprove, setOpenApprove] = useState(false)
@@ -41,7 +43,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
 
   const buttonClass = "w-64 h-12 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center"
 
-  const handleConfirm = async (status: string, approvalStatusId: number) => {
+  const handleConfirm = async (status: string, approvalStatusId: number, action: string) => {
     ////ESTADO DE APROBACION
     setOpenApprove(false)
     setOpenReject(false)
@@ -96,8 +98,18 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
         onStatusChange();
       }
 
-    } catch (error: any) {
-      alert("Ocurrió un error al actualizar el estado del POA.");
+      toast({
+        title: ` POA ${action} con exito`,
+        description: "Se actualizó el estado del POA correctamente.",
+        variant: "success",
+      });
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `No se pudo actualizar el estado del POA.`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -123,7 +135,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Cerrado", 1)} // approvalStatusId = 1
+                onClick={() => handleConfirm("Cerrado", 1, "aprobado")} // approvalStatusId = 1
                 className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Confirmar
@@ -151,7 +163,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Abierto", 2)} // approvalStatusId = 2
+                onClick={() => handleConfirm("Abierto", 2, "rechazado")} // approvalStatusId = 2
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
                 Confirmar
@@ -179,7 +191,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Abierto", 3)} // approvalStatusId = 3
+                onClick={() => handleConfirm("Abierto", 3, "aprobado con correciones")} // approvalStatusId = 3
                 className="bg-yellow-500 hover:bg-yellow-600 text-white"
               >
                 Confirmar
@@ -207,7 +219,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Abierto", 4)} // approvalStatusId = 4
+                onClick={() => handleConfirm("Abierto", 4, "regresado a revisión")} // approvalStatusId = 4
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 Confirmar
@@ -216,13 +228,13 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
           </AlertDialogContent>
         </AlertDialog>
 
-        {/*<Button
+        <Button
           onClick={handleOpenComments}
           className="w-12 h-12 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-full transition duration-300 ease-in-out flex items-center justify-center"
           aria-label="Abrir comentarios"
         >
           <MessageCircle className="h-6 w-6" />
-        </Button>*/}
+        </Button>
       </div>
 
       {showComments && (
