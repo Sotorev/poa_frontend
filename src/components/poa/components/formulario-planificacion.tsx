@@ -1,4 +1,4 @@
-// src/components/poa/components/PlanificacionFormComponent.tsx
+// src/components/poa/components/formulario-planificacion.tsx
 
 'use client'
 
@@ -129,6 +129,10 @@ export default function PlanificacionFormComponent() {
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false)
 
+  // Estados para gestionar la deshabilitación
+  const [isEstrategiasDisabled, setIsEstrategiasDisabled] = useState<boolean>(true)
+  const [isIntervencionesDisabled, setIsIntervencionesDisabled] = useState<boolean>(true)
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
@@ -239,16 +243,42 @@ export default function PlanificacionFormComponent() {
     fetchFacultyAndPoa()
   }, [userId])
 
+  // Función para actualizar los campos de la fila
   const actualizarFila = (campo: keyof FilaPlanificacion, valor: any | null) => {
     setFila(prevFila => {
       const updatedFila = { ...prevFila, [campo]: valor }
       if (campo === 'objetivoEstrategico') {
         updatedFila.areaEstrategica = objetivoToAreaMap[valor] || ''
+
+        // Gestionar deshabilitación del selector de estrategias
+        setIsEstrategiasDisabled(!valor) // Deshabilitar si no hay objetivo estratégico seleccionado
+
+        // Resetear estrategias e intervenciones si el objetivo estratégico cambia
+        if (!valor) {
+          updatedFila.estrategias = []
+          updatedFila.intervencion = []
+          setIsIntervencionesDisabled(true)
+        } else {
+          // Si se selecciona un objetivo estratégico, verificar si hay estrategias seleccionadas
+          setIsIntervencionesDisabled(updatedFila.estrategias.length === 0)
+        }
       }
+
+      if (campo === 'estrategias') {
+        // Gestionar deshabilitación del selector de intervenciones
+        setIsIntervencionesDisabled((valor as string[]).length === 0)
+      }
+
       return updatedFila
     })
   }  
 
+  // Función para manejar cambios en `IntervencionesSelectorComponent`
+  const actualizarIntervencion = (intervenciones: string[]) => {
+    actualizarFila('intervencion', intervenciones)
+  }
+
+  // Añadir un nuevo objetivo estratégico
   const addStrategicObjective = (createdObjetivo: StrategicObjective) => {
     setStrategicObjectives(prev => [...prev, createdObjetivo])
     const area = strategicAreas.find(area => area.strategicAreaId === createdObjetivo.strategicAreaId)
@@ -407,6 +437,10 @@ export default function PlanificacionFormComponent() {
 
       // Restablecer el formulario a sus valores iniciales
       setFila(initialFila)
+
+      // Resetear deshabilitaciones
+      setIsEstrategiasDisabled(true)
+      setIsIntervencionesDisabled(true)
     } catch (err) {
       console.error(err)
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`)
@@ -465,7 +499,9 @@ export default function PlanificacionFormComponent() {
               <EstrategiasSelectorComponent
                 selectedEstrategias={fila.estrategias}
                 onSelectEstrategia={(estrategias) => actualizarFila('estrategias', estrategias)}
-                strategicObjectiveIds={[strategicObjectiveId]} // Pasar como arreglo
+                strategicObjectiveIds={fila.objetivoEstrategico ? [Number(fila.objetivoEstrategico)] : []}
+                disabled={isEstrategiasDisabled}
+                tooltipMessage="Por favor, seleccione primero un objetivo estratégico."
               />
               {filaErrors?.estrategias && (
                 <span className="text-red-500 text-sm">{filaErrors.estrategias}</span>
@@ -475,12 +511,16 @@ export default function PlanificacionFormComponent() {
               <label className="block font-medium mb-2">Intervención</label>
               <IntervencionesSelectorComponent
                 selectedIntervenciones={fila.intervencion}
-                onSelectIntervencion={(intervenciones) => actualizarFila('intervencion', intervenciones)}
+                onSelectIntervencion={actualizarIntervencion}
+                disabled={isIntervencionesDisabled}
+                tooltipMessage="Por favor, seleccione primero al menos una estrategia."
+                strategyIds={fila.estrategias} // Pasamos las estrategias seleccionadas
               />
               {filaErrors?.intervencion && (
                 <span className="text-red-500 text-sm">{filaErrors.intervencion}</span>
               )}
             </div>
+            {/* Resto de los campos... */}
             <div>
               <label className="block font-medium mb-2">ODS</label>
               <OdsSelector

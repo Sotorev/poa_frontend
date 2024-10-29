@@ -1,3 +1,5 @@
+// src/components/poa/components/columns/intervenciones-selector.tsx
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
@@ -32,9 +34,18 @@ interface Intervencion {
 interface IntervencionesProps {
   selectedIntervenciones: string[];
   onSelectIntervencion: (intervenciones: string[]) => void;
+  disabled?: boolean; // Nueva propiedad
+  tooltipMessage?: string; // Mensaje del tooltip cuando está deshabilitado
+  strategyIds: string[]; // Nueva propiedad para filtrar intervenciones por estrategias seleccionadas
 }
 
-export function IntervencionesSelectorComponent({ selectedIntervenciones, onSelectIntervencion }: IntervencionesProps) {
+export function IntervencionesSelectorComponent({
+  selectedIntervenciones,
+  onSelectIntervencion,
+  disabled = false, // Por defecto, no está deshabilitado
+  tooltipMessage = "Por favor, seleccione al menos una estrategia primero.", // Mensaje por defecto
+  strategyIds, // Nueva propiedad
+}: IntervencionesProps) {
   const [intervencionesList, setIntervencionesList] = useState<Intervencion[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -69,8 +80,10 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
           throw new Error(`Error al obtener intervenciones: ${response.statusText}`);
         }
         const data: Intervencion[] = await response.json();
+        // Filtrar intervenciones que no estén eliminadas y que pertenezcan a las estrategias seleccionadas
+        const strategyIdsNum = strategyIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         const filteredIntervenciones = data.filter(
-          (intervencion) => !intervencion.isDeleted
+          (intervencion) => !intervencion.isDeleted && strategyIdsNum.includes(intervencion.strategyId)
         );
         setIntervencionesList(filteredIntervenciones);
       } catch (error) {
@@ -78,8 +91,12 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
       }
     };
 
-    fetchIntervenciones();
-  }, []);
+    if (!disabled && strategyIds.length > 0) { // Solo fetch si no está deshabilitado y hay estrategias seleccionadas
+      fetchIntervenciones();
+    } else {
+      setIntervencionesList([]); // Limpiar la lista si está deshabilitado o no hay estrategias
+    }
+  }, [disabled, user?.token, strategyIds]);
 
   const filteredIntervenciones = useMemo(() => {
     return intervencionesList.filter((int) =>
@@ -88,7 +105,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
   }, [intervencionesList, searchTerm]);
 
   const handleSelectIntervencion = (intervencionId: string) => {
-    if (!intervencionId) return;
+    if (disabled) return; // No permitir cambios si está deshabilitado
     const updatedIntervenciones = selectedIntervenciones.includes(intervencionId)
       ? selectedIntervenciones.filter((id) => id !== intervencionId)
       : [...selectedIntervenciones, intervencionId];
@@ -97,6 +114,7 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
 
   const handleRemoveIntervencion = (intId: string, event: React.MouseEvent) => {
     event.stopPropagation();
+    if (disabled) return; // No permitir cambios si está deshabilitado
     const updatedIntervenciones = selectedIntervenciones.filter(id => id !== intId);
     onSelectIntervencion(updatedIntervenciones);
   };
@@ -141,136 +159,101 @@ export function IntervencionesSelectorComponent({ selectedIntervenciones, onSele
   }, [isAddingNew]);
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2 mb-2">
-        {selectedIntervenciones.map((id) => {
-          const intervencion = intervencionesList.find(
-            (int) => int.interventionId.toString() === id
-          );
-          if (!intervencion) return null;
-          return (
-            <TooltipProvider key={id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {intervencion.isCustom ? `E${intervencion.interventionId}` : intervencion.interventionId}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-1 h-4 w-4 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
-                      onClick={(event) => handleRemoveIntervencion(id, event)}
-                      aria-label={`Eliminar ${intervencion.name}`}
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedIntervenciones.map((id) => {
+                  const intervencion = intervencionesList.find(
+                    (int) => int.interventionId.toString() === id
+                  );
+                  if (!intervencion) return null;
+                  return (
+                    <Badge
+                      key={id}
+                      variant="secondary"
+                      className={`bg-green-100 text-green-800 flex items-center ${
+                        disabled ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{intervencion.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          );
-        })}
-      </div>
+                      {intervencion.isCustom ? `E${intervencion.interventionId}` : intervencion.interventionId}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-1 h-4 w-4 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
+                        onClick={(event) => handleRemoveIntervencion(id, event)}
+                        aria-label={`Eliminar ${intervencion.name}`}
+                        disabled={disabled} // Deshabilitar el botón si está deshabilitado
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  );
+                })}
+              </div>
 
-      <Select
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        onValueChange={handleSelectIntervencion}
-      >
-        <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-          <SelectValue placeholder="Selecciona intervenciones" />
-        </SelectTrigger>
-        <SelectContent>
-          <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
-            <Search className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
-            <Input
-              ref={searchInputRef}
-              placeholder="Buscar intervención..."
-              className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-green-500 border-green-300"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <ScrollArea className="h-[200px]">
-            <SelectGroup>
-              {filteredIntervenciones.map((int) => (
-                <SelectItem
-                  key={int.interventionId}
-                  value={int.interventionId.toString()}
-                  className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
-                >
-                  <div className="flex items-center">
-                    <Checkbox
-                      checked={selectedIntervenciones.includes(int.interventionId.toString())}
-                      onCheckedChange={() => handleSelectIntervencion(int.interventionId.toString())}
-                      className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
+              <Select
+                open={isOpen}
+                onOpenChange={setIsOpen}
+                onValueChange={handleSelectIntervencion}
+                disabled={disabled} // Deshabilitar el Select si está deshabilitado
+              >
+                <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  <SelectValue placeholder="Selecciona intervenciones" />
+                </SelectTrigger>
+                <SelectContent>
+                  <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
+                    <Search className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
+                    <Input
+                      ref={searchInputRef}
+                      placeholder="Buscar intervención..."
+                      className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-green-500 border-green-300"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      disabled={disabled} // Deshabilitar el input si está deshabilitado
                     />
-                    <div
-                      className="w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold bg-green-500"
-                    >
-                      {int.isCustom ? `E${int.interventionId}` : int.interventionId}
-                    </div>
-                    {int.name}
                   </div>
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </ScrollArea>
-        </SelectContent>
-      </Select>
-
-      {/* Commenting out the add new intervention functionality */}
-      {/* <div className="flex items-center space-x-2">
-        {isAddingNew ? (
-          <form onSubmit={handleSubmit(onSubmit)} className="flex items-center space-x-2">
-            <Input
-              placeholder="Nueva intervención..."
-              {...register("name")}
-              className={`h-8 w-[240px] border ${
-                errors.name ? "border-red-500" : "border-green-300"
-              } focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
-            />
-            <Button
-              type="submit"
-              size="sm"
-              variant="outline"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100 border-green-300 hover:border-green-500"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setIsAddingNew(false);
-                reset();
-              }}
-              size="sm"
-              variant="outline"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100 border-red-300 hover:border-red-500"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </form>
-        ) : (
-          <Button
-            type="button"
-            onClick={() => setIsAddingNew(true)}
-            size="sm"
-            variant="outline"
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 border-green-300 hover:border-green-500"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Proponer nueva intervención
-          </Button>
+                  <ScrollArea className="h-[200px]">
+                    <SelectGroup>
+                      {filteredIntervenciones.map((int) => (
+                        <SelectItem
+                          key={int.interventionId}
+                          value={int.interventionId.toString()}
+                          className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
+                        >
+                          <div className="flex items-center">
+                            <Checkbox
+                              checked={selectedIntervenciones.includes(int.interventionId.toString())}
+                              onCheckedChange={() => handleSelectIntervencion(int.interventionId.toString())}
+                              className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
+                              disabled={disabled} // Deshabilitar el checkbox si está deshabilitado
+                            />
+                            <div
+                              className={`w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold ${
+                                int.isCustom ? "bg-blue-500" : "bg-green-500"
+                              }`}
+                            >
+                              {int.isCustom ? `E${int.interventionId}` : int.interventionId}
+                            </div>
+                            {int.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </ScrollArea>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </TooltipTrigger>
+        {disabled && (
+          <TooltipContent>
+            <p>{tooltipMessage}</p>
+          </TooltipContent>
         )}
-      </div> */}
-
-      {/* Removing error message display */}
-      {/* {errors.name && (
-        <span className="text-red-500 text-sm">{errors.name.message}</span>
-      )} */}
-    </div>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
