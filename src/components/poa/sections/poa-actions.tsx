@@ -14,21 +14,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { CheckCircle, XCircle, AlertCircle, RotateCcw, MessageCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
-export function PoaActions() {
+interface SectionProps {
+  name: string
+  isActive: boolean
+  poaId: number
+}
+
+export function PoaApproval({ name, isActive, poaId }: SectionProps) {
+  const [open, setOpen] = useState(false)
+  const [openCancel, setOpenCancel] = useState(false)
+  const user = useCurrentUser();
+  const { toast } = useToast(); // Mover la llamada al hook dentro del componente
+
+  //ESTADO DE APROBACION
   const [openApprove, setOpenApprove] = useState(false)
   const [openReject, setOpenReject] = useState(false)
   const [openCorrections, setOpenCorrections] = useState(false)
   const [openReturn, setOpenReturn] = useState(false)
   const [showComments, setShowComments] = useState(false)
-
-  const handleConfirm = (action: string) => {
-    console.log(`POA ${action}`)
-    setOpenApprove(false)
-    setOpenReject(false)
-    setOpenCorrections(false)
-    setOpenReturn(false)
-  }
 
   const handleOpenComments = () => {
     setShowComments(true)
@@ -36,8 +42,56 @@ export function PoaActions() {
 
   const buttonClass = "w-64 h-12 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center"
 
+  const handleConfirm = async (approvalStatusId: number, action: string) => {
+    ////ESTADO DE APROBACION
+    setOpenApprove(false)
+    setOpenReject(false)
+    setOpenCorrections(false)
+    setOpenReturn(false)
+
+    // Obtener la fecha actual en formato ISO
+    const currentDate = new Date().toISOString();
+
+    try {
+      const approvalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaapprovals/poa-approval/${poaId}/stage/1`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          approverUserId: user?.userId,
+          approverRoleId: user?.role.roleId,
+          approvalStageId: 1,
+          approvalStatusId: approvalStatusId,
+          approvalDate: currentDate,
+        }),
+      });
+
+      if (!approvalResponse.ok) {
+        throw new Error('Error al actualizar la aprobación del POA.');
+      }
+
+      setOpen(false);
+      setOpenCancel(false);
+
+      toast({
+        title: ` POA ${action} con exito`,
+        description: "Se actualizó el estado del POA correctamente.",
+        variant: "success",
+      });
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `No se pudo actualizar el estado del POA.`,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="flex flex-wrap justify-center bg-gray-100 p-8">
+    <div id={name} className= {`flex flex-wrap justify-center bg-gray-100 p-8 ${isActive ? 'ring-2 ring-green-400' : ''} `}>
       <div className="flex flex-row flex-wrap justify-center gap-4 p-4">
         <AlertDialog open={openApprove} onOpenChange={setOpenApprove}>
           <AlertDialogTrigger asChild>
@@ -58,7 +112,7 @@ export function PoaActions() {
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm('aprobado')}
+                onClick={() => handleConfirm(1, "aprobado")} // approvalStatusId = 1
                 className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Confirmar
@@ -86,7 +140,7 @@ export function PoaActions() {
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm('rechazado')}
+                onClick={() => handleConfirm(2, "rechazado")} // approvalStatusId = 2
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
                 Confirmar
@@ -114,7 +168,7 @@ export function PoaActions() {
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm('enviado a correcciones')}
+                onClick={() => handleConfirm(3, "aprobado con correciones")} // approvalStatusId = 3
                 className="bg-yellow-500 hover:bg-yellow-600 text-white"
               >
                 Confirmar
@@ -142,7 +196,7 @@ export function PoaActions() {
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm('regresado a revisión')}
+                onClick={() => handleConfirm(4, "regresado a revisión")} // approvalStatusId = 4
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 Confirmar
