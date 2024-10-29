@@ -41,27 +41,24 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
 
   const buttonClass = "w-64 h-12 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center"
 
-  const handleConfirm = async (status: string) => {
-
+  const handleConfirm = async (status: string, approvalStatusId: number) => {
     ////ESTADO DE APROBACION
     setOpenApprove(false)
     setOpenReject(false)
     setOpenCorrections(false)
     setOpenReturn(false)
 
-
-    //CAMBIAR EL ESTADO DE CERRADO O ABIERTO
     // Obtener la fecha actual en formato ISO
     const currentDate = new Date().toISOString();
 
     try {
+      // Primer fetch para actualizar el estado del POA
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${poaId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`,
         },
-
         body: JSON.stringify({
           status: status,
           submissionDate: currentDate, // Enviar la fecha actual
@@ -71,6 +68,27 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
       if (!response.ok) {
         throw new Error('Error al actualizar el estado del POA.');
       }
+
+      // Segundo fetch para actualizar la aprobación del POA
+      const approvalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaapprovals/poa-approval/${poaId}/stage/1`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          approverUserId: user?.userId,
+          approverRoleId: user?.role.roleId,
+          approvalStageId: 1,
+          approvalStatusId: approvalStatusId,
+          approvalDate: currentDate,
+        }),
+      });
+
+      if (!approvalResponse.ok) {
+        throw new Error('Error al actualizar la aprobación del POA.');
+      }
+
       setOpen(false);
       setOpenCancel(false);
 
@@ -105,7 +123,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Cerrado")}
+                onClick={() => handleConfirm("Cerrado", 1)} // approvalStatusId = 1
                 className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Confirmar
@@ -133,7 +151,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Abierto")}
+                onClick={() => handleConfirm("Abierto", 2)} // approvalStatusId = 2
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
                 Confirmar
@@ -161,7 +179,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Abierto")}
+                onClick={() => handleConfirm("Abierto", 3)} // approvalStatusId = 3
                 className="bg-yellow-500 hover:bg-yellow-600 text-white"
               >
                 Confirmar
@@ -189,7 +207,7 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
                 Cancelar
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleConfirm("Abierto")}
+                onClick={() => handleConfirm("Abierto", 4)} // approvalStatusId = 4
                 className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 Confirmar
