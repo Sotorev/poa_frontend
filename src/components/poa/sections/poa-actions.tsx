@@ -62,6 +62,7 @@ export function PoaActions({ name, isActive, poaId }: SectionProps) {
           description: `No tienes permisos para aprobar el POA.`,
           variant: "destructive",
         });
+        return; 
      }
 
     try {
@@ -83,7 +84,7 @@ export function PoaActions({ name, isActive, poaId }: SectionProps) {
       if (!approvalResponse.ok) {
         throw new Error('Error al actualizar la aprobación del POA.');
       }
-      
+
       toast({
         title: ` POA ${action} con exito`,
         description: "Se actualizó el estado del POA correctamente.",
