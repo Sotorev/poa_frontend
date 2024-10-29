@@ -23,9 +23,7 @@ interface SectionProps {
   poaId: number
 }
 
-export function PoaApproval({ name, isActive, poaId }: SectionProps) {
-  const [open, setOpen] = useState(false)
-  const [openCancel, setOpenCancel] = useState(false)
+export function PoaActions({ name, isActive, poaId }: SectionProps) {
   const user = useCurrentUser();
   const { toast } = useToast(); // Mover la llamada al hook dentro del componente
 
@@ -52,8 +50,22 @@ export function PoaApproval({ name, isActive, poaId }: SectionProps) {
     // Obtener la fecha actual en formato ISO
     const currentDate = new Date().toISOString();
 
+     // Determinar approvalStageId basado en el roleName del usuario
+     let approvalStageId;
+     if (user?.role.roleName === "Vicerrector académico") {
+       approvalStageId = 2;
+     } else if (user?.role.roleName === "Vicerrector financiero") {
+       approvalStageId = 3;
+     } else {
+        toast({
+          title: "Error",
+          description: `No tienes permisos para aprobar el POA.`,
+          variant: "destructive",
+        });
+     }
+
     try {
-      const approvalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaapprovals/poa-approval/${poaId}/stage/1`, {
+      const approvalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poaapprovals/poa-approval/${poaId}/stage/${approvalStageId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -62,7 +74,7 @@ export function PoaApproval({ name, isActive, poaId }: SectionProps) {
         body: JSON.stringify({
           approverUserId: user?.userId,
           approverRoleId: user?.role.roleId,
-          approvalStageId: 1,
+          approvalStageId: approvalStageId,
           approvalStatusId: approvalStatusId,
           approvalDate: currentDate,
         }),
@@ -71,10 +83,7 @@ export function PoaApproval({ name, isActive, poaId }: SectionProps) {
       if (!approvalResponse.ok) {
         throw new Error('Error al actualizar la aprobación del POA.');
       }
-
-      setOpen(false);
-      setOpenCancel(false);
-
+      
       toast({
         title: ` POA ${action} con exito`,
         description: "Se actualizó el estado del POA correctamente.",

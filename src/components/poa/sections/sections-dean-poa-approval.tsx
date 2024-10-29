@@ -25,8 +25,6 @@ interface SectionProps {
 }
 
 export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionProps) {
-  const [open, setOpen] = useState(false)
-  const [openCancel, setOpenCancel] = useState(false)
   const user = useCurrentUser();
   const { toast } = useToast(); // Mover la llamada al hook dentro del componente
 
@@ -90,9 +88,6 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
       if (!approvalResponse.ok) {
         throw new Error('Error al actualizar la aprobación del POA.');
       }
-
-      setOpen(false);
-      setOpenCancel(false);
 
       if (onStatusChange) {
         onStatusChange();
