@@ -635,7 +635,7 @@ export default function PlanificacionFormComponent() {
         </CardContent>
       </Card>
       <div className="flex justify-center">
-        <Button onClick={enviarActividad} className="px-8 py-2">Enviar Evento</Button>
+        <Button onClick={enviarActividad} className="px-8 my-2 mb-6">Enviar Evento</Button>
       </div>
 
       {/* Modal de Errores */}

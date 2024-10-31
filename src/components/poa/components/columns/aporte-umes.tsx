@@ -123,9 +123,8 @@ export function AporteUmesComponent({ aportes, onChangeAportes }: AporteUmesProp
 
   return (
     <div className="space-y-4">
-      <Label className="text-sm font-medium text-green-700">Aporte UMES</Label>
       {!isAdding && (
-        <Button onClick={() => setIsAdding(true)} variant="outline" className="text-sm text-green-600 border-green-300 hover:bg-green-50">
+        <Button onClick={() => setIsAdding(true)} className="text-sm">
           Agregar aporte
         </Button>
       )}
