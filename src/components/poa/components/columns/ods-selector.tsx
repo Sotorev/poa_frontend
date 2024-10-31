@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Search, X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useCurrentUser } from '@/hooks/use-current-user'
@@ -137,16 +137,16 @@ export function OdsSelector({ selectedODS, onSelectODS }: OdsSelectorProps) {
       <div className="relative">
         <button
           type="button"
-          className="w-[300px] flex justify-between items-center px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-[300px] flex justify-between items-center px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 hover:border-green-300 transition-colors"
           onClick={() => setIsOpen(!isOpen)}
         >
           <span>{selectedODS.length > 0 ? `${selectedODS.length} ODS seleccionados` : 'Selecciona ODS'}</span>
-          <Search className="h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
         </button>
         {isOpen && (
-          <div className="absolute mt-1 w-full bg-white border rounded-md shadow-lg z-20">
-            <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <div className="absolute mt-1 w-full bg-white border rounded-md shadow-lg z-20 border-green-100">
+            <div className="flex items-center px-3 py-2 sticky top-0 bg-white z-10 border-b border-green-100">
+              <ChevronDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <Input
                 ref={searchInputRef}
                 placeholder="Buscar ODS..."
@@ -160,22 +160,24 @@ export function OdsSelector({ selectedODS, onSelectODS }: OdsSelectorProps) {
                 {filteredODS.map((ods) => (
                   <div
                     key={ods.odsId}
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-green-50 cursor-pointer rounded-sm transition-colors"
                     onClick={() => handleSelectODS(ods.odsId.toString())}
                   >
                     <Checkbox
                       checked={selectedODS.includes(ods.odsId.toString())}
                       className="rounded border-gray-300"
                       style={{
-                        borderColor: `#${ods.colorHex}`,
-                        backgroundColor: selectedODS.includes(ods.odsId.toString()) ? `#${ods.colorHex}` : 'transparent',
+                        borderColor: ods.colorHex ? `#${ods.colorHex}` : '#22c55e',
+                        backgroundColor: selectedODS.includes(ods.odsId.toString())
+                          ? ods.colorHex ? `#${ods.colorHex}` : '#22c55e'
+                          : 'transparent',
                       }}
                       onChange={() => handleSelectODS(ods.odsId.toString())}
                       aria-label={`Seleccionar ODS ${ods.name}`}
                     />
                     <div
                       className="w-6 h-6 rounded-sm flex items-center justify-center text-white text-xs font-bold"
-                      style={{ backgroundColor: `#${ods.colorHex}` }}
+                      style={{ backgroundColor: ods.colorHex ? `#${ods.colorHex}` : '#22c55e' }}
                     >
                       {ods.odsId}
                     </div>
