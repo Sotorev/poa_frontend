@@ -10,7 +10,7 @@ import { PurchaseType } from '@/types/PurchaseType';
 import { StrategicObjective } from '@/types/StrategicObjective';
 import { StrategicArea } from '@/types/StrategicArea';
 import { User } from '@/types/User';
-import { Poa } from '@/types/poa';
+import { Poa } from '@/types/Poa';
 import { ApiEvent } from '@/types/interfaces';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
