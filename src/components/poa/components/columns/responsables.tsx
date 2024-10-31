@@ -24,21 +24,18 @@ export function ResponsablesComponent({
 }: ResponsablesComponentProps) {
   return (
     <div className="space-y-2">
-      <Label>Responsable Planificación</Label>
       <Input
-        placeholder="Responsable Planificación"
+        placeholder="Responsable de planificación"
         value={responsablePlanificacion}
         onChange={(e) => onChangeResponsablePlanificacion(e.target.value)}
       />
-      <Label>Responsable Ejecución</Label>
       <Input
-        placeholder="Responsable Ejecución"
+        placeholder="Responsable de ejecución"
         value={responsableEjecucion}
         onChange={(e) => onChangeResponsableEjecucion(e.target.value)}
       />
-      <Label>Responsable Seguimiento</Label>
       <Input
-        placeholder="Responsable Seguimiento"
+        placeholder="Responsable de seguimiento"
         value={responsableSeguimiento}
         onChange={(e) => onChangeResponsableSeguimiento(e.target.value)}
       />
