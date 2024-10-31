@@ -40,7 +40,7 @@ export function CampusSelector({ onSelectCampus, selectedCampusId }: CampusSelec
 
   return (
     <Select onValueChange={onSelectCampus} value={selectedCampusId}>
-      <SelectTrigger className="w-[200px] border-green-300 focus:ring-green-500 focus:border-green-500">
+      <SelectTrigger className=" border-green-300 focus:ring-green-500 focus:border-green-500">
         <SelectValue placeholder="Selecciona un campus" />
       </SelectTrigger>
       <SelectContent>
