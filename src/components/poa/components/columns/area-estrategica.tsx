@@ -12,13 +12,13 @@ interface AreaEstrategicaComponentProps {
 export function AreaEstrategicaComponent({ areaEstrategica, error }: AreaEstrategicaComponentProps) {
   return (
     <div className="w-64 h-full">
-      <p className="text-sm text-gray-500 mb-2">Auto-selección al elegir objetivo estratégico</p>
+      <p className="text-sm text-gray-500">Auto-selección al elegir objetivo estratégico</p>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="w-full h-full min-h-[40px] flex items-center">
+            <div className="w-full p-2 flex items-center">
               <label
-                className={`block w-full h-full p-2 bg-background border rounded-md text-sm ${
+                className={`block w-full h-8 p-2 bg-background border rounded-md text-sm ${
                   error ? 'border-red-500 text-red-500' : 'border-input text-foreground'
                 } truncate cursor-default overflow-hidden`}
               >
