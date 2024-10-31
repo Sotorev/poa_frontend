@@ -175,7 +175,7 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
         onValueChange={handleSelectTipo}
         value={selectedTipo || undefined}
       >
-        <SelectTrigger className="w-[300px] border-green-500 focus:ring-green-500">
+        <SelectTrigger className="border-green-500 focus:ring-green-500">
           <SelectValue placeholder="Selecciona tipos de compra" />
         </SelectTrigger>
         <SelectContent>
