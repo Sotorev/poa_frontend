@@ -121,7 +121,7 @@ export function IntervencionesSelectorComponent({
         onOpenChange={setIsOpen}
         onValueChange={handleSelectIntervencion}
       >
-        <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+        <SelectTrigger className="border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
           <SelectValue placeholder="Selecciona intervenciones" />
         </SelectTrigger>
         <SelectContent>
