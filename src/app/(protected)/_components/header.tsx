@@ -82,7 +82,7 @@ const navItems: NavItem[] = [
 		href: "/pei",
 		icon: BarChart2,
 		description: "Plan Estratégico Institucional",
-		requiredRoles: ['Vicerrector', "Decano", "Administrador", "Vicerrector académico", "Vicerrector financiero"],
+		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector financiero"],
 		subItems: [
 			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: FileText },
 			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: Settings },
