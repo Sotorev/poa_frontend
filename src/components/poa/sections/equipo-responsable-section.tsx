@@ -78,7 +78,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
 
   const fetchAllUsers = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/proponent/${facultyId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`,
