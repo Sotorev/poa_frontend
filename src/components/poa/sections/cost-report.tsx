@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useCurrentUser } from '@/hooks/use-current-user'
 
-export function CostReport() {
+interface CostReportProps {
+  facultyId: number;
+  userId: number;
+  rolId: number;
+  poaId: number;
+  isEditable: boolean;
+}
+
+export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: CostReportProps) {
   const [showDetails, setShowDetails] = useState(true)
   const [isMinimized, setIsMinimized] = useState(false)
   const user = useCurrentUser()
@@ -47,7 +55,7 @@ export function CostReport() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/financing/poa/5`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/financing/poa/${facultyId}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${user?.token}`
