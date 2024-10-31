@@ -17,7 +17,7 @@ export function CostReport() {
     amount: number;
     percentageOfCategory: number;
     percentageOfTotalCost: number;
-    color?: string; // Add the color property
+    color?: string;
   }
 
   interface CategoryStats {
@@ -77,7 +77,11 @@ export function CostReport() {
     fondosAdicionales,
     fondosExternos,
     costoTotal,
-    financingSourcesWithColors
+    financingSourcesWithColors,
+    presupuestoAnualSource, // Añadido aquí
+    fondosAdicionalesTotal,
+    fondosExternosTotal,
+    categoryStats
   } = useMemo(() => {
     if (!data) {
       return {
@@ -89,6 +93,10 @@ export function CostReport() {
         fondosExternos: [] as FinancingSource[],
         costoTotal: 0,
         financingSourcesWithColors: [] as FinancingSource[],
+        presupuestoAnualSource: null as FinancingSource | null,
+        fondosAdicionalesTotal: 0,
+        fondosExternosTotal: 0,
+        categoryStats: {} as CategoryStats,
       }
     }
 
@@ -112,11 +120,17 @@ export function CostReport() {
           .map(source => ({ ...source, color: colors[(colorIndex++) % colors.length] }))
       : []
 
+    // Total Fondos Adicionales
+    const fondosAdicionalesTotal = fondosAdicionales.reduce((sum, source) => sum + source.amount, 0)
+
     // Fondos Externos (Otra)
     const fondosExternosData = categoryStats['Otra']?.financingSources
     const fondosExternos = fondosExternosData
       ? Object.values(fondosExternosData).map(source => ({ ...source, color: colors[(colorIndex++) % colors.length] }))
       : []
+
+    // Total Fondos Externos
+    const fondosExternosTotal = fondosExternos.reduce((sum, source) => sum + source.amount, 0)
 
     // Costo Total
     const costoTotal = data.totalCost
@@ -136,7 +150,11 @@ export function CostReport() {
       fondosAdicionales,
       fondosExternos,
       costoTotal,
-      financingSourcesWithColors
+      financingSourcesWithColors,
+      presupuestoAnualSource, // Incluido en el retorno
+      fondosAdicionalesTotal,
+      fondosExternosTotal,
+      categoryStats
     }
   }, [data])
 
@@ -144,15 +162,18 @@ export function CostReport() {
   interface FundingSourceProps {
     label: string;
     amount: number;
+    percentageOfCategory: number;
     percentageOfTotalCost: number;
   }
 
-  const renderFundingSource = ({ label, amount, percentageOfTotalCost }: FundingSourceProps) => (
+  const renderFundingSource = ({ label, amount, percentageOfCategory, percentageOfTotalCost }: FundingSourceProps) => (
     <div className="flex justify-between items-center space-x-2">
       <span className="text-sm font-medium">{label}:</span>
       <div className="text-right">
         <span className="text-sm font-bold">{formatCurrency(amount)}</span>
-        <div className="text-xs text-muted-foreground">{percentageOfTotalCost.toFixed(2)}% del total</div>
+        <div className="text-xs text-muted-foreground">
+          {percentageOfTotalCost}% del total
+        </div>
       </div>
     </div>
   )
@@ -160,6 +181,8 @@ export function CostReport() {
   if (!data) {
     return <div>Cargando...</div>
   }
+
+  // const { categoryStats } = data
 
   return (
     <div className="w-full">
@@ -215,11 +238,11 @@ export function CostReport() {
                   </div>
                   <div className="mt-2">
                     <Progress 
-                      value={presupuestoAsignado !== 0 ? (presupuestoAnual / presupuestoAsignado) * 100 : 0} 
+                      value={presupuestoAnualSource ? presupuestoAnualSource.percentageOfCategory : 0} 
                       className="h-2"
                     />
                     <div className="text-xs text-right mt-1">
-                      {presupuestoAsignado !== 0 ? ((presupuestoAnual / presupuestoAsignado) * 100).toFixed(2) : '0.00'}% del presupuesto asignado se esta usando
+                      {presupuestoAnualSource ? presupuestoAnualSource.percentageOfTotalCost : '0.00'}% del total de costos
                     </div>
                   </div>
                   {seExcede ? (
@@ -244,22 +267,27 @@ export function CostReport() {
                 <CardContent>
                   {fondosAdicionales.map((source) => (
                     <div key={source.name}>
-                      {renderFundingSource({ label: source.name, amount: source.amount, percentageOfTotalCost: source.percentageOfTotalCost })}
+                      {renderFundingSource({ 
+                        label: source.name, 
+                        amount: source.amount, 
+                        percentageOfCategory: source.percentageOfCategory, 
+                        percentageOfTotalCost: source.percentageOfTotalCost 
+                      })}
                     </div>
                   ))}
                   <div className="mt-2">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium">Total Fondos Adicionales:</span>
                       <span className="text-sm font-bold">
-                        {formatCurrency(fondosAdicionales.reduce((sum, source) => sum + source.amount, 0))}
+                        {formatCurrency(fondosAdicionalesTotal)}
                       </span>
                     </div>
                     <Progress 
-                      value={(fondosAdicionales.reduce((sum, source) => sum + source.amount, 0) / costoTotal) * 100} 
+                      value={categoryStats['UMES']?.percentageOfTotal || 0} 
                       className="h-2"
                     />
                     <div className="text-xs text-right mt-1">
-                      {((fondosAdicionales.reduce((sum, source) => sum + source.amount, 0) / costoTotal) * 100).toFixed(2)}% del total
+                      {categoryStats['UMES']?.percentageOfTotal || '0.00'}% del total
                     </div>
                   </div>
                 </CardContent>
@@ -273,22 +301,27 @@ export function CostReport() {
                 <CardContent>
                   {fondosExternos.map((source) => (
                     <div key={source.name}>
-                      {renderFundingSource({ label: source.name, amount: source.amount, percentageOfTotalCost: source.percentageOfTotalCost })}
+                      {renderFundingSource({ 
+                        label: source.name, 
+                        amount: source.amount, 
+                        percentageOfCategory: source.percentageOfCategory, 
+                        percentageOfTotalCost: source.percentageOfTotalCost 
+                      })}
                     </div>
                   ))}
                   <div className="mt-2">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium">Total Fondos Externos:</span>
                       <span className="text-sm font-bold">
-                        {formatCurrency(fondosExternos.reduce((sum, source) => sum + source.amount, 0))}
+                        {formatCurrency(fondosExternosTotal)}
                       </span>
                     </div>
                     <Progress 
-                      value={(fondosExternos.reduce((sum, source) => sum + source.amount, 0) / costoTotal) * 100} 
+                      value={categoryStats['Otra']?.percentageOfTotal || 0} 
                       className="h-2"
                     />
                     <div className="text-xs text-right mt-1">
-                      {((fondosExternos.reduce((sum, source) => sum + source.amount, 0) / costoTotal) * 100).toFixed(2)}% del total
+                      {categoryStats['Otra']?.percentageOfTotal || '0.00'}% del total
                     </div>
                   </div>
                 </CardContent>
@@ -303,7 +336,7 @@ export function CostReport() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-                <span className="text-sm font-medium mb-2 md:mb-0">Costo total de eventos del POA (todos los fondos):</span>
+                <span className="text-sm font-medium mb-2 md:mb-0">Costo total (todos los fondos):</span>
                 <span className="text-lg font-bold">{formatCurrency(costoTotal)}</span>
               </div>
               <h4 className="text-sm font-semibold mb-2">Distribución del Presupuesto Total:</h4>
@@ -334,7 +367,7 @@ export function CostReport() {
 
           <div className="flex items-center text-sm text-gray-500 mt-4">
             <Info className="mr-2 h-4 w-4" />
-            <span>Este informe muestra el presupuesto asignado, los fondos adicionales, los fondos externos y la distribución total del presupuesto del POA de la facultad.</span>
+            <span>Este informe muestra el presupuesto asignado, los fondos adicionales, los fondos externos y la distribución total del presupuesto de los eventos de este POA.</span>
           </div>
         </div>
       )}
