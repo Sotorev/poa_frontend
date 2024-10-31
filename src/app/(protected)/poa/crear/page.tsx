@@ -4,7 +4,6 @@ import PlanificacionFormComponent from '@/components/poa/components/formulario-p
 import { TablaPlanificacionComponent } from '@/components/poa/components/tabla-planificacion'
 import React, { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const CreatePOAPage = () => {
 	const [formPreference, setFormPreference] = useState<'traditional' | 'table'>('traditional')
@@ -26,30 +25,25 @@ const CreatePOAPage = () => {
 	}
 
 	return (
-		<Card className="w-full max-w-7xl mx-auto">
-			<CardHeader>
-				<CardTitle>Crear evento</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div className="mb-6">
-					<Select onValueChange={handlePreferenceChange} value={formPreference}>
-						<SelectTrigger className="w-[180px]">
-							<SelectValue placeholder="Select form type" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="traditional">Formulario tradicional</SelectItem>
-							<SelectItem value="table">Formulario tabla</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
+		<div className="w-full max-w-7xl mx-auto">
+			<div className="mb-6">
+				<Select onValueChange={handlePreferenceChange} value={formPreference}>
+					<SelectTrigger className="w-[180px]">
+						<SelectValue placeholder="Select form type" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="traditional">Formulario tradicional</SelectItem>
+						<SelectItem value="table">Formulario tabla</SelectItem>
+					</SelectContent>
+				</Select>
+			</div>
 
-				{formPreference === 'traditional' ? (
-					<PlanificacionFormComponent />
-				) : (
-					<TablaPlanificacionComponent />
-				)}
-			</CardContent>
-		</Card>
+			{formPreference === 'traditional' ? (
+				<PlanificacionFormComponent />
+			) : (
+				<TablaPlanificacionComponent />
+			)}
+		</div>
 	)
 }
 
