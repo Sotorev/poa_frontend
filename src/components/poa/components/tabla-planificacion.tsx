@@ -11,8 +11,8 @@ import { IntervencionesSelectorComponent } from './columns/intervenciones-select
 import { OdsSelector } from './columns/ods-selector';
 import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector';
 import CurrencyInput from './columns/currency-input';
-import { AporteUmesComponent } from './columns/umes-financing-source';
-import { AporteOtrasFuentesComponent } from './columns/other-financing-source';
+import { UMESFinancingComponent } from './columns/umes-financing-source';
+import { OtherFinancingSourceComponent } from './columns/other-financing-source';
 import TipoDeCompraComponent from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleComponent } from './columns/detalle';
@@ -460,12 +460,12 @@ export function TablaPlanificacionComponent() {
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje,
+            percentage: aporte.percentage,
             amount: aporte.amount,
           })),
           ...fila.aporteOtros.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje,
+            percentage: aporte.percentage,
             amount: aporte.amount,
           })),
         ],
@@ -716,18 +716,20 @@ export function TablaPlanificacionComponent() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <AporteUmesComponent
-                    aportes={fila.aporteUMES}
-                    onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
+                  <UMESFinancingComponent
+                    contributions={fila.aporteUMES}
+                    onChangeContributions={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
+                    totalCost={fila.costoTotal}
                   />
                   {filaErrors[fila.id]?.aporteUMES && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteUMES}</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <AporteOtrasFuentesComponent
-                    aportes={fila.aporteOtros}
-                    onChangeAportes={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
+                  <OtherFinancingSourceComponent
+                    contributions={fila.aporteUMES}
+                    onChangeContributions={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
+                    totalCost={fila.costoTotal}
                   />
                   {filaErrors[fila.id]?.aporteOtros && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteOtros}</span>
