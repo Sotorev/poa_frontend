@@ -535,7 +535,7 @@ export default function PlanificacionFormComponent() {
               </CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-x-6">
                 <div>
-                  <Label className="block font-medium mb-2">Costo total <br /><b>{fila.costoTotal}</b></Label>
+                    <Label className="block font-medium mb-2">Costo total (GTQ) <br /><b>{fila.costoTotal.toFixed(2)}</b></Label>
                   
                   {filaErrors?.costoTotal && (
                     <span className="text-red-500 text-sm">{filaErrors.costoTotal}</span>
