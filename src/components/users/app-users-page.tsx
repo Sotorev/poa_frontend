@@ -318,6 +318,9 @@ export default function UserManagement() {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [showDeletedUsers, setShowDeletedUsers] = useState(false)
   const user = useCurrentUser()
+  const [newPassword, setNewPassword] = useState("");
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [userToResetPassword, setUserToResetPassword] = useState<User | null>(null);
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -462,10 +465,16 @@ export default function UserManagement() {
         setNotification({ message: "Usuario agregado exitosamente", type: "success" })
       } else {
         const errorData = await response.json();
-        console.error("Error al agregar usuario:", errorData);
-        setNotification({ message: errorData.error || "Error al agregar usuario", type: "error" })
+        throw new Error(errorData.error)
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Error de restricción única: email must be unique') {
+        setNotification({ message: "El email ya está en uso", type: "error" })
+        return
+      } else if (error.message === 'Error de restricción única: username must be unique') {
+        setNotification({ message: "El nombre de usuario ya está en uso", type: "error" })
+        return
+      }
       console.error("Error al agregar usuario", error)
       setNotification({ message: "Error al agregar usuario", type: "error" })
     }
@@ -563,6 +572,34 @@ export default function UserManagement() {
     } catch (error) {
       console.error("Error al restaurar usuario:", error);
       setNotification({ message: "Error al restaurar usuario", type: "error" });
+    }
+  }
+
+  // Función para restablecer la contraseña de un usuario
+  const resetPassword = async () => {
+    if (!userToResetPassword) return;
+    try {
+      const response = await fetch(`${API_URL}/api/users/reset-password/${userToResetPassword.userId}`, {
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify({ password: newPassword })
+      })
+      if (response.ok) {
+        setNotification({ message: "Contraseña restablecida exitosamente", type: "success" })
+        setIsResetPasswordDialogOpen(false);
+        setUserToResetPassword(null);
+        setNewPassword("");
+      } else {
+        const errorData = await response.json();
+        console.error("Error al restablecer contraseña:", errorData);
+        setNotification({ message: errorData.error || "Error al restablecer contraseña", type: "error" })
+      }
+    } catch (error) {
+      console.error("Error al restablecer contraseña", error)
+      setNotification({ message: "Error al restablecer contraseña", type: "error" })
     }
   }
 
@@ -730,6 +767,17 @@ export default function UserManagement() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-primary text-primary hover:bg-green-50"
+                            onClick={() => {
+                              setUserToResetPassword(user);
+                              setIsResetPasswordDialogOpen(true);
+                            }}
+                          >
+                            Restablecer Contraseña
+                          </Button>
                         </>
                       )}
                       {showDeletedUsers && (
@@ -762,6 +810,32 @@ export default function UserManagement() {
           onConfirm={handleDeleteConfirm}
           userName={userToDelete ? `${userToDelete.firstName} ${userToDelete.lastName}` : ''}
         />
+
+        <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Restablecer Contraseña</DialogTitle>
+              <DialogDescription>
+                Ingrese la nueva contraseña para el usuario <strong>{userToResetPassword?.username}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Label htmlFor="new-password">Nueva Contraseña</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
+              <Button  onClick={resetPassword}>Restablecer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {notification && (
           <Notification

@@ -81,6 +81,35 @@ export default function RolesManagementPage() {
 		}
 	}
 
+	const updateRoleName = async (roleId: number, roleName: string) => {
+		try {
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles/${roleId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${user?.token}`
+				},
+				body: JSON.stringify({ roleName })
+			})
+			if (response.ok) {
+				await fetchRoles()
+				toast({
+					title: 'Éxito',
+					description: 'Nombre del rol actualizado exitosamente',
+				})
+			} else {
+				throw new Error('Error al actualizar el nombre del rol')
+			}
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'Error al actualizar el nombre del rol',
+				variant: 'destructive',
+			})
+			console.error('Error updating role name:', error)
+		}
+	}
+
 	const handleRoleCreated = async () => {
 		await fetchRoles()
 		toast({
@@ -153,6 +182,7 @@ export default function RolesManagementPage() {
 										roles={roles}
 										onSelectRole={setSelectedRole}
 										onDeleteRole={handleRoleDeleted}
+										onUpdateRoleName={updateRoleName} // Pass the new method
 										canEdit={canEdit('Auth')}
 										canDelete={canDelete('Auth')}
 									/>
