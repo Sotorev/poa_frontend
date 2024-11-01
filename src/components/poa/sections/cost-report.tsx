@@ -55,7 +55,7 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/financing/poa/${facultyId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/financing/poa/${poaId}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${user?.token}`
