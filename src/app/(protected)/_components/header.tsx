@@ -52,7 +52,8 @@ const navItems: NavItem[] = [
 		href: "/facultades/gestion",
 		icon: BookOpen,
 		description: "Gestión de facultades",
-		requiredPermission: { module: "Faculty", action: "View" }
+		requiredPermission: { module: "Auth", action: "Edit" },
+		requiredRoles: ['Vicerrector', 'Administrador']
 	},
 	{
 		title: "Autorización",
