@@ -242,14 +242,14 @@ export default function PlanificacionFormComponent() {
       if (campo === 'aporteOtros' || campo === 'aporteUMES') {
         const totalAporte = [...updatedFila.aporteUMES, ...updatedFila.aporteOtros].reduce((acc, aporte) => acc + aporte.amount, 0)
         updatedFila.costoTotal = totalAporte
-        // Calculate the percentage for each contribution
+        // Calculate the percentage for each contribution and round to two decimals
         const updatedAporteUMES = updatedFila.aporteUMES.map(aporte => ({
           ...aporte,
-          percentage: (aporte.amount / totalAporte) * 100,
+          percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
         }))
         const updatedAporteOtros = updatedFila.aporteOtros.map(aporte => ({
           ...aporte,
-          percentage: (aporte.amount / totalAporte) * 100,
+          percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
         }))
         updatedFila.aporteUMES = updatedAporteUMES
         updatedFila.aporteOtros = updatedAporteOtros
