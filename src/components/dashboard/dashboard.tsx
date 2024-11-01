@@ -1,7 +1,5 @@
 // src/components/dashboard/Dashboard.tsx
 
-'use client'
-
 import React from 'react'
 import {
   BarChart,
@@ -83,7 +81,7 @@ function DashboardComponent({ user, stats }: DashboardComponentProps) {
           </CardContent>
         </Card>
 
-{/* 
+        {/*
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard icon={<CheckCircle className="h-8 w-8 text-green-500" />} title="Proyectos Completados" value={stats.completedProjects} />
           <StatCard icon={<Clock className="h-8 w-8 text-blue-500" />} title="Proyectos en Curso" value={stats.ongoingProjects} />
@@ -109,7 +107,8 @@ function DashboardComponent({ user, stats }: DashboardComponentProps) {
               <QuickActionButton icon={<TrendingUp className="h-5 w-5" />} title="Ver Estadísticas" />
             </CardContent>
           </Card>
-        </div> */}
+        </div>
+        */}
 
         {/* Tarjeta de Medios de Contacto */}
         <Card>
