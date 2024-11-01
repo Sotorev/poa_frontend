@@ -117,6 +117,10 @@ export function TablaPlanificacionComponent() {
   const [currentRowId, setCurrentRowId] = useState<string | null>(null);
   const [currentEntityName, setCurrentEntityName] = useState<string>("");
 
+  // Estados para gestionar la deshabilitación de selectores
+  const [isEstrategiasDisabled, setIsEstrategiasDisabled] = useState<boolean>(true);
+  const [isIntervencionesDisabled, setIsIntervencionesDisabled] = useState<boolean>(true);
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -180,6 +184,9 @@ export function TablaPlanificacionComponent() {
         const financingSourcesData: FinancingSource[] = await financingSourcesResponse.json();
         setFinancingSources(financingSourcesData);
 
+        // --------------------------------------------
+        // Comentado para evitar cargar eventos existentes en la tabla principal
+        /*
         // Fetch events
         const eventsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/`, {
           headers: {
@@ -200,6 +207,8 @@ export function TablaPlanificacionComponent() {
         });
 
         setFilas(mappedFilas);
+        */
+        // --------------------------------------------
 
       } catch (err) {
         if (err instanceof z.ZodError) {
@@ -298,6 +307,9 @@ export function TablaPlanificacionComponent() {
     toast.info("Nueva fila agregada.");
   };
 
+  // --------------------------------------------
+  // Comentado para eliminar la opción de eliminar filas
+  /*
   const eliminarFila = (id: string) => {
     setFilas(filas.filter(fila => fila.id !== id));
     const updatedErrors = { ...filaErrors };
@@ -305,7 +317,10 @@ export function TablaPlanificacionComponent() {
     setFilaErrors(updatedErrors);
     toast.success("Fila eliminada exitosamente.");
   };
+  */
+  // --------------------------------------------
 
+  // Función para actualizar los campos de la fila
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
     setFilas(prevFilas =>
       prevFilas.map(fila => {
@@ -316,19 +331,58 @@ export function TablaPlanificacionComponent() {
             const nuevaArea = objetivoToAreaMap[valor] || '';
             updatedFila.areaEstrategica = nuevaArea;
 
+            // Gestionar deshabilitación del selector de estrategias
+            setIsEstrategiasDisabled(!valor); // Deshabilitar si no hay objetivo estratégico seleccionado
+
             // Resetear estrategias e intervenciones si el objetivo estratégico cambia
             if (!valor) {
               updatedFila.estrategias = [];
               updatedFila.intervencion = [];
+              setIsIntervencionesDisabled(true);
+            } else {
+              // Si se selecciona un objetivo estratégico, verificar si hay estrategias seleccionadas
+              setIsIntervencionesDisabled(updatedFila.estrategias.length === 0);
             }
           }
 
           if (campo === 'estrategias') {
-            // Si se deseleccionan todas las estrategias, limpiar intervenciones
-            if ((valor as string[]).length === 0) {
-              updatedFila.intervencion = [];
+            // Gestionar deshabilitación del selector de intervenciones
+            setIsIntervencionesDisabled((valor as string[]).length === 0);
+          }
+
+          // --------------------------------------------
+          // Cálculo automático de costo total y porcentajes
+          if (campo === 'aporteUMES' || campo === 'aporteOtros') {
+            const totalAporte = [...updatedFila.aporteUMES, ...updatedFila.aporteOtros].reduce((acc, aporte) => acc + aporte.amount, 0);
+            updatedFila.costoTotal = totalAporte;
+
+            // Evitar división por cero
+            if (totalAporte > 0) {
+              const updatedAporteUMES = updatedFila.aporteUMES.map(aporte => ({
+                ...aporte,
+                percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
+              }));
+              const updatedAporteOtros = updatedFila.aporteOtros.map(aporte => ({
+                ...aporte,
+                percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
+              }));
+              updatedFila.aporteUMES = updatedAporteUMES;
+              updatedFila.aporteOtros = updatedAporteOtros;
+            } else {
+              // Resetear porcentajes si el total es cero
+              const updatedAporteUMES = updatedFila.aporteUMES.map(aporte => ({
+                ...aporte,
+                percentage: 0,
+              }));
+              const updatedAporteOtros = updatedFila.aporteOtros.map(aporte => ({
+                ...aporte,
+                percentage: 0,
+              }));
+              updatedFila.aporteUMES = updatedAporteUMES;
+              updatedFila.aporteOtros = updatedAporteOtros;
             }
           }
+          // --------------------------------------------
 
           return updatedFila;
         }
@@ -643,8 +697,8 @@ export function TablaPlanificacionComponent() {
                   <EstrategiasSelectorComponent
                     selectedEstrategias={fila.estrategias}
                     onSelectEstrategia={(estrategias) => actualizarFila(fila.id, 'estrategias', estrategias)}
-                    strategicObjectiveIds={fila.objetivoEstrategico ? [Number(fila.objetivoEstrategico)] : []} // Cambio aquí
-                    disabled={!fila.objetivoEstrategico} // **Nueva Lógica para Deshabilitar**
+                    strategicObjectiveIds={fila.objetivoEstrategico ? [Number(fila.objetivoEstrategico)] : []}
+                    disabled={isEstrategiasDisabled}
                     tooltipMessage="Por favor, seleccione primero un objetivo estratégico."
                   />
                   {filaErrors[fila.id]?.estrategias && (
@@ -655,9 +709,9 @@ export function TablaPlanificacionComponent() {
                   <IntervencionesSelectorComponent
                     selectedIntervenciones={fila.intervencion}
                     onSelectIntervencion={(intervenciones) => actualizarIntervencion(fila.id, intervenciones)}
-                    disabled={fila.estrategias.length === 0} // Deshabilitar si no hay estrategias seleccionadas
+                    disabled={isIntervencionesDisabled}
                     tooltipMessage="Por favor, seleccione primero al menos una estrategia."
-                    strategyIds={fila.estrategias} // Pasar las estrategias seleccionadas para filtrar intervenciones
+                    strategyIds={fila.estrategias}
                   />
                   {filaErrors[fila.id]?.intervencion && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].intervencion}</span>
@@ -707,10 +761,10 @@ export function TablaPlanificacionComponent() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <CurrencyInput
-                    value={fila.costoTotal}
-                    onChange={(valor: number | undefined) => actualizarFila(fila.id, 'costoTotal', valor ?? 0)}
-                  />
+                  {/* Mostrar Costo Total calculado automáticamente */}
+                  <div>
+                    <span>GTQ {fila.costoTotal.toFixed(2)}</span>
+                  </div>
                   {filaErrors[fila.id]?.costoTotal && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].costoTotal}</span>
                   )}
@@ -727,7 +781,7 @@ export function TablaPlanificacionComponent() {
                 </TableCell>
                 <TableCell>
                   <OtherFinancingSourceComponent
-                    contributions={fila.aporteUMES}
+                    contributions={fila.aporteOtros}
                     onChangeContributions={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
                     totalCost={fila.costoTotal}
                   />
@@ -826,10 +880,17 @@ export function TablaPlanificacionComponent() {
                   {!fila.processDocument && (
                     <span className="text-yellow-500 text-sm">Detalle del Proceso no agregado.</span>
                   )}
+                  {filaErrors[fila.id]?.detalleProceso && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].detalleProceso}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <AccionesComponent
+                    // --------------------------------------------
+                    // Removida la opción de eliminar fila
+                    /*
                     onEliminar={() => eliminarFila(fila.id)}
+                    */
                     onEnviar={() => enviarActividad(fila.id)}
                   />
                 </TableCell>
@@ -891,6 +952,9 @@ export function TablaPlanificacionComponent() {
   );
 }
 
+// --------------------------------------------
+// Comentado para eliminar la función de mapeo de eventos existentes
+/*
 function mapEventToFilaPlanificacion(event: any, financingSourcesData: FinancingSource[]): FilaPlanificacion {
   const fila: FilaPlanificacion = {
     id: event.eventId.toString(),
@@ -998,3 +1062,4 @@ function mapEventToFilaPlanificacion(event: any, financingSourcesData: Financing
 
   return fila;
 }
+*/
