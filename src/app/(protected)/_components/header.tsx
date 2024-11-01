@@ -27,7 +27,7 @@ import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
-type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente' | 'Vicerrector académico' | 'Vicerrector administrativo'
+type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Formulador' | 'Vicerrector académico' | 'Vicerrector administrativo'
 
 type NavItem = {
 	title: string
@@ -73,7 +73,7 @@ const navItems: NavItem[] = [
 		// requiredRoles: ['Vicerrector', 'Decano', 'Administrador'],
 		subItems: [
 			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: Settings },
-			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente", "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: FileText },
+			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Formulador", "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: FileText },
 			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: CheckSquare },
 		],
 	},

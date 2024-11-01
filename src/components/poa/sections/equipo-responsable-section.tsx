@@ -464,7 +464,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
                 Rol
               </Label>
               <Input
-                value="Proponente"
+                value="Formulador"
                 readOnly
                 className="col-span-3 bg-gray-100 cursor-not-allowed"
               />

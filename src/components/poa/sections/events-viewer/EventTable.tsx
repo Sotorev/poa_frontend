@@ -60,7 +60,7 @@ const EventTable: React.FC<EventTableProps> = ({
             <TableHead className="whitespace-normal break-words">Responsables</TableHead>
             <TableHead className="whitespace-normal break-words">Recursos</TableHead>
             <TableHead className="whitespace-normal break-words">Detalle de Planificación</TableHead>
-            <TableHead className="whitespace-normal break-words">Detalles del Proponente</TableHead>
+            <TableHead className="whitespace-normal break-words">Detalles del Formulador</TableHead>
             {showComments && <TableHead className="whitespace-normal break-words">Comentarios</TableHead>}
             {showActions && <TableHead className="whitespace-normal break-words">Acciones</TableHead>}
           </TableRow>
