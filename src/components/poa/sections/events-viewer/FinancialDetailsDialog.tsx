@@ -12,6 +12,18 @@ interface FinancialDetailsDialogProps {
 }
 
 const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen, onClose, event }) => {
+  
+  // Función para formatear moneda en quetzales
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(amount);
+  };
+
+  // Función para calcular el porcentaje con dos decimales
+  const calculatePercentage = (part: number, total: number): string => {
+    if (total === 0) return '0.00';
+    return ((part / total) * 100).toFixed(2);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
@@ -28,11 +40,17 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
         <div className="mt-4 space-y-4">
           <div>
             <h3 className="font-semibold">Aporte UMES:</h3>
-            <p>${event.aporteUMES.toLocaleString()} ({((event.aporteUMES / event.costoTotal) * 100).toFixed(2)}%)</p>
+            <p>
+              {formatCurrency(event.aporteUMES)} (
+              {calculatePercentage(event.aporteUMES, event.costoTotal)}%)
+            </p>
           </div>
           <div>
             <h3 className="font-semibold">Aporte Otros:</h3>
-            <p>${event.aporteOtros.toLocaleString()} ({((event.aporteOtros / event.costoTotal) * 100).toFixed(2)}%)</p>
+            <p>
+              {formatCurrency(event.aporteOtros)} (
+              {calculatePercentage(event.aporteOtros, event.costoTotal)}%)
+            </p>
           </div>
           <div>
             <h3 className="font-semibold">Tipo de Compra:</h3>
