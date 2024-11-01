@@ -576,14 +576,17 @@ export default function PlanificacionFormComponent() {
               </CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-x-6">
                 <div>
-                  <Label className="block font-medium mb-2">Costo Total <br /><b>{fila.costoTotal}</b></Label>
+                  <Label className="block font-medium mb-2">Costo total <br /><b>{fila.costoTotal}</b></Label>
                   
                   {filaErrors?.costoTotal && (
                     <span className="text-red-500 text-sm">{filaErrors.costoTotal}</span>
                   )}
                 </div>
                 <div>
-                  <label className="block font-medium mb-2">Aporte UMES</label>
+
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Aporte de UMES</label>
                   <UMESFinancingComponent
                     contributions={fila.aporteUMES}
                     onChangeContributions={(aportes) => actualizarFila('aporteUMES', aportes)}
@@ -594,7 +597,7 @@ export default function PlanificacionFormComponent() {
                   )}
                 </div>
                 <div>
-                  <label className="block font-medium mb-2">Aporte Otros</label>
+                  <label className="block font-medium mb-2">Aporte de otros</label>
                   <OtherFinancingSourceComponent
                     contributions={fila.aporteOtros}
                     onChangeContributions={(aportes) => actualizarFila('aporteOtros', aportes)}
