@@ -75,15 +75,15 @@ const allSections: Section[] = [
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador"]
   },
   { 
-    name: "Acciones", 
-    icon: CheckCheck, 
-    component: PoaActions,
-    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador"]
-  },
-  { 
     name: "Reporte de costos de eventos del POA", 
     icon: BarChart2, 
     component: CostReport,
+    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador"]
+  },
+  { 
+    name: "Acciones", 
+    icon: CheckCheck, 
+    component: PoaActions,
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador"]
   },
 ]
