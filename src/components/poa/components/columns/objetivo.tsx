@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ObjetivoComponentProps {
   value: string;
@@ -11,7 +11,7 @@ interface ObjetivoComponentProps {
 
 export function ObjetivoComponent({ value, onChange }: ObjetivoComponentProps) {
   return (
-    <Input
+    <Textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-64 border-green-300 focus:border-green-500 focus:ring-green-500 text-green-700 placeholder-green-400"

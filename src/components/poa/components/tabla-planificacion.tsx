@@ -11,8 +11,8 @@ import { IntervencionesSelectorComponent } from './columns/intervenciones-select
 import { OdsSelector } from './columns/ods-selector';
 import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector';
 import CurrencyInput from './columns/currency-input';
-import { AporteUmesComponent } from './columns/aporte-umes';
-import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes';
+import { AporteUmesComponent } from './columns/umes-financing-source';
+import { AporteOtrasFuentesComponent } from './columns/other-financing-source';
 import TipoDeCompraComponent from './columns/tipo-de-compra';
 import { RecursosSelectorComponent } from './columns/recursos-selector';
 import { DetalleComponent } from './columns/detalle';

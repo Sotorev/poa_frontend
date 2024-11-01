@@ -21,12 +21,12 @@ export const filaPlanificacionSchema = z.object({
   costoTotal: z.number().min(1, "El costo total debe ser mayor que cero"),
   aporteUMES: z.array(z.object({
     financingSourceId: z.number(),
-    porcentaje: z.number().min(0).max(100),
+    percentage: z.number().min(0).max(100),
     amount: z.number().nonnegative(),
   })).min(1, "Debe tener al menos un aporte UMES"),
   aporteOtros: z.array(z.object({
     financingSourceId: z.number(),
-    porcentaje: z.number().min(0).max(100),
+    percentage: z.number().min(0).max(100),
     amount: z.number().nonnegative(),
   })).min(1, "Debe tener al menos un aporte de otras fuentes"),
   tipoCompra: z.string().nonempty("Tipo de Compra es requerido"),// Cambiado a arreglo

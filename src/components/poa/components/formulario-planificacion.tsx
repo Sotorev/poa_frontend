@@ -2,7 +2,7 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from 'react-toastify'
@@ -14,8 +14,6 @@ import { IntervencionesSelectorComponent } from './columns/intervenciones-select
 import { OdsSelector } from './columns/ods-selector'
 import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector'
 import CurrencyInput from './columns/currency-input'
-import { AporteUmesComponent } from './columns/aporte-umes'
-import { AporteOtrasFuentesComponent } from './columns/aporte-otras-fuentes'
 import TipoDeCompraComponent from './columns/tipo-de-compra'
 import { RecursosSelectorComponent } from './columns/recursos-selector'
 import { DetalleComponent } from './columns/detalle'
@@ -40,6 +38,9 @@ import {
 
 import { StrategicArea } from '@/types/StrategicArea'
 import { StrategicObjective } from '@/schemas/strategicObjectiveSchema'
+import { OtherFinancingSourceComponent } from './columns/other-financing-source'
+import { UMESFinancingComponent } from './columns/umes-financing-source'
+import { Label } from '@radix-ui/react-dropdown-menu'
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>
 
@@ -57,6 +58,13 @@ interface DatePair {
   start: Date
   end: Date
 }
+
+interface Contribution {
+  financingSourceId: number
+  percentage: number
+  amount: number
+}
+
 
 const getColumnName = (field: string): string => {
   const columnMap: { [key: string]: string } = {
@@ -112,7 +120,7 @@ export default function PlanificacionFormComponent() {
     responsableSeguimiento: '',
     recursos: [],
     indicadorLogro: '',
-    detalleProceso: null, // Inicializamos detalleProceso
+    detalleProceso: null,
     comentarioDecano: '',
     fechas: [{ start: new Date(), end: new Date() }],
     campusId: '',
@@ -126,7 +134,6 @@ export default function PlanificacionFormComponent() {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [filaErrors, setFilaErrors] = useState<FilaError>({})
-
   const [facultyId, setFacultyId] = useState<number | null>(null)
   const [poaId, setPoaId] = useState<number | null>(null)
   const [loadingPoa, setLoadingPoa] = useState<boolean>(false)
@@ -232,6 +239,21 @@ export default function PlanificacionFormComponent() {
         setIsIntervencionesDisabled((valor as string[]).length === 0)
       }
 
+      if (campo === 'aporteOtros' || campo === 'aporteUMES') {
+        const totalAporte = [...updatedFila.aporteUMES, ...updatedFila.aporteOtros].reduce((acc, aporte) => acc + aporte.amount, 0)
+        updatedFila.costoTotal = totalAporte
+        // Calculate the percentage for each contribution
+        const updatedAporteUMES = updatedFila.aporteUMES.map(aporte => ({
+          ...aporte,
+          percentage: (aporte.amount / totalAporte) * 100,
+        }))
+        const updatedAporteOtros = updatedFila.aporteOtros.map(aporte => ({
+          ...aporte,
+          percentage: (aporte.amount / totalAporte) * 100,
+        }))
+        updatedFila.aporteUMES = updatedAporteUMES
+        updatedFila.aporteOtros = updatedAporteOtros
+      }
       return updatedFila
     })
   }  
@@ -333,12 +355,12 @@ export default function PlanificacionFormComponent() {
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje,
+            percentage: aporte.percentage,
             amount: aporte.amount,
           })),
           ...fila.aporteOtros.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
-            percentage: aporte.porcentaje,
+            percentage: aporte.percentage,
             amount: aporte.amount,
           })),
         ],
@@ -427,6 +449,7 @@ export default function PlanificacionFormComponent() {
     ? strategicObjective.strategicObjectiveId
     : 0
 
+
   return (
     <div className="container mx-auto p-4">
       <Card className="mb-8">
@@ -502,107 +525,120 @@ export default function PlanificacionFormComponent() {
             </div>
             </CardContent>
             </Card>
-            <div>
-              <label className="block font-medium mb-2">Tipo de Evento</label>
-              <ActividadProyectoSelector
-                selectedOption={fila.tipoEvento}
-                onSelectOption={(tipo) => actualizarFila('tipoEvento', tipo)}
-                onChange={(data) => manejarCambioFechas(data)}
-              />
-              {filaErrors?.tipoEvento && (
-                <span className="text-red-500 text-sm">{filaErrors.tipoEvento}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Evento</label>
-              <EventoComponent
-                value={fila.evento}
-                onChange={(value) => actualizarFila('evento', value)}
-              />
-              {filaErrors?.evento && (
-                <span className="text-red-500 text-sm">{filaErrors.evento}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Objetivo</label>
-              <ObjetivoComponent
-                value={fila.objetivo}
-                onChange={(value) => actualizarFila('objetivo', value)}
-              />
-              {filaErrors?.objetivo && (
-                <span className="text-red-500 text-sm">{filaErrors.objetivo}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Estado</label>
-              <EstadoComponent estado={fila.estado} />
-              {filaErrors?.estado && (
-                <span className="text-red-500 text-sm">{filaErrors.estado}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Costo Total</label>
-              <CurrencyInput
-                value={fila.costoTotal}
-                onChange={(valor: number | undefined) => actualizarFila('costoTotal', valor ?? 0)}
-              />
-              {filaErrors?.costoTotal && (
-                <span className="text-red-500 text-sm">{filaErrors.costoTotal}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Aporte UMES</label>
-              <AporteUmesComponent
-                aportes={fila.aporteUMES}
-                onChangeAportes={(aportes) => actualizarFila('aporteUMES', aportes)}
-              />
-              {filaErrors?.aporteUMES && (
-                <span className="text-red-500 text-sm">{filaErrors.aporteUMES}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Aporte Otros</label>
-              <AporteOtrasFuentesComponent
-                aportes={fila.aporteOtros}
-                onChangeAportes={(aportes) => actualizarFila('aporteOtros', aportes)}
-              />
-              {filaErrors?.aporteOtros && (
-                <span className="text-red-500 text-sm">{filaErrors.aporteOtros}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Tipo de Compra</label>
-              <TipoDeCompraComponent
-                selectedTipo={fila.tipoCompra}
-                onSelectTipo={(tipos: string | null) => actualizarFila('tipoCompra', tipos)}
-              />
-              {filaErrors?.tipoCompra && (
-                <span className="text-red-500 text-sm">{filaErrors.tipoCompra}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Detalle de Costos</label>
-              <DetalleComponent
-                file={fila.detalle}
-                onFileChange={(file) => actualizarFila('detalle', file)}
-              />
-              {!fila.detalle && (
-                <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
-              )}
-              {filaErrors?.detalle && (
-                <span className="text-red-500 text-sm">{filaErrors.detalle}</span>
-              )}
-            </div>
-            <div>
-              <label className="block font-medium mb-2">Campus</label>
-              <CampusSelector
-                selectedCampusId={fila.campusId}
-                onSelectCampus={(campusId) => actualizarFila('campusId', campusId)}
-              />
-              {filaErrors?.campusId && (
-                <span className="text-red-500 text-sm">{filaErrors.campusId}</span>
-              )}
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Información del evento</CardTitle>
+              </CardHeader>
+              <CardContent className="grid md:grid-cols-2">
+                <div>
+                  <label className="block font-medium mb-2">Tipo de Evento</label>
+                  <ActividadProyectoSelector
+                    selectedOption={fila.tipoEvento}
+                    onSelectOption={(tipo) => actualizarFila('tipoEvento', tipo)}
+                    onChange={(data) => manejarCambioFechas(data)}
+                  />
+                  {filaErrors?.tipoEvento && (
+                    <span className="text-red-500 text-sm">{filaErrors.tipoEvento}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Evento</label>
+                  <EventoComponent
+                    value={fila.evento}
+                    onChange={(value) => actualizarFila('evento', value)}
+                  />
+                  {filaErrors?.evento && (
+                    <span className="text-red-500 text-sm">{filaErrors.evento}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium my-2">Objetivo</label>
+                  <ObjetivoComponent
+                    value={fila.objetivo}
+                    onChange={(value) => actualizarFila('objetivo', value)}
+                  />
+                  {filaErrors?.objetivo && (
+                    <span className="text-red-500 text-sm">{filaErrors.objetivo}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Estado</label>
+                  <EstadoComponent estado={fila.estado} />
+                  {filaErrors?.estado && (
+                    <span className="text-red-500 text-sm">{filaErrors.estado}</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Financiamiento del evento</CardTitle>
+              </CardHeader>
+              <CardContent className="grid md:grid-cols-2 gap-x-6">
+                <div>
+                  <Label className="block font-medium mb-2">Costo Total <br /><b>{fila.costoTotal}</b></Label>
+                  
+                  {filaErrors?.costoTotal && (
+                    <span className="text-red-500 text-sm">{filaErrors.costoTotal}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Aporte UMES</label>
+                  <UMESFinancingComponent
+                    contributions={fila.aporteUMES}
+                    onChangeContributions={(aportes) => actualizarFila('aporteUMES', aportes)}
+                    totalCost={fila.costoTotal}
+                  />
+                  {filaErrors?.aporteUMES && (
+                    <span className="text-red-500 text-sm">{filaErrors.aporteUMES}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Aporte Otros</label>
+                  <OtherFinancingSourceComponent
+                    contributions={fila.aporteOtros}
+                    onChangeContributions={(aportes) => actualizarFila('aporteOtros', aportes)}
+                    totalCost={fila.costoTotal}
+                  />
+                  {filaErrors?.aporteOtros && (
+                    <span className="text-red-500 text-sm">{filaErrors.aporteOtros}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Tipo de compra</label>
+                  <TipoDeCompraComponent
+                    selectedTipo={fila.tipoCompra}
+                    onSelectTipo={(tipos: string | null) => actualizarFila('tipoCompra', tipos)}
+                  />
+                  {filaErrors?.tipoCompra && (
+                    <span className="text-red-500 text-sm">{filaErrors.tipoCompra}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Detalle de Costos</label>
+                  <DetalleComponent
+                    file={fila.detalle}
+                    onFileChange={(file) => actualizarFila('detalle', file)}
+                  />
+                  {!fila.detalle && (
+                    <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
+                  )}
+                  {filaErrors?.detalle && (
+                    <span className="text-red-500 text-sm">{filaErrors.detalle}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Campus</label>
+                  <CampusSelector
+                    selectedCampusId={fila.campusId}
+                    onSelectCampus={(campusId) => actualizarFila('campusId', campusId)}
+                  />
+                  {filaErrors?.campusId && (
+                    <span className="text-red-500 text-sm">{filaErrors.campusId}</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
             <div>
               <label className="block font-medium mb-2">Responsables</label>
               <ResponsablesComponent
