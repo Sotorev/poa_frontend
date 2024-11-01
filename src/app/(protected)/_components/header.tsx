@@ -27,7 +27,7 @@ import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
-type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente' | 'Vicerrector académico' | 'Vicerrector financiero'
+type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente' | 'Vicerrector académico' | 'Vicerrector administrativo'
 
 type NavItem = {
 	title: string
@@ -72,9 +72,9 @@ const navItems: NavItem[] = [
 		description: "Plan Operativo Anual",
 		// requiredRoles: ['Vicerrector', 'Decano', 'Administrador'],
 		subItems: [
-			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: Settings },
-			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente", "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: FileText },
-			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: CheckSquare },
+			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: Settings },
+			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente", "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: FileText },
+			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: CheckSquare },
 		],
 	},
 	{
@@ -82,10 +82,10 @@ const navItems: NavItem[] = [
 		href: "/pei",
 		icon: BarChart2,
 		description: "Plan Estratégico Institucional",
-		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector financiero"],
+		requiredRoles: ['Vicerrector', "Decano", "Administrador", "Vicerrector académico", "Vicerrector administrativo"],
 		subItems: [
-			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: FileText },
-			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector financiero"], icon: Settings },
+			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: FileText },
+			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo"], icon: Settings },
 		],
 	},
 ]

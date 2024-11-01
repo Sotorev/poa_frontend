@@ -54,7 +54,7 @@ export function PoaActions({ name, isActive, poaId }: SectionProps) {
      let approvalStageId;
      if (user?.role.roleName === "Vicerrector académico") {
        approvalStageId = 2;
-     } else if (user?.role.roleName === "Vicerrector financiero") {
+     } else if (user?.role.roleName === "Vicerrector administrativo") {
        approvalStageId = 3;
      } else {
         toast({

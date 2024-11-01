@@ -12,7 +12,8 @@ import {
   FilePlus,
   ListTodo,
   Pin,
-  CheckCheck
+  CheckCheck,
+  Wallet
 } from 'lucide-react'
 import { Link } from "react-scroll"
 import { cn } from "@/lib/utils"
@@ -22,6 +23,7 @@ import { EquipoResponsableSectionComponent } from './sections/equipo-responsable
 import { FodaSection } from './sections/foda-section'
 import { OtrosDocumentos } from './sections/sections-otros-documentos'
 import EventsViewerComponent from './sections/events-viewer/events-viewer'
+import { CostReport } from './sections/cost-report'
 import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useCurrentUser } from '@/hooks/use-current-user'
 
@@ -43,6 +45,7 @@ const sections = [
   { name: "Agregar/confirmar FODA", icon: BarChart2, component: FodaSection },
   { name: "Agregar/confirmar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
+  { name: "Informe de costos del POA", icon: Wallet, component: CostReport },
   { name: "Aprobar POA", icon: CheckCheck, component: PoaApproval }
 ]
 
