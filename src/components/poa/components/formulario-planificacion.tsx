@@ -47,7 +47,9 @@ type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado'
   comentarioDecano: string
-  detalleProceso: File | null // Añadido para manejar el archivo
+  detalleProceso: File | null 
+  fechas: DatePair[]; 
+  fechaProyecto: DatePair; 
 }
 
 interface FilaError {
@@ -55,8 +57,8 @@ interface FilaError {
 }
 
 interface DatePair {
-  start: Date
-  end: Date
+  start: Date;
+  end: Date;
 }
 
 interface Contribution {
@@ -123,6 +125,7 @@ export default function PlanificacionFormComponent() {
     detalleProceso: null,
     comentarioDecano: '',
     fechas: [{ start: new Date(), end: new Date() }],
+    fechaProyecto: { start: new Date(), end: new Date() },
     campusId: '',
   }
 
@@ -217,6 +220,15 @@ export default function PlanificacionFormComponent() {
   const actualizarFila = (campo: keyof FilaPlanificacion, valor: any | null) => {
     setFila(prevFila => {
       const updatedFila = { ...prevFila, [campo]: valor }
+
+      if (campo === 'tipoEvento') {
+        if (valor === 'actividad') {
+          updatedFila.fechaProyecto = { start: new Date(), end: new Date() }; // Resetear fechaProyecto
+        } else {
+          updatedFila.fechas = [{ start: new Date(), end: new Date() }]; // Resetear fechas
+        }
+      }
+
       if (campo === 'objetivoEstrategico') {
         updatedFila.areaEstrategica = objetivoToAreaMap[valor] || ''
 
@@ -278,9 +290,7 @@ export default function PlanificacionFormComponent() {
     toast.success("Nuevo objetivo estratégico agregado.")
   }
 
-  const manejarCambioFechas = (data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
-    // Implementar si es necesario
-  }
+
 
   const enviarActividad = async () => {
     if (loadingPoa) {
@@ -348,10 +358,18 @@ export default function PlanificacionFormComponent() {
         achievementIndicator: fila.indicadorLogro.trim(),
         purchaseTypeId: parseInt(fila.tipoCompra, 10),
         totalCost: fila.costoTotal,
-        dates: fila.fechas.map(pair => ({
-          startDate: pair.start.toISOString().split('T')[0],
-          endDate: pair.end.toISOString().split('T')[0],
-        })),
+        dates:
+        fila.tipoEvento === 'actividad'
+          ? fila.fechas.map((pair) => ({
+              startDate: pair.start.toISOString().split('T')[0],
+              endDate: pair.end.toISOString().split('T')[0],
+            }))
+          : [
+              {
+                startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+                endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+              },
+            ],
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
@@ -535,7 +553,10 @@ export default function PlanificacionFormComponent() {
                   <ActividadProyectoSelector
                     selectedOption={fila.tipoEvento}
                     onSelectOption={(tipo) => actualizarFila('tipoEvento', tipo)}
-                    onChange={(data) => manejarCambioFechas(data)}
+                    fechas={fila.fechas}
+                    onChangeFechas={(fechas) => actualizarFila('fechas', fechas)}
+                    fechaProyecto={fila.fechaProyecto}
+                    onChangeFechaProyecto={(fecha) => actualizarFila('fechaProyecto', fecha)}
                   />
                   {filaErrors?.tipoEvento && (
                     <span className="text-red-500 text-sm">{filaErrors.tipoEvento}</span>
