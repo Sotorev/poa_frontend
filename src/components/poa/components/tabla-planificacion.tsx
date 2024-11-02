@@ -1,7 +1,16 @@
+// src/components/poa/components/TablaPlanificacionComponent.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { z } from 'zod';
 import { toast } from 'react-toastify';
@@ -35,19 +44,21 @@ import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrecti
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
+interface DatePair {
+  start: Date;
+  end: Date;
+}
+
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   entityId: number | null;
   processDocument?: File;
+  fechas: DatePair[]; // Para actividades
+  fechaProyecto: DatePair; // Para proyectos
 }
 
 interface FilaError {
   [key: string]: string;
-}
-
-interface DatePair {
-  start: Date;
-  end: Date;
 }
 
 interface FinancingSource {
@@ -72,7 +83,7 @@ const getColumnName = (field: string): string => {
     aporteUMES: "Aporte UMES",
     aporteOtros: "Aporte Otros",
     tipoCompra: "Tipo de Compra",
-    detalle: "Detalle",
+    detalle: "Detalle de Costos",
     campusId: "Campus",
     responsablePlanificacion: "Responsable de Planificación",
     responsableEjecucion: "Responsable de Ejecución",
@@ -184,32 +195,6 @@ export function TablaPlanificacionComponent() {
         const financingSourcesData: FinancingSource[] = await financingSourcesResponse.json();
         setFinancingSources(financingSourcesData);
 
-        // --------------------------------------------
-        // Comentado para evitar cargar eventos existentes en la tabla principal
-        /*
-        // Fetch events
-        const eventsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-        });
-
-        if (!eventsResponse.ok) {
-          throw new Error(`Error fetching events: ${eventsResponse.statusText}`);
-        }
-
-        const eventsData = await eventsResponse.json();
-
-        // Map the data to 'filas' format
-        const mappedFilas = eventsData.map((event: any) => {
-          return mapEventToFilaPlanificacion(event, financingSourcesData);
-        });
-
-        setFilas(mappedFilas);
-        */
-        // --------------------------------------------
-
       } catch (err) {
         if (err instanceof z.ZodError) {
           setError("Error en la validación de datos de áreas estratégicas u objetivos estratégicos.");
@@ -300,25 +285,13 @@ export function TablaPlanificacionComponent() {
       indicadorLogro: '',
       detalleProceso: null,
       fechas: [{ start: new Date(), end: new Date() }],
+      fechaProyecto: { start: new Date(), end: new Date() },
       campusId: '',
       entityId: null,
     };
     setFilas([...filas, nuevaFila]);
     toast.info("Nueva fila agregada.");
   };
-
-  // --------------------------------------------
-  // Comentado para eliminar la opción de eliminar filas
-  /*
-  const eliminarFila = (id: string) => {
-    setFilas(filas.filter(fila => fila.id !== id));
-    const updatedErrors = { ...filaErrors };
-    delete updatedErrors[id];
-    setFilaErrors(updatedErrors);
-    toast.success("Fila eliminada exitosamente.");
-  };
-  */
-  // --------------------------------------------
 
   // Función para actualizar los campos de la fila
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
@@ -350,7 +323,14 @@ export function TablaPlanificacionComponent() {
             setIsIntervencionesDisabled((valor as string[]).length === 0);
           }
 
-          // --------------------------------------------
+          if (campo === 'tipoEvento') {
+            if (valor === 'actividad') {
+              updatedFila.fechaProyecto = { start: new Date(), end: new Date() };
+            } else {
+              updatedFila.fechas = [{ start: new Date(), end: new Date() }];
+            }
+          }
+
           // Cálculo automático de costo total y porcentajes
           if (campo === 'aporteUMES' || campo === 'aporteOtros') {
             const totalAporte = [...updatedFila.aporteUMES, ...updatedFila.aporteOtros].reduce((acc, aporte) => acc + aporte.amount, 0);
@@ -382,7 +362,6 @@ export function TablaPlanificacionComponent() {
               updatedFila.aporteOtros = updatedAporteOtros;
             }
           }
-          // --------------------------------------------
 
           return updatedFila;
         }
@@ -413,6 +392,28 @@ export function TablaPlanificacionComponent() {
     );
   };
 
+  const actualizarFechas = (id: string, fechas: DatePair[]) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, fechas };
+        }
+        return fila;
+      })
+    );
+  };
+
+  const actualizarFechaProyecto = (id: string, fechaProyecto: DatePair) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, fechaProyecto };
+        }
+        return fila;
+      })
+    );
+  };
+
   const addStrategicObjective = (createdObjetivo: StrategicObjective) => {
     setStrategicObjectives(prev => [...prev, createdObjetivo]);
     const area = strategicAreas.find(area => area.strategicAreaId === createdObjetivo.strategicAreaId);
@@ -425,10 +426,6 @@ export function TablaPlanificacionComponent() {
       console.warn(`No se encontró Área Estratégica para el nuevo Objetivo Estratégico ID: ${createdObjetivo.strategicObjectiveId}`);
     }
     toast.success("Nuevo objetivo estratégico agregado.");
-  };
-
-  const manejarCambioFechas = (id: string, data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
-    // Implementar si es necesario
   };
 
   const enviarActividad = async (id: string) => {
@@ -507,10 +504,18 @@ export function TablaPlanificacionComponent() {
         achievementIndicator: fila.indicadorLogro.trim(),
         purchaseTypeId: parseInt(fila.tipoCompra, 10),
         totalCost: fila.costoTotal,
-        dates: fila.fechas.map(pair => ({
-          startDate: pair.start.toISOString().split('T')[0],
-          endDate: pair.end.toISOString().split('T')[0],
-        })),
+        dates:
+          fila.tipoEvento === 'actividad'
+            ? fila.fechas.map((pair) => ({
+                startDate: pair.start.toISOString().split('T')[0],
+                endDate: pair.end.toISOString().split('T')[0],
+              }))
+            : [
+                {
+                  startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+                  endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+                },
+              ],
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
@@ -730,7 +735,10 @@ export function TablaPlanificacionComponent() {
                   <ActividadProyectoSelector
                     selectedOption={fila.tipoEvento}
                     onSelectOption={(tipo) => actualizarFila(fila.id, 'tipoEvento', tipo)}
-                    onChange={(data) => manejarCambioFechas(fila.id, data)}
+                    fechas={fila.fechas}
+                    onChangeFechas={(fechas) => actualizarFechas(fila.id, fechas)}
+                    fechaProyecto={fila.fechaProyecto}
+                    onChangeFechaProyecto={(fecha) => actualizarFechaProyecto(fila.id, fecha)}
                   />
                   {filaErrors[fila.id]?.tipoEvento && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoEvento}</span>
@@ -886,11 +894,6 @@ export function TablaPlanificacionComponent() {
                 </TableCell>
                 <TableCell>
                   <AccionesComponent
-                    // --------------------------------------------
-                    // Removida la opción de eliminar fila
-                    /*
-                    onEliminar={() => eliminarFila(fila.id)}
-                    */
                     onEnviar={() => enviarActividad(fila.id)}
                   />
                 </TableCell>
@@ -951,115 +954,3 @@ export function TablaPlanificacionComponent() {
     </div>
   );
 }
-
-// --------------------------------------------
-// Comentado para eliminar la función de mapeo de eventos existentes
-/*
-function mapEventToFilaPlanificacion(event: any, financingSourcesData: FinancingSource[]): FilaPlanificacion {
-  const fila: FilaPlanificacion = {
-    id: event.eventId.toString(),
-    areaEstrategica: '',
-    objetivoEstrategico: '',
-    estrategias: [],
-    intervencion: [],
-    ods: [],
-    tipoEvento: event.type.toLowerCase() === 'actividad' ? 'actividad' : 'proyecto',
-    evento: event.name,
-    objetivo: event.objective,
-    estado: 'planificado',
-    costoTotal: event.totalCost,
-    aporteUMES: [],
-    aporteOtros: [],
-    tipoCompra: event.purchaseTypeId ? event.purchaseTypeId.toString() : '',
-    detalle: null,
-    responsablePlanificacion: '',
-    responsableEjecucion: '',
-    responsableSeguimiento: '',
-    recursos: [],
-    indicadorLogro: event.achievementIndicator,
-    detalleProceso: null,
-    fechas: event.dates.map((dateItem: any) => ({
-      start: new Date(dateItem.startDate),
-      end: new Date(dateItem.endDate),
-    })),
-    campusId: event.campusId.toString(),
-    entityId: event.eventId,
-  };
-
-  if (event.interventions && event.interventions.length > 0) {
-    const intervention = event.interventions[0];
-    const strategicObjectiveId = intervention.strategy.strategicObjectiveId.toString();
-    fila.objetivoEstrategico = strategicObjectiveId;
-
-    const strategicAreaName = intervention.strategy.strategicObjective.strategicArea.name;
-    fila.areaEstrategica = strategicAreaName;
-  }
-
-  if (event.interventions) {
-    const estrategiaIds = event.interventions.map((intervention: any) => intervention.strategy.strategyId.toString());
-    fila.estrategias = estrategiaIds;
-  }
-
-  if (event.interventions) {
-    const intervencionIds = event.interventions.map((intervention: any) => intervention.interventionId.toString());
-    fila.intervencion = intervencionIds;
-  }
-
-  if (event.ods) {
-    const odsIds = event.ods.map((odsItem: any) => odsItem.odsId.toString());
-    fila.ods = odsIds;
-  }
-
-  if (event.financings) {
-    const aporteUMES: any[] = [];
-    const aporteOtros: any[] = [];
-
-    event.financings.forEach((financing: any) => {
-      const financingSourceId = financing.financingSourceId;
-      const financingSource = financingSourcesData.find(fs => fs.financingSourceId === financingSourceId);
-      if (financingSource) {
-        const aporte = {
-          financingSourceId: financing.financingSourceId,
-          porcentaje: financing.percentage,
-          amount: financing.amount,
-        };
-
-        if (financingSource.category === 'UMES') {
-          aporteUMES.push(aporte);
-        } else if (financingSource.category === 'Otra') {
-          aporteOtros.push(aporte);
-        }
-      }
-    });
-
-    fila.aporteUMES = aporteUMES;
-    fila.aporteOtros = aporteOtros;
-  }
-
-  if (event.resources) {
-    const recursosIds = event.resources.map((resource: any) => resource.resourceId.toString());
-    fila.recursos = recursosIds;
-  }
-
-  if (event.responsibles) {
-    fila.responsablePlanificacion = event.responsibles.find((r: any) => r.responsibleRole === 'Principal')?.name || '';
-    fila.responsableEjecucion = event.responsibles.find((r: any) => r.responsibleRole === 'Ejecución')?.name || '';
-    fila.responsableSeguimiento = event.responsibles.find((r: any) => r.responsibleRole === 'Seguimiento')?.name || '';
-  }
-
-  if (event.eventApprovals && event.eventApprovals.length > 0) {
-    const approvalStatusName = event.eventApprovals[0].approvalStatus.name;
-    if (approvalStatusName === 'Aprobado') {
-      fila.estado = 'aprobado';
-    } else if (approvalStatusName === 'Rechazado') {
-      fila.estado = 'rechazado';
-    } else if (approvalStatusName === 'Aprobado con Correcciones') {
-      fila.estado = 'aprobado'; // Adjust as needed
-    } else {
-      fila.estado = 'planificado';
-    }
-  }
-
-  return fila;
-}
-*/
