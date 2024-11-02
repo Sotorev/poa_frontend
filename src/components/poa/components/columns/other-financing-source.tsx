@@ -1,4 +1,4 @@
-// src/components/poa/components/columns/aporte-otras-fuentes.tsx
+// src/components/poa/components/columns/umes-financing-source.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -73,7 +73,7 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
     defaultValues: {
       financingSourceId: undefined,
       percentage: 0,
-      amount: 0,
+      amount: undefined,
     },
   });
 
@@ -153,9 +153,6 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
             {errors.financingSourceId && (
               <span className="text-red-500 text-sm">{errors.financingSourceId.message}</span>
             )}
-          </div>
-          <div>
-            <Label className="text-green-700">Porcentaje { }</Label>
           </div>
           <div>
             <Label className="text-green-700">Monto</Label>

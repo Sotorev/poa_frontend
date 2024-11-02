@@ -1,4 +1,4 @@
-// src/components/poa/components/columns/aporte-umes.tsx
+// /src/components/poa/components/columns/umes-financing-source.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -73,7 +73,7 @@ export function UMESFinancingComponent({ contributions, onChangeContributions, t
     defaultValues: {
       financingSourceId: undefined,
       percentage: 0,
-      amount: 0,
+      amount: undefined,
     },
   });
 
