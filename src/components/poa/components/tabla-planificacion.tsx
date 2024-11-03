@@ -19,7 +19,6 @@ import { EstrategiasSelectorComponent } from './columns/estrategias-selector';
 import { IntervencionesSelectorComponent } from './columns/intervenciones-selector';
 import { OdsSelector } from './columns/ods-selector';
 import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector';
-import CurrencyInput from './columns/currency-input';
 import { UMESFinancingComponent } from './columns/umes-financing-source';
 import { OtherFinancingSourceComponent } from './columns/other-financing-source';
 import TipoDeCompraComponent from './columns/tipo-de-compra';
@@ -41,6 +40,15 @@ import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
 import { CampusSelector } from './columns/campus-selector';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent';
+
+// Importamos los tipos necesarios
+import { Strategy } from '@/types/Strategy';
+import { Intervention } from '@/types/Intervention';
+import { ODS } from '@/types/ods';
+import { Resource } from '@/types/Resource';
+import { Campus } from '@/types/Campus';
+import { PurchaseType } from '@/types/PurchaseType';
+import { PlanningEvent } from '@/types/interfaces';
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
@@ -108,6 +116,13 @@ export function TablaPlanificacionComponent() {
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([]);
   const [objetivoToAreaMap, setObjetivoToAreaMap] = useState<{ [key: string]: string }>({});
   const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
+  const [estrategias, setEstrategias] = useState<Strategy[]>([]);
+  const [intervenciones, setIntervenciones] = useState<Intervention[]>([]);
+  const [odsList, setOdsList] = useState<ODS[]>([]);
+  const [recursos, setRecursos] = useState<Resource[]>([]);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [purchaseTypes, setPurchaseTypes] = useState<PurchaseType[]>([]);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filaErrors, setFilaErrors] = useState<{ [key: string]: FilaError }>({});
@@ -140,33 +155,24 @@ export function TablaPlanificacionComponent() {
           throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
         }
 
-        const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responseAreas.ok) {
-          throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`);
-        }
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        };
+
+        // Fetch Strategic Areas
+        const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, { headers });
+        if (!responseAreas.ok) throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`);
         const dataAreas = await responseAreas.json();
         const parsedAreas = strategicAreasSchema.parse(dataAreas);
         const activeAreas = parsedAreas.filter((area) => !area.isDeleted);
         setStrategicAreas(activeAreas);
 
-        const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responseObjectives.ok) {
-          throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`);
-        }
+        // Fetch Strategic Objectives
+        const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, { headers });
+        if (!responseObjectives.ok) throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`);
         const dataObjectives = await responseObjectives.json();
-        const parsedObjectives = dataObjectives.map((obj: any) => {
-          return StrategicObjectiveSchema.parse(obj);
-        }).filter((obj: StrategicObjective) => !obj.isDeleted);
+        const parsedObjectives = dataObjectives.map((obj: any) => StrategicObjectiveSchema.parse(obj)).filter((obj: StrategicObjective) => !obj.isDeleted);
         setStrategicObjectives(parsedObjectives);
 
         const map: { [key: string]: string } = {};
@@ -180,24 +186,51 @@ export function TablaPlanificacionComponent() {
         });
         setObjetivoToAreaMap(map);
 
-        // Fetch financing sources
-        const financingSourcesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-        });
-
-        if (!financingSourcesResponse.ok) {
-          throw new Error(`Error fetching financing sources: ${financingSourcesResponse.statusText}`);
-        }
-
+        // Fetch Financing Sources
+        const financingSourcesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, { headers });
+        if (!financingSourcesResponse.ok) throw new Error(`Error fetching financing sources: ${financingSourcesResponse.statusText}`);
         const financingSourcesData: FinancingSource[] = await financingSourcesResponse.json();
         setFinancingSources(financingSourcesData);
 
+        // Fetch Estrategias
+        const responseEstrategias = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategies`, { headers });
+        if (!responseEstrategias.ok) throw new Error(`Error al obtener estrategias: ${responseEstrategias.statusText}`);
+        const dataEstrategias = await responseEstrategias.json();
+        setEstrategias(dataEstrategias);
+
+        // Fetch Intervenciones
+        const responseIntervenciones = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interventions`, { headers });
+        if (!responseIntervenciones.ok) throw new Error(`Error al obtener intervenciones: ${responseIntervenciones.statusText}`);
+        const dataIntervenciones = await responseIntervenciones.json();
+        setIntervenciones(dataIntervenciones);
+
+        // Fetch ODS
+        const responseODS = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ods`, { headers });
+        if (!responseODS.ok) throw new Error(`Error al obtener ODS: ${responseODS.statusText}`);
+        const dataODS = await responseODS.json();
+        setOdsList(dataODS);
+
+        // Fetch Recursos
+        const responseRecursos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutionalResources`, { headers });
+        if (!responseRecursos.ok) throw new Error(`Error al obtener recursos: ${responseRecursos.statusText}`);
+        const dataRecursos = await responseRecursos.json();
+        setRecursos(dataRecursos);
+
+        // Fetch Campuses
+        const responseCampuses = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/campus/`, { headers });
+        if (!responseCampuses.ok) throw new Error(`Error al obtener campuses: ${responseCampuses.statusText}`);
+        const dataCampuses = await responseCampuses.json();
+        setCampuses(dataCampuses);
+
+        // Fetch Purchase Types
+        const responsePurchaseTypes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchasetypes`, { headers });
+        if (!responsePurchaseTypes.ok) throw new Error(`Error al obtener tipos de compra: ${responsePurchaseTypes.statusText}`);
+        const dataPurchaseTypes = await responsePurchaseTypes.json();
+        setPurchaseTypes(dataPurchaseTypes);
+
       } catch (err) {
         if (err instanceof z.ZodError) {
-          setError("Error en la validación de datos de áreas estratégicas u objetivos estratégicos.");
+          setError("Error en la validación de datos.");
           console.error(err.errors);
         } else {
           setError((err as Error).message);
@@ -222,31 +255,24 @@ export function TablaPlanificacionComponent() {
           throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
         }
 
-        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responseUser.ok) {
-          throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
-        }
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        };
+
+        // Fetch User Data
+        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, { headers });
+        if (!responseUser.ok) throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
         const dataUser = await responseUser.json();
         const fetchedFacultyId = dataUser.facultyId;
         setFacultyId(fetchedFacultyId);
 
         const currentYear = new Date().getFullYear();
 
+        // Fetch POA
         setLoadingPoa(true);
-        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responsePoa.ok) {
-          throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
-        }
+        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, { headers });
+        if (!responsePoa.ok) throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
         const dataPoa = await responsePoa.json();
         const fetchedPoaId = dataPoa.poaId;
         setPoaId(fetchedPoaId);
@@ -623,6 +649,86 @@ export function TablaPlanificacionComponent() {
     }
   };
 
+  // Agregar la función handleEditEvent
+  const handleEditEvent = (event: PlanningEvent) => {
+    // Mapeamos los datos del evento a FilaPlanificacion
+    const areaEstrategicaObj = strategicAreas.find(area => area.name === event.areaEstrategica);
+    const areaEstrategicaId = areaEstrategicaObj ? areaEstrategicaObj.name : '';
+
+    const objetivoEstrategicoObj = strategicObjectives.find(obj => obj.description === event.objetivoEstrategico);
+    const objetivoEstrategicoId = objetivoEstrategicoObj ? objetivoEstrategicoObj.strategicObjectiveId.toString() : '';
+
+    const estrategiasIds = estrategias
+      .filter(strategy => event.estrategias.includes(strategy.description))
+      .map(strategy => strategy.strategyId.toString());
+
+    const intervencionIds = intervenciones
+      .filter(intervention => event.intervencion.includes(intervention.name))
+      .map(intervention => intervention.interventionId.toString());
+
+    const odsIds = odsList
+      .filter(ods => event.ods.includes(ods.name))
+      .map(ods => ods.odsId.toString());
+
+    const recursosIds = recursos
+      .filter(resource => event.recursos.includes(resource.name))
+      .map(resource => resource.resourceId.toString());
+
+    const campusObj = campuses.find(campus => campus.name === event.campus);
+    const campusId = campusObj ? campusObj.campusId.toString() : '';
+
+    const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
+    const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
+
+    const aporteUMES = event.aporteUMES ? [{
+      financingSourceId: 1, // Asumiendo que el ID 1 es UMES
+      percentage: (event.aporteUMES / event.costoTotal) * 100,
+      amount: event.aporteUMES,
+    }] : [];
+
+    const aporteOtros = event.aporteOtros ? [{
+      financingSourceId: 2, // Ajusta este ID según corresponda
+      percentage: (event.aporteOtros / event.costoTotal) * 100,
+      amount: event.aporteOtros,
+    }] : [];
+
+    const fechas = event.fechas.map(interval => ({
+      start: new Date(interval.inicio),
+      end: new Date(interval.fin),
+    }));
+
+    const nuevaFila: FilaPlanificacion = {
+      id: Date.now().toString(),
+      areaEstrategica: areaEstrategicaId,
+      objetivoEstrategico: objetivoEstrategicoId,
+      estrategias: estrategiasIds,
+      intervencion: intervencionIds,
+      ods: odsIds,
+      tipoEvento: event.tipoEvento,
+      evento: event.evento,
+      objetivo: event.objetivo,
+      estado: 'planificado',
+      costoTotal: event.costoTotal,
+      aporteUMES: aporteUMES,
+      aporteOtros: aporteOtros,
+      tipoCompra: tipoCompraId,
+      detalle: null, // Puedes ajustar esto si tienes el detalle
+      responsablePlanificacion: event.responsables.principal,
+      responsableEjecucion: event.responsables.ejecucion,
+      responsableSeguimiento: event.responsables.seguimiento,
+      recursos: recursosIds,
+      indicadorLogro: event.indicadorLogro,
+      detalleProceso: null, // Puedes ajustar esto si tienes el detalle
+      fechas: fechas,
+      fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
+      campusId: campusId,
+      entityId: Number(event.id),
+    };
+
+    setFilas([nuevaFila]); // Puedes ajustar esto si deseas agregar la fila en lugar de reemplazar
+    toast.info("Evento cargado para edición.");
+  };
+
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
   if (errorPoa) return <div className="text-red-500">Error al obtener poaId: {errorPoa}</div>;
@@ -947,6 +1053,7 @@ export function TablaPlanificacionComponent() {
           facultyId={facultyId}
           isEditable={false}
           userId={userId}
+          onEditEvent={handleEditEvent} // Pasamos la función aquí
         />
       ) : (
         <div>Cargando datos de la tabla de eventos...</div>
