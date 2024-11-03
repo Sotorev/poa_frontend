@@ -21,7 +21,7 @@ export function ActionButtonsCorrectionsComponent({
   return (
     <TooltipProvider>
       <div className="flex space-x-2">
-        <Tooltip>
+        {/* <Tooltip>
           <TooltipTrigger asChild>
             <Button 
               variant="outline" 
@@ -36,7 +36,7 @@ export function ActionButtonsCorrectionsComponent({
           <TooltipContent>
             <p>Editar evento</p>
           </TooltipContent>
-        </Tooltip>
+        </Tooltip> */}
 
         <Tooltip>
           <TooltipTrigger asChild>

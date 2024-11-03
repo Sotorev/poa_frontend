@@ -7,6 +7,7 @@ import { ChevronUp } from 'lucide-react';
 import { PlanningEvent, SectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { deleteEvent } from '@/services/apiService'; // Importar la función deleteEvent
 
 // Importar el componente de acciones de corrección
 import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections';
@@ -138,37 +139,27 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
         // navigate(`/events/edit/${id}`);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${user?.token}`,
-                },
-            })
-            .then(response => {
-                if (response.ok) {
-                    toast.success('Evento eliminado exitosamente');
-                    // Actualizar el estado local para reflejar la eliminación
-                    setEventsByStatus(prev => ({
-                        revision: prev.revision.filter(event => event.id !== id),
-                        aprobado: prev.aprobado.filter(event => event.id !== id),
-                        rechazado: prev.rechazado.filter(event => event.id !== id),
-                        correccion: prev.correccion.filter(event => event.id !== id)
-                    }));
-                } else {
-                    toast.error('Error al eliminar el evento');
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting event:', error);
+            try {
+                await deleteEvent(Number(id), user?.token || '');
+                toast.success('Evento eliminado exitosamente');
+                // Actualizar el estado local para reflejar la eliminación
+                setEventsByStatus(prev => ({
+                    revision: prev.revision.filter(event => event.id !== id),
+                    aprobado: prev.aprobado.filter(event => event.id !== id),
+                    rechazado: prev.rechazado.filter(event => event.id !== id),
+                    correccion: prev.correccion.filter(event => event.id !== id)
+                }));
+            } catch (error) {
+                console.error('Error al eliminar el evento:', error);
                 toast.error('Error al eliminar el evento');
-            });
+            }
         }
     };
 
     // Componente reutilizable para cada sección de estado
-    const RenderEventSection = (title: string, events: PlanningEvent[]) => (
+    const RenderEventSection = (title: string, events: PlanningEvent[], showCorrectionsActions: boolean) => (
         <div className="mb-6">
             <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
                 <div className="p-4 bg-green-50 flex justify-between items-center">
@@ -187,11 +178,11 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
                                 <EventTable
                                     events={events}
                                     isPending={false}
-                                    showComments={false}
+                                    showComments={true}
                                     showActions={false}
-                                    showCorrectionsActions={true}       // Activar acciones de corrección
-                                    onEdit={handleEdit}                 // Pasar handler de edición
-                                    onDelete={handleDelete}             // Pasar handler de eliminación
+                                    showCorrectionsActions={showCorrectionsActions} // Activar o desactivar acciones de corrección
+                                    onEdit={showCorrectionsActions ? handleEdit : undefined} // Pasar handler de edición si aplica
+                                    onDelete={showCorrectionsActions ? handleDelete : undefined} // Pasar handler de eliminación si aplica
                                     onApprove={() => {}}
                                     onReject={() => {}}
                                     onRequestCorrection={() => {}}
@@ -210,16 +201,16 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
     return (
         <div id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
             {/* Sección para Revisión */}
-            {RenderEventSection('Eventos en Revisión', eventsByStatus.revision)}
+            {RenderEventSection('Eventos en Revisión', eventsByStatus.revision, true)}
 
             {/* Sección para Aprobados */}
-            {RenderEventSection('Eventos Aprobados', eventsByStatus.aprobado)}
+            {RenderEventSection('Eventos Aprobados', eventsByStatus.aprobado, false)} {/* No permitir acciones de corrección */}
 
             {/* Sección para Rechazados */}
-            {RenderEventSection('Eventos Rechazados', eventsByStatus.rechazado)}
+            {RenderEventSection('Eventos Rechazados', eventsByStatus.rechazado, true)}
 
             {/* Sección para Correcciones */}
-            {RenderEventSection('Eventos con Solicitud de Correcciones', eventsByStatus.correccion)}
+            {RenderEventSection('Eventos con Solicitud de Correcciones', eventsByStatus.correccion, true)}
         </div>
     );
 };

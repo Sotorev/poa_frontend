@@ -231,3 +231,17 @@ export async function getFullEvents(token: string): Promise<ApiEvent[]> {
 
   return response.json();
 }
+
+export async function deleteEvent(eventId: number, token: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/fullevent/${eventId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || `Error al eliminar el evento: ${response.statusText}`);
+  }
+}
