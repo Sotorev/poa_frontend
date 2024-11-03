@@ -1,13 +1,15 @@
-// events-corrections-component.tsx
+// src/components/poa/sections/events-viewer/EventsCorrectionsComponent.tsx
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { PlanningEvent, SectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
+import { useCurrentUser } from "@/hooks/use-current-user";
 
-import { useCurrentUser } from "@/hooks/use-current-user"
+// Importar el componente de acciones de corrección
+import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections';
 
 // Función para mapear datos de la API a PlanningEvent
 function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
@@ -20,7 +22,6 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 
     const estado = estadoMap[apiEvent.eventApprovals[0]?.approvalStatus?.name || 'Pendiente'] || 'revision';
-    
 
     return {
         id: String(apiEvent.eventId),
@@ -99,16 +100,14 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
 
     const user = useCurrentUser();
 
-
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`,
-                  },
-
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${user?.token}`,
+                    },
                 });
                 const data: ApiEvent[] = await response.json();
                 const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
@@ -129,7 +128,44 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
         };
 
         fetchData();
-    }, [poaId]);
+    }, [poaId, user?.token]);
+
+    // Definir handlers para editar y eliminar
+    const handleEdit = (id: string) => {
+        // Implementar lógica de edición, por ejemplo, redirigir a una página de edición
+        console.log(`Editar evento con id: ${id}`);
+        // Ejemplo:
+        // navigate(`/events/edit/${id}`);
+    };
+
+    const handleDelete = (id: string) => {
+        if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user?.token}`,
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    toast.success('Evento eliminado exitosamente');
+                    // Actualizar el estado local para reflejar la eliminación
+                    setEventsByStatus(prev => ({
+                        revision: prev.revision.filter(event => event.id !== id),
+                        aprobado: prev.aprobado.filter(event => event.id !== id),
+                        rechazado: prev.rechazado.filter(event => event.id !== id),
+                        correccion: prev.correccion.filter(event => event.id !== id)
+                    }));
+                } else {
+                    toast.error('Error al eliminar el evento');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting event:', error);
+                toast.error('Error al eliminar el evento');
+            });
+        }
+    };
 
     // Componente reutilizable para cada sección de estado
     const RenderEventSection = (title: string, events: PlanningEvent[]) => (
@@ -138,27 +174,29 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
                 <div className="p-4 bg-green-50 flex justify-between items-center">
                     <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
                     <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => { /* Puedes manejar la minimización por sección si lo deseas */ }}>
+                        <Button variant="ghost" size="icon" onClick={() => { /* manejar minimización */ }}>
                             <ChevronUp className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
-                {/* Aquí podrías manejar la minimización si lo implementas */}
+                {/* Manejar minimización si se implementa */}
                 <div className="p-4 bg-white">
                     <div className="container mx-auto space-y-8">
                         <div>
                             {events.length > 0 ? (
-                                <>
-                                    <EventTable
-                                        events={events}
-                                        isPending={false}
-                                        showActions={false} // Puedes ajustar esto según tus necesidades
-                                        onApprove={() => {}}
-                                        onReject={() => {}}
-                                        onRequestCorrection={() => {}}
-                                        onRevert={() => {}}
-                                    />
-                                </>
+                                <EventTable
+                                    events={events}
+                                    isPending={false}
+                                    showComments={false}
+                                    showActions={false}
+                                    showCorrectionsActions={true}       // Activar acciones de corrección
+                                    onEdit={handleEdit}                 // Pasar handler de edición
+                                    onDelete={handleDelete}             // Pasar handler de eliminación
+                                    onApprove={() => {}}
+                                    onReject={() => {}}
+                                    onRequestCorrection={() => {}}
+                                    onRevert={() => {}}
+                                />
                             ) : (
                                 <p>No hay eventos en este estado.</p>
                             )}
@@ -171,16 +209,16 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
 
     return (
         <div id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
-            {/* Sección para Revision */}
+            {/* Sección para Revisión */}
             {RenderEventSection('Eventos en Revisión', eventsByStatus.revision)}
 
-            {/* Sección para Aprobado */}
+            {/* Sección para Aprobados */}
             {RenderEventSection('Eventos Aprobados', eventsByStatus.aprobado)}
 
-            {/* Sección para Rechazado */}
+            {/* Sección para Rechazados */}
             {RenderEventSection('Eventos Rechazados', eventsByStatus.rechazado)}
 
-            {/* Sección para Corrección */}
+            {/* Sección para Correcciones */}
             {RenderEventSection('Eventos con Solicitud de Correcciones', eventsByStatus.correccion)}
         </div>
     );
