@@ -2,9 +2,11 @@
 
 import { useSession } from "next-auth/react"
 
+import { Role } from "@/types/Permission"
+
 type Action = 'Crear' | 'Editar' | 'Ver' | 'Eliminar'
 
-type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Formulador' | 'Vicerrector académico' | 'Vicerrector administrativo'	
+
 
 type ModuleMapping = {
 	[key: string]: string;
