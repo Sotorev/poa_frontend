@@ -218,7 +218,7 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
                     onReject={rejectEvent}
                     onRequestCorrection={requestCorrection}
                     onRevert={revertToPending}
-                    showCorrectionsButton={false}
+                    showCorrectionsActions={false}
                     showComments={true}
                   />
                 </div>
@@ -231,7 +231,7 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
                     onReject={rejectEvent}
                     onRequestCorrection={requestCorrection}
                     onRevert={revertToPending}
-                    showCorrectionsButton={false}
+                    showCorrectionsActions={false}
                     showComments={true}
                   />
                 </div>
