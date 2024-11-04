@@ -75,10 +75,14 @@ export const campusApi = {
 		if (!response.ok) throw new Error('Failed to update campus');
 		return response.json();
 	},
-	deleteCampus: async (id: number): Promise<void> => {
+
+	//debe ser movida a otra lib porque pertenece a otra entidad
+	deleteCampus: async (id: number, facultyId: number): Promise<void> => {
 		const user = await currentUser();
 
-		const response = await fetch(`${API_BASE_URL}/api/campus/${id}`, {
+
+
+		const response = await fetch(`${API_BASE_URL}/api/campusFaculty/${id}/faculty/${facultyId}`, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',

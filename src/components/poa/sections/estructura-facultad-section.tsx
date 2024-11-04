@@ -50,7 +50,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
         campusApi.getCampusByFaculty(facultyId),
         programApi.getProgramsByFaculty(facultyId),
         campusApi.getAllCampuses(),
-        programApi.getAllPrograms(),
+        programApi.getProgramsByFaculty(facultyId), // Cambiado aquí
       ]);
       setDepartments(departmentsData);
       setCampuses(campusesData);
@@ -66,6 +66,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
       });
     }
   };
+  
 
   const handleEdit = () => setIsEditing(!isEditing);
 
@@ -165,7 +166,7 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
 
   const handleDeleteCampus = async (id: number) => {
     try {
-      await campusApi.deleteCampus(id);
+      await campusApi.deleteCampus(id, facultyId);
       fetchAllData();
       toast({
         title: "Sede eliminada",
@@ -396,14 +397,16 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                         <TableCell>
                           {isEditing && (
                             <div className="flex space-x-2">
-                              <Button
+                              {/* <Button
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleEditCampus(campus)}
                                 className="text-primary hover:text-primary hover:bg-green-100"
                               >
                                 <Pencil className="h-4 w-4" />
-                              </Button>
+                              </Button> 
+                              podria ser inesesario en esta tabla
+                              */}
                               <Button
                                 variant="outline"
                                 size="icon"
@@ -420,14 +423,14 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                   </TableBody>
                 </Table>
                 <div className="flex space-x-2 mt-4">
-                  <Button
+                  {/* <Button
                     variant="outline"
                     onClick={handleAddCampus}
                     className={`bg-green-50 text-primary hover:bg-green-100 hover:text-primary ${isEditing ? '' : 'hidden'}`}
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Agregar nueva Sede
-                  </Button>
+                  </Button>  */}
                   <Button
                     variant="outline"
                     onClick={handleAddExistingCampus}
@@ -712,13 +715,14 @@ export function FacultyStructureSection({ name, isActive, facultyId, isEditable 
                   <SelectValue placeholder="Seleccionar carrera" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allPrograms
-                    .filter(program => !programs.some(p => p.programId === program.programId))
-                    .map((program) => (
-                      <SelectItem key={program.programId} value={program.programId.toString()}>
-                        {program.name}
-                      </SelectItem>
-                    ))}
+                {allPrograms
+  .filter(program => !programs.some(p => p.programId === program.programId))
+  .map((program) => (
+    <SelectItem key={program.programId} value={program.programId.toString()}>
+      {program.name}
+    </SelectItem>
+  ))}
+
                 </SelectContent>
               </Select>
             </div>
