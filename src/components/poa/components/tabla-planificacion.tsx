@@ -50,6 +50,8 @@ import { Campus } from '@/types/Campus';
 import { PurchaseType } from '@/types/PurchaseType';
 import { PlanningEvent } from '@/types/interfaces';
 
+import { downloadFile } from '@/utils/downloadFile'; // Importar la función de utilidad
+
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
 interface DatePair {
@@ -61,6 +63,7 @@ interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   entityId: number | null;
   processDocument?: File;
+  costDetailDocument?: File;
   fechas: DatePair[]; // Para actividades
   fechaProyecto: DatePair; // Para proyectos
 }
@@ -147,6 +150,28 @@ export function TablaPlanificacionComponent() {
   const [isEstrategiasDisabled, setIsEstrategiasDisabled] = useState<boolean>(true);
   const [isIntervencionesDisabled, setIsIntervencionesDisabled] = useState<boolean>(true);
 
+  // Función auxiliar para descargar y convertir archivos a objetos File
+  const descargarArchivo = async (url: string, nombreArchivo: string): Promise<File | null> => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`Error al descargar el archivo desde ${url}: ${response.statusText}`);
+        return null;
+      }
+      const blob = await response.blob();
+      // Inferir el tipo de archivo desde el blob
+      const tipo = blob.type || 'application/octet-stream';
+      return new File([blob], nombreArchivo, { type: tipo });
+    } catch (error) {
+      console.error(`Error al descargar el archivo desde ${url}:`, error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -227,6 +252,19 @@ export function TablaPlanificacionComponent() {
         if (!responsePurchaseTypes.ok) throw new Error(`Error al obtener tipos de compra: ${responsePurchaseTypes.statusText}`);
         const dataPurchaseTypes = await responsePurchaseTypes.json();
         setPurchaseTypes(dataPurchaseTypes);
+
+        // Opcional: Si al inicio tienes filas con entityId, cargar las URLs de descarga
+        setFilas(prevFilas =>
+          prevFilas.map(fila => {
+            if (fila.entityId) {
+              return {
+                ...fila,
+                // Las URLs de descarga se manejan directamente en el renderizado
+              };
+            }
+            return fila;
+          })
+        );
 
       } catch (err) {
         if (err instanceof z.ZodError) {
@@ -606,7 +644,13 @@ export function TablaPlanificacionComponent() {
 
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
-          filaItem.id === fila.id ? { ...filaItem, entityId: result.eventId, estado: 'aprobado' } : filaItem
+          filaItem.id === fila.id
+            ? {
+                ...filaItem,
+                entityId: result.eventId,
+                estado: 'aprobado',
+              }
+            : filaItem
         )
       );
 
@@ -649,84 +693,137 @@ export function TablaPlanificacionComponent() {
     }
   };
 
+  // Nueva implementación de handleDownload utilizando la función de utilidad
+  const handleDownload = (entityId: number, type: 'process' | 'costDetail') => {
+    const path = type === 'process' ? 'downloadProcessDocument' : 'downloadCostDetailDocument';
+    downloadFile(entityId, path);
+  };
+
   // Agregar la función handleEditEvent
-  const handleEditEvent = (event: PlanningEvent) => {
-    // Mapeamos los datos del evento a FilaPlanificacion
-    const areaEstrategicaObj = strategicAreas.find(area => area.name === event.areaEstrategica);
-    const areaEstrategicaId = areaEstrategicaObj ? areaEstrategicaObj.name : '';
+  const handleEditEvent = async (event: PlanningEvent) => {
+    try {
+      // Mapeo de datos existente
+      const areaEstrategicaObj = strategicAreas.find(area => area.name === event.areaEstrategica);
+      const areaEstrategicaId = areaEstrategicaObj ? areaEstrategicaObj.name : '';
 
-    const objetivoEstrategicoObj = strategicObjectives.find(obj => obj.description === event.objetivoEstrategico);
-    const objetivoEstrategicoId = objetivoEstrategicoObj ? objetivoEstrategicoObj.strategicObjectiveId.toString() : '';
+      const objetivoEstrategicoObj = strategicObjectives.find(obj => obj.description === event.objetivoEstrategico);
+      const objetivoEstrategicoId = objetivoEstrategicoObj ? objetivoEstrategicoObj.strategicObjectiveId.toString() : '';
 
-    const estrategiasIds = estrategias
-      .filter(strategy => event.estrategias.includes(strategy.description))
-      .map(strategy => strategy.strategyId.toString());
+      const estrategiasIds = estrategias
+        .filter(strategy => event.estrategias.includes(strategy.description))
+        .map(strategy => strategy.strategyId.toString());
 
-    const intervencionIds = intervenciones
-      .filter(intervention => event.intervencion.includes(intervention.name))
-      .map(intervention => intervention.interventionId.toString());
+      const intervencionIds = intervenciones
+        .filter(intervention => event.intervencion.includes(intervention.name))
+        .map(intervention => intervention.interventionId.toString());
 
-    const odsIds = odsList
-      .filter(ods => event.ods.includes(ods.name))
-      .map(ods => ods.odsId.toString());
+      const odsIds = odsList
+        .filter(ods => event.ods.includes(ods.name))
+        .map(ods => ods.odsId.toString());
 
-    const recursosIds = recursos
-      .filter(resource => event.recursos.includes(resource.name))
-      .map(resource => resource.resourceId.toString());
+      const recursosIds = recursos
+        .filter(resource => event.recursos.includes(resource.name))
+        .map(resource => resource.resourceId.toString());
 
-    const campusObj = campuses.find(campus => campus.name === event.campus);
-    const campusId = campusObj ? campusObj.campusId.toString() : '';
+      const campusObj = campuses.find(campus => campus.name === event.campus);
+      const campusId = campusObj ? campusObj.campusId.toString() : '';
 
-    const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
-    const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
+      const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
+      const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
 
-    const aporteUMES = event.aporteUMES ? [{
-      financingSourceId: 1, // Asumiendo que el ID 1 es UMES
-      percentage: (event.aporteUMES / event.costoTotal) * 100,
-      amount: event.aporteUMES,
-    }] : [];
+      const aporteUMES = event.aporteUMES ? [{
+        financingSourceId: 1, // Asumiendo que el ID 1 es UMES
+        percentage: (event.aporteUMES / event.costoTotal) * 100,
+        amount: event.aporteUMES,
+      }] : [];
 
-    const aporteOtros = event.aporteOtros ? [{
-      financingSourceId: 2, // Ajusta este ID según corresponda
-      percentage: (event.aporteOtros / event.costoTotal) * 100,
-      amount: event.aporteOtros,
-    }] : [];
+      const aporteOtros = event.aporteOtros ? [{
+        financingSourceId: 2, // Ajusta este ID según corresponda
+        percentage: (event.aporteOtros / event.costoTotal) * 100,
+        amount: event.aporteOtros,
+      }] : [];
 
-    const fechas = event.fechas.map(interval => ({
-      start: new Date(interval.inicio),
-      end: new Date(interval.fin),
-    }));
+      const fechas = event.fechas.map(interval => ({
+        start: new Date(interval.inicio),
+        end: new Date(interval.fin),
+      }));
 
-    const nuevaFila: FilaPlanificacion = {
-      id: Date.now().toString(),
-      areaEstrategica: areaEstrategicaId,
-      objetivoEstrategico: objetivoEstrategicoId,
-      estrategias: estrategiasIds,
-      intervencion: intervencionIds,
-      ods: odsIds,
-      tipoEvento: event.tipoEvento,
-      evento: event.evento,
-      objetivo: event.objetivo,
-      estado: 'planificado',
-      costoTotal: event.costoTotal,
-      aporteUMES: aporteUMES,
-      aporteOtros: aporteOtros,
-      tipoCompra: tipoCompraId,
-      detalle: null, // Puedes ajustar esto si tienes el detalle
-      responsablePlanificacion: event.responsables.principal,
-      responsableEjecucion: event.responsables.ejecucion,
-      responsableSeguimiento: event.responsables.seguimiento,
-      recursos: recursosIds,
-      indicadorLogro: event.indicadorLogro,
-      detalleProceso: null, // Puedes ajustar esto si tienes el detalle
-      fechas: fechas,
-      fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
-      campusId: campusId,
-      entityId: Number(event.id),
-    };
+      const nuevaFila: FilaPlanificacion = {
+        id: Date.now().toString(),
+        areaEstrategica: areaEstrategicaId,
+        objetivoEstrategico: objetivoEstrategicoId,
+        estrategias: estrategiasIds,
+        intervencion: intervencionIds,
+        ods: odsIds,
+        tipoEvento: event.tipoEvento,
+        evento: event.evento,
+        objetivo: event.objetivo,
+        estado: 'planificado',
+        costoTotal: event.costoTotal,
+        aporteUMES: aporteUMES,
+        aporteOtros: aporteOtros,
+        tipoCompra: tipoCompraId,
+        detalle: null, // Inicialmente nulo; se actualizará más adelante
+        responsablePlanificacion: event.responsables.principal,
+        responsableEjecucion: event.responsables.ejecucion,
+        responsableSeguimiento: event.responsables.seguimiento,
+        recursos: recursosIds,
+        indicadorLogro: event.indicadorLogro,
+        detalleProceso: null, // Inicialmente nulo; se actualizará más adelante
+        fechas: fechas,
+        fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
+        campusId: campusId,
+        entityId: Number(event.id),
+      };
 
-    setFilas([nuevaFila]); // Puedes ajustar esto si deseas agregar la fila en lugar de reemplazar
-    toast.info("Evento cargado para edición.");
+      // Agregar la nueva fila al estado
+      setFilas([nuevaFila]); // Puedes ajustar esto si deseas agregar la fila en lugar de reemplazar
+      toast.info("Evento cargado para edición.");
+
+      // **Actualizar los estados de deshabilitación**
+      setIsEstrategiasDisabled(!nuevaFila.objetivoEstrategico);
+      setIsIntervencionesDisabled(nuevaFila.estrategias.length === 0);
+
+      // URLs para descargar los archivos
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!baseUrl) {
+        console.error("URL de la API no definida.");
+        return;
+      }
+
+      const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;
+      const urlDetalle = `${baseUrl}/api/fullevent/downloadCostDetailDocument/${event.id}`;
+
+      // Descargar los archivos
+      const [archivoDetalleProceso, archivoDetalle] = await Promise.all([
+        descargarArchivo(urlDetalleProceso, `detalle-proceso-${event.id}`),
+        descargarArchivo(urlDetalle, `detalle-${event.id}`)
+      ]);
+
+      // Actualizar la fila con los archivos descargados
+      setFilas(prevFilas =>
+        prevFilas.map(fila => {
+          if (fila.id === nuevaFila.id) {
+            return {
+              ...fila,
+              detalleProceso: archivoDetalleProceso || null,
+              detalle: archivoDetalle || null,
+            };
+          }
+          return fila;
+        })
+      );
+
+      if (archivoDetalleProceso || archivoDetalle) {
+        toast.success("Archivos cargados correctamente.");
+      } else {
+        toast.warn("No se pudieron cargar algunos archivos.");
+      }
+
+    } catch (error) {
+      console.error("Error en handleEditEvent:", error);
+      toast.error("Ocurrió un error al editar el evento.");
+    }
   };
 
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
@@ -917,6 +1014,17 @@ export function TablaPlanificacionComponent() {
                     file={fila.detalle}
                     onFileChange={(file) => actualizarFila(fila.id, 'detalle', file)}
                   />
+                  {/* Enlace para descargar el detalle de costos si existe entityId */}
+                  {fila.entityId && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span
+                        className="cursor-pointer text-blue-600 hover:underline"
+                        onClick={() => handleDownload(fila.entityId!, 'costDetail')}
+                      >
+                        Descargar Detalle de Costos
+                      </span>
+                    </div>
+                  )}
                   {!fila.detalle && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
                   )}
@@ -988,9 +1096,20 @@ export function TablaPlanificacionComponent() {
                 </TableCell>
                 <TableCell>
                   <DetalleProcesoComponent
-                    file={fila.processDocument || null}
+                    file={fila.detalleProceso || null}
                     onFileChange={(file) => actualizarProcessDocument(fila.id, file)}
                   />
+                  {/* Enlace para descargar el detalle del proceso si existe entityId */}
+                  {fila.entityId && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span
+                        className="cursor-pointer text-blue-600 hover:underline"
+                        onClick={() => handleDownload(fila.entityId!, 'process')}
+                      >
+                        Descargar Detalle del Proceso
+                      </span>
+                    </div>
+                  )}
                   {!fila.processDocument && (
                     <span className="text-yellow-500 text-sm">Detalle del Proceso no agregado.</span>
                   )}
