@@ -1,4 +1,4 @@
-// src/components/poa/components/PlanificacionFormComponent.tsx
+// src/components/poa/eventManagement/formView/formulario-planificacion.tsx
 
 'use client'
 
@@ -8,30 +8,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from 'react-toastify'
 import { z } from 'zod'
 
-import { ObjetivosEstrategicosSelectorComponent } from './fields/objetivos-estrategicos-selector'
-import { EstrategiasSelectorComponent } from './fields/estrategias-selector'
-import { IntervencionesSelectorComponent } from './fields/intervenciones-selector'
-import { OdsSelector } from './fields/ods-selector'
-import { ActividadProyectoSelector } from './fields/actividad-proyecto-selector'
-import TipoDeCompraComponent from './fields/tipo-de-compra'
-import { RecursosSelectorComponent } from './fields/recursos-selector'
-import { DetalleComponent } from './fields/detalle'
-import { DetalleProcesoComponent } from './fields/detalle-proceso'
-import { AreaEstrategicaComponent } from './fields/area-estrategica'
-import { EventoComponent } from './fields/evento'
-import { ObjetivoComponent } from './fields/objetivo'
-import { EstadoComponent } from './fields/estado'
-import { ResponsablesComponent } from './fields/responsables'
-import { IndicadorLogroComponent } from './fields/indicador-logro'
-import { CampusSelector } from './fields/campus-selector'
-import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent'
+import { ObjetivosEstrategicosSelectorComponent } from '../fields/objetivos-estrategicos-selector'
+import { EstrategiasSelectorComponent } from '../fields/estrategias-selector'
+import { IntervencionesSelectorComponent } from '../fields/intervenciones-selector'
+import { OdsSelector } from '../fields/ods-selector'
+import { ActividadProyectoSelector } from '../fields/actividad-proyecto-selector'
+import TipoDeCompraComponent from '../fields/tipo-de-compra'
+import { RecursosSelectorComponent } from '../fields/recursos-selector'
+import { DetalleComponent } from '../fields/detalle'
+import { DetalleProcesoComponent } from '../fields/detalle-proceso'
+import { AreaEstrategicaComponent } from '../fields/area-estrategica'
+import { EventoComponent } from '../fields/evento'
+import { ObjetivoComponent } from '../fields/objetivo'
+import { EstadoComponent } from '../fields/estado'
+import { ResponsablesComponent } from '../fields/responsables'
+import { IndicadorLogroComponent } from '../fields/indicador-logro'
+import { CampusSelector } from '../fields/campus-selector'
+import { OtherFinancingSourceComponent } from '../fields/other-financing-source'
+import { UMESFinancingComponent } from '../fields/umes-financing-source'
+
+
+import EventsCorrectionsComponent from '../../sections/events-viewer/EventsCorrectionsComponent'
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'
 import { useCurrentUser } from '@/hooks/use-current-user'
 
 import { StrategicArea } from '@/types/StrategicArea'
 import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
-import { OtherFinancingSourceComponent } from './fields/other-financing-source'
-import { UMESFinancingComponent } from './fields/umes-financing-source'
+
 import { Label } from '@radix-ui/react-dropdown-menu'
 
 import { Strategy } from '@/types/Strategy'
@@ -40,7 +43,7 @@ import { ODS } from '@/types/ods'
 import { Resource } from '@/types/Resource'
 import { Campus } from '@/types/Campus'
 import { PurchaseType } from '@/types/PurchaseType'
-import { downloadFile } from '@/utils/downloadFile' // Importar la función de utilidad
+import { downloadFile } from '@/utils/downloadFile'
 import { PlanningEvent } from '@/types/interfaces'
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
 
