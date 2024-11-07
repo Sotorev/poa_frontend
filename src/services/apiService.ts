@@ -59,7 +59,9 @@ export async function getEstrategias(token: string): Promise<Strategy[]> {
     throw new Error(`Error al obtener estrategias: ${response.statusText}`);
   }
 
-  return response.json();
+  const data: Strategy[] = await response.json();
+
+  return data;
 }
 
 export async function getIntervenciones(token: string): Promise<Intervention[]> {
@@ -74,7 +76,9 @@ export async function getIntervenciones(token: string): Promise<Intervention[]> 
     throw new Error(`Error al obtener intervenciones: ${response.statusText}`);
   }
 
-  return response.json();
+  const data: Intervention[] = await response.json();
+
+  return data;
 }
 
 export async function getODS(token: string): Promise<ODS[]> {
@@ -226,4 +230,18 @@ export async function getFullEvents(token: string): Promise<ApiEvent[]> {
   }
 
   return response.json();
+}
+
+export async function deleteEvent(eventId: number, token: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/fullevent/${eventId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || `Error al eliminar el evento: ${response.statusText}`);
+  }
 }

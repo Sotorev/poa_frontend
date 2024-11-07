@@ -1,16 +1,18 @@
-// components/EventsViewer/EventRow.tsx
+// src/components/poa/sections/events-viewer/EventRow.tsx
+
 import React, { useState } from 'react';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { X } from 'lucide-react';
 import ActionButtons from './ActionButtons';
+import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections'; // Importar el nuevo componente
 import AportesPEIDialog from './AportesPEIDialog';
 import FinancialDetailsDialog from './FinancialDetailsDialog';
 import ProponentDetailsDialog from './ProponentDetailsDialog';
 import { PlanningEvent } from '@/types/interfaces';
 import { toast } from 'react-toastify';
-import DownloadButton from './DownloadButton'; // Asegúrate de importar DownloadButton
+import DownloadButton from './DownloadButton';
 
 interface EventRowProps {
   event: PlanningEvent;
@@ -21,6 +23,9 @@ interface EventRowProps {
   onRevert: (id: string) => void;
   showComments: boolean;
   showActions: boolean;
+  showCorrectionsActions?: boolean; // Nueva prop
+  onEdit?: (id: string) => void;       // Nueva prop
+  onDelete?: (id: string) => void;     // Nueva prop
   setShowCommentThread: (show: boolean) => void;
   setCurrentEntityId: (id: number | null) => void;
   setCurrentEntityName: (name: string) => void;
@@ -34,8 +39,11 @@ const EventRow: React.FC<EventRowProps> = ({
   onRequestCorrection,
   onRevert,
   showComments,
-  setShowCommentThread,
   showActions,
+  showCorrectionsActions = false, // Valor por defecto
+  onEdit,
+  onDelete,
+  setShowCommentThread,
   setCurrentEntityId,
   setCurrentEntityName
 }) => {
@@ -158,6 +166,7 @@ const EventRow: React.FC<EventRowProps> = ({
                 <p>Responsable principal del evento</p>
               </TooltipContent>
             </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
@@ -170,6 +179,7 @@ const EventRow: React.FC<EventRowProps> = ({
                 <p>Encargado de la ejecución del evento</p>
               </TooltipContent>
             </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
@@ -224,16 +234,25 @@ const EventRow: React.FC<EventRowProps> = ({
         </TableCell>
       )}
       {showActions && (
-      <TableCell className="whitespace-normal break-words">
-        <ActionButtons 
-          event={event} 
-          isPending={isPending} 
-          onApprove={onApprove} 
-          onReject={onReject} 
-          onRequestCorrection={onRequestCorrection} 
-          onRevert={onRevert}
-        />
-      </TableCell>
+        <TableCell className="whitespace-normal break-words">
+          <ActionButtons 
+            event={event} 
+            isPending={isPending} 
+            onApprove={onApprove} 
+            onReject={onReject} 
+            onRequestCorrection={onRequestCorrection} 
+            onRevert={onRevert}
+          />
+        </TableCell>
+      )}
+      {showCorrectionsActions && onEdit && onDelete && ( // Condicional para renderizar las acciones de corrección
+        <TableCell className="whitespace-normal break-words">
+          <ActionButtonsCorrectionsComponent
+            event={event}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </TableCell>
       )}
     </TableRow>
   );

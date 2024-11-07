@@ -1,4 +1,4 @@
-// src/components/poa/components/columns/aporte-otras-fuentes.tsx
+// /src/components/poa/components/columns/umes-financing-source.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -21,7 +21,7 @@ import { FinancingSource } from '@/types/FinancingSource';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getFinancingSources } from '@/services/apiService';
 
-const otherFinancingSourceSchema = z.object({
+const umesFinancingSchema = z.object({
   financingSourceId: z.number({
     required_error: 'La fuente es requerida',
     invalid_type_error: 'La fuente debe ser un número',
@@ -41,21 +41,21 @@ const otherFinancingSourceSchema = z.object({
     .nonnegative('El monto no puede ser negativo'),
 });
 
-type OtherFinancingSourceForm = z.infer<typeof otherFinancingSourceSchema>;
+type UmesContributionForm = z.infer<typeof umesFinancingSchema>;
 
-interface OtherFinancingSource {
+interface UMESContribution {
   financingSourceId: number;
   percentage: number;
   amount: number;
 }
 
-interface OtherFinancingSourceProps {
-  contributions: OtherFinancingSource[];
-  onChangeContributions: (contributions: OtherFinancingSource[]) => void;
+interface umesFinancingProps {
+  contributions: UMESContribution[];
+  onChangeContributions: (aportes: UMESContribution[]) => void;
   totalCost: number;
 }
 
-export function OtherFinancingSourceComponent({ contributions, onChangeContributions, totalCost }: OtherFinancingSourceProps) {
+export function UMESFinancingComponent({ contributions, onChangeContributions, totalCost }: umesFinancingProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -68,12 +68,12 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
     reset,
     setValue,
     formState: { errors },
-  } = useForm<OtherFinancingSourceForm>({
-    resolver: zodResolver(otherFinancingSourceSchema),
+  } = useForm<UmesContributionForm>({
+    resolver: zodResolver(umesFinancingSchema),
     defaultValues: {
       financingSourceId: undefined,
       percentage: 0,
-      amount: 0,
+      amount: undefined,
     },
   });
 
@@ -83,7 +83,7 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
       try {
         const data = await getFinancingSources(user?.token || '');
         const filteredData = data.filter(
-          (source) => source.category === 'Otra' && !source.isDeleted
+          (source) => source.category === 'UMES' && !source.isDeleted
         );
         setFinancingSources(filteredData);
       } catch (err) {
@@ -97,18 +97,19 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
     fetchData();
   }, [user?.token]);
 
-  const onSubmit = (data: OtherFinancingSourceForm) => {
+  const onSubmit = (data: UmesContributionForm) => {
     try {
+
       const newTotal = totalCost + data.amount;
       const percentage = (data.amount / newTotal) * 100;
 
-      const newContribution: OtherFinancingSource = {
+      const newContribution: UMESContribution = {
         financingSourceId: data.financingSourceId,
-        percentage: percentage,
         amount: data.amount,
+        percentage: percentage,
       };
-      const newContributions = [...contributions, newContribution];
-      onChangeContributions(newContributions);
+      const updatedContributions = [...contributions, newContribution];
+      onChangeContributions(updatedContributions);
       reset();
       setIsAdding(false);
     } catch (err) {
@@ -118,8 +119,8 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
   };
 
   const handleRemoveAporte = (index: number) => {
-    const newContributions = contributions.filter((_, i) => i !== index);
-    onChangeContributions(newContributions);
+    const newAportes = contributions.filter((_, i) => i !== index);
+    onChangeContributions(newAportes);
   };
 
   if (loading) return <div className="text-green-600">Cargando fuentes de financiamiento...</div>;
@@ -155,9 +156,6 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
             )}
           </div>
           <div>
-            <Label className="text-green-700">Porcentaje { }</Label>
-          </div>
-          <div>
             <Label className="text-green-700">Monto</Label>
             <Input
               type="number"
@@ -180,11 +178,11 @@ export function OtherFinancingSourceComponent({ contributions, onChangeContribut
 
       <div className="space-y-2">
         {contributions.map((contribution, index) => {
-          const fuente = financingSources.find(source => source.financingSourceId === contribution.financingSourceId)?.name || contribution.financingSourceId;
+          const source = financingSources.find(source => source.financingSourceId === contribution.financingSourceId)?.name || contribution.financingSourceId;
           return (
             <div key={index} className="flex items-center justify-between bg-green-100 p-2 rounded-md">
               <span className="text-green-800">
-                {fuente}: {contribution.percentage}% - Q{contribution.amount.toFixed(2)}
+                {source}: {contribution.percentage}% - Q{contribution.amount.toFixed(2)}
               </span>
               <Button onClick={() => handleRemoveAporte(index)} variant="ghost" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-200">
                 <X className="h-4 w-4" />

@@ -3,8 +3,9 @@
 export interface Intervention {
     interventionId: number;
     name: string;
+    isDeleted: boolean;
     strategyId: number;
-    isDeleted?: boolean;
+    isCustom?: boolean;
   }
   
   export interface CreateInterventionInput {

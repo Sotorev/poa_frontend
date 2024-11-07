@@ -1,62 +1,57 @@
-// src/components/poa/components/PlanificacionFormComponent.tsx
+// src/components/poa/eventManagement/formView/formulario-planificacion.tsx
 
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from 'react-toastify'
 import { z } from 'zod'
 
-import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector'
-import { EstrategiasSelectorComponent } from './columns/estrategias-selector'
-import { IntervencionesSelectorComponent } from './columns/intervenciones-selector'
-import { OdsSelector } from './columns/ods-selector'
-import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector'
-import CurrencyInput from './columns/currency-input'
-import TipoDeCompraComponent from './columns/tipo-de-compra'
-import { RecursosSelectorComponent } from './columns/recursos-selector'
-import { DetalleComponent } from './columns/detalle'
-import { DetalleProcesoComponent } from './columns/detalle-proceso' // Importamos el componente
-import { AreaEstrategicaComponent } from './columns/area-estrategica'
-import { EventoComponent } from './columns/evento'
-import { ObjetivoComponent } from './columns/objetivo'
-import { EstadoComponent } from './columns/estado'
-import { ResponsablesComponent } from './columns/responsables'
-import { IndicadorLogroComponent } from './columns/indicador-logro'
-import { CampusSelector } from './columns/campus-selector'
-import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent'
+import { ObjetivosEstrategicosSelectorComponent } from '../fields/objetivos-estrategicos-selector'
+import { EstrategiasSelectorComponent } from '../fields/estrategias-selector'
+import { IntervencionesSelectorComponent } from '../fields/intervenciones-selector'
+import { OdsSelector } from '../fields/ods-selector'
+import { ActividadProyectoSelector } from '../fields/actividad-proyecto-selector'
+import TipoDeCompraComponent from '../fields/tipo-de-compra'
+import { RecursosSelectorComponent } from '../fields/recursos-selector'
+import { DetalleComponent } from '../fields/detalle'
+import { DetalleProcesoComponent } from '../fields/detalle-proceso'
+import { AreaEstrategicaComponent } from '../fields/area-estrategica'
+import { EventoComponent } from '../fields/evento'
+import { ObjetivoComponent } from '../fields/objetivo'
+import { EstadoComponent } from '../fields/estado'
+import { ResponsablesComponent } from '../fields/responsables'
+import { IndicadorLogroComponent } from '../fields/indicador-logro'
+import { CampusSelector } from '../fields/campus-selector'
+import { OtherFinancingSourceComponent } from '../fields/other-financing-source'
+import { UMESFinancingComponent } from '../fields/umes-financing-source'
+
+
+import EventsCorrectionsComponent from '../../sections/events-viewer/EventsCorrectionsComponent'
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema'
 import { useCurrentUser } from '@/hooks/use-current-user'
 
-import {
-  getStrategicAreas,
-  getStrategicObjectives,
-  getUserById,
-  getPoaByFacultyAndYear
-} from '@/services/apiService'
-
 import { StrategicArea } from '@/types/StrategicArea'
-import { StrategicObjective } from '@/schemas/strategicObjectiveSchema'
-import { OtherFinancingSourceComponent } from './columns/other-financing-source'
-import { UMESFinancingComponent } from './columns/umes-financing-source'
+import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
+
 import { Label } from '@radix-ui/react-dropdown-menu'
+
+import { Strategy } from '@/types/Strategy'
+import { Intervention } from '@/types/Intervention'
+import { ODS } from '@/types/ods'
+import { Resource } from '@/types/Resource'
+import { Campus } from '@/types/Campus'
+import { PurchaseType } from '@/types/PurchaseType'
+import { downloadFile } from '@/utils/downloadFile'
+import { PlanningEvent } from '@/types/interfaces'
+import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>
 
-interface FilaPlanificacion extends FilaPlanificacionForm {
-  estado: 'planificado' | 'aprobado' | 'rechazado'
-  comentarioDecano: string
-  detalleProceso: File | null // Añadido para manejar el archivo
-}
-
-interface FilaError {
-  [key: string]: string
-}
-
 interface DatePair {
-  start: Date
-  end: Date
+  start: Date;
+  end: Date;
 }
 
 interface Contribution {
@@ -65,6 +60,19 @@ interface Contribution {
   amount: number
 }
 
+interface FilaPlanificacion extends FilaPlanificacionForm {
+  id: string
+  estado: 'planificado' | 'aprobado' | 'rechazado'
+  comentarioDecano: string
+  detalleProceso: File | null
+  fechas: DatePair[]
+  fechaProyecto: DatePair
+  entityId: number | null
+}
+
+interface FilaError {
+  [key: string]: string
+}
 
 const getColumnName = (field: string): string => {
   const columnMap: { [key: string]: string } = {
@@ -91,6 +99,7 @@ const getColumnName = (field: string): string => {
     fechas: "Fechas",
     detalleProceso: "Detalle del Proceso",
     comentarioDecano: "Comentario Decano",
+    processDocument: "Documento de Proceso",
   }
   return columnMap[field] || field
 }
@@ -123,7 +132,9 @@ export default function PlanificacionFormComponent() {
     detalleProceso: null,
     comentarioDecano: '',
     fechas: [{ start: new Date(), end: new Date() }],
+    fechaProyecto: { start: new Date(), end: new Date() },
     campusId: '',
+    entityId: null,
   }
 
   const [fila, setFila] = useState<FilaPlanificacion>(initialFila)
@@ -144,31 +155,95 @@ export default function PlanificacionFormComponent() {
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false)
 
+  // Estados para gestionar la deshabilitación
+  const [isEstrategiasDisabled, setIsEstrategiasDisabled] = useState<boolean>(true)
+  const [isIntervencionesDisabled, setIsIntervencionesDisabled] = useState<boolean>(true)
+
+  const [estrategias, setEstrategias] = useState<Strategy[]>([])
+  const [intervenciones, setIntervenciones] = useState<Intervention[]>([])
+  const [odsList, setOdsList] = useState<ODS[]>([])
+  const [recursos, setRecursos] = useState<Resource[]>([])
+  const [campuses, setCampuses] = useState<Campus[]>([])
+  const [purchaseTypes, setPurchaseTypes] = useState<PurchaseType[]>([])
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const areas = await getStrategicAreas(user?.token || '')
-        const activeAreas = areas.filter(area => !area.isDeleted)
-        setStrategicAreas(activeAreas)
+        if (!process.env.NEXT_PUBLIC_API_URL) {
+          throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.")
+        }
 
-        const objectives = await getStrategicObjectives(user?.token || '')
-        const activeObjectives = objectives.filter(obj => !obj.isDeleted)
-        setStrategicObjectives(activeObjectives)
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        }
 
-        const map: { [key: string]: string } = {}
-        activeObjectives.forEach(obj => {
-          const areaMatched = activeAreas.find(area => area.strategicAreaId === obj.strategicAreaId)
+        // Fetch Strategic Areas
+        const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, { headers });
+        if (!responseAreas.ok) throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`);
+        const dataAreas = await responseAreas.json();
+        const parsedAreas = strategicAreasSchema.parse(dataAreas);
+        const activeAreas = parsedAreas.filter((area) => !area.isDeleted);
+        setStrategicAreas(activeAreas);
+
+        // Fetch Strategic Objectives
+        const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, { headers });
+        if (!responseObjectives.ok) throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`);
+        const dataObjectives = await responseObjectives.json();
+        const parsedObjectives = dataObjectives.map((obj: any) => StrategicObjectiveSchema.parse(obj)).filter((obj: StrategicObjective) => !obj.isDeleted);
+        setStrategicObjectives(parsedObjectives);
+
+        const map: { [key: string]: string } = {};
+        parsedObjectives.forEach((obj: StrategicObjective) => {
+          const areaMatched = activeAreas.find(area => area.strategicAreaId === obj.strategicAreaId);
           if (areaMatched) {
-            map[obj.strategicObjectiveId.toString()] = areaMatched.name
+            map[obj.strategicObjectiveId.toString()] = areaMatched.name;
           } else {
-            console.warn(`No se encontró Área Estratégica para el Objetivo Estratégico ID: ${obj.strategicObjectiveId}`)
+            console.warn(`No se encontró Área Estratégica para el Objetivo Estratégico ID: ${obj.strategicObjectiveId}`);
           }
-        })
-        setObjetivoToAreaMap(map)
+        });
+        setObjetivoToAreaMap(map);
+
+        // Fetch Estrategias
+        const responseEstrategias = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategies`, { headers });
+        if (!responseEstrategias.ok) throw new Error(`Error al obtener estrategias: ${responseEstrategias.statusText}`);
+        const dataEstrategias = await responseEstrategias.json();
+        setEstrategias(dataEstrategias);
+
+        // Fetch Intervenciones
+        const responseIntervenciones = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interventions`, { headers });
+        if (!responseIntervenciones.ok) throw new Error(`Error al obtener intervenciones: ${responseIntervenciones.statusText}`);
+        const dataIntervenciones = await responseIntervenciones.json();
+        setIntervenciones(dataIntervenciones);
+
+        // Fetch ODS
+        const responseODS = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ods`, { headers });
+        if (!responseODS.ok) throw new Error(`Error al obtener ODS: ${responseODS.statusText}`);
+        const dataODS = await responseODS.json();
+        setOdsList(dataODS);
+
+        // Fetch Recursos
+        const responseRecursos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutionalResources`, { headers });
+        if (!responseRecursos.ok) throw new Error(`Error al obtener recursos: ${responseRecursos.statusText}`);
+        const dataRecursos = await responseRecursos.json();
+        setRecursos(dataRecursos);
+
+        // Fetch Campuses
+        const responseCampuses = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/campus/`, { headers });
+        if (!responseCampuses.ok) throw new Error(`Error al obtener campuses: ${responseCampuses.statusText}`);
+        const dataCampuses = await responseCampuses.json();
+        setCampuses(dataCampuses);
+
+        // Fetch Purchase Types
+        const responsePurchaseTypes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchasetypes`, { headers });
+        if (!responsePurchaseTypes.ok) throw new Error(`Error al obtener tipos de compra: ${responsePurchaseTypes.statusText}`);
+        const dataPurchaseTypes = await responsePurchaseTypes.json();
+        setPurchaseTypes(dataPurchaseTypes);
+
       } catch (err) {
         if (err instanceof z.ZodError) {
-          setError("Error en la validación de datos de áreas estratégicas u objetivos estratégicos.")
+          setError("Error en la validación de datos.")
           console.error(err.errors)
         } else {
           setError((err as Error).message)
@@ -179,7 +254,7 @@ export default function PlanificacionFormComponent() {
     }
 
     fetchData()
-  }, [])
+  }, [user?.token])
 
   useEffect(() => {
     const fetchFacultyAndPoa = async () => {
@@ -188,44 +263,231 @@ export default function PlanificacionFormComponent() {
         return
       }
       try {
-        const userData = await getUserById(userId, user?.token || '')
-        const fetchedFacultyId = userData.facultyId
-        setFacultyId(fetchedFacultyId)
+        if (!process.env.NEXT_PUBLIC_API_URL) {
+          throw new Error("La URL de la API no está definida.")
+        }
 
-        const currentYear = new Date().getFullYear()
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        }
 
-        setLoadingPoa(true)
-        const poaData = await getPoaByFacultyAndYear(fetchedFacultyId, currentYear, user?.token || '')
-        const fetchedPoaId = poaData.poaId
-        setPoaId(fetchedPoaId)
+        // Fetch User Data
+        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, { headers });
+        if (!responseUser.ok) throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
+        const dataUser = await responseUser.json();
+        const fetchedFacultyId = dataUser.facultyId;
+        setFacultyId(fetchedFacultyId);
+
+        const currentYear = new Date().getFullYear();
+
+        // Fetch POA
+        setLoadingPoa(true);
+        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, { headers });
+        if (!responsePoa.ok) throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
+        const dataPoa = await responsePoa.json();
+        const fetchedPoaId = dataPoa.poaId;
+        setPoaId(fetchedPoaId);
       } catch (err) {
-        setErrorPoa((err as Error).message)
-        console.error(err)
+        setErrorPoa((err as Error).message);
+        console.error(err);
       } finally {
-        setLoadingPoa(false)
+        setLoadingPoa(false);
       }
     }
 
     fetchFacultyAndPoa()
-  }, [userId])
+  }, [userId, user?.token])
 
+  // Función auxiliar para descargar y convertir archivos a objetos File
+  const descargarArchivo = async (url: string, nombreArchivo: string): Promise<File | null> => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`Error al descargar el archivo desde ${url}: ${response.statusText}`);
+        return null;
+      }
+      const blob = await response.blob();
+      // Inferir el tipo de archivo desde el blob
+      const tipo = blob.type || 'application/octet-stream';
+      return new File([blob], nombreArchivo, { type: tipo });
+    } catch (error) {
+      console.error(`Error al descargar el archivo desde ${url}:`, error);
+      return null;
+    }
+  };
+
+  // Función para manejar la edición de un evento
+  const handleEditEvent = async (event: PlanningEvent) => {
+    try {
+      // Mapeo de datos existente
+      const areaEstrategicaObj = strategicAreas.find(area => area.name === event.areaEstrategica);
+      const areaEstrategicaId = areaEstrategicaObj ? areaEstrategicaObj.name : '';
+
+      const objetivoEstrategicoObj = strategicObjectives.find(obj => obj.description === event.objetivoEstrategico);
+      const objetivoEstrategicoId = objetivoEstrategicoObj ? objetivoEstrategicoObj.strategicObjectiveId.toString() : '';
+
+      const estrategiasIds = estrategias
+        .filter(strategy => event.estrategias.includes(strategy.description))
+        .map(strategy => strategy.strategyId.toString());
+
+      const intervencionIds = intervenciones
+        .filter(intervention => event.intervencion.includes(intervention.name))
+        .map(intervention => intervention.interventionId.toString());
+
+      const odsIds = odsList
+        .filter(ods => event.ods.includes(ods.name))
+        .map(ods => ods.odsId.toString());
+
+      const recursosIds = recursos
+        .filter(resource => event.recursos.includes(resource.name))
+        .map(resource => resource.resourceId.toString());
+
+      const campusObj = campuses.find(campus => campus.name === event.campus);
+      const campusId = campusObj ? campusObj.campusId.toString() : '';
+
+      const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
+      const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
+
+      const aporteUMES = event.aporteUMES ? [{
+        financingSourceId: 1, // Asumiendo que el ID 1 es UMES
+        percentage: (event.aporteUMES / event.costoTotal) * 100,
+        amount: event.aporteUMES,
+      }] : [];
+
+      const aporteOtros = event.aporteOtros ? [{
+        financingSourceId: 2, // Ajusta este ID según corresponda
+        percentage: (event.aporteOtros / event.costoTotal) * 100,
+        amount: event.aporteOtros,
+      }] : [];
+
+      const fechas = event.fechas.map(interval => ({
+        start: new Date(interval.inicio),
+        end: new Date(interval.fin),
+      }));
+
+      const newFila: FilaPlanificacion = {
+        ...initialFila, // Reset to initialFila to avoid carrying over any existing data
+        id: Date.now().toString(),
+        areaEstrategica: areaEstrategicaId,
+        objetivoEstrategico: objetivoEstrategicoId,
+        estrategias: estrategiasIds,
+        intervencion: intervencionIds,
+        ods: odsIds,
+        tipoEvento: event.tipoEvento,
+        evento: event.evento,
+        objetivo: event.objetivo,
+        estado: 'planificado',
+        costoTotal: event.costoTotal,
+        aporteUMES: aporteUMES,
+        aporteOtros: aporteOtros,
+        tipoCompra: tipoCompraId,
+        detalle: null, // Inicialmente nulo; se actualizará más adelante
+        responsablePlanificacion: event.responsables.principal,
+        responsableEjecucion: event.responsables.ejecucion,
+        responsableSeguimiento: event.responsables.seguimiento,
+        recursos: recursosIds,
+        indicadorLogro: event.indicadorLogro,
+        detalleProceso: null, // Inicialmente nulo; se actualizará más adelante
+        fechas: fechas,
+        fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
+        campusId: campusId,
+        entityId: Number(event.id),
+      };
+
+      // Set the fila state
+      setFila(newFila);
+      toast.info("Evento cargado para edición.");
+
+      // **Actualizar los estados de deshabilitación**
+      setIsEstrategiasDisabled(!newFila.objetivoEstrategico);
+      setIsIntervencionesDisabled(newFila.estrategias.length === 0);
+
+      // URLs para descargar los archivos
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!baseUrl) {
+        console.error("URL de la API no definida.");
+        return;
+      }
+
+      const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;
+      const urlDetalle = `${baseUrl}/api/fullevent/downloadCostDetailDocument/${event.id}`;
+
+      // Descargar los archivos
+      const [archivoDetalleProceso, archivoDetalle] = await Promise.all([
+        descargarArchivo(urlDetalleProceso, `detalle-proceso-${event.id}`),
+        descargarArchivo(urlDetalle, `detalle-${event.id}`)
+      ]);
+
+      // Actualizar la fila con los archivos descargados
+      setFila(prevFila => ({
+        ...prevFila,
+        detalleProceso: archivoDetalleProceso || null,
+        detalle: archivoDetalle || null,
+      }));
+
+      if (archivoDetalleProceso || archivoDetalle) {
+        toast.success("Archivos cargados correctamente.");
+      } else {
+        toast.warn("No se pudieron cargar algunos archivos.");
+      }
+
+    } catch (error) {
+      console.error("Error en handleEditEvent:", error);
+      toast.error("Ocurrió un error al editar el evento.")
+    }
+  };
+
+  // Función para actualizar los campos de la fila
   const actualizarFila = (campo: keyof FilaPlanificacion, valor: any | null) => {
     setFila(prevFila => {
       const updatedFila = { ...prevFila, [campo]: valor }
+
+      if (campo === 'tipoEvento') {
+        if (valor === 'actividad') {
+          updatedFila.fechaProyecto = { start: new Date(), end: new Date() } // Resetear fechaProyecto
+        } else {
+          updatedFila.fechas = [{ start: new Date(), end: new Date() }] // Resetear fechas
+        }
+      }
+
       if (campo === 'objetivoEstrategico') {
         updatedFila.areaEstrategica = objetivoToAreaMap[valor] || ''
+
+        // Gestionar deshabilitación del selector de estrategias
+        setIsEstrategiasDisabled(!valor) // Deshabilitar si no hay objetivo estratégico seleccionado
+
+        // Resetear estrategias e intervenciones si el objetivo estratégico cambia
+        if (!valor) {
+          updatedFila.estrategias = []
+          updatedFila.intervencion = []
+          setIsIntervencionesDisabled(true)
+        } else {
+          // Si se selecciona un objetivo estratégico, verificar si hay estrategias seleccionadas
+          setIsIntervencionesDisabled(updatedFila.estrategias.length === 0)
+        }
       }
+
+      if (campo === 'estrategias') {
+        // Gestionar deshabilitación del selector de intervenciones
+        setIsIntervencionesDisabled((valor as string[]).length === 0)
+      }
+
       if (campo === 'aporteOtros' || campo === 'aporteUMES') {
         const totalAporte = [...updatedFila.aporteUMES, ...updatedFila.aporteOtros].reduce((acc, aporte) => acc + aporte.amount, 0)
         updatedFila.costoTotal = totalAporte
         // Calculate the percentage for each contribution and round to two decimals
         const updatedAporteUMES = updatedFila.aporteUMES.map(aporte => ({
           ...aporte,
-          percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
+          percentage: totalAporte > 0 ? parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)) : 0,
         }))
         const updatedAporteOtros = updatedFila.aporteOtros.map(aporte => ({
           ...aporte,
-          percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
+          percentage: totalAporte > 0 ? parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)) : 0,
         }))
         updatedFila.aporteUMES = updatedAporteUMES
         updatedFila.aporteOtros = updatedAporteOtros
@@ -234,6 +496,12 @@ export default function PlanificacionFormComponent() {
     })
   }
 
+  // Función para manejar cambios en `IntervencionesSelectorComponent`
+  const actualizarIntervencion = (intervenciones: string[]) => {
+    actualizarFila('intervencion', intervenciones)
+  }
+
+  // Añadir un nuevo objetivo estratégico
   const addStrategicObjective = (createdObjetivo: StrategicObjective) => {
     setStrategicObjectives(prev => [...prev, createdObjetivo])
     const area = strategicAreas.find(area => area.strategicAreaId === createdObjetivo.strategicAreaId)
@@ -246,10 +514,6 @@ export default function PlanificacionFormComponent() {
       console.warn(`No se encontró Área Estratégica para el nuevo Objetivo Estratégico ID: ${createdObjetivo.strategicObjectiveId}`)
     }
     toast.success("Nuevo objetivo estratégico agregado.")
-  }
-
-  const manejarCambioFechas = (data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
-    // Implementar si es necesario
   }
 
   const enviarActividad = async () => {
@@ -305,6 +569,13 @@ export default function PlanificacionFormComponent() {
         throw new Error("La URL de la API no está definida.")
       }
 
+      // Determine if it's a creation (POST) or an update (PUT)
+      const url = fila.entityId
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/${fila.entityId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`
+
+      const method = fila.entityId ? 'PUT' : 'POST'
+
       const eventData = {
         name: fila.evento.trim(),
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
@@ -318,10 +589,18 @@ export default function PlanificacionFormComponent() {
         achievementIndicator: fila.indicadorLogro.trim(),
         purchaseTypeId: parseInt(fila.tipoCompra, 10),
         totalCost: fila.costoTotal,
-        dates: fila.fechas.map(pair => ({
-          startDate: pair.start.toISOString().split('T')[0],
-          endDate: pair.end.toISOString().split('T')[0],
-        })),
+        dates:
+          fila.tipoEvento === 'actividad'
+            ? fila.fechas.map((pair) => ({
+                startDate: pair.start.toISOString().split('T')[0],
+                endDate: pair.end.toISOString().split('T')[0],
+              }))
+            : [
+                {
+                  startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+                  endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+                },
+              ],
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
@@ -351,7 +630,9 @@ export default function PlanificacionFormComponent() {
         ],
         interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
         ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
-        recursos: fila.recursos,
+        resources: fila.recursos.map((recurso: string) => ({
+          resourceId: parseInt(recurso, 10),
+        })),
         userId: userId,
       }
 
@@ -368,8 +649,8 @@ export default function PlanificacionFormComponent() {
         formData.append('processDocument', fila.detalleProceso) // Enviamos el archivo como 'processDocument'
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
-        method: 'POST',
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Authorization': `Bearer ${user?.token}`
         },
@@ -384,14 +665,23 @@ export default function PlanificacionFormComponent() {
       const result = await response.json()
       console.log(`Actividad enviada exitosamente:`, result)
 
-      toast.success("Actividad enviada exitosamente.")
+      toast.success(fila.entityId ? "Actividad actualizada exitosamente." : "Actividad enviada exitosamente.")
 
-      setFila(prevFila => ({ ...prevFila, estado: 'aprobado' }))
+      setFila(prevFila => ({ 
+        ...prevFila, 
+        estado: 'aprobado', 
+        entityId: result.eventId || prevFila.entityId 
+      }))
 
       setFilaErrors({})
 
-      // Restablecer el formulario a sus valores iniciales
-      setFila(initialFila)
+      // Restablecer el formulario a sus valores iniciales si es un nuevo registro
+      if (!fila.entityId) {
+        setFila(initialFila)
+        setIsEstrategiasDisabled(true)
+        setIsIntervencionesDisabled(true)
+      }
+
     } catch (err) {
       console.error(err)
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`)
@@ -414,7 +704,6 @@ export default function PlanificacionFormComponent() {
   const strategicObjectiveId = strategicObjective
     ? strategicObjective.strategicObjectiveId
     : 0
-
 
   return (
     <div className="container mx-auto p-4">
@@ -451,29 +740,34 @@ export default function PlanificacionFormComponent() {
                     <span className="text-red-500 text-sm">{filaErrors.objetivoEstrategico}</span>
                   )}
                 </div>
-                <div className="">
+                <div className="pt-16">
                   <label className="block font-medium mb-2">Estrategias</label>
                   <EstrategiasSelectorComponent
                     selectedEstrategias={fila.estrategias}
                     onSelectEstrategia={(estrategias) => actualizarFila('estrategias', estrategias)}
-                    strategicObjectiveId={strategicObjectiveId}
+                    strategicObjectiveIds={fila.objetivoEstrategico ? [Number(fila.objetivoEstrategico)] : []}
+                    disabled={isEstrategiasDisabled}
+                    tooltipMessage="Por favor, seleccione primero un objetivo estratégico."
                   />
                   {filaErrors?.estrategias && (
                     <span className="text-red-500 text-sm">{filaErrors.estrategias}</span>
                   )}
                 </div>
-                <div className="">
+                <div className="pt-16">
                   <label className="block font-medium mb-2">Intervención</label>
                   <IntervencionesSelectorComponent
                     selectedIntervenciones={fila.intervencion}
-                    onSelectIntervencion={(intervenciones) => actualizarFila('intervencion', intervenciones)}
+                    onSelectIntervencion={actualizarIntervencion}
+                    disabled={isIntervencionesDisabled}
+                    tooltipMessage="Por favor, seleccione primero al menos una estrategia."
+                    strategyIds={fila.estrategias} // Pasamos las estrategias seleccionadas
                   />
                   {filaErrors?.intervencion && (
                     <span className="text-red-500 text-sm">{filaErrors.intervencion}</span>
                   )}
                 </div>
                 <div>
-                  <label className="block font-medium my-2">ODS</label>
+                  <label className="block font-medium mb-2">ODS</label>
                   <OdsSelector
                     selectedODS={fila.ods}
                     onSelectODS={(ods) => actualizarFila('ods', ods)}
@@ -494,7 +788,10 @@ export default function PlanificacionFormComponent() {
                   <ActividadProyectoSelector
                     selectedOption={fila.tipoEvento}
                     onSelectOption={(tipo) => actualizarFila('tipoEvento', tipo)}
-                    onChange={(data) => manejarCambioFechas(data)}
+                    fechas={fila.fechas}
+                    onChangeFechas={(fechas) => actualizarFila('fechas', fechas)}
+                    fechaProyecto={fila.fechaProyecto}
+                    onChangeFechaProyecto={(fecha) => actualizarFila('fechaProyecto', fecha)}
                   />
                   {filaErrors?.tipoEvento && (
                     <span className="text-red-500 text-sm">{filaErrors.tipoEvento}</span>
@@ -535,14 +832,13 @@ export default function PlanificacionFormComponent() {
               </CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-x-6">
                 <div>
-                    <Label className="block font-medium mb-2">Costo total (GTQ) <br /><b>{fila.costoTotal.toFixed(2)}</b></Label>
-                  
+                  <Label className="block font-medium mb-2">Costo total (GTQ) <br /><b>{fila.costoTotal.toFixed(2)}</b></Label>
                   {filaErrors?.costoTotal && (
                     <span className="text-red-500 text-sm">{filaErrors.costoTotal}</span>
                   )}
                 </div>
                 <div>
-
+                  {/* Espacio vacío para alineación */}
                 </div>
                 <div>
                   <label className="block font-medium mb-2">Aporte de UMES</label>
@@ -571,8 +867,6 @@ export default function PlanificacionFormComponent() {
                   <TipoDeCompraComponent
                     selectedTipo={fila.tipoCompra}
                     onSelectTipo={(tipos: string | null) => actualizarFila('tipoCompra', tipos)}
-                  // selectedTypes={fila.tipoCompra}
-                  // onSelectTypes={(tipos: string[]) => actualizarFila('tipoCompra', tipos)}
                   />
                   {filaErrors?.tipoCompra && (
                     <span className="text-red-500 text-sm">{filaErrors.tipoCompra}</span>
@@ -589,6 +883,16 @@ export default function PlanificacionFormComponent() {
                   )}
                   {filaErrors?.detalle && (
                     <span className="text-red-500 text-sm">{filaErrors.detalle}</span>
+                  )}
+                  {fila.entityId && fila.detalle && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span
+                        className="cursor-pointer text-blue-600 hover:underline"
+                        onClick={() => downloadFile(fila.entityId!, 'downloadCostDetailDocument')}
+                      >
+                        Descargar Detalle de Costos
+                      </span>
+                    </div>
                   )}
                 </div>
                 <div>
@@ -655,6 +959,16 @@ export default function PlanificacionFormComponent() {
               {filaErrors?.detalleProceso && (
                 <span className="text-red-500 text-sm">{filaErrors.detalleProceso}</span>
               )}
+              {fila.entityId && fila.detalleProceso && (
+                <div className="flex items-center space-x-2 mt-2">
+                  <span
+                    className="cursor-pointer text-blue-600 hover:underline"
+                    onClick={() => downloadFile(fila.entityId!, 'downloadProcessDocument')}
+                  >
+                    Descargar Detalle del Proceso
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -716,6 +1030,7 @@ export default function PlanificacionFormComponent() {
           facultyId={facultyId}
           isEditable={false}
           userId={userId}
+          onEditEvent={handleEditEvent} // Pasamos la función aquí
         />
       ) : (
         <div>Cargando datos de la tabla de eventos...</div>

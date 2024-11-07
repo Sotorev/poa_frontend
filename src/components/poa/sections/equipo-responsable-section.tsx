@@ -7,12 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, ChevronUp, Trash2, PlusCircle, Save, Edit, Loader2, UserPlus } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2, PlusCircle, Edit, Loader2, UserPlus } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { z } from 'zod'
 import { SectionProps } from '../poa-dashboard-main';
 import { useCurrentUser } from '@/hooks/use-current-user'
-
 
 interface TeamMember {
   name: string
@@ -39,11 +38,11 @@ interface Role {
 }
 
 const createUserSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email address'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  firstName: z.string().min(1, 'El nombre es obligatorio'),
+  lastName: z.string().min(1, 'El apellido es obligatorio'),
+  email: z.string().email('Dirección de correo electrónico no válida'),
+  username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   roleId: z.number().int().positive(),
   facultyId: z.number().int().positive(),
 })
@@ -65,8 +64,8 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
     email: '',
     username: '',
     password: '',
-    roleId: 0,
-    facultyId: facultyId, // Assuming a default facultyId
+    roleId: 4, // Establecer roleId a 4
+    facultyId: facultyId, // Asumiendo un facultyId por defecto
   })
   const { toast } = useToast()
 
@@ -79,7 +78,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
 
   const fetchAllUsers = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/proponent/${facultyId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`,
@@ -216,16 +215,17 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
     setSelectedUserId(value)
   }
 
-  const handleNewUserChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleNewUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewUser({
       ...newUser,
-      [e.target.name]: e.target.name === 'roleId' ? parseInt(e.target.value) : e.target.value,
+      [e.target.name]: e.target.value,
     })
   }
 
   const handleCreateNewUser = async () => {
     setIsLoading(true)
     try {
+      newUser.roleId = 4; // Asegurarse de que roleId siempre sea 4
       const validatedData = createUserSchema.parse(newUser)
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/`, {
         method: 'POST',
@@ -235,11 +235,23 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
         },
       })
       if (!response.ok) throw new Error('Failed to create new user')
-      await fetchAllUsers() // Refresh the users list
+      const createdUser = await response.json()
+      // Añadir el usuario al equipo
+      const addMemberResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poateams`, {
+        method: 'POST',
+        body: JSON.stringify({ poaId, userId: createdUser.userId }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      })
+      if (!addMemberResponse.ok) throw new Error('Failed to add new user to team')
+      await fetchAllUsers() // Actualizar la lista de usuarios
+      await fetchTeamMembers() // Actualizar la lista de miembros del equipo
       setIsNewUserDialogOpen(false)
       toast({
         title: "Éxito",
-        description: "Usuario creado correctamente.",
+        description: "Usuario creado y agregado al equipo correctamente.",
         variant: "success",
       })
     } catch (error) {
@@ -310,29 +322,34 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
                         <TableHead className="text-black">Nombre</TableHead>
                         <TableHead className="text-black">Correo electrónico</TableHead>
                         <TableHead className="text-black">Nombre de usuario</TableHead>
+                        <TableHead className="text-black">Rol</TableHead> {/* Columna de Rol */}
                         {isEditing && <TableHead className="text-black">Acciones</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {teamMembers.map((member) => (
-                        <TableRow key={member.username}>
-                          <TableCell>{member.name}</TableCell>
-                          <TableCell>{member.email}</TableCell>
-                          <TableCell>{member.username}</TableCell>
-                          {isEditing && (
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleRemoveMember(member.userId)}
-                                className="text-primary hover:text-primary hover:bg-green-100"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
+                      {teamMembers.map((member) => {
+                        const role = roles.find(r => r.roleId === member.roleId)?.roleName || 'Desconocido'
+                        return (
+                          <TableRow key={member.username}>
+                            <TableCell>{member.name}</TableCell>
+                            <TableCell>{member.email}</TableCell>
+                            <TableCell>{member.username}</TableCell>
+                            <TableCell>{role}</TableCell> {/* Mostrar el nombre del rol */}
+                            {isEditing && (
+                              <TableCell>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleRemoveMember(member.userId)}
+                                  className="text-primary hover:text-primary hover:bg-green-100"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -342,6 +359,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
         )}
       </div>
 
+      {/* Dialogo para agregar miembro existente */}
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="bg-green-50 sm:max-w-[425px]">
           <DialogHeader>
@@ -372,6 +390,7 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
         </DialogContent>
       </Dialog>
 
+      {/* Dialogo para crear nuevo usuario */}
       <Dialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen}>
         <DialogContent className="bg-green-50 sm:max-w-[425px]">
           <DialogHeader>
@@ -441,21 +460,14 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="roleId" className="text-right text-black">
+              <Label htmlFor="role" className="text-right text-black">
                 Rol
               </Label>
-              <Select name="roleId" onValueChange={(value) => handleNewUserChange({ target: { name: 'roleId', value } } as React.ChangeEvent<HTMLSelectElement>)}>
-                <SelectTrigger className="w-[180px] border-black focus:border-primary">
-                  <SelectValue placeholder="Selecciona un rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.roleId} value={role.roleId.toString()}>
-                      {role.roleName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                value="Formulador"
+                readOnly
+                className="col-span-3 bg-gray-100 cursor-not-allowed"
+              />
             </div>
           </div>
           <Button onClick={handleCreateNewUser} className="bg-primary text-white hover:bg-green-700" disabled={isLoading}>

@@ -1,13 +1,21 @@
-// events-corrections-component.tsx
+// src/components/poa/sections/events-viewer/EventsCorrectionsComponent.tsx
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { PlanningEvent, SectionProps, ApiEvent } from '@/types/interfaces';
+import { ChevronUp } from 'lucide-react';
+import { PlanningEvent, SectionProps as OriginalSectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { deleteEvent } from '@/services/apiService';
 
-import { useCurrentUser } from "@/hooks/use-current-user"
+// Importar el componente de acciones de corrección
+import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections';
+
+// Modificar SectionProps para incluir onEditEvent
+interface SectionProps extends OriginalSectionProps {
+  onEditEvent: (event: PlanningEvent) => void;
+}
 
 // Función para mapear datos de la API a PlanningEvent
 function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
@@ -20,7 +28,6 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 
     const estado = estadoMap[apiEvent.eventApprovals[0]?.approvalStatus?.name || 'Pendiente'] || 'revision';
-    
 
     return {
         id: String(apiEvent.eventId),
@@ -83,7 +90,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 }
 
-const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId }) => {
+const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId, onEditEvent }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [eventsByStatus, setEventsByStatus] = useState<{
         revision: PlanningEvent[];
@@ -99,17 +106,18 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
 
     const user = useCurrentUser();
 
-
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`,
-                  },
-
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${user?.token}`,
+                    },
                 });
+                if (!response.ok) {
+                    throw new Error(`Error al obtener eventos: ${response.statusText}`);
+                }
                 const data: ApiEvent[] = await response.json();
                 const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
 
@@ -129,59 +137,100 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
         };
 
         fetchData();
-    }, [poaId]);
+    }, [poaId, user?.token]);
+
+    // Definir handlers para editar y eliminar
+    const handleEdit = (id: string) => {
+        // Buscar el evento en los eventos cargados
+        const event =
+            eventsByStatus.revision.find(event => event.id === id) ||
+            eventsByStatus.aprobado.find(event => event.id === id) ||
+            eventsByStatus.rechazado.find(event => event.id === id) ||
+            eventsByStatus.correccion.find(event => event.id === id);
+
+        if (event) {
+            console.log(`Editing event:`, event);
+            onEditEvent(event);
+        } else {
+            console.error(`Event with id ${id} not found.`);
+            toast.error('Evento no encontrado.');
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
+            try {
+                await deleteEvent(Number(id), user?.token || '');
+                toast.success('Evento eliminado exitosamente');
+                // Actualizar el estado local para reflejar la eliminación
+                setEventsByStatus(prev => ({
+                    revision: prev.revision.filter(event => event.id !== id),
+                    aprobado: prev.aprobado.filter(event => event.id !== id),
+                    rechazado: prev.rechazado.filter(event => event.id !== id),
+                    correccion: prev.correccion.filter(event => event.id !== id)
+                }));
+            } catch (error) {
+                console.error('Error al eliminar el evento:', error);
+                toast.error('Error al eliminar el evento');
+            }
+        }
+    };
 
     // Componente reutilizable para cada sección de estado
-    const RenderEventSection = (title: string, events: PlanningEvent[]) => (
+    const RenderEventSection = (title: string, events: PlanningEvent[], showCorrectionsActions: boolean) => (
         <div className="mb-6">
             <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300">
                 <div className="p-4 bg-green-50 flex justify-between items-center">
                     <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
                     <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => { /* Puedes manejar la minimización por sección si lo deseas */ }}>
-                            <ChevronUp className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
+                            <ChevronUp className={`h-4 w-4 transform ${isMinimized ? 'rotate-180' : 'rotate-0'} transition-transform duration-300`} />
                         </Button>
                     </div>
                 </div>
-                {/* Aquí podrías manejar la minimización si lo implementas */}
-                <div className="p-4 bg-white">
-                    <div className="container mx-auto space-y-8">
-                        <div>
-                            {events.length > 0 ? (
-                                <>
+                {/* Manejar minimización */}
+                {!isMinimized && (
+                    <div className="p-4 bg-white">
+                        <div className="container mx-auto space-y-8">
+                            <div>
+                                {events.length > 0 ? (
                                     <EventTable
                                         events={events}
                                         isPending={false}
-                                        showActions={false} // Puedes ajustar esto según tus necesidades
+                                        showComments={true}
+                                        showActions={false}
+                                        showCorrectionsActions={showCorrectionsActions} // Activar o desactivar acciones de corrección
+                                        onEdit={showCorrectionsActions ? handleEdit : undefined} // Pasar handler de edición si aplica
+                                        onDelete={showCorrectionsActions ? handleDelete : undefined} // Pasar handler de eliminación si aplica
                                         onApprove={() => {}}
                                         onReject={() => {}}
                                         onRequestCorrection={() => {}}
                                         onRevert={() => {}}
                                     />
-                                </>
-                            ) : (
-                                <p>No hay eventos en este estado.</p>
-                            )}
+                                ) : (
+                                    <p>No hay eventos en este estado.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
 
     return (
         <div id={name} className={`mb-6 ${isActive ? 'ring-2 ring-green-400' : ''}`}>
-            {/* Sección para Revision */}
-            {RenderEventSection('Eventos en Revisión', eventsByStatus.revision)}
+            {/* Sección para Revisión */}
+            {RenderEventSection('Eventos en Revisión', eventsByStatus.revision, true)}
 
-            {/* Sección para Aprobado */}
-            {RenderEventSection('Eventos Aprobados', eventsByStatus.aprobado)}
+            {/* Sección para Aprobados */}
+            {RenderEventSection('Eventos Aprobados', eventsByStatus.aprobado, false)} {/* No permitir acciones de corrección */}
 
-            {/* Sección para Rechazado */}
-            {RenderEventSection('Eventos Rechazados', eventsByStatus.rechazado)}
+            {/* Sección para Rechazados */}
+            {RenderEventSection('Eventos Rechazados', eventsByStatus.rechazado, true)}
 
-            {/* Sección para Corrección */}
-            {RenderEventSection('Eventos con Solicitud de Correcciones', eventsByStatus.correccion)}
+            {/* Sección para Correcciones */}
+            {RenderEventSection('Eventos con Solicitud de Correcciones', eventsByStatus.correccion, true)}
         </div>
     );
 };

@@ -29,6 +29,10 @@ export default auth((req) => {
 		return NextResponse.next();
 	}
 
+	if (nextUrl.pathname === '/') {
+		return NextResponse.redirect(new URL('/inicio', nextUrl));
+	}
+
 	if (!isLoggedIn && !isPublicRoute) {
 		return NextResponse.redirect(new URL("/iniciar-sesion ", nextUrl));
 	}

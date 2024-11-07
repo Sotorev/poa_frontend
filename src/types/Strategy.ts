@@ -7,7 +7,8 @@ export interface Strategy {
     completionPercentage: number;
     assignedBudget: number;
     executedBudget: number;
-    isDeleted?: boolean;
+    isDeleted: boolean;
+    isCustom?: boolean;
   }
   
   export interface CreateStrategyInput {

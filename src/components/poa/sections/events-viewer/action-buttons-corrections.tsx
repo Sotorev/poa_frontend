@@ -1,3 +1,4 @@
+// src/components/poa/sections/events-viewer/action-buttons-corrections.tsx
 'use client'
 
 import React from 'react';

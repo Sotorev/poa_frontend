@@ -23,7 +23,7 @@ const ProponentDetailsDialog: React.FC<ProponentDetailsDialogProps> = ({ isOpen,
           <span className="sr-only">Close</span>
         </button>
         <DialogHeader className="bg-[#014A2D] text-white p-4 rounded-t-lg">
-          <DialogTitle>Detalles del Proponente</DialogTitle>
+          <DialogTitle>Detalles del Formulador</DialogTitle>
         </DialogHeader>
         <div className="mt-4 space-y-4">
           <div>

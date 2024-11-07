@@ -1,55 +1,75 @@
-// src/components/poa/components/tabla-planificacion.tsx
+// src/components/poa/components/TablaPlanificacionComponent.tsx
 
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { z } from 'zod';
 import { toast } from 'react-toastify';
-import { ObjetivosEstrategicosSelectorComponent } from './columns/objetivos-estrategicos-selector';
-import { EstrategiasSelectorComponent } from './columns/estrategias-selector';
-import { IntervencionesSelectorComponent } from './columns/intervenciones-selector';
-import { OdsSelector } from './columns/ods-selector';
-import { ActividadProyectoSelector } from './columns/actividad-proyecto-selector';
-import CurrencyInput from './columns/currency-input';
-import { UMESFinancingComponent } from './columns/umes-financing-source';
-import { OtherFinancingSourceComponent } from './columns/other-financing-source';
-import TipoDeCompraComponent from './columns/tipo-de-compra';
-import { RecursosSelectorComponent } from './columns/recursos-selector';
-import { DetalleComponent } from './columns/detalle';
-import { DetalleProcesoComponent } from './columns/detalle-proceso';
-import { AreaEstrategicaComponent } from './columns/area-estrategica';
-import { EventoComponent } from './columns/evento';
-import { ObjetivoComponent } from './columns/objetivo';
-import { EstadoComponent } from './columns/estado';
-import { ResponsablesComponent } from './columns/responsables';
-import { IndicadorLogroComponent } from './columns/indicador-logro';
-import { CommentThread } from './columns/comment-thread';
-import { AccionesComponent } from './columns/acciones';
+import { ObjetivosEstrategicosSelectorComponent } from './fields/objetivos-estrategicos-selector';
+import { EstrategiasSelectorComponent } from './fields/estrategias-selector';
+import { IntervencionesSelectorComponent } from './fields/intervenciones-selector';
+import { OdsSelector } from './fields/ods-selector';
+import { ActividadProyectoSelector } from './fields/actividad-proyecto-selector';
+import { UMESFinancingComponent } from './fields/umes-financing-source';
+import { OtherFinancingSourceComponent } from './fields/other-financing-source';
+import TipoDeCompraComponent from './fields/tipo-de-compra';
+import { RecursosSelectorComponent } from './fields/recursos-selector';
+import { DetalleComponent } from './fields/detalle';
+import { DetalleProcesoComponent } from './fields/detalle-proceso';
+import { AreaEstrategicaComponent } from './fields/area-estrategica';
+import { EventoComponent } from './fields/evento';
+import { ObjetivoComponent } from './fields/objetivo';
+import { EstadoComponent } from './fields/estado';
+import { ResponsablesComponent } from './fields/responsables';
+import { IndicadorLogroComponent } from './fields/indicador-logro';
+import { CommentThread } from './fields/comment-thread';
+import { AccionesComponent } from './fields/acciones';
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
 import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
 import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
 
-import { CampusSelector } from './columns/campus-selector';
+import { CampusSelector } from './fields/campus-selector';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent';
 
+// Importamos los tipos necesarios
+import { Strategy } from '@/types/Strategy';
+import { Intervention } from '@/types/Intervention';
+import { ODS } from '@/types/ods';
+import { Resource } from '@/types/Resource';
+import { Campus } from '@/types/Campus';
+import { PurchaseType } from '@/types/PurchaseType';
+import { PlanningEvent } from '@/types/interfaces';
+
+import { downloadFile } from '@/utils/downloadFile'; // Importar la función de utilidad
+
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
+
+interface DatePair {
+  start: Date;
+  end: Date;
+}
 
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   entityId: number | null;
   processDocument?: File;
+  costDetailDocument?: File;
+  fechas: DatePair[]; // Para actividades
+  fechaProyecto: DatePair; // Para proyectos
 }
 
 interface FilaError {
   [key: string]: string;
-}
-
-interface DatePair {
-  start: Date;
-  end: Date;
 }
 
 interface FinancingSource {
@@ -74,7 +94,7 @@ const getColumnName = (field: string): string => {
     aporteUMES: "Aporte UMES",
     aporteOtros: "Aporte Otros",
     tipoCompra: "Tipo de Compra",
-    detalle: "Detalle",
+    detalle: "Detalle de Costos",
     campusId: "Campus",
     responsablePlanificacion: "Responsable de Planificación",
     responsableEjecucion: "Responsable de Ejecución",
@@ -99,6 +119,13 @@ export function TablaPlanificacionComponent() {
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([]);
   const [objetivoToAreaMap, setObjetivoToAreaMap] = useState<{ [key: string]: string }>({});
   const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
+  const [estrategias, setEstrategias] = useState<Strategy[]>([]);
+  const [intervenciones, setIntervenciones] = useState<Intervention[]>([]);
+  const [odsList, setOdsList] = useState<ODS[]>([]);
+  const [recursos, setRecursos] = useState<Resource[]>([]);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [purchaseTypes, setPurchaseTypes] = useState<PurchaseType[]>([]);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filaErrors, setFilaErrors] = useState<{ [key: string]: FilaError }>({});
@@ -119,6 +146,32 @@ export function TablaPlanificacionComponent() {
   const [currentRowId, setCurrentRowId] = useState<string | null>(null);
   const [currentEntityName, setCurrentEntityName] = useState<string>("");
 
+  // Estados para gestionar la deshabilitación de selectores
+  const [isEstrategiasDisabled, setIsEstrategiasDisabled] = useState<boolean>(true);
+  const [isIntervencionesDisabled, setIsIntervencionesDisabled] = useState<boolean>(true);
+
+  // Función auxiliar para descargar y convertir archivos a objetos File
+  const descargarArchivo = async (url: string, nombreArchivo: string): Promise<File | null> => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`Error al descargar el archivo desde ${url}: ${response.statusText}`);
+        return null;
+      }
+      const blob = await response.blob();
+      // Inferir el tipo de archivo desde el blob
+      const tipo = blob.type || 'application/octet-stream';
+      return new File([blob], nombreArchivo, { type: tipo });
+    } catch (error) {
+      console.error(`Error al descargar el archivo desde ${url}:`, error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -127,33 +180,24 @@ export function TablaPlanificacionComponent() {
           throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
         }
 
-        const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responseAreas.ok) {
-          throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`);
-        }
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        };
+
+        // Fetch Strategic Areas
+        const responseAreas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicareas`, { headers });
+        if (!responseAreas.ok) throw new Error(`Error al obtener áreas estratégicas: ${responseAreas.statusText}`);
         const dataAreas = await responseAreas.json();
         const parsedAreas = strategicAreasSchema.parse(dataAreas);
         const activeAreas = parsedAreas.filter((area) => !area.isDeleted);
         setStrategicAreas(activeAreas);
 
-        const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responseObjectives.ok) {
-          throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`);
-        }
+        // Fetch Strategic Objectives
+        const responseObjectives = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategicobjectives`, { headers });
+        if (!responseObjectives.ok) throw new Error(`Error al obtener objetivos estratégicos: ${responseObjectives.statusText}`);
         const dataObjectives = await responseObjectives.json();
-        const parsedObjectives = dataObjectives.map((obj: any) => {
-          return StrategicObjectiveSchema.parse(obj);
-        }).filter((obj: StrategicObjective) => !obj.isDeleted);
+        const parsedObjectives = dataObjectives.map((obj: any) => StrategicObjectiveSchema.parse(obj)).filter((obj: StrategicObjective) => !obj.isDeleted);
         setStrategicObjectives(parsedObjectives);
 
         const map: { [key: string]: string } = {};
@@ -167,45 +211,64 @@ export function TablaPlanificacionComponent() {
         });
         setObjetivoToAreaMap(map);
 
-        // Fetch financing sources
-        const financingSourcesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-        });
-
-        if (!financingSourcesResponse.ok) {
-          throw new Error(`Error fetching financing sources: ${financingSourcesResponse.statusText}`);
-        }
-
+        // Fetch Financing Sources
+        const financingSourcesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/financingSource`, { headers });
+        if (!financingSourcesResponse.ok) throw new Error(`Error fetching financing sources: ${financingSourcesResponse.statusText}`);
         const financingSourcesData: FinancingSource[] = await financingSourcesResponse.json();
         setFinancingSources(financingSourcesData);
 
-        // Fetch events
-        const eventsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-        });
+        // Fetch Estrategias
+        const responseEstrategias = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/strategies`, { headers });
+        if (!responseEstrategias.ok) throw new Error(`Error al obtener estrategias: ${responseEstrategias.statusText}`);
+        const dataEstrategias = await responseEstrategias.json();
+        setEstrategias(dataEstrategias);
 
-        if (!eventsResponse.ok) {
-          throw new Error(`Error fetching events: ${eventsResponse.statusText}`);
-        }
+        // Fetch Intervenciones
+        const responseIntervenciones = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interventions`, { headers });
+        if (!responseIntervenciones.ok) throw new Error(`Error al obtener intervenciones: ${responseIntervenciones.statusText}`);
+        const dataIntervenciones = await responseIntervenciones.json();
+        setIntervenciones(dataIntervenciones);
 
-        const eventsData = await eventsResponse.json();
+        // Fetch ODS
+        const responseODS = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ods`, { headers });
+        if (!responseODS.ok) throw new Error(`Error al obtener ODS: ${responseODS.statusText}`);
+        const dataODS = await responseODS.json();
+        setOdsList(dataODS);
 
-        // Map the data to 'filas' format
-        const mappedFilas = eventsData.map((event: any) => {
-          return mapEventToFilaPlanificacion(event, financingSourcesData);
-        });
+        // Fetch Recursos
+        const responseRecursos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/institutionalResources`, { headers });
+        if (!responseRecursos.ok) throw new Error(`Error al obtener recursos: ${responseRecursos.statusText}`);
+        const dataRecursos = await responseRecursos.json();
+        setRecursos(dataRecursos);
 
-        setFilas(mappedFilas);
+        // Fetch Campuses
+        const responseCampuses = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/campus/`, { headers });
+        if (!responseCampuses.ok) throw new Error(`Error al obtener campuses: ${responseCampuses.statusText}`);
+        const dataCampuses = await responseCampuses.json();
+        setCampuses(dataCampuses);
+
+        // Fetch Purchase Types
+        const responsePurchaseTypes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchasetypes`, { headers });
+        if (!responsePurchaseTypes.ok) throw new Error(`Error al obtener tipos de compra: ${responsePurchaseTypes.statusText}`);
+        const dataPurchaseTypes = await responsePurchaseTypes.json();
+        setPurchaseTypes(dataPurchaseTypes);
+
+        // Opcional: Si al inicio tienes filas con entityId, cargar las URLs de descarga
+        setFilas(prevFilas =>
+          prevFilas.map(fila => {
+            if (fila.entityId) {
+              return {
+                ...fila,
+                // Las URLs de descarga se manejan directamente en el renderizado
+              };
+            }
+            return fila;
+          })
+        );
 
       } catch (err) {
         if (err instanceof z.ZodError) {
-          setError("Error en la validación de datos de áreas estratégicas u objetivos estratégicos.");
+          setError("Error en la validación de datos.");
           console.error(err.errors);
         } else {
           setError((err as Error).message);
@@ -230,31 +293,24 @@ export function TablaPlanificacionComponent() {
           throw new Error("NEXT_PUBLIC_API_URL no está definido en las variables de entorno.");
         }
 
-        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responseUser.ok) {
-          throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
-        }
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        };
+
+        // Fetch User Data
+        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, { headers });
+        if (!responseUser.ok) throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
         const dataUser = await responseUser.json();
         const fetchedFacultyId = dataUser.facultyId;
         setFacultyId(fetchedFacultyId);
 
         const currentYear = new Date().getFullYear();
 
+        // Fetch POA
         setLoadingPoa(true);
-        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`
-          },
-        });
-        if (!responsePoa.ok) {
-          throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
-        }
+        const responsePoa = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${fetchedFacultyId}/${currentYear}`, { headers });
+        if (!responsePoa.ok) throw new Error(`Error al obtener poaId: ${responsePoa.statusText}`);
         const dataPoa = await responsePoa.json();
         const fetchedPoaId = dataPoa.poaId;
         setPoaId(fetchedPoaId);
@@ -293,6 +349,7 @@ export function TablaPlanificacionComponent() {
       indicadorLogro: '',
       detalleProceso: null,
       fechas: [{ start: new Date(), end: new Date() }],
+      fechaProyecto: { start: new Date(), end: new Date() },
       campusId: '',
       entityId: null,
     };
@@ -300,14 +357,7 @@ export function TablaPlanificacionComponent() {
     toast.info("Nueva fila agregada.");
   };
 
-  const eliminarFila = (id: string) => {
-    setFilas(filas.filter(fila => fila.id !== id));
-    const updatedErrors = { ...filaErrors };
-    delete updatedErrors[id];
-    setFilaErrors(updatedErrors);
-    toast.success("Fila eliminada exitosamente.");
-  };
-
+  // Función para actualizar los campos de la fila
   const actualizarFila = (id: string, campo: keyof FilaPlanificacion, valor: any | null) => {
     setFilas(prevFilas =>
       prevFilas.map(fila => {
@@ -317,6 +367,64 @@ export function TablaPlanificacionComponent() {
           if (campo === 'objetivoEstrategico') {
             const nuevaArea = objetivoToAreaMap[valor] || '';
             updatedFila.areaEstrategica = nuevaArea;
+
+            // Gestionar deshabilitación del selector de estrategias
+            setIsEstrategiasDisabled(!valor); // Deshabilitar si no hay objetivo estratégico seleccionado
+
+            // Resetear estrategias e intervenciones si el objetivo estratégico cambia
+            if (!valor) {
+              updatedFila.estrategias = [];
+              updatedFila.intervencion = [];
+              setIsIntervencionesDisabled(true);
+            } else {
+              // Si se selecciona un objetivo estratégico, verificar si hay estrategias seleccionadas
+              setIsIntervencionesDisabled(updatedFila.estrategias.length === 0);
+            }
+          }
+
+          if (campo === 'estrategias') {
+            // Gestionar deshabilitación del selector de intervenciones
+            setIsIntervencionesDisabled((valor as string[]).length === 0);
+          }
+
+          if (campo === 'tipoEvento') {
+            if (valor === 'actividad') {
+              updatedFila.fechaProyecto = { start: new Date(), end: new Date() };
+            } else {
+              updatedFila.fechas = [{ start: new Date(), end: new Date() }];
+            }
+          }
+
+          // Cálculo automático de costo total y porcentajes
+          if (campo === 'aporteUMES' || campo === 'aporteOtros') {
+            const totalAporte = [...updatedFila.aporteUMES, ...updatedFila.aporteOtros].reduce((acc, aporte) => acc + aporte.amount, 0);
+            updatedFila.costoTotal = totalAporte;
+
+            // Evitar división por cero
+            if (totalAporte > 0) {
+              const updatedAporteUMES = updatedFila.aporteUMES.map(aporte => ({
+                ...aporte,
+                percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
+              }));
+              const updatedAporteOtros = updatedFila.aporteOtros.map(aporte => ({
+                ...aporte,
+                percentage: parseFloat(((aporte.amount / totalAporte) * 100).toFixed(2)),
+              }));
+              updatedFila.aporteUMES = updatedAporteUMES;
+              updatedFila.aporteOtros = updatedAporteOtros;
+            } else {
+              // Resetear porcentajes si el total es cero
+              const updatedAporteUMES = updatedFila.aporteUMES.map(aporte => ({
+                ...aporte,
+                percentage: 0,
+              }));
+              const updatedAporteOtros = updatedFila.aporteOtros.map(aporte => ({
+                ...aporte,
+                percentage: 0,
+              }));
+              updatedFila.aporteUMES = updatedAporteUMES;
+              updatedFila.aporteOtros = updatedAporteOtros;
+            }
           }
 
           return updatedFila;
@@ -337,6 +445,39 @@ export function TablaPlanificacionComponent() {
     );
   };
 
+  const actualizarIntervencion = (id: string, intervenciones: string[]) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, intervencion: intervenciones };
+        }
+        return fila;
+      })
+    );
+  };
+
+  const actualizarFechas = (id: string, fechas: DatePair[]) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, fechas };
+        }
+        return fila;
+      })
+    );
+  };
+
+  const actualizarFechaProyecto = (id: string, fechaProyecto: DatePair) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, fechaProyecto };
+        }
+        return fila;
+      })
+    );
+  };
+
   const addStrategicObjective = (createdObjetivo: StrategicObjective) => {
     setStrategicObjectives(prev => [...prev, createdObjetivo]);
     const area = strategicAreas.find(area => area.strategicAreaId === createdObjetivo.strategicAreaId);
@@ -349,10 +490,6 @@ export function TablaPlanificacionComponent() {
       console.warn(`No se encontró Área Estratégica para el nuevo Objetivo Estratégico ID: ${createdObjetivo.strategicObjectiveId}`);
     }
     toast.success("Nuevo objetivo estratégico agregado.");
-  };
-
-  const manejarCambioFechas = (id: string, data: { tipoEvento: "actividad" | "proyecto"; fechas: DatePair[] }) => {
-    // Implementar si es necesario
   };
 
   const enviarActividad = async (id: string) => {
@@ -417,7 +554,14 @@ export function TablaPlanificacionComponent() {
       if (!process.env.NEXT_PUBLIC_API_URL) {
         throw new Error("La URL de la API no está definida.");
       }
-
+  
+      // Determinar si es una creación (POST) o una actualización (PUT)
+      const url = fila.entityId
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/${fila.entityId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`;
+  
+      const method = fila.entityId ? 'PUT' : 'POST';
+  
       const eventData = {
         name: fila.evento.trim(),
         type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
@@ -431,10 +575,18 @@ export function TablaPlanificacionComponent() {
         achievementIndicator: fila.indicadorLogro.trim(),
         purchaseTypeId: parseInt(fila.tipoCompra, 10),
         totalCost: fila.costoTotal,
-        dates: fila.fechas.map(pair => ({
-          startDate: pair.start.toISOString().split('T')[0],
-          endDate: pair.end.toISOString().split('T')[0],
-        })),
+        dates:
+          fila.tipoEvento === 'actividad'
+            ? fila.fechas.map((pair) => ({
+                startDate: pair.start.toISOString().split('T')[0],
+                endDate: pair.end.toISOString().split('T')[0],
+              }))
+            : [
+                {
+                  startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+                  endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+                },
+              ],
         financings: [
           ...fila.aporteUMES.map(aporte => ({
             financingSourceId: aporte.financingSourceId,
@@ -468,49 +620,56 @@ export function TablaPlanificacionComponent() {
         })),
         userId: userId,
       };
-
+  
       console.log('Enviando datos:', eventData);
-
+  
       const formData = new FormData();
       formData.append('data', JSON.stringify(eventData));
-
+  
       if (fila.detalle) {
         formData.append('costDetailDocuments', fila.detalle);
       }
-
+  
       if (fila.processDocument) {
         formData.append('processDocument', fila.processDocument);
       }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`, {
-        method: 'POST',
+  
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Authorization': `Bearer ${user?.token}`
         },
         body: formData,
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`Error al enviar la actividad: ${errorData.message || response.statusText}`);
       }
-
+  
       const result = await response.json();
-
+  
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
-          filaItem.id === fila.id ? { ...filaItem, entityId: result.eventId, estado: 'aprobado' } : filaItem
+          filaItem.id === fila.id
+            ? {
+                ...filaItem,
+                entityId: result.eventId || fila.entityId,
+                estado: 'aprobado',
+              }
+            : filaItem
         )
       );
-
-      toast.success("Actividad enviada exitosamente.");
-
+  
+      toast.success(fila.entityId ? "Actividad actualizada exitosamente." : "Actividad enviada exitosamente.");
+  
       setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
       console.error(err);
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
+  
 
   const confirmarEnvioSinDetalle = async () => {
     if (!pendingSendId) return;
@@ -542,6 +701,139 @@ export function TablaPlanificacionComponent() {
     }
   };
 
+  // Nueva implementación de handleDownload utilizando la función de utilidad
+  const handleDownload = (entityId: number, type: 'process' | 'costDetail') => {
+    const path = type === 'process' ? 'downloadProcessDocument' : 'downloadCostDetailDocument';
+    downloadFile(entityId, path);
+  };
+
+  // Agregar la función handleEditEvent
+  const handleEditEvent = async (event: PlanningEvent) => {
+    try {
+      // Mapeo de datos existente
+      const areaEstrategicaObj = strategicAreas.find(area => area.name === event.areaEstrategica);
+      const areaEstrategicaId = areaEstrategicaObj ? areaEstrategicaObj.name : '';
+
+      const objetivoEstrategicoObj = strategicObjectives.find(obj => obj.description === event.objetivoEstrategico);
+      const objetivoEstrategicoId = objetivoEstrategicoObj ? objetivoEstrategicoObj.strategicObjectiveId.toString() : '';
+
+      const estrategiasIds = estrategias
+        .filter(strategy => event.estrategias.includes(strategy.description))
+        .map(strategy => strategy.strategyId.toString());
+
+      const intervencionIds = intervenciones
+        .filter(intervention => event.intervencion.includes(intervention.name))
+        .map(intervention => intervention.interventionId.toString());
+
+      const odsIds = odsList
+        .filter(ods => event.ods.includes(ods.name))
+        .map(ods => ods.odsId.toString());
+
+      const recursosIds = recursos
+        .filter(resource => event.recursos.includes(resource.name))
+        .map(resource => resource.resourceId.toString());
+
+      const campusObj = campuses.find(campus => campus.name === event.campus);
+      const campusId = campusObj ? campusObj.campusId.toString() : '';
+
+      const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
+      const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
+
+      const aporteUMES = event.aporteUMES ? [{
+        financingSourceId: 1, // Asumiendo que el ID 1 es UMES
+        percentage: (event.aporteUMES / event.costoTotal) * 100,
+        amount: event.aporteUMES,
+      }] : [];
+
+      const aporteOtros = event.aporteOtros ? [{
+        financingSourceId: 2, // Ajusta este ID según corresponda
+        percentage: (event.aporteOtros / event.costoTotal) * 100,
+        amount: event.aporteOtros,
+      }] : [];
+
+      const fechas = event.fechas.map(interval => ({
+        start: new Date(interval.inicio),
+        end: new Date(interval.fin),
+      }));
+
+      const nuevaFila: FilaPlanificacion = {
+        id: Date.now().toString(),
+        areaEstrategica: areaEstrategicaId,
+        objetivoEstrategico: objetivoEstrategicoId,
+        estrategias: estrategiasIds,
+        intervencion: intervencionIds,
+        ods: odsIds,
+        tipoEvento: event.tipoEvento,
+        evento: event.evento,
+        objetivo: event.objetivo,
+        estado: 'planificado',
+        costoTotal: event.costoTotal,
+        aporteUMES: aporteUMES,
+        aporteOtros: aporteOtros,
+        tipoCompra: tipoCompraId,
+        detalle: null, // Inicialmente nulo; se actualizará más adelante
+        responsablePlanificacion: event.responsables.principal,
+        responsableEjecucion: event.responsables.ejecucion,
+        responsableSeguimiento: event.responsables.seguimiento,
+        recursos: recursosIds,
+        indicadorLogro: event.indicadorLogro,
+        detalleProceso: null, // Inicialmente nulo; se actualizará más adelante
+        fechas: fechas,
+        fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
+        campusId: campusId,
+        entityId: Number(event.id),
+      };
+
+      // Agregar la nueva fila al estado
+      setFilas([nuevaFila]); // Puedes ajustar esto si deseas agregar la fila en lugar de reemplazar
+      toast.info("Evento cargado para edición.");
+
+      // **Actualizar los estados de deshabilitación**
+      setIsEstrategiasDisabled(!nuevaFila.objetivoEstrategico);
+      setIsIntervencionesDisabled(nuevaFila.estrategias.length === 0);
+
+      // URLs para descargar los archivos
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!baseUrl) {
+        console.error("URL de la API no definida.");
+        return;
+      }
+
+      const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;
+      const urlDetalle = `${baseUrl}/api/fullevent/downloadCostDetailDocument/${event.id}`;
+
+      // Descargar los archivos
+      const [archivoDetalleProceso, archivoDetalle] = await Promise.all([
+        descargarArchivo(urlDetalleProceso, `detalle-proceso-${event.id}`),
+        descargarArchivo(urlDetalle, `detalle-${event.id}`)
+      ]);
+
+      // Actualizar la fila con los archivos descargados
+      setFilas(prevFilas =>
+        prevFilas.map(fila => {
+          if (fila.id === nuevaFila.id) {
+            return {
+              ...fila,
+              detalleProceso: archivoDetalleProceso || null,
+              detalle: archivoDetalle || null,
+            };
+          }
+          return fila;
+        })
+      );
+
+      if (archivoDetalleProceso || archivoDetalle) {
+        toast.success("Archivos cargados correctamente.");
+      } else {
+        toast.warn("No se pudieron cargar algunos archivos.");
+      }
+
+    } catch (error) {
+      console.error("Error en handleEditEvent:", error);
+      toast.error("Ocurrió un error al editar el evento.");
+    }
+  };
+
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
   if (errorPoa) return <div className="text-red-500">Error al obtener poaId: {errorPoa}</div>;
@@ -558,6 +850,7 @@ export function TablaPlanificacionComponent() {
           />
         </div>
       )}
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -620,7 +913,9 @@ export function TablaPlanificacionComponent() {
                   <EstrategiasSelectorComponent
                     selectedEstrategias={fila.estrategias}
                     onSelectEstrategia={(estrategias) => actualizarFila(fila.id, 'estrategias', estrategias)}
-                    strategicObjectiveId={strategicObjectiveId}
+                    strategicObjectiveIds={fila.objetivoEstrategico ? [Number(fila.objetivoEstrategico)] : []}
+                    disabled={isEstrategiasDisabled}
+                    tooltipMessage="Por favor, seleccione primero un objetivo estratégico."
                   />
                   {filaErrors[fila.id]?.estrategias && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].estrategias}</span>
@@ -629,7 +924,10 @@ export function TablaPlanificacionComponent() {
                 <TableCell>
                   <IntervencionesSelectorComponent
                     selectedIntervenciones={fila.intervencion}
-                    onSelectIntervencion={(intervenciones) => actualizarFila(fila.id, 'intervencion', intervenciones)}
+                    onSelectIntervencion={(intervenciones) => actualizarIntervencion(fila.id, intervenciones)}
+                    disabled={isIntervencionesDisabled}
+                    tooltipMessage="Por favor, seleccione primero al menos una estrategia."
+                    strategyIds={fila.estrategias}
                   />
                   {filaErrors[fila.id]?.intervencion && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].intervencion}</span>
@@ -648,7 +946,10 @@ export function TablaPlanificacionComponent() {
                   <ActividadProyectoSelector
                     selectedOption={fila.tipoEvento}
                     onSelectOption={(tipo) => actualizarFila(fila.id, 'tipoEvento', tipo)}
-                    onChange={(data) => manejarCambioFechas(fila.id, data)}
+                    fechas={fila.fechas}
+                    onChangeFechas={(fechas) => actualizarFechas(fila.id, fechas)}
+                    fechaProyecto={fila.fechaProyecto}
+                    onChangeFechaProyecto={(fecha) => actualizarFechaProyecto(fila.id, fecha)}
                   />
                   {filaErrors[fila.id]?.tipoEvento && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].tipoEvento}</span>
@@ -679,10 +980,10 @@ export function TablaPlanificacionComponent() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <CurrencyInput
-                    value={fila.costoTotal}
-                    onChange={(valor: number | undefined) => actualizarFila(fila.id, 'costoTotal', valor ?? 0)}
-                  />
+                  {/* Mostrar Costo Total calculado automáticamente */}
+                  <div>
+                    <span>GTQ {fila.costoTotal.toFixed(2)}</span>
+                  </div>
                   {filaErrors[fila.id]?.costoTotal && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].costoTotal}</span>
                   )}
@@ -699,7 +1000,7 @@ export function TablaPlanificacionComponent() {
                 </TableCell>
                 <TableCell>
                   <OtherFinancingSourceComponent
-                    contributions={fila.aporteUMES}
+                    contributions={fila.aporteOtros}
                     onChangeContributions={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
                     totalCost={fila.costoTotal}
                   />
@@ -721,8 +1022,22 @@ export function TablaPlanificacionComponent() {
                     file={fila.detalle}
                     onFileChange={(file) => actualizarFila(fila.id, 'detalle', file)}
                   />
+                  {/* Enlace para descargar el detalle de costos si existe entityId */}
+                  {fila.entityId && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span
+                        className="cursor-pointer text-blue-600 hover:underline"
+                        onClick={() => handleDownload(fila.entityId!, 'costDetail')}
+                      >
+                        Descargar Detalle de Costos
+                      </span>
+                    </div>
+                  )}
                   {!fila.detalle && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
+                  )}
+                  {filaErrors[fila.id]?.detalle && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].detalle}</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -789,16 +1104,29 @@ export function TablaPlanificacionComponent() {
                 </TableCell>
                 <TableCell>
                   <DetalleProcesoComponent
-                    file={fila.processDocument || null}
+                    file={fila.detalleProceso || null}
                     onFileChange={(file) => actualizarProcessDocument(fila.id, file)}
                   />
+                  {/* Enlace para descargar el detalle del proceso si existe entityId */}
+                  {fila.entityId && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span
+                        className="cursor-pointer text-blue-600 hover:underline"
+                        onClick={() => handleDownload(fila.entityId!, 'process')}
+                      >
+                        Descargar Detalle del Proceso
+                      </span>
+                    </div>
+                  )}
                   {!fila.processDocument && (
                     <span className="text-yellow-500 text-sm">Detalle del Proceso no agregado.</span>
+                  )}
+                  {filaErrors[fila.id]?.detalleProceso && (
+                    <span className="text-red-500 text-sm">{filaErrors[fila.id].detalleProceso}</span>
                   )}
                 </TableCell>
                 <TableCell>
                   <AccionesComponent
-                    onEliminar={() => eliminarFila(fila.id)}
                     onEnviar={() => enviarActividad(fila.id)}
                   />
                 </TableCell>
@@ -852,118 +1180,11 @@ export function TablaPlanificacionComponent() {
           facultyId={facultyId}
           isEditable={false}
           userId={userId}
+          onEditEvent={handleEditEvent} // Pasamos la función aquí
         />
       ) : (
         <div>Cargando datos de la tabla de eventos...</div>
       )}
     </div>
   );
-}
-
-function mapEventToFilaPlanificacion(event: any, financingSourcesData: FinancingSource[]): FilaPlanificacion {
-  const fila: FilaPlanificacion = {
-    id: event.eventId.toString(),
-    areaEstrategica: '',
-    objetivoEstrategico: '',
-    estrategias: [],
-    intervencion: [],
-    ods: [],
-    tipoEvento: event.type.toLowerCase() === 'actividad' ? 'actividad' : 'proyecto',
-    evento: event.name,
-    objetivo: event.objective,
-    estado: 'planificado',
-    costoTotal: event.totalCost,
-    aporteUMES: [],
-    aporteOtros: [],
-    tipoCompra: event.purchaseTypeId ? event.purchaseTypeId.toString() : '',
-    detalle: null,
-    responsablePlanificacion: '',
-    responsableEjecucion: '',
-    responsableSeguimiento: '',
-    recursos: [],
-    indicadorLogro: event.achievementIndicator,
-    detalleProceso: null,
-    fechas: event.dates.map((dateItem: any) => ({
-      start: new Date(dateItem.startDate),
-      end: new Date(dateItem.endDate),
-    })),
-    campusId: event.campusId.toString(),
-    entityId: event.eventId,
-  };
-
-  if (event.interventions && event.interventions.length > 0) {
-    const intervention = event.interventions[0];
-    const strategicObjectiveId = intervention.strategy.strategicObjectiveId.toString();
-    fila.objetivoEstrategico = strategicObjectiveId;
-
-    const strategicAreaName = intervention.strategy.strategicObjective.strategicArea.name;
-    fila.areaEstrategica = strategicAreaName;
-  }
-
-  if (event.interventions) {
-    const estrategiaIds = event.interventions.map((intervention: any) => intervention.strategy.strategyId.toString());
-    fila.estrategias = estrategiaIds;
-  }
-
-  if (event.interventions) {
-    const intervencionIds = event.interventions.map((intervention: any) => intervention.interventionId.toString());
-    fila.intervencion = intervencionIds;
-  }
-
-  if (event.ods) {
-    const odsIds = event.ods.map((odsItem: any) => odsItem.odsId.toString());
-    fila.ods = odsIds;
-  }
-
-  if (event.financings) {
-    const aporteUMES: any[] = [];
-    const aporteOtros: any[] = [];
-
-    event.financings.forEach((financing: any) => {
-      const financingSourceId = financing.financingSourceId;
-      const financingSource = financingSourcesData.find(fs => fs.financingSourceId === financingSourceId);
-      if (financingSource) {
-        const aporte = {
-          financingSourceId: financing.financingSourceId,
-          porcentaje: financing.percentage,
-          amount: financing.amount,
-        };
-
-        if (financingSource.category === 'UMES') {
-          aporteUMES.push(aporte);
-        } else if (financingSource.category === 'Otra') {
-          aporteOtros.push(aporte);
-        }
-      }
-    });
-
-    fila.aporteUMES = aporteUMES;
-    fila.aporteOtros = aporteOtros;
-  }
-
-  if (event.resources) {
-    const recursosIds = event.resources.map((resource: any) => resource.resourceId.toString());
-    fila.recursos = recursosIds;
-  }
-
-  if (event.responsibles) {
-    fila.responsablePlanificacion = event.responsibles.find((r: any) => r.responsibleRole === 'Principal')?.name || '';
-    fila.responsableEjecucion = event.responsibles.find((r: any) => r.responsibleRole === 'Ejecución')?.name || '';
-    fila.responsableSeguimiento = event.responsibles.find((r: any) => r.responsibleRole === 'Seguimiento')?.name || '';
-  }
-
-  if (event.eventApprovals && event.eventApprovals.length > 0) {
-    const approvalStatusName = event.eventApprovals[0].approvalStatus.name;
-    if (approvalStatusName === 'Aprobado') {
-      fila.estado = 'aprobado';
-    } else if (approvalStatusName === 'Rechazado') {
-      fila.estado = 'rechazado';
-    } else if (approvalStatusName === 'Aprobado con Correcciones') {
-      fila.estado = 'aprobado'; // Adjust as needed
-    } else {
-      fila.estado = 'planificado';
-    }
-  }
-
-  return fila;
 }

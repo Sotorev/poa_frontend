@@ -25,9 +25,10 @@ import { useCurrentUser } from "@/hooks/use-current-user"
 import { usePermissions } from "@/hooks/use-permissions"
 import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
+import { Role } from "@/types/Permission"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
-type Role = 'Vicerrector' | 'Decano' | 'Coordinador Pedagógico' | 'Usuario General' | 'Administrador' | 'Proponente'
+
 
 type NavItem = {
 	title: string
@@ -52,7 +53,8 @@ const navItems: NavItem[] = [
 		href: "/facultades/gestion",
 		icon: BookOpen,
 		description: "Gestión de facultades",
-		requiredPermission: { module: "Faculty", action: "View" }
+		requiredPermission: { module: "Auth", action: "Edit" },
+		requiredRoles: ['Vicerrector', 'Administrador']
 	},
 	{
 		title: "Autorización",
@@ -60,6 +62,7 @@ const navItems: NavItem[] = [
 		icon: User,
 		description: "Gestión de usuarios",
 		requiredPermission: { module: "Auth", action: "Edit" },
+		requiredRoles: ['Administrador'],
 		subItems: [
 			{ title: "Usuarios", href: "/autorizacion/usuarios", description: "Gestión de usuarios", requiredPermission: { module: "Auth", action: "View" }, icon: User },
 			{ title: "Roles", href: "/autorizacion/roles", description: "Gestión de roles", requiredPermission: { module: "Auth", action: "View" }, icon: Settings },
@@ -72,9 +75,9 @@ const navItems: NavItem[] = [
 		description: "Plan Operativo Anual",
 		// requiredRoles: ['Vicerrector', 'Decano', 'Administrador'],
 		subItems: [
-			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: Settings },
-			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Proponente", "Administrador"], icon: FileText },
-			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador"], icon: CheckSquare },
+			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: Settings },
+			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Formulador", "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: FileText },
+			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Rector"], icon: CheckSquare },
 		],
 	},
 	{
@@ -82,10 +85,10 @@ const navItems: NavItem[] = [
 		href: "/pei",
 		icon: BarChart2,
 		description: "Plan Estratégico Institucional",
-		requiredRoles: ['Vicerrector', "Decano", "Administrador"],
+		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo"],
 		subItems: [
-			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector', "Administrador"], icon: FileText },
-			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ['Vicerrector', "Administrador"], icon: Settings },
+			{ title: "Crear", href: "/pei/crear", description: "Crear nuevo PEI", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Rector"], icon: FileText },
+			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ["Administrador"], icon: Settings },
 		],
 	},
 ]

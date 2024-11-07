@@ -12,6 +12,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Input } from '@/components/ui/input';
 
 interface Permission {
 	permissionId: number
@@ -34,11 +35,14 @@ interface RoleListProps {
 	onDeleteRole: (roleId: number) => void
 	canEdit: boolean
 	canDelete: boolean
+	onUpdateRoleName: (roleId: number, roleName: string) => void
 }
 
-export function RoleList({ roles, onSelectRole, onDeleteRole, canEdit, canDelete }: RoleListProps) {
+export function RoleList({ roles, onSelectRole, onDeleteRole, canEdit, canDelete, onUpdateRoleName }: RoleListProps) {
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 	const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
+	const [isEditing, setIsEditing] = useState(false)
+	const [newRoleName, setNewRoleName] = useState('')
 
 	const handleDeleteClick = (role: Role) => {
 		setRoleToDelete(role)
@@ -50,6 +54,19 @@ export function RoleList({ roles, onSelectRole, onDeleteRole, canEdit, canDelete
 			onDeleteRole(roleToDelete.roleId)
 		}
 		setIsDeleteDialogOpen(false)
+	}
+
+	const handleEditClick = (role: Role) => {
+		setRoleToDelete(role)
+		setNewRoleName(role.roleName)
+		setIsEditing(true)
+	}
+
+	const handleConfirmEdit = () => {
+		if (roleToDelete) {
+			onUpdateRoleName(roleToDelete.roleId, newRoleName)
+		}
+		setIsEditing(false)
 	}
 
 	return (
@@ -67,15 +84,20 @@ export function RoleList({ roles, onSelectRole, onDeleteRole, canEdit, canDelete
 							<TableCell>{role.roleName}</TableCell>
 							<TableCell>
 								{canEdit && (
-									<Button variant="outline" onClick={() => onSelectRole(role)} className="mr-2">
-										Editar
-									</Button>
+									<>
+										<Button variant="outline" onClick={() => onSelectRole(role)} className="mr-2">
+											Editar permisos
+										</Button>
+										<Button variant="outline" onClick={() => handleEditClick(role)} className="mr-2">
+											Editar nombre
+										</Button>
+									</>
 								)}
 								{canDelete && (
 									<Button variant="destructive" onClick={() => handleDeleteClick(role)}>
 										Eliminar
 									</Button>
-								)}
+									)}
 							</TableCell>
 						</TableRow>
 					))}
@@ -95,6 +117,27 @@ export function RoleList({ roles, onSelectRole, onDeleteRole, canEdit, canDelete
 						<AlertDialogCancel>Cancelar</AlertDialogCancel>
 						<AlertDialogAction onClick={handleConfirmDelete}>Eliminar</AlertDialogAction>
 					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<AlertDialog open={isEditing} onOpenChange={setIsEditing}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Editar Nombre del Rol</AlertDialogTitle>
+						<AlertDialogDescription>
+							Ingrese el nuevo nombre para el rol <b>{roleToDelete?.roleName}</b>.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction onClick={handleConfirmEdit}>Guardar</AlertDialogAction>
+					</AlertDialogFooter>
+					<Input
+						value={newRoleName}
+						onChange={(e) => setNewRoleName(e.target.value)}
+						placeholder="Nuevo nombre del rol"
+						required
+					/>
 				</AlertDialogContent>
 			</AlertDialog>
 		</>
