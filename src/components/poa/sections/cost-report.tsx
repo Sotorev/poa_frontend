@@ -124,7 +124,6 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
   // Procesar los datos para obtener las fuentes de financiamiento
   const {
     presupuestoAnual,
-    seExcede,
     fondosAdicionales,
     fondosExternos,
     costoTotal,
@@ -137,7 +136,6 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
     if (!data) {
       return {
         presupuestoAnual: 0,
-        seExcede: false,
         fondosAdicionales: [] as FinancingSource[],
         fondosExternos: [] as FinancingSource[],
         costoTotal: 0,
@@ -159,8 +157,6 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
     const presupuestoAnualSource = presupuestoAnualData ? Object.values(presupuestoAnualData).find(source => source.name === 'Presupuesto Anual') : null
     const presupuestoAnualAmount = presupuestoAnualSource ? presupuestoAnualSource.amount : 0
     const presupuestoAsignado = data.facultyBudget
-    const diferencia = presupuestoAsignado - presupuestoAnualAmount
-    const seExcede = diferencia < 0
 
     // Fondos Adicionales (UMES sin Presupuesto Anual)
     const fondosAdicionales = presupuestoAnualData
@@ -214,7 +210,6 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
 
     return {
       presupuestoAnual: presupuestoAnualAmount,
-      seExcede,
       fondosAdicionales: fondosAdicionalesConPorcentaje,
       fondosExternos: fondosExternosConPorcentaje,
       costoTotal,
@@ -252,60 +247,131 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
       return;
     }
 
-    // Crear un nuevo libro de trabajo
-    const wb = XLSX.utils.book_new();
+    try {
+      // Crear un nuevo libro de trabajo
+      const wb = XLSX.utils.book_new();
 
-    // Hoja 1: Estadísticas por Categoría
-    const categoryData = Object.keys(data.categoryStats).map(category => {
-      const financingSources = data.categoryStats[category].financingSources;
-      const financingSourcesEntries = Object.entries(financingSources).map(([key, source]) => ({
-        [`${key} - Monto`]: source.amount,
-        [`${key} - % Total`]: source.percentageOfTotalCost
+      // Hoja 1: Estadísticas por Categoría
+      const categoryData = Object.keys(data.categoryStats).flatMap(category => {
+        const financingSources = data.categoryStats[category].financingSources;
+        return Object.values(financingSources).map(source => ({
+          'Categoría': category,
+          'Fuente de Financiamiento': source.name,
+          'Monto (GTQ)': source.amount,
+          '% Total': source.percentageOfTotalCost / 100, // Excel espera 0.25 para 25%
+        }));
+      });
+
+      const wsCategory = XLSX.utils.json_to_sheet(categoryData, { header: ['Categoría', 'Fuente de Financiamiento', 'Monto (GTQ)', '% Total'], skipHeader: false });
+
+      // Ajustar ancho de columnas
+      const categoryCols = calculateColumnWidths(categoryData, ['Categoría', 'Fuente de Financiamiento', 'Monto (GTQ)', '% Total']);
+      wsCategory['!cols'] = categoryCols;
+
+      // Formatear celdas en la hoja de Estadísticas por Categoría
+      const rangeCategory = XLSX.utils.decode_range(wsCategory['!ref'] || 'A1:D1');
+      for (let R = 1; R <= rangeCategory.e.r; ++R) { // Empezar en 1 para omitir encabezado
+        const montoCellAddress = { c: 2, r: R }; // 'Monto (GTQ)' es la tercera columna (índice 2)
+        const montoCellRef = XLSX.utils.encode_cell(montoCellAddress);
+        if (wsCategory[montoCellRef]) {
+          wsCategory[montoCellRef].t = 'n'; // Tipo numérico
+          wsCategory[montoCellRef].z = '"GTQ"#,##0.00'; // Formato moneda GTQ
+        }
+
+        const porcentajeCellAddress = { c: 3, r: R }; // '% Total' es la cuarta columna (índice 3)
+        const porcentajeCellRef = XLSX.utils.encode_cell(porcentajeCellAddress);
+        if (wsCategory[porcentajeCellRef]) {
+          wsCategory[porcentajeCellRef].t = 'n'; // Tipo numérico
+          wsCategory[porcentajeCellRef].z = '0.00%'; // Formato porcentaje
+        }
+      }
+
+      XLSX.utils.book_append_sheet(wb, wsCategory, 'Estadísticas por Categoría');
+
+      // Hoja 2: Presupuesto y Fondos
+      const presupuestoData = [
+        {
+          'Presupuesto Anual (GTQ)': presupuestoAnual,
+          'Total Fondos Adicionales (GTQ)': fondosAdicionalesTotal,
+          'Total Fondos Externos (GTQ)': fondosExternosTotal,
+          'Costo Total (GTQ)': costoTotal,
+        },
+      ];
+
+      const wsPresupuesto = XLSX.utils.json_to_sheet(presupuestoData, { header: ['Presupuesto Anual (GTQ)', 'Total Fondos Adicionales (GTQ)', 'Total Fondos Externos (GTQ)', 'Costo Total (GTQ)'], skipHeader: false });
+
+      // Ajustar ancho de columnas
+      const presupuestoCols = calculateColumnWidths(presupuestoData, ['Presupuesto Anual (GTQ)', 'Total Fondos Adicionales (GTQ)', 'Total Fondos Externos (GTQ)', 'Costo Total (GTQ)']);
+      wsPresupuesto['!cols'] = presupuestoCols;
+
+      // Formatear celdas en la hoja de Presupuesto y Fondos
+      const rangePresupuesto = XLSX.utils.decode_range(wsPresupuesto['!ref'] || 'A1:D1');
+      for (let R = 1; R <= rangePresupuesto.e.r; ++R) { // Empezar en 1 para omitir encabezado
+        for (let C = 0; C <= 3; C++) { // Columnas A a D
+          const cellAddress = { c: C, r: R };
+          const cellRef = XLSX.utils.encode_cell(cellAddress);
+          if (wsPresupuesto[cellRef]) {
+            wsPresupuesto[cellRef].t = 'n'; // Tipo numérico
+            wsPresupuesto[cellRef].z = '"GTQ"#,##0.00'; // Formato moneda GTQ
+          }
+        }
+      }
+
+      XLSX.utils.book_append_sheet(wb, wsPresupuesto, 'Presupuesto y Fondos');
+
+      // Hoja 3: Eventos Aprobados
+      const eventosData = approvedEvents.map(event => ({
+        'ID Evento': event.eventId,
+        'Nombre del Evento': event.name,
+        'Costo Total (GTQ)': event.totalCost,
       }));
 
-      // Combinar todos los objetos en uno solo
-      const combined = financingSourcesEntries.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+      const wsEventos = XLSX.utils.json_to_sheet(eventosData, { header: ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)'], skipHeader: false });
 
-      return {
-        'Categoría': category,
-        'Monto Total': data.categoryStats[category].totalAmount,
-        'Porcentaje del Total': data.categoryStats[category].percentageOfTotal,
-        ...combined
-      };
-    });
+      // Ajustar ancho de columnas
+      const eventosCols = calculateColumnWidths(eventosData, ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)']);
+      wsEventos['!cols'] = eventosCols;
 
-    const wsCategory = XLSX.utils.json_to_sheet(categoryData);
-    XLSX.utils.book_append_sheet(wb, wsCategory, 'Estadísticas por Categoría');
+      // Formatear celdas en la hoja de Eventos Aprobados
+      const rangeEventos = XLSX.utils.decode_range(wsEventos['!ref'] || 'A1:C1');
+      for (let R = 1; R <= rangeEventos.e.r; ++R) { // Empezar en 1 para omitir encabezado
+        const costoCellAddress = { c: 2, r: R }; // 'Costo Total (GTQ)' es la tercera columna (índice 2)
+        const costoCellRef = XLSX.utils.encode_cell(costoCellAddress);
+        if (wsEventos[costoCellRef]) {
+          wsEventos[costoCellRef].t = 'n'; // Tipo numérico
+          wsEventos[costoCellRef].z = '"GTQ"#,##0.00'; // Formato moneda GTQ
+        }
+      }
 
-    // Hoja 2: Presupuesto y Fondos
-    const presupuestoData = [
-      {
-        'Presupuesto Anual': presupuestoAnual,
-        'Total Fondos Adicionales': fondosAdicionalesTotal,
-        'Total Fondos Externos': fondosExternosTotal,
-        'Costo Total': costoTotal,
-        'Se Excede': seExcede ? 'Sí' : 'No'
-      },
-    ];
+      XLSX.utils.book_append_sheet(wb, wsEventos, 'Eventos Aprobados');
 
-    const wsPresupuesto = XLSX.utils.json_to_sheet(presupuestoData);
-    XLSX.utils.book_append_sheet(wb, wsPresupuesto, 'Presupuesto y Fondos');
-
-    // Hoja 3: Eventos Aprobados
-    const eventosData = approvedEvents.map(event => ({
-      'ID Evento': event.eventId,
-      'Nombre del Evento': event.name,
-      'Costo Total': event.totalCost,
-    }));
-
-    const wsEventos = XLSX.utils.json_to_sheet(eventosData);
-    XLSX.utils.book_append_sheet(wb, wsEventos, 'Eventos Aprobados');
-
-    // Generar el archivo Excel
-    const wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-    const blob = new Blob([wbout], { type: 'application/octet-stream' });
-    saveAs(blob, 'Informe_de_Costos_POA.xlsx');
+      // Generar el archivo Excel
+      const wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      saveAs(blob, 'Informe_de_Costos_POA.xlsx');
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+      alert('Hubo un error al generar el archivo Excel. Por favor, intenta nuevamente.')
+    }
   };
+
+  // Función para calcular el ancho de las columnas basado en el contenido máximo
+  const calculateColumnWidths = (data: any[], headers: string[]) => {
+    const colWidths = headers.map(header => header.length);
+    data.forEach(row => {
+      headers.forEach((header, i) => {
+        const value = row[header];
+        if (value !== undefined && value !== null) {
+          const valueString = typeof value === 'number' ? value.toString() : value.toString();
+          if (valueString.length > colWidths[i]) {
+            colWidths[i] = valueString.length
+          }
+        }
+      })
+    })
+    // Agregar un poco de margen
+    return colWidths.map(width => ({ wch: width + 2 }))
+  }
 
   if (!data) {
     return <div>Cargando...</div>
