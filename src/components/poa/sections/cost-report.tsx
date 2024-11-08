@@ -15,11 +15,29 @@ interface CostReportProps {
   isEditable: boolean;
 }
 
+interface EventApproval {
+  approvalStatusId: number;
+  // Otros campos que puedan ser necesarios
+}
+
+interface Event {
+  eventId: number;
+  name: string;
+  totalCost: number;
+  eventApprovals: EventApproval[];
+  // Otros campos que puedan ser necesarios
+}
+
+
+
+
+
+
 export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: CostReportProps) {
   const [showDetails, setShowDetails] = useState(true)
   const [isMinimized, setIsMinimized] = useState(false)
   const user = useCurrentUser()
-  
+
   interface FinancingSource {
     name: string;
     amount: number;
@@ -46,13 +64,14 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
   }
 
   const [data, setData] = useState<Data | null>(null)
+  const [approvedEvents, setApprovedEvents] = useState<Event[]>([])
 
   // Función para formatear moneda
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(amount)
   }
 
-  // Fetch de datos desde la API
+  // Fetch de datos desde la API para Cost Report
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -74,6 +93,34 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
 
     if (user?.token) {
       fetchData()
+    }
+  }, [user?.token, poaId])
+
+  // Fetch de eventos aprobados
+  useEffect(() => {
+    const fetchApprovedEvents = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token}`
+          },
+        })
+        if (!response.ok) {
+          throw new Error(`Error al obtener eventos: ${response.statusText}`)
+        }
+        const events: Event[] = await response.json()
+        const filteredEvents = events.filter(event => 
+          event.eventApprovals.some(approval => approval.approvalStatusId === 1)
+        )
+        setApprovedEvents(filteredEvents)
+      } catch (error) {
+        console.error('Error al obtener eventos aprobados:', error)
+      }
+    }
+
+    if (user?.token) {
+      fetchApprovedEvents()
     }
   }, [user?.token])
 
@@ -360,6 +407,28 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
                   </span>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Nueva Card para Eventos Aprobados */}
+          <Card className="w-full mt-4">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Eventos Aprobados</CardTitle>
+              <CardDescription>Listado de eventos aprobados con su costo total</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {approvedEvents.length === 0 ? (
+                <p>No hay eventos aprobados para mostrar.</p>
+              ) : (
+                <div className="space-y-2">
+                  {approvedEvents.map(event => (
+                    <div key={event.eventId} className="flex justify-between items-center p-2 border rounded">
+                      <span className="font-medium">{event.name}</span>
+                      <span className="font-semibold">{formatCurrency(event.totalCost)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
