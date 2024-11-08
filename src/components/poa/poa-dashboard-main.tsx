@@ -228,7 +228,7 @@ export function PoaDashboardMain() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/poa/poa-report/${facultyId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/poa/poa-report/${poaId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/pdf',
