@@ -1,3 +1,4 @@
+// src/components/poa/PoaAcademicApproval.tsx
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
@@ -11,7 +12,10 @@ import {
   BarChart2, 
   ListTodo,
   Pin,
-  CheckCheck
+  CheckCheck,
+  Wallet,
+  WalletMinimal,
+  Percent
 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Link } from "react-scroll"
@@ -22,6 +26,7 @@ import { EquipoResponsableSectionComponent } from './sections/equipo-responsable
 import { FodaSection } from './sections/foda-section'
 import EventsViewerViceChancellorComponent from './sections/events-viewer/events-viewer-vicechancellor'
 import { CostReport } from './sections/cost-report'
+import { ResourceManagementComponent } from './sections/resource-management'
 import { PoaActions } from './sections/poa-actions'
 import { useCurrentUser } from '@/hooks/use-current-user'
 
@@ -44,6 +49,12 @@ interface Section {
 }
 
 const allSections: Section[] = [
+  { 
+    name: "Gestión de Recursos", 
+    icon: WalletMinimal, 
+    component: ResourceManagementComponent,
+    roles: ["Tesorería", "Administrador"]
+  },
   { 
     name: "Datos de la facultad", 
     icon: Building2, 
@@ -76,7 +87,7 @@ const allSections: Section[] = [
   },
   { 
     name: "Reporte de costos de eventos del POA", 
-    icon: BarChart2, 
+    icon: Percent, 
     component: CostReport,
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
   },
@@ -87,6 +98,9 @@ const allSections: Section[] = [
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador"]
   },
 ]
+
+// Función para normalizar nombres de sección
+const normalizeSectionName = (name: string) => name.replace(/\s+/g, '-').toLowerCase();
 
 export function PoaAcademicApproval() {
   const [activeSection, setActiveSection] = useState<string | null>(null)
@@ -127,8 +141,8 @@ export function PoaAcademicApproval() {
     fetchUserData()
   }, [user])
 
-  const handleSetActive = (to: string) => {
-    setActiveSection(to)
+  const handleSetActive = (normalizedName: string) => {
+    setActiveSection(normalizedName)
     setTimeout(() => {
       setActiveSection(null)
     }, 1000)
@@ -173,38 +187,41 @@ export function PoaAcademicApproval() {
         >
           <ScrollArea className="flex-grow">
             <nav className="p-2 flex flex-col items-center space-y-4">
-              {availableSections.map((section) => (
-                <Tooltip key={section.name}>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Link
-                        to={section.name}
-                        spy={true}
-                        smooth={true}
-                        offset={-70}
-                        duration={500}
-                        onClick={() => handleSetActive(section.name)}
-                      >
-                        <Button
-                          variant={activeSection === section.name ? "secondary" : "ghost"}
-                          size="icon"
-                          className={cn(
-                            "w-12 h-12 rounded-lg transition-colors duration-200",
-                            isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0',
-                            activeSection === section.name ? 'bg-green-600 text-white' : 'text-green-300 hover:bg-green-800'
-                          )}
+              {availableSections.map((section) => {
+                const normalizedName = normalizeSectionName(section.name)
+                return (
+                  <Tooltip key={section.name}>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Link
+                          to={normalizedName}
+                          spy={true}
+                          smooth={true}
+                          offset={-70}
+                          duration={500}
+                          onClick={() => handleSetActive(normalizedName)}
                         >
-                          {React.createElement(section.icon, { className: "h-6 w-6" })}
-                          <span className="sr-only">{section.name}</span>
-                        </Button>
-                      </Link>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-green-800 text-white py-1 px-2 text-sm rounded">
-                    <p>{section.name}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
+                          <Button
+                            variant={activeSection === normalizedName ? "secondary" : "ghost"}
+                            size="icon"
+                            className={cn(
+                              "w-12 h-12 rounded-lg transition-colors duration-200",
+                              isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0',
+                              activeSection === normalizedName ? 'bg-green-600 text-white' : 'text-green-300 hover:bg-green-800'
+                            )}
+                          >
+                            {React.createElement(section.icon, { className: "h-6 w-6" })}
+                            <span className="sr-only">{section.name}</span>
+                          </Button>
+                        </Link>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="bg-green-800 text-white py-1 px-2 text-sm rounded">
+                      <p>{section.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              })}
             </nav>
           </ScrollArea>
           <div className="p-2 flex justify-center">
@@ -241,19 +258,23 @@ export function PoaAcademicApproval() {
         {/* Renderizar las secciones solo si facultyId y poaId no son null */}
         {(facultyId !== null && poaId !== null && userId !== undefined && rolId !== undefined && roleName) && (
           <div className="space-y-8">
-            {availableSections.map((section) => (
-              <section.component
-                key={section.name}
-                name={section.name}
-                isActive={activeSection === section.name}
-                poaId={poaId}
-                facultyId={facultyId}
-                userId={userId}
-                rolId={rolId}
-                isEditable={false}
-                roleName={roleName}
-              />
-            ))}
+            {availableSections.map((section) => {
+              const normalizedName = normalizeSectionName(section.name)
+              return (
+                <div key={section.name} id={normalizedName}>
+                  <section.component
+                    name={section.name}
+                    isActive={activeSection === normalizedName}
+                    poaId={poaId}
+                    facultyId={facultyId}
+                    userId={userId}
+                    rolId={rolId}
+                    isEditable={section.name === "Gestión de Recursos"}
+                    roleName={roleName}
+                  />
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
