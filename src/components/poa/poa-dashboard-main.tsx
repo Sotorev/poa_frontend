@@ -220,6 +220,41 @@ export function PoaDashboardMain() {
     }
   };
 
+  // Función para exportar el POA a PDF
+  const handleExportPdf = async () => {
+    if (!facultyId) {
+      alert("No se ha establecido el ID de la facultad.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/poa/poa-report/${poaId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Authorization': `Bearer ${user?.token}`
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al exportar el reporte a PDF.');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `POA_Report_Faculty_${facultyId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error al exportar el PDF:', error);
+      alert("Error al exportar el reporte a PDF.");
+    }
+  };
 
   return (
     <main className="flex bg-gray-100 min-h-screen">
@@ -292,10 +327,13 @@ export function PoaDashboardMain() {
         className={`flex-1 p-6 overflow-auto transition-all duration-300 ${isSidebarFixed || isSidebarVisible ? 'ml-16' : 'ml-0'
           }`}
       >
-        {/* Botón para crear POA */}
-        <div className="mb-4">
+        {/* Botones para crear POA y exportar PDF */}
+        <div className="mb-4 flex space-x-2">
           <Button onClick={handleCreatePoa} disabled={!facultyId}>
             Iniciar nuevo POA
+          </Button>
+          <Button onClick={handleExportPdf} disabled={!facultyId || !poaId}>
+            Exportar a PDF
           </Button>
         </div>
 
