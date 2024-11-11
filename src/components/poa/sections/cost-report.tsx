@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertCircle, CheckCircle, Info, EyeOff, Eye, ChevronDown, ChevronUp } from "lucide-react"
+import { AlertCircle, CheckCircle, Info, EyeOff, Eye, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useCurrentUser } from '@/hooks/use-current-user'
@@ -27,11 +27,6 @@ interface Event {
   eventApprovals: EventApproval[];
   // Otros campos que puedan ser necesarios
 }
-
-
-
-
-
 
 export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: CostReportProps) {
   const [showDetails, setShowDetails] = useState(true)
@@ -65,6 +60,10 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
 
   const [data, setData] = useState<Data | null>(null)
   const [approvedEvents, setApprovedEvents] = useState<Event[]>([])
+
+  // Estados para la ordenación de eventos aprobados
+  const [sortField, setSortField] = useState<'name' | 'totalCost'>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // Función para formatear moneda
   const formatCurrency = (amount: number): string => {
@@ -122,7 +121,7 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
     if (user?.token) {
       fetchApprovedEvents()
     }
-  }, [user?.token])
+  }, [user?.token, poaId])
 
   // Procesar los datos para obtener las fuentes de financiamiento
   const {
@@ -247,6 +246,33 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
       </div>
     </div>
   )
+
+  // Memoizar los eventos aprobados ya ordenados
+  const sortedApprovedEvents = useMemo(() => {
+    const eventsCopy = [...approvedEvents]
+    eventsCopy.sort((a, b) => {
+      let comparison = 0
+      if (sortField === 'name') {
+        comparison = a.name.localeCompare(b.name)
+      } else if (sortField === 'totalCost') {
+        comparison = a.totalCost - b.totalCost
+      }
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+    return eventsCopy
+  }, [approvedEvents, sortField, sortOrder])
+
+  // Función para manejar el cambio de ordenación
+  const handleSort = (field: 'name' | 'totalCost') => {
+    if (sortField === field) {
+      // Si ya se está ordenando por este campo, invertir el orden
+      setSortOrder(prevOrder => prevOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Cambiar al nuevo campo y establecer el orden ascendente
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }
 
   if (!data) {
     return <div>Cargando...</div>
@@ -421,7 +447,33 @@ export function CostReport({ facultyId, userId, rolId, poaId, isEditable }: Cost
                 <p>No hay eventos aprobados para mostrar.</p>
               ) : (
                 <div className="space-y-2">
-                  {approvedEvents.map(event => (
+                  {/* Tabla de Eventos con Cabeceras para Ordenar */}
+                  <div className="border-b pb-2 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <button 
+                        className="flex items-center text-sm font-medium focus:outline-none"
+                        onClick={() => handleSort('name')}
+                      >
+                        Nombre
+                        {sortField === 'name' && (
+                          sortOrder === 'asc' ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex items-center">
+                      <button 
+                        className="flex items-center text-sm font-medium focus:outline-none"
+                        onClick={() => handleSort('totalCost')}
+                      >
+                        Costo Total
+                        {sortField === 'totalCost' && (
+                          sortOrder === 'asc' ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Lista de Eventos Ordenados */}
+                  {sortedApprovedEvents.map(event => (
                     <div key={event.eventId} className="flex justify-between items-center p-2 border rounded">
                       <span className="font-medium">{event.name}</span>
                       <span className="font-semibold">{formatCurrency(event.totalCost)}</span>
