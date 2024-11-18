@@ -909,8 +909,8 @@ const handleEditEvent = async (event: PlanningEvent) => {
 
       // Descarga paralela de archivos
       const [archivoDetalleProceso, archivoDetalle] = await Promise.all([
-        descargarArchivo(urlDetalleProceso, event.detalleProceso),
-        descargarArchivo(urlDetalle, event.detalle),
+        descargarArchivo(urlDetalleProceso, Array.isArray(event.detalleProceso) ? event.detalleProceso[0] : `detalle-proceso-${event.id}`),
+        descargarArchivo(urlDetalle, Array.isArray(event.detalle) ? event.detalle[0] : `detalle-${event.id}`),
       ]);
 
       // Verificación de la carga de archivos descargados

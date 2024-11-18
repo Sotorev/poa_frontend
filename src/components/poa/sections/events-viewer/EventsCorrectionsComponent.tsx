@@ -48,7 +48,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
             .filter(f => f.financingSourceId !== 1)
             .reduce((sum, f) => sum + f.amount, 0),
         tipoCompra: apiEvent.purchaseType?.name || '',
-        detalle: apiEvent.costDetails?.map(detail => detail.fileName).join(', ') || '',
+        detalle: apiEvent.costDetails?.map(detail => detail.fileName) || [],
         responsables: {
             principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
             ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
@@ -56,7 +56,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         },
         recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
         indicadorLogro: apiEvent.achievementIndicator,
-        detalleProceso: apiEvent.files?.find(file => file.filePath.includes('Procesos_Eventos'))?.fileName || '',
+        detalleProceso: apiEvent.files?.find(file => file.filePath.includes('Procesos_Eventos'))?.fileName ? [apiEvent.files.find(file => file.filePath.includes('Procesos_Eventos'))!.fileName] : [],
         comentarioDecano: apiEvent.eventApprovals[0]?.comments || '', // Ajustado aquí
         propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
         fechaCreacion: apiEvent.createdAt,

@@ -270,7 +270,7 @@ export interface PlanningEvent {
   /** Clasificación del tipo de compra */
   tipoCompra: string;
   /** Detalles adicionales del evento */
-  detalle: string;
+  detalle: string[];
   /** Responsables del evento */
   responsables: {
     /** Responsable principal del evento */
@@ -285,7 +285,7 @@ export interface PlanningEvent {
   /** Indicadores de logro del evento */
   indicadorLogro: string;
   /** Detalles del proceso */
-  detalleProceso: string;
+  detalleProceso: string[];
   /** Comentarios del decano */
   comentarioDecano: string;
   /** Usuario que propuso el evento */
