@@ -8,23 +8,24 @@ import { Button } from "@/components/ui/button"
 import { Upload, X } from "lucide-react"
 
 interface DetalleProcesoProps {
-  file: File | null
-  onFileChange: (file: File | null) => void
+  file: File[]  // Change to an array of Files
+  onFileChange: (files: File[]) => void  // Update to handle multiple files
 }
 
 export function DetalleProcesoComponent({ file, onFileChange }: DetalleProcesoProps) {
-  const [localFile, setLocalFile] = useState<File | null>(file)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [localFiles, setLocalFiles] = useState<File[]>(file || [])  // Initialize with an array
 
   useEffect(() => {
-    setLocalFile(file)
+    setLocalFiles(file || [])
   }, [file])
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const newFile = event.target.files[0]
-      setLocalFile(newFile)
-      onFileChange(newFile)
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files)
+      setLocalFiles(newFiles)
+      onFileChange(newFiles)
     }
   }
 
@@ -34,17 +35,19 @@ export function DetalleProcesoComponent({ file, onFileChange }: DetalleProcesoPr
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
-    if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      const newFile = event.dataTransfer.files[0]
-      setLocalFile(newFile)
-      onFileChange(newFile)
+    if (event.dataTransfer.files) {
+      const newFiles = Array.from(event.dataTransfer.files)
+      setLocalFiles(newFiles)
+      onFileChange(newFiles)
     }
   }
 
-  const handleRemoveFile = () => {
-    setLocalFile(null)
-    onFileChange(null)
-    if (fileInputRef.current) {
+  const handleRemoveFile = (index: number) => {
+    const updatedFiles = [...localFiles]
+    updatedFiles.splice(index, 1)
+    setLocalFiles(updatedFiles)
+    onFileChange(updatedFiles)
+    if (updatedFiles.length === 0 && fileInputRef.current) {
       fileInputRef.current.value = ""
     }
   }
@@ -73,25 +76,26 @@ export function DetalleProcesoComponent({ file, onFileChange }: DetalleProcesoPr
               ref={fileInputRef}
               onChange={handleFileChange}
               accept=".pdf,.doc,.docx,.txt"
+              multiple  // Allow multiple file selection
             />
             <p className="pl-1">o arrastrar y soltar</p>
           </div>
           <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT hasta 10MB</p>
         </div>
       </div>
-      {localFile && (
-        <div className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-          <span className="text-sm text-gray-600">{localFile.name}</span>
+      {localFiles.length > 0 && localFiles.map((file, index) => (
+        <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
+          <span className="text-sm text-gray-600">{file.name}</span>
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleRemoveFile}
+            onClick={() => handleRemoveFile(index)}
             className="text-red-500 hover:text-red-700"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
-      )}
+      ))}
     </div>
   )
 }

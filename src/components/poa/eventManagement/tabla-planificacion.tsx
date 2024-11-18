@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,44 +11,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { z } from 'zod';
+import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
+import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
+import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { ObjetivosEstrategicosSelectorComponent } from './fields/objetivos-estrategicos-selector';
-import { EstrategiasSelectorComponent } from './fields/estrategias-selector';
-import { IntervencionesSelectorComponent } from './fields/intervenciones-selector';
-import { OdsSelector } from './fields/ods-selector';
+import { z } from 'zod';
+import { AccionesComponent } from './fields/acciones';
 import { ActividadProyectoSelector } from './fields/actividad-proyecto-selector';
-import { UMESFinancingComponent } from './fields/umes-financing-source';
-import { OtherFinancingSourceComponent } from './fields/other-financing-source';
-import TipoDeCompraComponent from './fields/tipo-de-compra';
-import { RecursosSelectorComponent } from './fields/recursos-selector';
+import { AreaEstrategicaComponent } from './fields/area-estrategica';
+import { CommentThread } from './fields/comment-thread';
 import { DetalleComponent } from './fields/detalle';
 import { DetalleProcesoComponent } from './fields/detalle-proceso';
-import { AreaEstrategicaComponent } from './fields/area-estrategica';
-import { EventoComponent } from './fields/evento';
-import { ObjetivoComponent } from './fields/objetivo';
 import { EstadoComponent } from './fields/estado';
-import { ResponsablesComponent } from './fields/responsables';
+import { EstrategiasSelectorComponent } from './fields/estrategias-selector';
+import { EventoComponent } from './fields/evento';
 import { IndicadorLogroComponent } from './fields/indicador-logro';
-import { CommentThread } from './fields/comment-thread';
-import { AccionesComponent } from './fields/acciones';
-import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
-import { StrategicObjectiveSchema, StrategicObjective } from '@/schemas/strategicObjectiveSchema';
-import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
+import { IntervencionesSelectorComponent } from './fields/intervenciones-selector';
+import { ObjetivoComponent } from './fields/objetivo';
+import { ObjetivosEstrategicosSelectorComponent } from './fields/objetivos-estrategicos-selector';
+import { OdsSelector } from './fields/ods-selector';
+import { OtherFinancingSourceComponent } from './fields/other-financing-source';
+import { RecursosSelectorComponent } from './fields/recursos-selector';
+import { ResponsablesComponent } from './fields/responsables';
+import TipoDeCompraComponent from './fields/tipo-de-compra';
+import { UMESFinancingComponent } from './fields/umes-financing-source';
 
-import { CampusSelector } from './fields/campus-selector';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent';
+import { CampusSelector } from './fields/campus-selector';
 
 // Importamos los tipos necesarios
-import { Strategy } from '@/types/Strategy';
+import { Campus } from '@/types/Campus';
+import { PlanningEvent } from '@/types/interfaces';
 import { Intervention } from '@/types/Intervention';
 import { ODS } from '@/types/ods';
-import { Resource } from '@/types/Resource';
-import { Campus } from '@/types/Campus';
 import { PurchaseType } from '@/types/PurchaseType';
-import { PlanningEvent } from '@/types/interfaces';
+import { Resource } from '@/types/Resource';
+import { Strategy } from '@/types/Strategy';
 
 import { downloadFile } from '@/utils/downloadFile'; // Importar la función de utilidad
 
@@ -62,10 +62,11 @@ interface DatePair {
 interface FilaPlanificacion extends FilaPlanificacionForm {
   estado: 'planificado' | 'aprobado' | 'rechazado';
   entityId: number | null;
-  processDocument?: File;
+  processDocument?: File[];
   costDetailDocument?: File;
   fechas: DatePair[]; // Para actividades
   fechaProyecto: DatePair; // Para proyectos
+  detalleProceso?: File[];  // Update to accept an array of Files
 }
 
 interface FilaError {
@@ -347,7 +348,7 @@ export function TablaPlanificacionComponent() {
       responsableSeguimiento: '',
       recursos: [],
       indicadorLogro: '',
-      detalleProceso: null,
+      detalleProceso: undefined,
       fechas: [{ start: new Date(), end: new Date() }],
       fechaProyecto: { start: new Date(), end: new Date() },
       campusId: '',
@@ -434,11 +435,11 @@ export function TablaPlanificacionComponent() {
     );
   };
 
-  const actualizarProcessDocument = (id: string, file: File | null) => {
+  const actualizarProcessDocument = (id: string, files: File[] | null) => {
     setFilas(prevFilas =>
       prevFilas.map(fila => {
         if (fila.id === id) {
-          return { ...fila, processDocument: file || undefined };
+          return { ...fila, processDocument: files || undefined };
         }
         return fila;
       })
@@ -622,7 +623,11 @@ const actualizarEvento = async (fila: FilaPlanificacion) => {
     }
 
     if (fila.processDocument) {
-      formData.append('processDocument', fila.processDocument);
+      if (fila.processDocument) {
+        fila.processDocument.forEach((file, index) => {
+          formData.append(`processDocument[${index}]`, file);
+        });
+      }
     }
 
     // Envío de la petición PUT
@@ -706,7 +711,6 @@ const actualizarEvento = async (fila: FilaPlanificacion) => {
     }
 
     if (fila.processDocument) {
-      formData.append('processDocument', fila.processDocument);
     }
 
     const response = await fetch(url, {
@@ -881,7 +885,7 @@ const handleEditEvent = async (event: PlanningEvent) => {
         responsableSeguimiento: event.responsables.seguimiento,
         recursos: recursosIds,
         indicadorLogro: event.indicadorLogro,
-        detalleProceso: null, // Inicialmente nulo; se actualizará más adelante
+        detalleProceso: undefined, // Inicialmente nulo; se actualizará más adelante
         fechas: fechas,
         fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
         campusId: campusId,
@@ -895,47 +899,64 @@ const handleEditEvent = async (event: PlanningEvent) => {
       // Actualización de estados de deshabilitación
       setIsEstrategiasDisabled(!nuevaFila.objetivoEstrategico);
       setIsIntervencionesDisabled(nuevaFila.estrategias.length === 0);
-
+      
       // Descarga y vinculación de archivos adjuntos
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!baseUrl) {
         console.error("URL de la API no definida.");
         return;
       }
-
+      
       // URLs para descarga de archivos
-      const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;
+      const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;  // Note the endpoint may need to be adjusted for multiple files
       const urlDetalle = `${baseUrl}/api/fullevent/downloadCostDetailDocument/${event.id}`;
-
-      // Descarga paralela de archivos
-      const [archivoDetalleProceso, archivoDetalle] = await Promise.all([
-        descargarArchivo(urlDetalleProceso, Array.isArray(event.detalleProceso) ? event.detalleProceso[0] : `detalle-proceso-${event.id}`),
-        descargarArchivo(urlDetalle, Array.isArray(event.detalle) ? event.detalle[0] : `detalle-${event.id}`),
+      
+      // Función para descargar múltiples archivos
+      const descargarArchivos = async (url: string, nombres: string[]) => {
+        return Promise.all(
+          nombres.map(nombre => descargarArchivo(url, nombre))
+        );
+      };
+      
+      // Obtener nombres de archivos (ya son arrays de strings)
+      console.log("Detalle de proceso:", event.detalleProceso);
+      const nombresDetalleProceso = event.detalleProceso?.length > 0 
+        ? event.detalleProceso 
+        : [`detalle-proceso-${event.id}`];
+      
+      const nombresDetalle = event.detalle?.length > 0
+        ? event.detalle
+        : [`detalle-${event.id}`];
+      
+      // Descarga paralela de todos los archivos
+      const [archivosDetalleProceso, archivosDetalle] = await Promise.all([
+        descargarArchivos(urlDetalleProceso, nombresDetalleProceso),
+        descargarArchivos(urlDetalle, nombresDetalle),
       ]);
-
+      
       // Verificación de la carga de archivos descargados
-      if (archivoDetalleProceso && archivoDetalle) {
-        console.log("Archivos descargados correctamente:", archivoDetalleProceso, archivoDetalle);
+      if (archivosDetalleProceso.length === nombresDetalleProceso.length && archivosDetalle.length === nombresDetalle.length) {
+        console.log("Todos los archivos descargados correctamente:", archivosDetalleProceso, archivosDetalle);
       } else {
         console.warn("Algunos archivos no se descargaron correctamente.");
       }
-
+      
       // Actualización final con archivos descargados
       setFilas(prevFilas =>
         prevFilas.map(fila => {
           if (fila.id === nuevaFila.id) {
             return {
               ...fila,
-              detalleProceso: archivoDetalleProceso || null,
-              detalle: archivoDetalle || null,
+              detalleProceso: archivosDetalleProceso.filter(file => file !== null) as File[],  // Ensure it's an array of Files
+              detalle: archivosDetalle.filter(file => file !== null) as File[],
             };
           }
           return fila;
         })
       );
-
+      
       // Notificación del resultado de la carga de archivos
-      if (archivoDetalleProceso || archivoDetalle) {
+      if (archivosDetalleProceso.length > 0 || archivosDetalle.length > 0) {
         toast.success("Archivos cargados correctamente.");
       } else {
         toast.warn("No se pudieron cargar algunos archivos.");
@@ -1129,8 +1150,8 @@ const handleEditEvent = async (event: PlanningEvent) => {
                 </TableCell>
                 <TableCell>
                   <DetalleComponent
-                    file={fila.detalle}
-                    onFileChange={(file) => actualizarFila(fila.id, 'detalle', file)}
+                    files={fila.detalle}
+                    onFilesChange={(file) => actualizarFila(fila.id, 'detalle', file)}
                   />
                   {/* Enlace para descargar el detalle de costos si existe entityId */}
                   {fila.entityId && (
@@ -1214,8 +1235,8 @@ const handleEditEvent = async (event: PlanningEvent) => {
                 </TableCell>
                 <TableCell>
                   <DetalleProcesoComponent
-                    file={fila.detalleProceso || null}
-                    onFileChange={(file) => actualizarProcessDocument(fila.id, file)}
+                    file={fila.detalleProceso || []}
+                    onFileChange={(files) => actualizarProcessDocument(fila.id, files)}
                   />
                   {/* Enlace para descargar el detalle del proceso si existe entityId */}
                   {fila.entityId && (

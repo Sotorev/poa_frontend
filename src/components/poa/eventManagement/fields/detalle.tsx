@@ -9,23 +9,23 @@ import { Label } from "@/components/ui/label"
 import { Upload, X } from "lucide-react"
 
 interface DetalleProps {
-  file: File | null
-  onFileChange: (file: File | null) => void
+  files: File[]
+  onFilesChange: (files: File[]) => void
 }
 
-export function DetalleComponent({ file, onFileChange }: DetalleProps) {
-  const [localFile, setLocalFile] = useState<File | null>(file)
+export function DetalleComponent({ files, onFilesChange }: DetalleProps) {
+  const [localFiles, setLocalFiles] = useState<File[]>(files || [])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setLocalFile(file)
-  }, [file])
+    setLocalFiles(files || [])
+  }, [files])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const newFile = event.target.files[0]
-      setLocalFile(newFile)
-      onFileChange(newFile)
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files)
+      setLocalFiles(prevFiles => [...prevFiles, ...newFiles])
+      onFilesChange([...localFiles, ...newFiles])
     }
   }
 
@@ -35,19 +35,17 @@ export function DetalleComponent({ file, onFileChange }: DetalleProps) {
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
-    if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      const newFile = event.dataTransfer.files[0]
-      setLocalFile(newFile)
-      onFileChange(newFile)
+    if (event.dataTransfer.files) {
+      const newFiles = Array.from(event.dataTransfer.files)
+      setLocalFiles(prevFiles => [...prevFiles, ...newFiles])
+      onFilesChange([...localFiles, ...newFiles])
     }
   }
 
-  const handleRemoveFile = () => {
-    setLocalFile(null)
-    onFileChange(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
+  const handleRemoveFile = (fileToRemove: File) => {
+    const updatedFiles = localFiles.filter(file => file !== fileToRemove)
+    setLocalFiles(updatedFiles)
+    onFilesChange(updatedFiles)
   }
 
   return (
@@ -73,6 +71,7 @@ export function DetalleComponent({ file, onFileChange }: DetalleProps) {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 accept=".pdf,.doc,.docx,.xls,.xlsx"
+                multiple
               />
             </label>
             <p className="pl-1">o arrastrar y soltar</p>
@@ -80,17 +79,21 @@ export function DetalleComponent({ file, onFileChange }: DetalleProps) {
           <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX hasta 10MB</p>
         </div>
       </div>
-      {localFile && (
-        <div className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-          <span className="text-sm text-gray-600">{localFile.name}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRemoveFile}
-            className="text-destructive hover:text-destructive-foreground"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      {localFiles.length > 0 && (
+        <div className="space-y-2">
+          {localFiles.map((file, index) => (
+            <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
+              <span className="text-sm text-gray-600">{file.name}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveFile(file)}
+                className="text-destructive hover:text-destructive-foreground"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
     </div>
