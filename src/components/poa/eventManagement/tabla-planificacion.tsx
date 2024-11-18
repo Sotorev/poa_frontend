@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -549,106 +549,201 @@ export function TablaPlanificacionComponent() {
     await enviarAlBackend(fila);
   };
 
+  /**
+ * @description Actualiza un evento existente en el sistema
+ * @param {FilaPlanificacion} fila - Objeto que contiene los datos del evento a actualizar
+ * @throws {Error} Si el evento no tiene entityId
+ * @returns {Promise<any>} Respuesta del servidor con los datos actualizados
+ */
+const actualizarEvento = async (fila: FilaPlanificacion) => {
+    if (!fila.entityId) {
+      throw new Error("No se puede actualizar un evento sin entityId");
+    }
+
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/${fila.entityId}`;
+    
+    // Construcción del objeto eventData con todos los campos necesarios
+    const eventData = {
+      name: fila.evento.trim(),
+      type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
+      poaId: poaId,
+      statusId: 1,
+      completionPercentage: 0,
+      campusId: parseInt(fila.campusId, 10),
+      objective: fila.objetivo.trim(),
+      eventNature: 'Planificado',
+      isDelayed: false,
+      achievementIndicator: fila.indicadorLogro.trim(),
+      purchaseTypeId: parseInt(fila.tipoCompra, 10),
+      totalCost: fila.costoTotal,
+      // Manejo de fechas según tipo de evento
+      dates: fila.tipoEvento === 'actividad'
+        ? fila.fechas.map((pair) => ({
+            startDate: pair.start.toISOString().split('T')[0],
+            endDate: pair.end.toISOString().split('T')[0],
+          }))
+        : [{
+            startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+            endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+          }],
+      // Combinación de financiamientos UMES y otros
+      financings: [
+        ...fila.aporteUMES.map(aporte => ({
+          financingSourceId: aporte.financingSourceId,
+          percentage: aporte.percentage,
+          amount: aporte.amount,
+        })),
+        ...fila.aporteOtros.map(aporte => ({
+          financingSourceId: aporte.financingSourceId,
+          percentage: aporte.percentage,
+          amount: aporte.amount,
+        })),
+      ],
+      // Definición de responsables con roles específicos
+      responsibles: [
+        { responsibleRole: 'Principal', name: fila.responsablePlanificacion.trim() },
+        { responsibleRole: 'Ejecución', name: fila.responsableEjecucion.trim() },
+        { responsibleRole: 'Seguimiento', name: fila.responsableSeguimiento.trim() },
+      ],
+      interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+      ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+      resources: fila.recursos.map((recurso: string) => ({
+        resourceId: parseInt(recurso, 10),
+      })),
+      userId: userId,
+    };
+
+    // Preparación del FormData para envío de archivos
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(eventData));
+
+    if (fila.detalle) {
+      formData.append('costDetailDocuments', fila.detalle);
+    }
+
+    if (fila.processDocument) {
+      formData.append('processDocument', fila.processDocument);
+    }
+
+    // Envío de la petición PUT
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${user?.token}`
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Error al actualizar la actividad: ${errorData.message || response.statusText}`);
+    }
+
+    return await response.json();
+  };
+
+/**
+ * @description Crea un nuevo evento en el sistema
+ * @param {FilaPlanificacion} fila - Objeto que contiene los datos del nuevo evento
+ * @returns {Promise<any>} Respuesta del servidor con los datos del evento creado
+ */
+  const crearEvento = async (fila: FilaPlanificacion) => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`;
+    
+    // Construcción del objeto eventData (similar a actualizarEvento)
+    const eventData = {
+      name: fila.evento.trim(),
+      type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
+      poaId: poaId,
+      statusId: 1,
+      completionPercentage: 0,
+      campusId: parseInt(fila.campusId, 10),
+      objective: fila.objetivo.trim(),
+      eventNature: 'Planificado',
+      isDelayed: false,
+      achievementIndicator: fila.indicadorLogro.trim(),
+      purchaseTypeId: parseInt(fila.tipoCompra, 10),
+      totalCost: fila.costoTotal,
+      dates: fila.tipoEvento === 'actividad'
+        ? fila.fechas.map((pair) => ({
+            startDate: pair.start.toISOString().split('T')[0],
+            endDate: pair.end.toISOString().split('T')[0],
+          }))
+        : [{
+            startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+            endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+          }],
+      financings: [
+        ...fila.aporteUMES.map(aporte => ({
+          financingSourceId: aporte.financingSourceId,
+          percentage: aporte.percentage,
+          amount: aporte.amount,
+        })),
+        ...fila.aporteOtros.map(aporte => ({
+          financingSourceId: aporte.financingSourceId,
+          percentage: aporte.percentage,
+          amount: aporte.amount,
+        })),
+      ],
+      responsibles: [
+        { responsibleRole: 'Principal', name: fila.responsablePlanificacion.trim() },
+        { responsibleRole: 'Ejecución', name: fila.responsableEjecucion.trim() },
+        { responsibleRole: 'Seguimiento', name: fila.responsableSeguimiento.trim() },
+      ],
+      interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+      ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
+      resources: fila.recursos.map((recurso: string) => ({
+        resourceId: parseInt(recurso, 10),
+      })),
+      userId: userId,
+    };
+
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(eventData));
+
+    if (fila.detalle) {
+      formData.append('costDetailDocuments', fila.detalle);
+    }
+
+    if (fila.processDocument) {
+      formData.append('processDocument', fila.processDocument);
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${user?.token}`
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Error al crear la actividad: ${errorData.message || response.statusText}`);
+    }
+
+    return await response.json();
+  };
+
+/**
+ * @description Coordina el envío de datos al backend, determinando si se debe crear o actualizar
+ * @param {FilaPlanificacion} fila - Objeto con los datos a enviar
+ * @throws {Error} Si la URL de la API no está definida
+ */
   const enviarAlBackend = async (fila: FilaPlanificacion) => {
     try {
       if (!process.env.NEXT_PUBLIC_API_URL) {
         throw new Error("La URL de la API no está definida.");
       }
-  
-      // Determinar si es una creación (POST) o una actualización (PUT)
-      const url = fila.entityId
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/${fila.entityId}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`;
-  
-      const method = fila.entityId ? 'PUT' : 'POST';
-  
-      const eventData = {
-        name: fila.evento.trim(),
-        type: fila.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto',
-        poaId: poaId,
-        statusId: 1,
-        completionPercentage: 0,
-        campusId: parseInt(fila.campusId, 10),
-        objective: fila.objetivo.trim(),
-        eventNature: 'Planificado',
-        isDelayed: false,
-        achievementIndicator: fila.indicadorLogro.trim(),
-        purchaseTypeId: parseInt(fila.tipoCompra, 10),
-        totalCost: fila.costoTotal,
-        dates:
-          fila.tipoEvento === 'actividad'
-            ? fila.fechas.map((pair) => ({
-                startDate: pair.start.toISOString().split('T')[0],
-                endDate: pair.end.toISOString().split('T')[0],
-              }))
-            : [
-                {
-                  startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
-                  endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
-                },
-              ],
-        financings: [
-          ...fila.aporteUMES.map(aporte => ({
-            financingSourceId: aporte.financingSourceId,
-            percentage: aporte.percentage,
-            amount: aporte.amount,
-          })),
-          ...fila.aporteOtros.map(aporte => ({
-            financingSourceId: aporte.financingSourceId,
-            percentage: aporte.percentage,
-            amount: aporte.amount,
-          })),
-        ],
-        responsibles: [
-          {
-            responsibleRole: 'Principal',
-            name: fila.responsablePlanificacion.trim(),
-          },
-          {
-            responsibleRole: 'Ejecución',
-            name: fila.responsableEjecucion.trim(),
-          },
-          {
-            responsibleRole: 'Seguimiento',
-            name: fila.responsableSeguimiento.trim(),
-          },
-        ],
-        interventions: fila.intervencion.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
-        ods: fila.ods.map(id => parseInt(id, 10)).filter(id => !isNaN(id)),
-        resources: fila.recursos.map((recurso: string) => ({
-          resourceId: parseInt(recurso, 10),
-        })),
-        userId: userId,
-      };
-  
-      console.log('Enviando datos:', eventData);
-  
-      const formData = new FormData();
-      formData.append('data', JSON.stringify(eventData));
-  
-      if (fila.detalle) {
-        formData.append('costDetailDocuments', fila.detalle);
-      }
-  
-      if (fila.processDocument) {
-        formData.append('processDocument', fila.processDocument);
-      }
-  
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Authorization': `Bearer ${user?.token}`
-        },
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Error al enviar la actividad: ${errorData.message || response.statusText}`);
-      }
-  
-      const result = await response.json();
-  
+
+      console.log('Enviando datos:', fila);
+
+      // Determina si crear o actualizar basado en la existencia de entityId
+      const result = fila.entityId 
+        ? await actualizarEvento(fila)
+        : await crearEvento(fila);
+
+      // Actualiza el estado local con el resultado
       setFilas(prevFilas =>
         prevFilas.map(filaItem =>
           filaItem.id === fila.id
@@ -660,9 +755,9 @@ export function TablaPlanificacionComponent() {
             : filaItem
         )
       );
-  
+
+      // Muestra mensaje de éxito y limpia errores
       toast.success(fila.entityId ? "Actividad actualizada exitosamente." : "Actividad enviada exitosamente.");
-  
       setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
       console.error(err);
@@ -688,18 +783,6 @@ export function TablaPlanificacionComponent() {
     setPendingSendId(null);
   };
 
-  const handleEntityIdCreated = (newEntityId: number) => {
-    if (currentRowId) {
-      setFilas(prevFilas =>
-        prevFilas.map(fila =>
-          fila.id === currentRowId ? { ...fila, entityId: newEntityId } : fila
-        )
-      );
-      setCurrentEntityId(newEntityId);
-      setShowCommentThread(false);
-      toast.success("Comentario enviado y entityId creado.");
-    }
-  };
 
   // Nueva implementación de handleDownload utilizando la función de utilidad
   const handleDownload = (entityId: number, type: 'process' | 'costDetail') => {
@@ -707,55 +790,76 @@ export function TablaPlanificacionComponent() {
     downloadFile(entityId, path);
   };
 
-  // Agregar la función handleEditEvent
-  const handleEditEvent = async (event: PlanningEvent) => {
+  /**
+ * @description Maneja la edición de un evento existente, cargando sus datos en el formulario
+ * @param {PlanningEvent} event - El evento a editar con todos sus datos
+ * 
+ * El proceso incluye:
+ * 1. Mapeo de datos relacionales (áreas, objetivos, estrategias, etc)
+ * 2. Cálculo de aportes financieros
+ * 3. Formateo de fechas
+ * 4. Creación de nueva fila con datos mapeados
+ * 5. Actualización del estado del formulario
+ * 6. Descarga y vinculación de archivos adjuntos
+ * 7. Verificación de la carga de archivos descargados
+ */
+const handleEditEvent = async (event: PlanningEvent) => {
     try {
-      // Mapeo de datos existente
+      // Mapeo de área estratégica
       const areaEstrategicaObj = strategicAreas.find(area => area.name === event.areaEstrategica);
       const areaEstrategicaId = areaEstrategicaObj ? areaEstrategicaObj.name : '';
 
+      // Mapeo de objetivo estratégico
       const objetivoEstrategicoObj = strategicObjectives.find(obj => obj.description === event.objetivoEstrategico);
       const objetivoEstrategicoId = objetivoEstrategicoObj ? objetivoEstrategicoObj.strategicObjectiveId.toString() : '';
 
+      // Mapeo de estrategias seleccionadas
       const estrategiasIds = estrategias
         .filter(strategy => event.estrategias.includes(strategy.description))
         .map(strategy => strategy.strategyId.toString());
 
+      // Mapeo de intervenciones seleccionadas
       const intervencionIds = intervenciones
         .filter(intervention => event.intervencion.includes(intervention.name))
         .map(intervention => intervention.interventionId.toString());
 
+      // Mapeo de ODS seleccionados
       const odsIds = odsList
         .filter(ods => event.ods.includes(ods.name))
         .map(ods => ods.odsId.toString());
 
+      // Mapeo de recursos seleccionados
       const recursosIds = recursos
         .filter(resource => event.recursos.includes(resource.name))
         .map(resource => resource.resourceId.toString());
 
+      // Mapeo de campus y tipo de compra
       const campusObj = campuses.find(campus => campus.name === event.campus);
       const campusId = campusObj ? campusObj.campusId.toString() : '';
 
       const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
       const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
 
+      // Cálculo de aportes financieros
       const aporteUMES = event.aporteUMES ? [{
-        financingSourceId: 1, // Asumiendo que el ID 1 es UMES
+        financingSourceId: 1, // ID fijo para UMES
         percentage: (event.aporteUMES / event.costoTotal) * 100,
         amount: event.aporteUMES,
       }] : [];
 
       const aporteOtros = event.aporteOtros ? [{
-        financingSourceId: 2, // Ajusta este ID según corresponda
+        financingSourceId: 2, // ID fijo para otros aportes
         percentage: (event.aporteOtros / event.costoTotal) * 100,
         amount: event.aporteOtros,
       }] : [];
 
+      // Formateo de fechas
       const fechas = event.fechas.map(interval => ({
         start: new Date(interval.inicio),
         end: new Date(interval.fin),
       }));
 
+      // Construcción de nueva fila con datos mapeados
       const nuevaFila: FilaPlanificacion = {
         id: Date.now().toString(),
         areaEstrategica: areaEstrategicaId,
@@ -784,31 +888,39 @@ export function TablaPlanificacionComponent() {
         entityId: Number(event.id),
       };
 
-      // Agregar la nueva fila al estado
-      setFilas([nuevaFila]); // Puedes ajustar esto si deseas agregar la fila en lugar de reemplazar
+      // // Actualización del estado con la nueva fila
+      setFilas([nuevaFila]);
       toast.info("Evento cargado para edición.");
 
-      // **Actualizar los estados de deshabilitación**
+      // Actualización de estados de deshabilitación
       setIsEstrategiasDisabled(!nuevaFila.objetivoEstrategico);
       setIsIntervencionesDisabled(nuevaFila.estrategias.length === 0);
 
-      // URLs para descargar los archivos
+      // Descarga y vinculación de archivos adjuntos
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!baseUrl) {
         console.error("URL de la API no definida.");
         return;
       }
 
+      // URLs para descarga de archivos
       const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;
       const urlDetalle = `${baseUrl}/api/fullevent/downloadCostDetailDocument/${event.id}`;
 
-      // Descargar los archivos
+      // Descarga paralela de archivos
       const [archivoDetalleProceso, archivoDetalle] = await Promise.all([
-        descargarArchivo(urlDetalleProceso, `detalle-proceso-${event.id}`),
-        descargarArchivo(urlDetalle, `detalle-${event.id}`)
+        descargarArchivo(urlDetalleProceso, event.detalleProceso),
+        descargarArchivo(urlDetalle, event.detalle),
       ]);
 
-      // Actualizar la fila con los archivos descargados
+      // Verificación de la carga de archivos descargados
+      if (archivoDetalleProceso && archivoDetalle) {
+        console.log("Archivos descargados correctamente:", archivoDetalleProceso, archivoDetalle);
+      } else {
+        console.warn("Algunos archivos no se descargaron correctamente.");
+      }
+
+      // Actualización final con archivos descargados
       setFilas(prevFilas =>
         prevFilas.map(fila => {
           if (fila.id === nuevaFila.id) {
@@ -822,6 +934,7 @@ export function TablaPlanificacionComponent() {
         })
       );
 
+      // Notificación del resultado de la carga de archivos
       if (archivoDetalleProceso || archivoDetalle) {
         toast.success("Archivos cargados correctamente.");
       } else {
@@ -832,7 +945,7 @@ export function TablaPlanificacionComponent() {
       console.error("Error en handleEditEvent:", error);
       toast.error("Ocurrió un error al editar el evento.");
     }
-  };
+};
 
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
@@ -884,9 +997,6 @@ export function TablaPlanificacionComponent() {
               (obj) => obj.strategicObjectiveId.toString() === fila.objetivoEstrategico
             );
 
-            const strategicObjectiveId = strategicObjective
-              ? strategicObjective.strategicObjectiveId
-              : 0;
             return (
               <TableRow key={fila.id}>
                 <TableCell>

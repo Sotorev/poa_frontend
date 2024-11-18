@@ -9,8 +9,7 @@ import EventTable from './EventTable';
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { deleteEvent } from '@/services/apiService';
 
-// Importar el componente de acciones de corrección
-import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections';
+
 
 // Modificar SectionProps para incluir onEditEvent
 interface SectionProps extends OriginalSectionProps {
@@ -49,7 +48,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
             .filter(f => f.financingSourceId !== 1)
             .reduce((sum, f) => sum + f.amount, 0),
         tipoCompra: apiEvent.purchaseType?.name || '',
-        detalle: apiEvent.costDetailDocumentPath || '',
+        detalle: apiEvent.costDetails?.map(detail => detail.fileName).join(', ') || '',
         responsables: {
             principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
             ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
@@ -57,7 +56,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         },
         recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
         indicadorLogro: apiEvent.achievementIndicator,
-        detalleProceso: apiEvent.processDocumentPath || '',
+        detalleProceso: apiEvent.files?.find(file => file.filePath.includes('Procesos_Eventos'))?.fileName || '',
         comentarioDecano: apiEvent.eventApprovals[0]?.comments || '', // Ajustado aquí
         propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
         fechaCreacion: apiEvent.createdAt,
