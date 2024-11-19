@@ -18,9 +18,10 @@ interface DetalleProcesoFileWithStatus {
 interface DetalleProcesoProps {
   files: DetalleProcesoFileWithStatus[];
   onFilesChange: (files: DetalleProcesoFileWithStatus[]) => void;
+  onDelete: (fileId: number) => void; // Nueva prop
 }
 
-export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProcesoProps) {
+export function DetalleProcesoComponent({ files, onFilesChange, onDelete }: DetalleProcesoProps) {
   const [localFiles, setLocalFiles] = useState<DetalleProcesoFileWithStatus[]>(files || []);
 
   // Add useEffect to update localFiles when files prop changes
@@ -63,10 +64,16 @@ export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProceso
     }
   };
 
-  const handleRemoveFile = (id: number) => {
-    const updatedFiles = localFiles.filter(file => file.id !== id);
-    setLocalFiles(updatedFiles);
-    onFilesChange(updatedFiles);
+  const handleRemoveFile = async (id: number) => {
+    try {
+      await onDelete(id);
+      const updatedFiles = localFiles.filter(file => file.id !== id);
+      setLocalFiles(updatedFiles);
+      onFilesChange(updatedFiles);
+      // Después de eliminar exitosamente: toast.success('Archivo eliminado correctamente');
+    } catch (error) {
+      // En caso de error: toast.error('Error al eliminar el archivo');
+    }
   };
 
   return (

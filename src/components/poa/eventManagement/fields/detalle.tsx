@@ -11,6 +11,7 @@ import { Upload, X } from "lucide-react"
 interface DetalleProps {
   files: FileWithId[]
   onFilesChange: (files: FileWithId[]) => void
+  onDelete: (costDetailId: number) => void // Nueva prop
 }
 
 // Define an interface for files with an id
@@ -19,7 +20,7 @@ interface FileWithId {
   file: File
 }
 
-export function DetalleComponent({ files, onFilesChange }: DetalleProps) {
+export function DetalleComponent({ files, onFilesChange, onDelete }: DetalleProps) {
   const [localFiles, setLocalFiles] = useState<FileWithId[]>(files || [])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -56,10 +57,16 @@ export function DetalleComponent({ files, onFilesChange }: DetalleProps) {
     }
   }
 
-  const handleRemoveFile = (id: number) => {
-    const updatedFiles = localFiles.filter(f => f.id !== id)
-    setLocalFiles(updatedFiles)
-    onFilesChange(updatedFiles)
+  const handleRemoveFile = async (id: number) => {
+    try {
+      await onDelete(id);
+      const updatedFiles = localFiles.filter(f => f.id !== id);
+      setLocalFiles(updatedFiles);
+      onFilesChange(updatedFiles);
+      // Después de eliminar exitosamente: toast.success('Archivo eliminado correctamente');
+    } catch (error) {
+      // En caso de error: toast.error('Error al eliminar el archivo');
+    }
   }
 
   return (

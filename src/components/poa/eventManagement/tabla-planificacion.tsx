@@ -1106,6 +1106,42 @@ const actualizarDetalleProcesoFiles = (id: string, files: DetalleProcesoFileWith
   );
 };
 
+const handleDeleteCostDetail = async (costDetailId: number) => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/costDetailDocument/${costDetailId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${user?.token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Error al borrar el detalle de costos.');
+    }
+    // Notificación de éxito: toast.success('Detalle de costos eliminado exitosamente.');
+  } catch (error) {
+    console.error(error);
+    // Notificación de error: toast.error('No se pudo eliminar el detalle de costos.');
+  }
+};
+
+const handleDeleteEventFile = async (fileId: number) => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/eventFile/${fileId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${user?.token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Error al borrar el archivo del proceso.');
+    }
+    // Notificación de éxito: toast.success('Archivo del proceso eliminado exitosamente.');
+  } catch (error) {
+    console.error(error);
+    // Notificación de error: toast.error('No se pudo eliminar el archivo del proceso.');
+  }
+};
+
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
   if (errorPoa) return <div className="text-red-500">Error al obtener poaId: {errorPoa}</div>;
@@ -1298,6 +1334,7 @@ const actualizarDetalleProcesoFiles = (id: string, files: DetalleProcesoFileWith
                       originalName: file.file.name
                     
                     })))}
+                    onDelete={handleDeleteCostDetail} // Nueva prop
                   />
                   {/* Enlace para descargar el detalle de costos si existe entityId */}
                   {fila.entityId && (
@@ -1388,6 +1425,7 @@ const actualizarDetalleProcesoFiles = (id: string, files: DetalleProcesoFileWith
                       originalName: item.originalName 
                     }))}
                     onFilesChange={(files) => actualizarDetalleProcesoFiles(fila.id, files)}
+                    onDelete={handleDeleteEventFile} // Nueva prop
                   />
                   {/* Enlace para descargar el detalle del proceso si existe entityId */}
                   {fila.entityId && (
