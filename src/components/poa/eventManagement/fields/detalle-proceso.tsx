@@ -6,51 +6,68 @@ import * as React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, X } from "lucide-react"
+import { Input } from "@/components/ui/input" // Import Input component
 
-interface DetalleProcesoProps {
-  file: File[]  // Change to an array of Files
-  onFileChange: (files: File[]) => void  // Update to handle multiple files
+interface DetalleProcesoFileWithStatus {
+  id: number;
+  file: File;
+  isEdited: boolean;
+  originalName: string;
 }
 
-export function DetalleProcesoComponent({ file, onFileChange }: DetalleProcesoProps) {
-  const [localFiles, setLocalFiles] = useState<File[]>(file || [])  // Initialize with an array
+interface DetalleProcesoProps {
+  files: DetalleProcesoFileWithStatus[];
+  onFilesChange: (files: DetalleProcesoFileWithStatus[]) => void;
+}
 
+export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProcesoProps) {
+  const [localFiles, setLocalFiles] = useState<DetalleProcesoFileWithStatus[]>(files || []);
+
+  // Add useEffect to update localFiles when files prop changes
   useEffect(() => {
-    setLocalFiles(file || [])
-  }, [file])
+    setLocalFiles(files || []);
+  }, [files]);
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const newFiles = Array.from(event.target.files)
-      setLocalFiles(newFiles)
-      onFileChange(newFiles)
+      const newFiles = Array.from(event.target.files).map((file) => ({
+        id: Date.now(),
+        file,
+        isEdited: true,
+        originalName: file.name,
+      }));
+      const updatedFiles = [...localFiles, ...newFiles];
+      setLocalFiles(updatedFiles);
+      onFilesChange(updatedFiles);
     }
-  }
+  };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-  }
+    event.preventDefault();
+  };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     if (event.dataTransfer.files) {
-      const newFiles = Array.from(event.dataTransfer.files)
-      setLocalFiles(newFiles)
-      onFileChange(newFiles)
+      const newFiles = Array.from(event.dataTransfer.files).map((file) => ({
+        id: Date.now(),
+        file,
+        isEdited: true,
+        originalName: file.name,
+      }));
+      const updatedFiles = [...localFiles, ...newFiles];
+      setLocalFiles(updatedFiles);
+      onFilesChange(updatedFiles);
     }
-  }
+  };
 
-  const handleRemoveFile = (index: number) => {
-    const updatedFiles = [...localFiles]
-    updatedFiles.splice(index, 1)
-    setLocalFiles(updatedFiles)
-    onFileChange(updatedFiles)
-    if (updatedFiles.length === 0 && fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
+  const handleRemoveFile = (id: number) => {
+    const updatedFiles = localFiles.filter(file => file.id !== id);
+    setLocalFiles(updatedFiles);
+    onFilesChange(updatedFiles);
+  };
 
   return (
     <div className="space-y-4">
@@ -61,41 +78,45 @@ export function DetalleProcesoComponent({ file, onFileChange }: DetalleProcesoPr
       >
         <div className="space-y-1 text-center">
           <Upload className="mx-auto h-12 w-12 text-gray-400" />
-          <div className="flex text-sm text-gray-600 items-center">
+          <div className="flex text-sm text-gray-600">
             <label
               htmlFor="file-upload-proceso"
               className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-500"
             >
               <span>Cargar un archivo</span>
+              <Input
+                id="file-upload-proceso"
+                name="file-upload-proceso"
+                type="file"
+                className="sr-only" // Hide the input
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx,.txt"
+                multiple
+              />
             </label>
-            <input
-              id="file-upload-proceso"
-              name="file-upload-proceso"
-              type="file"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".pdf,.doc,.docx,.txt"
-              multiple  // Allow multiple file selection
-            />
             <p className="pl-1">o arrastrar y soltar</p>
           </div>
           <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT hasta 10MB</p>
         </div>
       </div>
-      {localFiles.length > 0 && localFiles.map((file, index) => (
-        <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-          <span className="text-sm text-gray-600">{file.name}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleRemoveFile(index)}
-            className="text-red-500 hover:text-red-700"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      {localFiles.length > 0 && (
+        <div className="space-y-2">
+          {localFiles.map(({ id, originalName }) => (
+            <div key={id} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
+              <span className="text-sm text-gray-600">{originalName}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveFile(id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
-  )
+  );
 }

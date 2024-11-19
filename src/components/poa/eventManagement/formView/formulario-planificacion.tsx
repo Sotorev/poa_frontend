@@ -874,10 +874,10 @@ export default function PlanificacionFormComponent() {
                 </div>
                 <div>
                   <label className="block font-medium mb-2">Detalle de Costos</label>
-                  <DetalleComponent
+                  {/* <DetalleComponent
                     file={fila.detalle}
                     onFileChange={(file) => actualizarFila('detalle', file)}
-                  />
+                  /> */}
                   {!fila.detalle && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
                   )}
@@ -949,10 +949,10 @@ export default function PlanificacionFormComponent() {
             </div>
             <div>
               <label className="block font-medium mb-2">Detalle del Proceso</label>
-              <DetalleProcesoComponent
+              {/* <DetalleProcesoComponent
                 file={fila.detalleProceso}
                 onFileChange={(file) => actualizarFila('detalleProceso', file)}
-              />
+              /> */}
               {!fila.detalleProceso && (
                 <span className="text-yellow-500 text-sm">Detalle del proceso no agregado.</span>
               )}
