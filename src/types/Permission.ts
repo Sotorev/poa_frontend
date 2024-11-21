@@ -9,6 +9,6 @@ export type Role =
   | 'Rector'
   | 'Vicerrector administrativo'
   | 'Secretaria General'
-  | 'Tesoreria'
   | 'Directora académica'
-  | 'Directora';
+  | 'Directora'
+  | 'Tesorería';

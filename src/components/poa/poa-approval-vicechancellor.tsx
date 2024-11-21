@@ -59,37 +59,37 @@ const allSections: Section[] = [
     name: "Datos de la facultad", 
     icon: Building2, 
     component: FacultadDataSection,
-    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
+    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector", "Tesorería"]
   },
   { 
     name: "Estructura de la facultad", 
     icon: LayoutDashboard, 
     component: FacultyStructureSection,
-    roles: ["Vicerrector académico", "Administrador", "Rector"]
+    roles: ["Vicerrector académico", "Administrador", "Rector", "Tesorería"]
   },
   { 
     name: "Equipo responsable POA", 
     icon: UserCog, 
     component: EquipoResponsableSectionComponent,
-    roles: ["Vicerrector académico", "Administrador", "Rector"]
+    roles: ["Vicerrector académico", "Administrador", "Rector", "Tesorería"]
   },
   { 
     name: "FODA", 
     icon: BarChart2, 
     component: FodaSection,
-    roles: ["Vicerrector académico", "Administrador", "Rector"]
+    roles: ["Vicerrector académico", "Administrador", "Rector", "Tesorería"]
   },
   { 
     name: "Eventos", 
     icon: ListTodo, 
     component: EventsViewerViceChancellorComponent,
-    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
+    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector", "Tesorería"]
   },
   { 
     name: "Reporte de costos de eventos del POA", 
     icon: Percent, 
     component: CostReport,
-    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
+    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector", "Tesorería"]
   },
   { 
     name: "Acciones", 

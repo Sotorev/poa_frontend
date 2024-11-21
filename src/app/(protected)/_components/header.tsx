@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
 		subItems: [
 			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: Settings },
 			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Formulador", "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: FileText },
-			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Rector"], icon: CheckSquare },
+			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Rector", "Tesorería"], icon: CheckSquare },
 		],
 	},
 	{
