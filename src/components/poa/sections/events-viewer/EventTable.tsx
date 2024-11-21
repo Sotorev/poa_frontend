@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CommentThread } from '../../components/columns/comment-thread';
+import { CommentThread } from '../../eventManagement/fields/comment-thread';
 import EventRow from './EventRow';
 import { PlanningEvent } from '@/types/interfaces';
 

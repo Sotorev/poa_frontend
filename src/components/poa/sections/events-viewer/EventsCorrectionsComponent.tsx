@@ -4,13 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from "@/components/ui/button";
 import { ChevronUp } from 'lucide-react';
-import { PlanningEvent, SectionProps, ApiEvent } from '@/types/interfaces';
+import { PlanningEvent, SectionProps as OriginalSectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { deleteEvent } from '@/services/apiService'; // Importar la función deleteEvent
+import { deleteEvent } from '@/services/apiService';
 
-// Importar el componente de acciones de corrección
-import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections';
+
+
+// Modificar SectionProps para incluir onEditEvent
+interface SectionProps extends OriginalSectionProps {
+  onEditEvent: (event: PlanningEvent) => void;
+}
 
 // Función para mapear datos de la API a PlanningEvent
 function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
@@ -44,7 +48,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
             .filter(f => f.financingSourceId !== 1)
             .reduce((sum, f) => sum + f.amount, 0),
         tipoCompra: apiEvent.purchaseType?.name || '',
-        detalle: apiEvent.costDetailDocumentPath || '',
+        detalle: apiEvent.costDetails?.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [],
         responsables: {
             principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
             ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
@@ -52,7 +56,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         },
         recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
         indicadorLogro: apiEvent.achievementIndicator,
-        detalleProceso: apiEvent.processDocumentPath || '',
+        detalleProceso: apiEvent.files?.map(file => ({ id: file.fileId, name: file.fileName })) || [],
         comentarioDecano: apiEvent.eventApprovals[0]?.comments || '', // Ajustado aquí
         propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
         fechaCreacion: apiEvent.createdAt,
@@ -85,7 +89,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 }
 
-const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId }) => {
+const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId, onEditEvent }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [eventsByStatus, setEventsByStatus] = useState<{
         revision: PlanningEvent[];
@@ -110,6 +114,9 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
                         'Authorization': `Bearer ${user?.token}`,
                     },
                 });
+                if (!response.ok) {
+                    throw new Error(`Error al obtener eventos: ${response.statusText}`);
+                }
                 const data: ApiEvent[] = await response.json();
                 const mappedEvents = data.map(event => mapApiEventToPlanningEvent(event));
 
@@ -133,10 +140,20 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
 
     // Definir handlers para editar y eliminar
     const handleEdit = (id: string) => {
-        // Implementar lógica de edición, por ejemplo, redirigir a una página de edición
-        console.log(`Editar evento con id: ${id}`);
-        // Ejemplo:
-        // navigate(`/events/edit/${id}`);
+        // Buscar el evento en los eventos cargados
+        const event =
+            eventsByStatus.revision.find(event => event.id === id) ||
+            eventsByStatus.aprobado.find(event => event.id === id) ||
+            eventsByStatus.rechazado.find(event => event.id === id) ||
+            eventsByStatus.correccion.find(event => event.id === id);
+
+        if (event) {
+            console.log(`Editing event:`, event);
+            onEditEvent(event);
+        } else {
+            console.error(`Event with id ${id} not found.`);
+            toast.error('Evento no encontrado.');
+        }
     };
 
     const handleDelete = async (id: string) => {
@@ -165,35 +182,37 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
                 <div className="p-4 bg-green-50 flex justify-between items-center">
                     <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
                     <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => { /* manejar minimización */ }}>
-                            <ChevronUp className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)}>
+                            <ChevronUp className={`h-4 w-4 transform ${isMinimized ? 'rotate-180' : 'rotate-0'} transition-transform duration-300`} />
                         </Button>
                     </div>
                 </div>
-                {/* Manejar minimización si se implementa */}
-                <div className="p-4 bg-white">
-                    <div className="container mx-auto space-y-8">
-                        <div>
-                            {events.length > 0 ? (
-                                <EventTable
-                                    events={events}
-                                    isPending={false}
-                                    showComments={true}
-                                    showActions={false}
-                                    showCorrectionsActions={showCorrectionsActions} // Activar o desactivar acciones de corrección
-                                    onEdit={showCorrectionsActions ? handleEdit : undefined} // Pasar handler de edición si aplica
-                                    onDelete={showCorrectionsActions ? handleDelete : undefined} // Pasar handler de eliminación si aplica
-                                    onApprove={() => {}}
-                                    onReject={() => {}}
-                                    onRequestCorrection={() => {}}
-                                    onRevert={() => {}}
-                                />
-                            ) : (
-                                <p>No hay eventos en este estado.</p>
-                            )}
+                {/* Manejar minimización */}
+                {!isMinimized && (
+                    <div className="p-4 bg-white">
+                        <div className="container mx-auto space-y-8">
+                            <div>
+                                {events.length > 0 ? (
+                                    <EventTable
+                                        events={events}
+                                        isPending={false}
+                                        showComments={true}
+                                        showActions={false}
+                                        showCorrectionsActions={showCorrectionsActions} // Activar o desactivar acciones de corrección
+                                        onEdit={showCorrectionsActions ? handleEdit : undefined} // Pasar handler de edición si aplica
+                                        onDelete={showCorrectionsActions ? handleDelete : undefined} // Pasar handler de eliminación si aplica
+                                        onApprove={() => {}}
+                                        onReject={() => {}}
+                                        onRequestCorrection={() => {}}
+                                        onRevert={() => {}}
+                                    />
+                                ) : (
+                                    <p>No hay eventos en este estado.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
