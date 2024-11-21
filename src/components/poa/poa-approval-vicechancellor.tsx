@@ -20,7 +20,7 @@ import { FacultadDataSection } from './sections/sections-facultad-data-section'
 import { FacultyStructureSection } from './sections/estructura-facultad-section'
 import { EquipoResponsableSectionComponent } from './sections/equipo-responsable-section'
 import { FodaSection } from './sections/foda-section'
-import EventsViewerViceChancellorComponent from './sections/events-viewer/events-viewer-vicechancellor'
+// import EventsViewerViceChancellorComponent from './sections/events-viewer/events-viewer-vicechancellor'
 import { CostReport } from './sections/cost-report'
 import { PoaActions } from './sections/poa-actions'
 import { useCurrentUser } from '@/hooks/use-current-user'
@@ -68,12 +68,12 @@ const allSections: Section[] = [
     component: FodaSection,
     roles: ["Vicerrector académico", "Administrador", "Rector"]
   },
-  { 
-    name: "Eventos", 
-    icon: ListTodo, 
-    component: EventsViewerViceChancellorComponent,
-    roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
-  },
+  // { 
+  //   name: "Eventos", 
+  //   icon: ListTodo, 
+  //   component: EventsViewerViceChancellorComponent,
+  //   roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
+  // },
   { 
     name: "Reporte de costos de eventos del POA", 
     icon: BarChart2, 

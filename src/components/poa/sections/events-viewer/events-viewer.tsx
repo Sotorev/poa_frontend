@@ -39,7 +39,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     aporteUMES: apiEvent.financings.find(f => f.financingSourceId === 1)?.amount || 0,
     aporteOtros: apiEvent.financings.filter(f => f.financingSourceId !== 1).reduce((sum, f) => sum + f.amount, 0),
     tipoCompra: apiEvent.purchaseType?.name || '',
-    detalle: apiEvent.costDetailDocumentPath || '', // Ajusta el nombre del campo según los datos reales
+    detalle: apiEvent.costDetails.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [], // Ajusta el nombre del campo según los datos reales
     responsables: {
       principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
       ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
@@ -47,7 +47,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     },
     recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
     indicadorLogro: apiEvent.achievementIndicator,
-    detalleProceso: apiEvent.processDocumentPath || '',
+    detalleProceso: [], // Ajusta según los datos reales
     comentarioDecano: '', // Ajusta según los datos reales
     propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
     fechaCreacion: apiEvent.createdAt,
