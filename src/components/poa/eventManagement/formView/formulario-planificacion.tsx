@@ -15,7 +15,7 @@ import { OdsSelector } from '../fields/ods-selector'
 import { ActividadProyectoSelector } from '../fields/actividad-proyecto-selector'
 import TipoDeCompraComponent from '../fields/tipo-de-compra'
 import { RecursosSelectorComponent } from '../fields/recursos-selector'
-import { DetalleComponent } from '../fields/detalle'
+import { EventCostDetail } from '../fields/detalle'
 import { DetalleProcesoComponent } from '../fields/detalle-proceso'
 import { AreaEstrategicaComponent } from '../fields/area-estrategica'
 import { EventoComponent } from '../fields/evento'
@@ -64,7 +64,6 @@ interface FilaPlanificacion extends FilaPlanificacionForm {
   id: string
   estado: 'planificado' | 'aprobado' | 'rechazado'
   comentarioDecano: string
-  detalleProceso: File | null
   fechas: DatePair[]
   fechaProyecto: DatePair
   entityId: number | null
@@ -89,7 +88,7 @@ const getColumnName = (field: string): string => {
     aporteUMES: "Aporte UMES",
     aporteOtros: "Aporte Otros",
     tipoCompra: "Tipo de Compra",
-    detalle: "Detalle de Costos",
+    costDetails: "Detalle de Costos",
     campusId: "Campus",
     responsablePlanificacion: "Responsable de Planificación",
     responsableEjecucion: "Responsable de Ejecución",
@@ -97,7 +96,7 @@ const getColumnName = (field: string): string => {
     recursos: "Recursos",
     indicadorLogro: "Indicador de Logro",
     fechas: "Fechas",
-    detalleProceso: "Detalle del Proceso",
+    files: "Detalle del Proceso",
     comentarioDecano: "Comentario Decano",
     processDocument: "Documento de Proceso",
   }
@@ -123,13 +122,13 @@ export default function PlanificacionFormComponent() {
     aporteUMES: [],
     aporteOtros: [],
     tipoCompra: "",
-    detalle: null,
+    costDetailDocuments: null,
     responsablePlanificacion: '',
     responsableEjecucion: '',
     responsableSeguimiento: '',
     recursos: [],
     indicadorLogro: '',
-    detalleProceso: null,
+    processDocuments: null,
     comentarioDecano: '',
     fechas: [{ start: new Date(), end: new Date() }],
     fechaProyecto: { start: new Date(), end: new Date() },
@@ -386,13 +385,13 @@ export default function PlanificacionFormComponent() {
         aporteUMES: aporteUMES,
         aporteOtros: aporteOtros,
         tipoCompra: tipoCompraId,
-        detalle: null, // Inicialmente nulo; se actualizará más adelante
+        costDetailDocuments: null, // Inicialmente nulo; se actualizará más adelante
         responsablePlanificacion: event.responsables.principal,
         responsableEjecucion: event.responsables.ejecucion,
         responsableSeguimiento: event.responsables.seguimiento,
         recursos: recursosIds,
         indicadorLogro: event.indicadorLogro,
-        detalleProceso: null, // Inicialmente nulo; se actualizará más adelante
+        processDocuments: null, // Inicialmente nulo; se actualizará más adelante
         fechas: fechas,
         fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
         campusId: campusId,
@@ -414,26 +413,43 @@ export default function PlanificacionFormComponent() {
         return;
       }
 
-      const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;
-      const urlDetalle = `${baseUrl}/api/fullevent/downloadCostDetailDocument/${event.id}`;
+      // Download cost detail documents
+      const costDetailDownloads = event.detalle.map(async (doc) => {
+        const url = `${baseUrl}/api/fullEvent/downloadEventCostDetailDocumentById/${doc.id}`;
+        return descargarArchivo(url, doc.name);
+      });
 
-      // Descargar los archivos
-      const [archivoDetalleProceso, archivoDetalle] = await Promise.all([
-        descargarArchivo(urlDetalleProceso, `detalle-proceso-${event.id}`),
-        descargarArchivo(urlDetalle, `detalle-${event.id}`)
-      ]);
+      // Download process detail documents
+      const processDetailDownloads = event.detalleProceso.map(async (doc) => {
+        const url = `${baseUrl}/api/fullEvent/downloadEventFileById/${doc.id}`;
+        return descargarArchivo(url, doc.name);
+      });
 
-      // Actualizar la fila con los archivos descargados
-      setFila(prevFila => ({
-        ...prevFila,
-        detalleProceso: archivoDetalleProceso || null,
-        detalle: archivoDetalle || null,
-      }));
+      try {
+        const [costDetailFiles, processFiles] = await Promise.all([
+          Promise.all(costDetailDownloads),
+          Promise.all(processDetailDownloads)
+        ]);
 
-      if (archivoDetalleProceso || archivoDetalle) {
-        toast.success("Archivos cargados correctamente.");
-      } else {
-        toast.warn("No se pudieron cargar algunos archivos.");
+        // Filter out any null values from failed downloads
+        const validCostDetailFiles = costDetailFiles.filter((file): file is File => file !== null);
+        const validProcessFiles = processFiles.filter((file): file is File => file !== null);
+
+        // Update the fila with the downloaded files
+        setFila(prevFila => ({
+          ...prevFila,
+          processDocuments: validProcessFiles,
+          costDetailDocuments: validCostDetailFiles,
+        }));
+
+        if (validCostDetailFiles.length > 0 || validProcessFiles.length > 0) {
+          toast.success("Archivos cargados correctamente.");
+        } else {
+          toast.warn("No se pudieron cargar algunos archivos.");
+        }
+      } catch (error) {
+        console.error("Error al descargar los archivos:", error);
+        toast.error("Error al cargar los archivos del evento.");
       }
 
     } catch (error) {
@@ -555,7 +571,7 @@ export default function PlanificacionFormComponent() {
       return
     }
 
-    if (!fila.detalle) {
+    if (!fila.costDetailDocuments) {
       setIsConfirmModalOpen(true)
       return
     }
@@ -641,12 +657,16 @@ export default function PlanificacionFormComponent() {
       const formData = new FormData()
       formData.append('data', JSON.stringify(eventData))
 
-      if (fila.detalle) {
-        formData.append('costDetailDocuments', fila.detalle)
+      if (fila.costDetailDocuments) {
+        fila.costDetailDocuments.forEach((file: File) => {
+          formData.append('costDetailDocuments', file);
+        });
       }
 
-      if (fila.detalleProceso) {
-        formData.append('processDocument', fila.detalleProceso) // Enviamos el archivo como 'processDocument'
+      if (fila.processDocuments) {
+        fila.processDocuments.forEach((file: File) => {
+          formData.append('processDocuments', file);
+        });
       }
 
       const response = await fetch(url, {
@@ -874,17 +894,17 @@ export default function PlanificacionFormComponent() {
                 </div>
                 <div>
                   <label className="block font-medium mb-2">Detalle de Costos</label>
-                  {/* <DetalleComponent
-                    file={fila.detalle}
-                    onFileChange={(file) => actualizarFila('detalle', file)}
-                  /> */}
-                  {!fila.detalle && (
+                  <EventCostDetail
+                    files={fila.costDetailDocuments as File[]}
+                    onFilesChange={(files) => actualizarFila('costDetailDocuments', files)}
+                  />
+                  {!fila.costDetailDocuments && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
                   )}
-                  {filaErrors?.detalle && (
+                  {filaErrors?.costDetailDocuments && (
                     <span className="text-red-500 text-sm">{filaErrors.detalle}</span>
                   )}
-                  {fila.entityId && fila.detalle && (
+                  {fila.entityId && fila.costDetailDocuments && (
                     <div className="flex items-center space-x-2 mt-2">
                       <span
                         className="cursor-pointer text-blue-600 hover:underline"
@@ -948,18 +968,18 @@ export default function PlanificacionFormComponent() {
               )}
             </div>
             <div>
-              <label className="block font-medium mb-2">Detalle del Proceso</label>
-              {/* <DetalleProcesoComponent
-                file={fila.detalleProceso}
-                onFileChange={(file) => actualizarFila('detalleProceso', file)}
-              /> */}
-              {!fila.detalleProceso && (
+                <label className="block font-medium mb-2">Detalle del Proceso</label>
+                <DetalleProcesoComponent
+                files={fila.processDocuments as File[]}
+                onFilesChange={(files: File[]) => actualizarFila('processDocuments', files)}
+                />
+              {!fila.processDocuments && (
                 <span className="text-yellow-500 text-sm">Detalle del proceso no agregado.</span>
               )}
-              {filaErrors?.detalleProceso && (
+              {filaErrors?.processDocuments && (
                 <span className="text-red-500 text-sm">{filaErrors.detalleProceso}</span>
               )}
-              {fila.entityId && fila.detalleProceso && (
+              {fila.entityId && fila.processDocuments && (
                 <div className="flex items-center space-x-2 mt-2">
                   <span
                     className="cursor-pointer text-blue-600 hover:underline"
