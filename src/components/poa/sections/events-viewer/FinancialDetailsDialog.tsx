@@ -75,8 +75,8 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
           <span className="sr-only">Cerrar</span>
         </button>
         
-        <ScrollArea className="h-[calc(90vh-4rem)] px-4 py-6">
-          <div className="space-y-6">
+        <ScrollArea className="h-[calc(90vh-4rem)] px-4 py-0 pb-4">
+          <div className="space-y-2">
             <Card className="border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-semibold">Aporte UMES</CardTitle>
@@ -132,10 +132,11 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
             <Card className="border">
               <CardContent className="pt-4">
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">Tipo de Compra</h3>
-                    <p className="text-sm text-muted-foreground">{event.tipoCompra}</p>
-                  </div>
+                    <div>
+                    <p className="text-lg font-semibold mb-1">
+                      Tipo de Compra: <span className="text-md text-[#014A2D]">{event.tipoCompra}</span>
+                    </p>
+                    </div>
                   
                   <div>
                     <h3 className="text-lg font-semibold mb-1">Detalle de Presupuesto</h3>
