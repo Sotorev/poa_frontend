@@ -352,17 +352,22 @@ export default function PlanificacionFormComponent() {
       const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
       const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
 
-      const aporteUMES = event.aporteUMES ? [{
-        financingSourceId: 1, // Asumiendo que el ID 1 es UMES
-        percentage: (event.aporteUMES / event.costoTotal) * 100,
-        amount: event.aporteUMES,
-      }] : [];
+      // Cálculo de aportes financieros
+      const aporteUMES = Array.isArray(event.aporteUMES) ? event.aporteUMES.map(aporte => ({
+        financingSourceId: aporte.financingSourceId,
+        percentage: aporte.percentage,
+        amount: aporte.amount,
+      })) : [];
 
-      const aporteOtros = event.aporteOtros ? [{
-        financingSourceId: 2, // Ajusta este ID según corresponda
-        percentage: (event.aporteOtros / event.costoTotal) * 100,
-        amount: event.aporteOtros,
-      }] : [];
+      console.log("Aporte UMES:", aporteUMES);
+
+      const aporteOtros = Array.isArray(event.aporteOtros) ? event.aporteOtros.map(aporte => ({
+        financingSourceId: aporte.financingSourceId,
+        percentage: aporte.percentage,
+        amount: aporte.amount,
+      })) : [];
+
+      console.log("Aporte Otros:", aporteOtros);
 
       const fechas = event.fechas.map(interval => ({
         start: new Date(interval.inicio),

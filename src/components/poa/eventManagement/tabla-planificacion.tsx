@@ -869,17 +869,21 @@ export function TablaPlanificacionComponent() {
       const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
 
       // Cálculo de aportes financieros
-      const aporteUMES = event.aporteUMES ? [{
-        financingSourceId: 1, // ID fijo para UMES
-        percentage: (event.aporteUMES / event.costoTotal) * 100,
-        amount: event.aporteUMES,
-      }] : [];
+      const aporteUMES = Array.isArray(event.aporteUMES) ? event.aporteUMES.map(aporte => ({
+        financingSourceId: aporte.financingSourceId,
+        percentage: aporte.percentage,
+        amount: aporte.amount,
+      })) : [];
 
-      const aporteOtros = event.aporteOtros ? [{
-        financingSourceId: 2, // ID fijo para otros aportes
-        percentage: (event.aporteOtros / event.costoTotal) * 100,
-        amount: event.aporteOtros,
-      }] : [];
+      console.log("Aporte UMES:", aporteUMES);
+
+      const aporteOtros = Array.isArray(event.aporteOtros) ? event.aporteOtros.map(aporte => ({
+        financingSourceId: aporte.financingSourceId,
+        percentage: aporte.percentage,
+        amount: aporte.amount,
+      })) : [];
+
+      console.log("Aporte Otros:", aporteOtros);
 
       // Formateo de fechas
       const fechas = event.fechas.map(interval => ({

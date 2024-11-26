@@ -36,8 +36,16 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
       fin: date.endDate
     })),
     costoTotal: apiEvent.totalCost,
-    aporteUMES: apiEvent.financings.find(f => f.financingSourceId === 1)?.amount || 0,
-    aporteOtros: apiEvent.financings.filter(f => f.financingSourceId !== 1).reduce((sum, f) => sum + f.amount, 0),
+    aporteUMES: {
+      financingSourceId: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.financingSourceId || 0,
+      percentage: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.percentage || 0,
+      amount: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.amount || 0
+    },
+    aporteOtros: {
+      financingSourceId: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.financingSourceId || 0,
+      percentage: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.percentage || 0,
+      amount: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.amount || 0
+    },
     tipoCompra: apiEvent.purchaseType?.name || '',
     detalle: apiEvent.costDetails.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [], // Ajusta el nombre del campo según los datos reales
     responsables: {

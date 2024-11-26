@@ -264,9 +264,17 @@ export interface PlanningEvent {
   /** Costo total del evento */
   costoTotal: number;
   /** Aporte económico de UMES */
-  aporteUMES: number;
+  aporteUMES: {
+    "financingSourceId": number,
+    "percentage": number,
+    "amount": number
+  };
   /** Aportes económicos de otras fuentes */
-  aporteOtros: number;
+  aporteOtros: {
+    "financingSourceId": number,
+    "percentage": number,
+    "amount": number
+  };
   /** Clasificación del tipo de compra */
   tipoCompra: string;
   /** Detalles adicionales del evento */
