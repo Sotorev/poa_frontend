@@ -1,80 +1,78 @@
-// detalle-proceso.tsx
-
 'use client'
 
 import * as React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, X } from "lucide-react"
-import { Input } from "@/components/ui/input" // Import Input component
-
-interface DetalleProcesoFileWithStatus {
-  id: number;
-  file: File;
-  isEdited: boolean;
-  originalName: string;
-}
+import { Input } from "@/components/ui/input"
 
 interface DetalleProcesoProps {
-  files: DetalleProcesoFileWithStatus[];
-  onFilesChange: (files: DetalleProcesoFileWithStatus[]) => void;
-  onDelete: (fileId: number) => void; // Nueva prop
+  files: File[]
+  onFilesChange: (files: File[]) => void
 }
 
-export function DetalleProcesoComponent({ files, onFilesChange, onDelete }: DetalleProcesoProps) {
-  const [localFiles, setLocalFiles] = useState<DetalleProcesoFileWithStatus[]>(files || []);
+interface FileWithId {
+  id: number
+  file: File
+}
 
-  // Add useEffect to update localFiles when files prop changes
+export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProcesoProps) {
+  const [localFiles, setLocalFiles] = useState<FileWithId[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Helper function to generate unique IDs
+  const generateUniqueId = () => {
+    return Date.now() + Math.random() * 1000
+  }
+
   useEffect(() => {
-    setLocalFiles(files || []);
-  }, [files]);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+    if (!files) return
+    
+    const filesWithId = files.map((file) => ({
+      id: generateUniqueId(),
+      file,
+    }))
+    setLocalFiles(filesWithId)
+  }, [files])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const newFiles = Array.from(event.target.files).map((file) => ({
-        id: Date.now(),
+      const newFiles = Array.from(event.target.files).map(file => ({
+        id: generateUniqueId(),
         file,
-        isEdited: true,
-        originalName: file.name,
-      }));
-      const updatedFiles = [...localFiles, ...newFiles];
-      setLocalFiles(updatedFiles);
-      onFilesChange(updatedFiles);
+      }))
+      const updatedFiles = [...localFiles, ...newFiles]
+      setLocalFiles(updatedFiles)
+      onFilesChange(updatedFiles.map(f => f.file))
     }
-  };
+  }
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-  };
+    event.preventDefault()
+  }
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
+    event.preventDefault()
     if (event.dataTransfer.files) {
-      const newFiles = Array.from(event.dataTransfer.files).map((file) => ({
-        id: Date.now(),
+      const newFiles = Array.from(event.dataTransfer.files).map(file => ({
+        id: generateUniqueId(),
         file,
-        isEdited: true,
-        originalName: file.name,
-      }));
-      const updatedFiles = [...localFiles, ...newFiles];
-      setLocalFiles(updatedFiles);
-      onFilesChange(updatedFiles);
+      }))
+      const updatedFiles = [...localFiles, ...newFiles]
+      setLocalFiles(updatedFiles)
+      onFilesChange(updatedFiles.map(f => f.file))
     }
-  };
+  }
 
   const handleRemoveFile = async (id: number) => {
     try {
-      await onDelete(id);
-      const updatedFiles = localFiles.filter(file => file.id !== id);
-      setLocalFiles(updatedFiles);
-      onFilesChange(updatedFiles);
-      // Después de eliminar exitosamente: toast.success('Archivo eliminado correctamente');
+      const updatedFiles = localFiles.filter(f => f.id !== id)
+      setLocalFiles(updatedFiles)
+      onFilesChange(updatedFiles.map(f => f.file))
     } catch (error) {
-      // En caso de error: toast.error('Error al eliminar el archivo');
+      console.error('Error removing file:', error)
     }
-  };
+  }
 
   return (
     <div className="space-y-4">
@@ -95,7 +93,7 @@ export function DetalleProcesoComponent({ files, onFilesChange, onDelete }: Deta
                 id="file-upload-proceso"
                 name="file-upload-proceso"
                 type="file"
-                className="sr-only" // Hide the input
+                className="sr-only"
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 accept=".pdf,.doc,.docx,.txt"
@@ -109,9 +107,9 @@ export function DetalleProcesoComponent({ files, onFilesChange, onDelete }: Deta
       </div>
       {localFiles.length > 0 && (
         <div className="space-y-2">
-          {localFiles.map(({ id, originalName }) => (
+          {localFiles.map(({ id, file }) => (
             <div key={id} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-              <span className="text-sm text-gray-600">{originalName}</span>
+              <span className="text-sm text-gray-600">{file.name}</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -125,5 +123,5 @@ export function DetalleProcesoComponent({ files, onFilesChange, onDelete }: Deta
         </div>
       )}
     </div>
-  );
+  )
 }

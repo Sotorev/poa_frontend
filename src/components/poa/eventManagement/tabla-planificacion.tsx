@@ -21,7 +21,7 @@ import { AccionesComponent } from './fields/acciones';
 import { ActividadProyectoSelector } from './fields/actividad-proyecto-selector';
 import { AreaEstrategicaComponent } from './fields/area-estrategica';
 import { CommentThread } from './fields/comment-thread';
-import { DetalleComponent } from "./fields/detalle";
+import { EventCostDetail } from "./fields/detalle";
 import { DetalleProcesoComponent } from './fields/detalle-proceso';
 import { EstadoComponent } from './fields/estado';
 import { EstrategiasSelectorComponent } from './fields/estrategias-selector';
@@ -64,7 +64,7 @@ interface DetalleProcesoFileWithStatus {
   id: number;
   file: File;
   isEdited: boolean;
-  originalName: string;  
+  originalName: string;
 }
 
 // New interface for detalle
@@ -72,19 +72,19 @@ interface DetalleFileWithStatus {
   id: number;
   file: File;
   isEdited: boolean;
-  originalName: string;  
+  originalName: string;
 }
 
 // Updated FilaPlanificacion interface
 interface FilaPlanificacion extends FilaPlanificacionForm {
+  id: string; // Added this property
   estado: 'planificado' | 'aprobado' | 'rechazado';
-  entityId: number | null;
-  processDocument?: File[];
-  costDetailDocument?: File;
+  comentarioDecano: string; // Added this property
   fechas: DatePair[]; // Para actividades
   fechaProyecto: DatePair; // Para proyectos
+  entityId: number | null;
+  processDocument?: File[];
   detalleProceso?: DetalleProcesoFileWithStatus[];
-  detalle?: DetalleFileWithStatus[] | null;
 }
 
 interface FilaError {
@@ -360,17 +360,18 @@ export function TablaPlanificacionComponent() {
       aporteUMES: [],
       aporteOtros: [],
       tipoCompra: '',
-      detalle: null,
+      costDetailDocuments: null,
       responsablePlanificacion: '',
       responsableEjecucion: '',
       responsableSeguimiento: '',
       recursos: [],
       indicadorLogro: '',
-      detalleProceso: undefined,
+      processDocuments: null,
       fechas: [{ start: new Date(), end: new Date() }],
       fechaProyecto: { start: new Date(), end: new Date() },
       campusId: '',
       entityId: null,
+      comentarioDecano: '', // Added this property
     };
     setFilas([...filas, nuevaFila]);
     toast.info("Nueva fila agregada.");
@@ -557,7 +558,7 @@ export function TablaPlanificacionComponent() {
       return;
     }
 
-    if (!fila.detalle) {
+    if (!fila.costDetailDocuments) {
       setPendingSendId(id);
       setIsConfirmModalOpen(true);
       setCurrentRowId(id);
@@ -578,9 +579,9 @@ export function TablaPlanificacionComponent() {
     if (!fila.entityId) {
       throw new Error("No se puede actualizar un evento sin entityId");
     }
-  
+    console.log("Actualizando evento:", fila);
     const url = `${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/${fila.entityId}`;
-    
+
     // Construcción del objeto eventData con todos los campos necesarios
     const eventData = {
       name: fila.evento.trim(),
@@ -598,13 +599,13 @@ export function TablaPlanificacionComponent() {
       // Manejo de fechas según tipo de evento
       dates: fila.tipoEvento === 'actividad'
         ? fila.fechas.map((pair) => ({
-            startDate: pair.start.toISOString().split('T')[0],
-            endDate: pair.end.toISOString().split('T')[0],
-          }))
+          startDate: pair.start.toISOString().split('T')[0],
+          endDate: pair.end.toISOString().split('T')[0],
+        }))
         : [{
-            startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
-            endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
-          }],
+          startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+          endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+        }],
       // Combinación de financiamientos UMES y otros
       financings: [
         ...fila.aporteUMES.map(aporte => ({
@@ -631,34 +632,26 @@ export function TablaPlanificacionComponent() {
       })),
       userId: userId,
     };
-  
+
     // Preparación del FormData para envío de archivos
     const formData = new FormData();
     formData.append('data', JSON.stringify(eventData));
-  
+    console.log(fila.costDetailDocuments);
+    console.log(fila.processDocument);
     // Filtrar y agregar solo los archivos editados de 'detalle'
-    if (fila.detalle) {
-      const editedFiles = fila.detalle.filter((fileWithStatus: DetalleFileWithStatus) => fileWithStatus.isEdited);
-      editedFiles.forEach(fileWithStatus => {
-        formData.append('costDetailDocuments', fileWithStatus.file);
+    if (fila.costDetailDocuments) {
+      fila.costDetailDocuments.forEach((file: File) => {
+        formData.append('costDetailDocuments', file);
       });
     }
-  
+
     // Filtrar y agregar solo los archivos editados de 'processDocument'
-    if (fila.processDocument) {
-      const processFiles = fila.processDocument ? fila.processDocument.map((file, index) => ({
-        id: index,
-        file,
-        isEdited: true,
-        originalName: file.name
-      })) : [];
-      processFiles
-        .filter(file => file.isEdited)
-        .forEach((file, index) => {
-          formData.append(`processDocument[${index}]`, file.file);
-        });
+    if (fila.processDocuments) {
+      fila.processDocuments.forEach((file: File) => {
+        formData.append('processDocuments', file);
+      });
     }
-  
+
     // Envío de la petición PUT
     const response = await fetch(url, {
       method: 'PUT',
@@ -667,23 +660,23 @@ export function TablaPlanificacionComponent() {
       },
       body: formData,
     });
-  
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(`Error al actualizar la actividad: ${errorData.message || response.statusText}`);
     }
-  
+
     return await response.json();
   };
 
-/**
- * @description Crea un nuevo evento en el sistema
- * @param {FilaPlanificacion} fila - Objeto que contiene los datos del nuevo evento
- * @returns {Promise<any>} Respuesta del servidor con los datos del evento creado
- */
+  /**
+   * @description Crea un nuevo evento en el sistema
+   * @param {FilaPlanificacion} fila - Objeto que contiene los datos del nuevo evento
+   * @returns {Promise<any>} Respuesta del servidor con los datos del evento creado
+   */
   const crearEvento = async (fila: FilaPlanificacion) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`;
-    
+
     // Construcción del objeto eventData (similar a actualizarEvento)
     const eventData = {
       name: fila.evento.trim(),
@@ -700,13 +693,13 @@ export function TablaPlanificacionComponent() {
       totalCost: fila.costoTotal,
       dates: fila.tipoEvento === 'actividad'
         ? fila.fechas.map((pair) => ({
-            startDate: pair.start.toISOString().split('T')[0],
-            endDate: pair.end.toISOString().split('T')[0],
-          }))
+          startDate: pair.start.toISOString().split('T')[0],
+          endDate: pair.end.toISOString().split('T')[0],
+        }))
         : [{
-            startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
-            endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
-          }],
+          startDate: fila.fechaProyecto.start.toISOString().split('T')[0],
+          endDate: fila.fechaProyecto.end.toISOString().split('T')[0],
+        }],
       financings: [
         ...fila.aporteUMES.map(aporte => ({
           financingSourceId: aporte.financingSourceId,
@@ -735,8 +728,8 @@ export function TablaPlanificacionComponent() {
     const formData = new FormData();
     formData.append('data', JSON.stringify(eventData));
 
-    if (fila.detalle) {
-      fila.detalle.forEach(file => {
+    if (fila.costDetailDocuments) {
+      fila.costDetailDocuments.forEach(file => {
         formData.append('costDetailDocuments', file.file);
       });
     }
@@ -760,11 +753,11 @@ export function TablaPlanificacionComponent() {
     return await response.json();
   };
 
-/**
- * @description Coordina el envío de datos al backend, determinando si se debe crear o actualizar
- * @param {FilaPlanificacion} fila - Objeto con los datos a enviar
- * @throws {Error} Si la URL de la API no está definida
- */
+  /**
+   * @description Coordina el envío de datos al backend, determinando si se debe crear o actualizar
+   * @param {FilaPlanificacion} fila - Objeto con los datos a enviar
+   * @throws {Error} Si la URL de la API no está definida
+   */
   const enviarAlBackend = async (fila: FilaPlanificacion) => {
     try {
       if (!process.env.NEXT_PUBLIC_API_URL) {
@@ -774,7 +767,7 @@ export function TablaPlanificacionComponent() {
       console.log('Enviando datos:', fila);
 
       // Determina si crear o actualizar basado en la existencia de entityId
-      const result = fila.entityId 
+      const result = fila.entityId
         ? await actualizarEvento(fila)
         : await crearEvento(fila);
 
@@ -783,10 +776,10 @@ export function TablaPlanificacionComponent() {
         prevFilas.map(filaItem =>
           filaItem.id === fila.id
             ? {
-                ...filaItem,
-                entityId: result.eventId || fila.entityId,
-                estado: 'aprobado',
-              }
+              ...filaItem,
+              entityId: result.eventId || fila.entityId,
+              estado: 'aprobado',
+            }
             : filaItem
         )
       );
@@ -799,7 +792,7 @@ export function TablaPlanificacionComponent() {
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
-  
+
 
   const confirmarEnvioSinDetalle = async () => {
     if (!pendingSendId) return;
@@ -838,9 +831,8 @@ export function TablaPlanificacionComponent() {
  * 6. Descarga y vinculación de archivos adjuntos
  * 7. Verificación de la carga de archivos descargados
  */
-const handleEditEvent = async (event: PlanningEvent) => {
+  const handleEditEvent = async (event: PlanningEvent) => {
     try {
-
       // Mapeo de área estratégica
       const areaEstrategicaObj = strategicAreas.find(area => area.name === event.areaEstrategica);
       const areaEstrategicaId = areaEstrategicaObj ? areaEstrategicaObj.name : '';
@@ -911,17 +903,18 @@ const handleEditEvent = async (event: PlanningEvent) => {
         aporteUMES: aporteUMES,
         aporteOtros: aporteOtros,
         tipoCompra: tipoCompraId,
-        detalle: null, // Inicialmente nulo; se actualizará más adelante
+        costDetailDocuments: null, // Inicialmente nulo; se actualizará más adelante
         responsablePlanificacion: event.responsables.principal,
         responsableEjecucion: event.responsables.ejecucion,
         responsableSeguimiento: event.responsables.seguimiento,
         recursos: recursosIds,
         indicadorLogro: event.indicadorLogro,
-        detalleProceso: undefined, // Inicialmente nulo; se actualizará más adelante
+        processDocuments: null, // Inicialmente nulo; se actualizará más adelante
         fechas: fechas,
         fechaProyecto: fechas[0], // Asumiendo que el primer intervalo es para proyectos
         campusId: campusId,
         entityId: Number(event.id),
+        comentarioDecano: '', // Added this property
       };
 
       // // Actualización del estado con la nueva fila
@@ -931,216 +924,85 @@ const handleEditEvent = async (event: PlanningEvent) => {
       // Actualización de estados de deshabilitación
       setIsEstrategiasDisabled(!nuevaFila.objetivoEstrategico);
       setIsIntervencionesDisabled(nuevaFila.estrategias.length === 0);
-      
+
       // Descarga y vinculación de archivos adjuntos
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!baseUrl) {
         console.error("URL de la API no definida.");
         return;
       }
-      
-      // URLs para descarga de archivos
-      const urlDetalleProceso = `${baseUrl}/api/fullevent/downloadProcessDocument/${event.id}`;  // Note the endpoint may need to be adjusted for multiple files
-      const urlDetalle = `${baseUrl}/api/fullevent/downloadCostDetailDocument/${event.id}`;
-      
-      // Función para descargar múltiples archivos
-      const descargarArchivos = async (url: string, nombres: string[]) => {
-        return Promise.all(
-          nombres.map(nombre => descargarArchivo(url, nombre))
-        );
-      };
-      
-      // Obtener nombres de archivos (ya son arrays de strings)
-      console.log("Detalle de proceso:", event.detalleProceso);
-      const nombresDetalleProceso = event.detalleProceso?.length > 0 
-          ? event.detalleProceso.map(item => typeof item === 'string' ? item : item.name)
-          : [`detalle-proceso-${event.id}`];
-      
-      const nombresDetalle = event.detalle?.length > 0
-        ? event.detalle.map(item => typeof item === 'string' ? item : item.name)
-        : [`detalle-${event.id}`];
 
-      // obtener ids de archivos
-      const idsDetalleProceso = event.detalleProceso?.length > 0 
-          ? event.detalleProceso.map(item => typeof item === 'string' ? 0 : item.id)
-          : [0];
+      // Download cost detail documents
+      const costDetailDownloads = event.detalle.map(async (doc) => {
+        const url = `${baseUrl}/api/fullEvent/downloadEventCostDetailDocumentById/${doc.id}`;
+        return descargarArchivo(url, doc.name);
+      });
 
-      console.log("Detalle de proceso con ids:", idsDetalleProceso);
+      // Download process detail documents
+      const processDetailDownloads = event.detalleProceso.map(async (doc) => {
+        const url = `${baseUrl}/api/fullEvent/downloadEventFileById/${doc.id}`;
+        return descargarArchivo(url, doc.name);
+      });
 
-      const idsDetalle = event.detalle?.length > 0
-        ? event.detalle.map(item => typeof item === 'string' ? 0 : item.id)
-        : [0];
-      
-      // Descarga paralela de todos los archivos
-      const [archivosDetalleProceso, archivosDetalle] = await Promise.all([
-        descargarArchivos(urlDetalleProceso, nombresDetalleProceso),
-        descargarArchivos(urlDetalle, nombresDetalle),
-      ]);
-      
-      // Verificación de la carga de archivos descargados
-      if (archivosDetalleProceso.length === nombresDetalleProceso.length && archivosDetalle.length === nombresDetalle.length) {
-        console.log("Todos los archivos descargados correctamente:", archivosDetalleProceso, archivosDetalle);
-      } else {
-        console.warn("Algunos archivos no se descargaron correctamente.");
+      try {
+        const [costDetailFiles, processFiles] = await Promise.all([
+          Promise.all(costDetailDownloads),
+          Promise.all(processDetailDownloads)
+        ]);
+
+ 
+        // Filter out any null values from failed downloads
+        const validCostDetailFiles = costDetailFiles.filter((file): file is File => file !== null);
+        const validProcessFiles = processFiles.filter((file): file is File => file !== null);
+
+        console.log("Cost detail files:", validCostDetailFiles);
+        console.log("Process files:", validProcessFiles);
+        // Update the fila with the downloaded files
+        updateEditingEventCostDetails(nuevaFila.id, validCostDetailFiles);
+        updateEditingEventProcessDocuments(nuevaFila.id, validProcessFiles);
+
+        if (validCostDetailFiles.length > 0 || validProcessFiles.length > 0) {
+          toast.success("Archivos cargados correctamente.");
+        } else {
+          toast.warn("No se pudieron cargar algunos archivos.");
+        }
+      } catch (error) {
+        console.error("Error al descargar los archivos:", error);
+        toast.error("Error al cargar los archivos del evento.");
       }
-      
-      // Convert downloaded files to their respective types
-      const convertToDetalleProcesoWithStatus = (
-        files: File[], 
-        originalNames: string[],
-        ids: number[]
-      ): DetalleProcesoFileWithStatus[] => {
-        return files.map((file, index) => ({
-          id: ids[index],
-          file,
-          isEdited: false,
-          originalName: originalNames[index]
-        }));
-      };
-      
-      const convertToDetalleWithStatus = (
-        files: File[], 
-        originalNames: string[],
-        ids: number[]
-      ): DetalleFileWithStatus[] => {
-        return files.map((file, index) => ({
-          id: ids[index],
-          file,
-          isEdited: false,
-          originalName: originalNames[index]
-        }));
-      };
-      
-      // Convert to specific types
-      const detalleProcesoWithStatus = convertToDetalleProcesoWithStatus(
-        archivosDetalleProceso.filter(file => file !== null) as File[],
-        nombresDetalleProceso,
-        idsDetalleProceso
-      );
 
-      console.log("Detalle de proceso con status:", detalleProcesoWithStatus);
-      
-      const detalleWithStatus = convertToDetalleWithStatus(
-        archivosDetalle.filter(file => file !== null) as File[],
-        nombresDetalle,
-        idsDetalle
-      );
-
-      console.log("Detalle con status:", detalleWithStatus);
-
-      // Actualización final con archivos descargados
-      setFilas(prevFilas =>
-        prevFilas.map(fila => {
-          if (fila.id === nuevaFila.id) {
-            return {
-              ...fila,
-              detalleProceso: detalleProcesoWithStatus,
-              detalle: detalleWithStatus,
-            };
-          }
-          return fila;
-        })
-      );
-      
-      // Notificación del resultado de la carga de archivos
-      if (archivosDetalleProceso.length > 0 || archivosDetalle.length > 0) {
-        toast.success("Archivos cargados correctamente.");
-      } else {
-        toast.warn("No se pudieron cargar algunos archivos.");
-      }
 
     } catch (error) {
       console.error("Error en handleEditEvent:", error);
       toast.error("Ocurrió un error al editar el evento.");
     }
-};
+  };
 
-// Update file edit status using document ID
-const updateFileEditStatus = (
-  filaId: string,
-  fileType: 'detalleProceso' | 'detalle',
-  documentId: number
-) => {
-  setFilas(prevFilas =>
-    prevFilas.map(fila => {
-      if (fila.id === filaId && fila[fileType]) {
-        const updatedFiles = fila[fileType]!.map(file => {
-          if (file.id === documentId) {
-            return {
-              ...file,
-              isEdited: true
-            };
-          }
-          return file;
-        });
-        return {
-          ...fila,
-          [fileType]: updatedFiles
-        };
-      }
-      return fila;
-    })
-  );
-};
-
-const actualizarDetalleFiles = (id: string, files: DetalleFileWithStatus[]) => {
-  setFilas(prevFilas =>
-    prevFilas.map(fila => {
-      if (fila.id === id) {
-        return { ...fila, detalle: files }
-      }
-      return fila
-    })
-  )
-}
-
-// Function to update 'detalleProceso' files
-const actualizarDetalleProcesoFiles = (id: string, files: DetalleProcesoFileWithStatus[]) => {
-  setFilas(prevFilas =>
-    prevFilas.map(fila => {
-      if (fila.id === id) {
-        return { ...fila, detalleProceso: files };
-      }
-      return fila;
-    })
-  );
-};
-
-const handleDeleteCostDetail = async (costDetailId: number) => {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/costDetailDocument/${costDetailId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${user?.token}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Error al borrar el detalle de costos.');
-    }
-    // Notificación de éxito: toast.success('Detalle de costos eliminado exitosamente.');
-  } catch (error) {
-    console.error(error);
-    // Notificación de error: toast.error('No se pudo eliminar el detalle de costos.');
+  const updateEditingEventCostDetails = (id: string, files: File[]) => {
+    console.log("Editing event id", id);
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, costDetailDocuments: files.map(file => file) };
+        }
+        return fila;
+      })
+    );
   }
-};
 
-const handleDeleteEventFile = async (fileId: number) => {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/eventFile/${fileId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${user?.token}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Error al borrar el archivo del proceso.');
-    }
-    // Notificación de éxito: toast.success('Archivo del proceso eliminado exitosamente.');
-  } catch (error) {
-    console.error(error);
-    // Notificación de error: toast.error('No se pudo eliminar el archivo del proceso.');
-  }
-};
+  // Function to update 'detalleProceso' files
+  const updateEditingEventProcessDocuments = (id: string, files: File[]) => {
+    setFilas(prevFilas =>
+      prevFilas.map(fila => {
+        if (fila.id === id) {
+          return { ...fila, processDocuments: files.map(file => file) };
+        }
+        return fila;
+      })
+
+    );
+
+  };
 
   if (loading || loadingAuth || loadingPoa) return <div>Cargando datos...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
@@ -1323,18 +1185,9 @@ const handleDeleteEventFile = async (fileId: number) => {
                   )}
                 </TableCell>
                 <TableCell>
-                  <DetalleComponent
-                    files={fila.detalle || []}
-                    onFilesChange={(files) => actualizarDetalleFiles(fila.id, files.map(file => ({
-
-                      ...file,
-                    
-                      isEdited: true,
-                    
-                      originalName: file.file.name
-                    
-                    })))}
-                    onDelete={handleDeleteCostDetail} // Nueva prop
+                  <EventCostDetail
+                    files={fila.costDetailDocuments || []}
+                    onFilesChange={(files) => updateEditingEventCostDetails(fila.id, files)}
                   />
                   {/* Enlace para descargar el detalle de costos si existe entityId */}
                   {fila.entityId && (
@@ -1347,7 +1200,7 @@ const handleDeleteEventFile = async (fileId: number) => {
                       </span>
                     </div>
                   )}
-                  {!fila.detalle && (
+                  {!fila.costDetailDocuments && (
                     <span className="text-yellow-500 text-sm">Detalle de costos no agregado.</span>
                   )}
                   {filaErrors[fila.id]?.detalle && (
@@ -1418,14 +1271,8 @@ const handleDeleteEventFile = async (fileId: number) => {
                 </TableCell>
                 <TableCell>
                   <DetalleProcesoComponent
-                    files={(fila.detalleProceso || []).map(item => ({ 
-                      id: item.id, 
-                      file: item.file, 
-                      isEdited: item.isEdited, 
-                      originalName: item.originalName 
-                    }))}
-                    onFilesChange={(files) => actualizarDetalleProcesoFiles(fila.id, files)}
-                    onDelete={handleDeleteEventFile} // Nueva prop
+                    files={fila.processDocuments as File[]}
+                    onFilesChange={(files) => updateEditingEventProcessDocuments(fila.id, files)}
                   />
                   {/* Enlace para descargar el detalle del proceso si existe entityId */}
                   {fila.entityId && (
