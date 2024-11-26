@@ -13,7 +13,7 @@ import { deleteEvent } from '@/services/apiService';
 
 // Modificar SectionProps para incluir onEditEvent
 interface SectionProps extends OriginalSectionProps {
-  onEditEvent: (event: PlanningEvent) => void;
+    onEditEvent: (event: PlanningEvent) => void;
 }
 
 // Función para mapear datos de la API a PlanningEvent
@@ -27,6 +27,9 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 
     const estado = estadoMap[apiEvent.eventApprovals[0]?.approvalStatus?.name || 'Pendiente'] || 'revision';
+
+    console.log("apiEvent.financings", apiEvent.financings);
+
 
     return {
         id: String(apiEvent.eventId),
@@ -43,16 +46,20 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
             fin: date.endDate
         })),
         costoTotal: apiEvent.totalCost,
-        aporteUMES: {
-            financingSourceId: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.financingSourceId || 0,
-            percentage: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.percentage || 0,
-            amount: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.amount || 0
-          },
-          aporteOtros: {
-            financingSourceId: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.financingSourceId || 0,
-            percentage: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.percentage || 0,
-            amount: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.amount || 0
-          },
+        aporteUMES: apiEvent.financings
+            .filter(f => [1, 4, 5, 7].includes(f.financingSourceId))
+            .map(f => ({
+                financingSourceId: f.financingSourceId,
+                percentage: f.percentage,
+                amount: f.amount
+            })),
+        aporteOtros: apiEvent.financings
+            .filter(f => [2, 3, 6].includes(f.financingSourceId))
+            .map(f => ({
+                financingSourceId: f.financingSourceId,
+                percentage: f.percentage,
+                amount: f.amount
+            })),
         tipoCompra: apiEvent.purchaseType?.name || '',
         detalle: apiEvent.costDetails?.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [],
         responsables: {
@@ -207,10 +214,10 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
                                         showCorrectionsActions={showCorrectionsActions} // Activar o desactivar acciones de corrección
                                         onEdit={showCorrectionsActions ? handleEdit : undefined} // Pasar handler de edición si aplica
                                         onDelete={showCorrectionsActions ? handleDelete : undefined} // Pasar handler de eliminación si aplica
-                                        onApprove={() => {}}
-                                        onReject={() => {}}
-                                        onRequestCorrection={() => {}}
-                                        onRevert={() => {}}
+                                        onApprove={() => { }}
+                                        onReject={() => { }}
+                                        onRequestCorrection={() => { }}
+                                        onRevert={() => { }}
                                     />
                                 ) : (
                                     <p>No hay eventos en este estado.</p>

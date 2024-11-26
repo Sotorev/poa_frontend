@@ -41,15 +41,15 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
           <div>
             <h3 className="font-semibold">Aporte UMES:</h3>
             <p>
-              {formatCurrency(event.aporteUMES.amount)} (
-              {calculatePercentage(event.aporteUMES.amount, event.costoTotal)}%)
+              {formatCurrency(event.aporteUMES[0].amount)} (
+              {calculatePercentage(event.aporteUMES[0].amount, event.costoTotal)}%)
             </p>
           </div>
           <div>
             <h3 className="font-semibold">Aporte Otros:</h3>
             <p>
-              {formatCurrency(event.aporteOtros.amount)} (
-              {calculatePercentage(event.aporteOtros.amount, event.costoTotal)}%)
+              {formatCurrency(event.aporteOtros[0].amount)} (
+              {calculatePercentage(event.aporteOtros[0].amount, event.costoTotal)}%)
             </p>
           </div>
           <div>

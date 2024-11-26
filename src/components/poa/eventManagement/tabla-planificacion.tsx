@@ -868,6 +868,8 @@ export function TablaPlanificacionComponent() {
       const tipoCompraObj = purchaseTypes.find(pt => pt.name === event.tipoCompra);
       const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
 
+
+      console.log("event.aporteUMES", event.aporteUMES);
       // Cálculo de aportes financieros
       const aporteUMES = Array.isArray(event.aporteUMES) ? event.aporteUMES.map(aporte => ({
         financingSourceId: aporte.financingSourceId,

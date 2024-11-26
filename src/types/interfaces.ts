@@ -268,13 +268,13 @@ export interface PlanningEvent {
     "financingSourceId": number,
     "percentage": number,
     "amount": number
-  };
+  }[];
   /** Aportes económicos de otras fuentes */
   aporteOtros: {
     "financingSourceId": number,
     "percentage": number,
     "amount": number
-  };
+  }[];
   /** Clasificación del tipo de compra */
   tipoCompra: string;
   /** Detalles adicionales del evento */

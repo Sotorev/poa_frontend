@@ -36,16 +36,20 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
       fin: date.endDate
     })),
     costoTotal: apiEvent.totalCost,
-    aporteUMES: {
-      financingSourceId: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.financingSourceId || 0,
-      percentage: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.percentage || 0,
-      amount: apiEvent.financings.find(f => f.financingSourceId === 1 || f.financingSourceId === 4 || f.financingSourceId === 5 || f.financingSourceId === 7)?.amount || 0
-    },
-    aporteOtros: {
-      financingSourceId: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.financingSourceId || 0,
-      percentage: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.percentage || 0,
-      amount: apiEvent.financings.find(f => f.financingSourceId === 2 || f.financingSourceId === 3 || f.financingSourceId === 6)?.amount || 0
-    },
+    aporteUMES: apiEvent.financings
+      .filter(f => [1, 4, 5, 7].includes(f.financingSourceId))
+      .map(f => ({
+        financingSourceId: f.financingSourceId,
+        percentage: f.percentage,
+        amount: f.amount
+      })),
+    aporteOtros: apiEvent.financings
+      .filter(f => [2, 3, 6].includes(f.financingSourceId))
+      .map(f => ({
+        financingSourceId: f.financingSourceId,
+        percentage: f.percentage,
+        amount: f.amount
+      })),
     tipoCompra: apiEvent.purchaseType?.name || '',
     detalle: apiEvent.costDetails.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [], // Ajusta el nombre del campo según los datos reales
     responsables: {
