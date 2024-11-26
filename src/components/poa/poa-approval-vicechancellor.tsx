@@ -5,11 +5,11 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { WelcomeVicechancellor } from './sections/welcome-vicechancellor'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { 
-  Building2, 
-  LayoutDashboard, 
-  UserCog, 
-  BarChart2, 
+import {
+  Building2,
+  LayoutDashboard,
+  UserCog,
+  BarChart2,
   ListTodo,
   Pin,
   CheckCheck,
@@ -49,51 +49,51 @@ interface Section {
 }
 
 const allSections: Section[] = [
-  { 
-    name: "Gestión de Recursos", 
-    icon: WalletMinimal, 
+  {
+    name: "Gestión de Recursos",
+    icon: WalletMinimal,
     component: ResourceManagementComponent,
     roles: ["Tesorería", "Administrador"]
   },
-  { 
-    name: "Datos de la facultad", 
-    icon: Building2, 
+  {
+    name: "Datos de la facultad",
+    icon: Building2,
     component: FacultadDataSection,
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
   },
-  { 
-    name: "Estructura de la facultad", 
-    icon: LayoutDashboard, 
+  {
+    name: "Estructura de la facultad",
+    icon: LayoutDashboard,
     component: FacultyStructureSection,
     roles: ["Vicerrector académico", "Administrador", "Rector"]
   },
-  { 
-    name: "Equipo responsable POA", 
-    icon: UserCog, 
+  {
+    name: "Equipo responsable POA",
+    icon: UserCog,
     component: EquipoResponsableSectionComponent,
     roles: ["Vicerrector académico", "Administrador", "Rector"]
   },
-  { 
-    name: "FODA", 
-    icon: BarChart2, 
+  {
+    name: "FODA",
+    icon: BarChart2,
     component: FodaSection,
     roles: ["Vicerrector académico", "Administrador", "Rector"]
   },
-  { 
-    name: "Eventos", 
-    icon: ListTodo, 
+  {
+    name: "Eventos",
+    icon: ListTodo,
     component: EventsViewerViceChancellorComponent,
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
   },
-  { 
-    name: "Reporte de costos de eventos del POA", 
-    icon: Percent, 
+  {
+    name: "Reporte de costos de eventos del POA",
+    icon: Percent,
     component: CostReport,
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador", "Rector"]
   },
-  { 
-    name: "Acciones", 
-    icon: CheckCheck, 
+  {
+    name: "Acciones",
+    icon: CheckCheck,
     component: PoaActions,
     roles: ["Vicerrector académico", "Vicerrector administrativo", "Administrador"]
   },
@@ -176,14 +176,49 @@ export function PoaAcademicApproval() {
     }
   }, [isSidebarFixed])
 
+  // Función para exportar el POA a PDF
+  const handleExportPdf = async () => {
+    if (!facultyId) {
+      alert("No se ha establecido el ID de la facultad.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/poa/poa-report/${poaId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Authorization': `Bearer ${user?.token}`
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al exportar el reporte a PDF.');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `POA_Report_Faculty_${facultyId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error al exportar el PDF:', error);
+      alert("Error al exportar el reporte a PDF.");
+    }
+  };
+
   return (
     <main className="flex bg-green-50 min-h-screen">
       <TooltipProvider>
-        <aside 
+        <aside
           ref={sidebarRef}
-          className={`fixed left-0 top-0 h-full bg-green-900 shadow-lg transition-all duration-300 ease-in-out z-50 flex flex-col justify-between ${
-            isSidebarFixed || isSidebarVisible ? 'w-16 opacity-100' : 'w-0 opacity-0'
-          }`}
+          className={`fixed left-0 top-0 h-full bg-green-900 shadow-lg transition-all duration-300 ease-in-out z-50 flex flex-col justify-between ${isSidebarFixed || isSidebarVisible ? 'w-16 opacity-100' : 'w-0 opacity-0'
+            }`}
         >
           <ScrollArea className="flex-grow">
             <nav className="p-2 flex flex-col items-center space-y-4">
@@ -231,9 +266,8 @@ export function PoaAcademicApproval() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsSidebarFixed(!isSidebarFixed)}
-                  className={`w-8 h-8 rounded-lg hover:bg-green-800 transition-colors duration-200 ${
-                    isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0'
-                  }`}
+                  className={`w-8 h-8 rounded-lg hover:bg-green-800 transition-colors duration-200 ${isSidebarFixed || isSidebarVisible ? 'opacity-100' : 'opacity-0'
+                    }`}
                 >
                   <Pin className={`h-4 w-4 ${isSidebarFixed ? 'text-green-400' : 'text-green-300'}`} />
                   <span className="sr-only">Fijar barra lateral</span>
@@ -246,18 +280,28 @@ export function PoaAcademicApproval() {
           </div>
         </aside>
       </TooltipProvider>
-      <div 
+
+
+      <div
         ref={mainRef}
-        className={`flex-1 p-6 overflow-auto transition-all duration-300 ${
-          isSidebarFixed || isSidebarVisible ? 'ml-16' : 'ml-0'
-        }`}
+        className={`flex-1 p-6 overflow-auto transition-all duration-300 ${isSidebarFixed || isSidebarVisible ? 'ml-16' : 'ml-0'
+          }`}
       >
         {/* Renderizar WelcomeVicechancellor solo una vez */}
         <WelcomeVicechancellor onSelectFaculty={handleSelectFaculty} />
 
         {/* Renderizar las secciones solo si facultyId y poaId no son null */}
         {(facultyId !== null && poaId !== null && userId !== undefined && rolId !== undefined && roleName) && (
+
+
           <div className="space-y-8">
+            {/* Botones para crear POA y exportar PDF */}
+            <div className="mb-4 flex space-x-2">
+              <Button onClick={handleExportPdf} disabled={!facultyId || !poaId}>
+                Exportar a PDF
+              </Button>
+            </div>
+
             {availableSections.map((section) => {
               const normalizedName = normalizeSectionName(section.name)
               return (
