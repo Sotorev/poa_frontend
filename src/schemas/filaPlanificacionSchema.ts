@@ -30,13 +30,13 @@ export const filaPlanificacionSchema = z.object({
     amount: z.number().nonnegative(),
   })).min(1, "Debe tener al menos un aporte de otras fuentes"),
   tipoCompra: z.string().nonempty("Tipo de Compra es requerido"),// Cambiado a arreglo
-  detalle: z.any().nullable(),
+  costDetailDocuments: z.any().array().nullable(),
   responsablePlanificacion: z.string().nonempty("Responsable de planificación es requerido"),
   responsableEjecucion: z.string().nonempty("Responsable de ejecución es requerido"),
   responsableSeguimiento: z.string().nonempty("Responsable de seguimiento es requerido"),
   recursos: z.array(z.string()).min(1, "Debe seleccionar al menos un recurso"),
   indicadorLogro: z.string().nonempty("El indicador de logro es requerido"),
-  detalleProceso: z.any().nullable(),
+  processDocuments: z.any().array().nullable(),
   fechas: z.array(datePairSchema).min(1, "Debe haber al menos una fecha."),
   campusId: z.string().nonempty("Campus es requerido"), // Añadido para CampusSelector
 }).refine((data) => {

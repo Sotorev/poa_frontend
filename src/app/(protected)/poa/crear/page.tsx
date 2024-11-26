@@ -1,7 +1,7 @@
 'use client'
 
-import PlanificacionFormComponent from '@/components/poa/components/formulario-planificacion'
-import { TablaPlanificacionComponent } from '@/components/poa/components/tabla-planificacion'
+// import PlanificacionFormComponent from '@/components/poa/eventManagement/formView/formulario-planificacion'
+import { TablaPlanificacionComponent } from '@/components/poa/eventManagement/tabla-planificacion'
 import React, { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -39,7 +39,7 @@ const CreatePOAPage = () => {
 			</div>
 
 			{formPreference === 'traditional' ? (
-				<PlanificacionFormComponent />
+				<TablaPlanificacionComponent />
 			) : (
 				<TablaPlanificacionComponent />
 			)}
