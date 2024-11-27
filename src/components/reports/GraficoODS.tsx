@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from 'recharts'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { facultades, ods, dataODS } from '../mock/odsData'
+import { faculties, sdgs, sdgData } from '../mock/odsData'
 
-export default function GraficoODS() {
-  const [facultadSeleccionada, setFacultadSeleccionada] = useState("Todas")
+/**
+ * Componente que muestra un gráfico de barras de los Objetivos de Desarrollo Sostenible (ODS).
+ * Permite filtrar por facultad y ajusta el tamaño del gráfico según el ancho de la ventana.
+ */
+export default function ODSChart() {
+  const [selectedFaculty, setSelectedFaculty] = useState("Todas")
   const [chartWidth, setChartWidth] = useState(0)
-  const [dataFiltrada, setDataFiltrada] = useState<{objetivo: string; eventos: number; nombre: string; color: string;}[]>([])
+  const [filteredData, setFilteredData] = useState<{ objective: string; events: number; name: string; color: string; }[]>([])
 
   useEffect(() => {
     const updateWidth = () => {
@@ -23,30 +27,36 @@ export default function GraficoODS() {
   }, [])
 
   useEffect(() => {
-    if (ods && dataODS) {
-      const newData = facultadSeleccionada === "Todas"
-        ? ods.map((objetivo, index) => ({
-            objetivo: `ODS ${objetivo.numero}`,
-            eventos: dataODS.reduce((sum, facultad) => sum + facultad.eventos[index], 0),
-            nombre: objetivo.nombre,
-            color: objetivo.color
+    if (sdgs && sdgData) {
+      const newData = selectedFaculty === "Todas"
+        ? sdgs.map((goal, index) => ({
+            objective: `ODS ${goal.number}`,
+            events: sdgData.reduce((sum, faculty) => sum + faculty.events[index], 0),
+            name: goal.name,
+            color: goal.color
           }))
-        : ods.map((objetivo, index) => ({
-            objetivo: `ODS ${objetivo.numero}`,
-            eventos: dataODS.find(f => f.facultad === facultadSeleccionada)?.eventos[index] || 0,
-            nombre: objetivo.nombre,
-            color: objetivo.color
+        : sdgs.map((goal, index) => ({
+            objective: `ODS ${goal.number}`,
+            events: sdgData.find(f => f.faculty === selectedFaculty)?.events[index] || 0,
+            name: goal.name,
+            color: goal.color
           }))
-      setDataFiltrada(newData)
+      setFilteredData(newData)
     }
-  }, [facultadSeleccionada])
+  }, [selectedFaculty])
 
+  /**
+   * Obtiene el tamaño de la fuente para las etiquetas del eje X según el ancho del gráfico.
+   */
   const getTickFontSize = () => {
     if (chartWidth < 480) return 10
     if (chartWidth < 768) return 11
     return 12
   }
 
+  /**
+   * Obtiene la altura del gráfico según el ancho de la ventana.
+   */
   const getChartHeight = () => {
     if (chartWidth < 480) return 400
     if (chartWidth < 768) return 500
@@ -60,25 +70,25 @@ export default function GraficoODS() {
           Cantidad de eventos por Objetivo de Desarrollo Sostenible (ODS)
         </CardTitle>
         <CardDescription className="text-sm sm:text-base text-center">
-          {facultadSeleccionada === "Todas"
+          {selectedFaculty === "Todas"
             ? <>Aporte total de <span className="text-[#004D40] font-semibold">todas las facultades</span> en la Distribución de eventos del POA por ODS</>
-            : <>Distribución de eventos del POA por ODS para la Facultad de <span className="text-[#004D40] font-semibold">{facultadSeleccionada}</span></>}
+            : <>Distribución de eventos del POA por ODS para la Facultad de <span className="text-[#004D40] font-semibold">{selectedFaculty}</span></>}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-2 sm:p-6">
         <div className="mb-6 flex justify-start">
-          <Select onValueChange={setFacultadSeleccionada} defaultValue="Todas">
+          <Select onValueChange={setSelectedFaculty} defaultValue="Todas">
             <SelectTrigger className="w-full sm:w-[200px] text-[#004D40] font-semibold">
               <SelectValue placeholder="Seleccionar Facultad" />
             </SelectTrigger>
             <SelectContent>
-              {facultades.map((facultad) => (
+              {faculties.map((faculty) => (
                 <SelectItem 
-                  key={facultad} 
-                  value={facultad} 
-                  className={`font-semibold ${facultad === "Todas" ? "text-[#004D40]" : ""}`}
+                  key={faculty} 
+                  value={faculty} 
+                  className={`font-semibold ${faculty === "Todas" ? "text-[#004D40]" : ""}`}
                 >
-                  {facultad}
+                  {faculty}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -87,7 +97,7 @@ export default function GraficoODS() {
         <div className="w-full" style={{ height: getChartHeight() }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={dataFiltrada}
+              data={filteredData}
               margin={{
                 top: 20,
                 right: chartWidth < 768 ? 10 : 30,
@@ -97,7 +107,7 @@ export default function GraficoODS() {
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
-                dataKey="objetivo"
+                dataKey="objective"
                 angle={-45}
                 textAnchor="end"
                 interval={0}
@@ -115,7 +125,7 @@ export default function GraficoODS() {
                   if (active && payload && payload.length) {
                     return (
                       <div className="bg-white p-2 border rounded shadow">
-                        <p className="font-semibold">{payload[0].payload.nombre}</p>
+                        <p className="font-semibold">{payload[0].payload.name}</p>
                         <p>Eventos: {payload[0].value}</p>
                       </div>
                     );
@@ -124,7 +134,7 @@ export default function GraficoODS() {
                 }}
               />
               <Bar
-                dataKey="eventos"
+                dataKey="events"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={60}
                 label={{ 
@@ -133,7 +143,7 @@ export default function GraficoODS() {
                   fontSize: 14 
                 }}
               >
-                {dataFiltrada.map((entry, index) => (
+                {filteredData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={entry.color}
@@ -147,4 +157,3 @@ export default function GraficoODS() {
     </Card>
   )
 }
-

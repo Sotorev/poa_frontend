@@ -1,4 +1,8 @@
-export const facultades = [
+/**
+ * Datos relacionados con el POA (Plan Operativo Anual).
+ */
+
+export const faculties = [
   "Todas",
   "Ingeniería",
   "Ciencias Económicas",
@@ -7,7 +11,7 @@ export const facultades = [
   "Derecho"
 ];
 
-export const objetivosEstrategicos = [
+export const strategicObjectives = [
   "Calidad Académica",
   "Investigación",
   "Vinculación",
@@ -17,26 +21,25 @@ export const objetivosEstrategicos = [
   "Responsabilidad Social"
 ];
 
-export const dataPOA = [
+export const poaData = [
   {
-    facultad: "Ingeniería",
-    eventos: [12, 8, 5, 3, 10, 15, 7]
+    faculty: "Ingeniería",
+    events: [12, 8, 5, 3, 10, 15, 7]
   },
   {
-    facultad: "Ciencias Económicas",
-    eventos: [10, 6, 8, 4, 9, 11, 5]
+    faculty: "Ciencias Económicas",
+    events: [10, 6, 8, 4, 9, 11, 5]
   },
   {
-    facultad: "Humanidades",
-    eventos: [8, 10, 12, 6, 7, 9, 11]
+    faculty: "Humanidades",
+    events: [8, 10, 12, 6, 7, 9, 11]
   },
   {
-    facultad: "Ciencias de la Salud",
-    eventos: [15, 7, 9, 5, 8, 6, 10]
+    faculty: "Ciencias de la Salud",
+    events: [15, 7, 9, 5, 8, 6, 10]
   },
   {
-    facultad: "Derecho",
-    eventos: [9, 11, 7, 8, 6, 10, 8]
+    faculty: "Derecho",
+    events: [9, 11, 7, 8, 6, 10, 8]
   }
 ];
-

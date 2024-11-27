@@ -5,12 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 // Datos mockeados de las facultades con aportes
 const facultyData = [
-  { faculty: "Engineering", umesContribution: 300000, otherContributions: 200000 },
-  { faculty: "Medicine", umesContribution: 450000, otherContributions: 300000 },
-  { faculty: "Law", umesContribution: 200000, otherContributions: 100000 },
-  { faculty: "Economics", umesContribution: 250000, otherContributions: 200000 },
-  { faculty: "Humanities", umesContribution: 150000, otherContributions: 100000 },
-  { faculty: "Architecture", umesContribution: 250000, otherContributions: 150000 },
+  { faculty: "Ingeniería", umesContribution: 300000, otherContributions: 200000 },
+  { faculty: "Medicina", umesContribution: 450000, otherContributions: 300000 },
+  { faculty: "Derecho", umesContribution: 200000, otherContributions: 100000 },
+  { faculty: "Economía", umesContribution: 250000, otherContributions: 200000 },
+  { faculty: "Humanidades", umesContribution: 150000, otherContributions: 100000 },
+  { faculty: "Arquitectura", umesContribution: 250000, otherContributions: 150000 },
 ]
 
 // Componente principal que muestra los costos por facultad
@@ -31,59 +31,60 @@ export default function CostByFaculty() {
   const formatCurrency = (value: number) => `Q${value.toLocaleString()}`
 
   return (
-    <Card className="w-full max-w-3xl">
+    <div className="flex items-center justify-center w-full">
+      <Card className="w-full max-w-3xl">
       <CardHeader>
-        <CardTitle className="text-green-700">Total Costs by Faculty</CardTitle>
-        <CardDescription className="text-green-600">Annual Operational Planning (POA) - Universidad Mesoamericana</CardDescription>
+        <CardTitle className="text-green-700">Costos Totales por Facultad</CardTitle>
+        <CardDescription className="text-green-600">Plan Operativo Anual (POA) - Universidad Mesoamericana</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[450px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={facultyData} // Datos que se utilizarán para el gráfico
-              margin={{ top: 20, right: 30, left: 65, bottom: 60 }} // Márgenes del gráfico
-              barSize={30} // Tamaño de las barras individuales
-              maxBarSize={50} // Tamaño máximo permitido para las barras
+              data={facultyData}
+              margin={{ top: 20, right: 30, left: 65, bottom: 60 }}
+              barSize={30}
+              maxBarSize={50}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(142, 76%, 90%)" /> {/* Cuadrícula del gráfico con líneas punteadas */}
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(142, 76%, 90%)" />
               <XAxis
-                dataKey="faculty" // Clave de datos para el eje X
-                tick={{ fill: "hsl(142, 76%, 36%)" }} // Estilo de las etiquetas del eje X
-                tickLine={{ stroke: "hsl(142, 76%, 36%)" }} // Estilo de las líneas de las etiquetas del eje X
-                axisLine={{ stroke: "hsl(142, 76%, 36%)" }} // Estilo de la línea del eje X
-                interval={0} // Intervalo de las etiquetas del eje X
-                angle={-45} // Ángulo de inclinación de las etiquetas del eje X
-                textAnchor="end" // Alineación del texto de las etiquetas
-                height={80} // Altura del área del eje X
+                dataKey="faculty"
+                tick={{ fill: "hsl(142, 76%, 36%)" }}
+                tickLine={{ stroke: "hsl(142, 76%, 36%)" }}
+                axisLine={{ stroke: "hsl(142, 76%, 36%)" }}
+                interval={0}
+                angle={-45}
+                textAnchor="end"
+                height={80}
               />
               <YAxis
-                tickFormatter={formatCurrency} // Función para formatear las etiquetas del eje Y
-                tick={{ fill: "hsl(142, 76%, 36%)" }} // Estilo de las etiquetas del eje Y
-                tickLine={{ stroke: "hsl(142, 76%, 36%)" }} // Estilo de las líneas de las etiquetas del eje Y
-                axisLine={{ stroke: "hsl(142, 76%, 36%)" }} // Estilo de la línea del eje Y
+                tickFormatter={formatCurrency}
+                tick={{ fill: "hsl(142, 76%, 36%)" }}
+                tickLine={{ stroke: "hsl(142, 76%, 36%)" }}
+                axisLine={{ stroke: "hsl(142, 76%, 36%)" }}
                 label={{
-                  value: 'Total Cost (Q)', // Texto de la etiqueta del eje Y
-                  angle: -90, // Ángulo de la etiqueta
-                  position: 'insideLeft', // Posición de la etiqueta
-                  fill: "hsl(142, 76%, 36%)", // Color de la etiqueta
-                  offset: -50, // Desplazamiento de la etiqueta
+                  value: 'Costo Total (Q)',
+                  angle: -90,
+                  position: 'insideLeft',
+                  fill: "hsl(142, 76%, 36%)",
+                  offset: -50,
                   style: {
-                    textAnchor: 'middle' // Alineación del texto de la etiqueta
+                    textAnchor: 'middle'
                   }
                 }}
               />
               <Tooltip
-                formatter={formatCurrency} // Función para formatear los valores en el tooltip
-                cursor={{ fill: "hsl(142, 76%, 90%)" }} // Estilo del cursor al pasar sobre una barra
+                formatter={formatCurrency}
+                cursor={{ fill: "hsl(142, 76%, 90%)" }}
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="rounded-lg border border-green-300 bg-green-50 p-2 shadow-sm"> {/* Contenedor del tooltip con estilos */}
-                        <p className="font-bold text-green-800">{label}</p> {/* Etiqueta de la facultad */}
+                      <div className="rounded-lg border border-green-300 bg-green-50 p-2 shadow-sm">
+                        <p className="font-bold text-green-800">{label}</p>
                         {payload.map((entry, index) => (
                           <p key={index} className="text-sm">
                             <span className="font-medium" style={{ color: entry.color }}>
-                              {entry.name}:
+                              {entry.name === "UMES Contribution" ? "Contribución UMES" : "Otras Contribuciones"}:
                             </span>{' '}
                             {formatCurrency(entry.value ?? 0)}
                           </p>
@@ -98,16 +99,17 @@ export default function CostByFaculty() {
                 }}
               />
               <Legend
-                verticalAlign="top" // Alineación vertical de la leyenda
-                height={36} // Altura de la leyenda
-                wrapperStyle={{ paddingTop: '10px' }} // Estilo de envoltura de la leyenda
+                verticalAlign="top"
+                height={36}
+                wrapperStyle={{ paddingTop: '10px' }}
               />
-              <Bar dataKey="umesContribution" stackId="a" fill="hsl(142, 76%, 36%)" name="UMES Contribution" /> {/* Barra para la contribución de UMES */}
-              <Bar dataKey="otherContributions" stackId="a" fill="hsl(142, 50%, 60%)" name="Other Contributions" /> {/* Barra para otras contribuciones */}
+              <Bar dataKey="umesContribution" stackId="a" fill="hsl(142, 76%, 36%)" name="Contribución UMES" />
+              <Bar dataKey="otherContributions" stackId="a" fill="hsl(142, 50%, 60%)" name="Otras Contribuciones" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   )
 }
