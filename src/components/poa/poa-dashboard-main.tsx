@@ -1,3 +1,5 @@
+// src/components/poa/poa-dashboard-main.tsx
+
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
@@ -13,6 +15,7 @@ import {
   ListTodo,
   Pin,
   CheckCheck,
+  Activity,
   Wallet
 } from 'lucide-react'
 import { Link } from "react-scroll"
@@ -24,6 +27,8 @@ import { FodaSection } from './sections/foda-section'
 import { OtrosDocumentos } from './sections/sections-otros-documentos'
 import EventsViewerComponent from './sections/events-viewer/events-viewer'
 import { CostReport } from './sections/cost-report'
+import ApprovalStatus from './sections/approvalStatus'
+
 import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useCurrentUser } from '@/hooks/use-current-user'
 
@@ -35,7 +40,7 @@ export interface SectionProps {
   userId: number
   rolId: number
   isEditable: boolean
-  onStatusChange?: () => void 
+  onStatusChange?: () => void
 }
 
 const sections = [
@@ -46,6 +51,7 @@ const sections = [
   { name: "Agregar/confirmar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
   { name: "Informe de costos del POA", icon: Wallet, component: CostReport },
+  { name: "Estado de aprobación", icon: Activity, component: ApprovalStatus },
   { name: "Aprobar POA", icon: CheckCheck, component: PoaApproval }
 ]
 

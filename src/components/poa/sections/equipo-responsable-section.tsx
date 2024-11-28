@@ -1,3 +1,5 @@
+// src/components/poa/sections/equipo-responsable-section.tsx
+
 'use client'
 
 import React, { useState, useEffect } from 'react'

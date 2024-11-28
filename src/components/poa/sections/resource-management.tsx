@@ -17,11 +17,13 @@ import { createPoaResourceSchema, updatePoaResourceSchema } from '@/schemas/poaR
 type UpdatePoaResource = Partial<Omit<PoaResource, 'poaResourceId' | 'isDeleted'>>;
 
 interface ResourceManagementProps {
+  name: string;
+  isActive?: boolean;
   poaId: number;
   isEditable?: boolean;
 }
 
-export function ResourceManagementComponent({ poaId, isEditable = true }: ResourceManagementProps) {
+export function ResourceManagementComponent({ name, isActive, poaId, isEditable = true }: ResourceManagementProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [resources, setResources] = useState<PoaResource[]>([]);
@@ -270,7 +272,7 @@ export function ResourceManagementComponent({ poaId, isEditable = true }: Resour
   }, [resources]);
 
   return (
-    <div className="mb-6">
+    <div id={name} className="mb-6">
       <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300`}>
         {/* Cabecera de la sección */}
         <div className="p-4 bg-green-50 flex flex-wrap justify-between items-center">
