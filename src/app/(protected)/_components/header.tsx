@@ -91,6 +91,13 @@ const navItems: NavItem[] = [
 			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ["Administrador"], icon: Settings },
 		],
 	},
+	{
+		title: "Reportes",
+		href: "/reportes",
+		icon: BarChart2,
+		description: "Reportes",
+		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo"],
+	},
 ]
 
 export default function Header() {
