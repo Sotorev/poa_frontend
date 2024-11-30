@@ -51,6 +51,7 @@ interface Faculty {
 
 /**
  * Lista de Objetivos de Desarrollo Sostenible (ODS) con sus colores específicos.
+ * Se define fuera del componente para evitar recrearlos en cada render.
  */
 const ODS_LIST: { number: number; name: string; color: string }[] = [
   { number: 1, name: "Fin de la pobreza", color: "#E5243B" },
@@ -102,6 +103,17 @@ export default function ODSChart() {
   }, [])
 
   /**
+   * Configuración de ODS para facilitar el acceso a nombres y colores.
+   */
+  const ODS_CONFIG = useMemo(() => {
+    const config: Record<number, { name: string; color: string }> = {}
+    ODS_LIST.forEach(ods => {
+      config[ods.number] = { name: ods.name, color: ods.color }
+    })
+    return config
+  }, [])
+
+  /**
    * Obtiene la lista de facultades al montar el componente.
    */
   useEffect(() => {
@@ -138,15 +150,14 @@ export default function ODSChart() {
   }, [API_URL, user?.token])
 
   /**
-   * Configuración de ODS para facilitar el acceso a nombres y colores.
+   * Estado para almacenar los datos mapeados de ODS.
    */
-  const ODS_CONFIG = useMemo(() => {
-    const config: Record<number, { name: string; color: string }> = {}
-    ODS_LIST.forEach(ods => {
-      config[ods.number] = { name: ods.name, color: ods.color }
-    })
-    return config
-  }, [])
+  const [filteredData, setFilteredData] = useState<{
+    objective: string
+    events: number
+    name: string
+    color: string
+  }[]>([])
 
   /**
    * Obtiene los datos de ODS al montar el componente o al cambiar la facultad seleccionada.
@@ -187,11 +198,18 @@ export default function ODSChart() {
 
         console.log('ODS Data Received:', data) // Registro de depuración
 
-        const mapped = data.map((ods) => ({
-          objective: `ODS ${ods.odsId}`,
-          events: ods.eventCount,
-          name: ODS_CONFIG[ods.odsId]?.name || ods.odsName,
-          color: ODS_CONFIG[ods.odsId]?.color || "#8884d8" // Color por defecto si no se encuentra en ODS_CONFIG
+        // Crear un mapa de odsId a eventCount para facilitar la búsqueda
+        const dataMap: Record<number, number> = {}
+        data.forEach(item => {
+          dataMap[item.odsId] = item.eventCount
+        })
+
+        // Mapear todos los ODS, asignando 0 a los que no estén en la respuesta
+        const mapped = ODS_LIST.map(ods => ({
+          objective: `ODS ${ods.number}`,
+          events: dataMap[ods.number] || 0,
+          name: ods.name,
+          color: ods.color
         }))
 
         setFilteredData(mapped)
@@ -236,16 +254,6 @@ export default function ODSChart() {
     if (chartWidth < 768) return 11
     return 12
   }
-
-  /**
-   * Estado para almacenar los datos mapeados de ODS.
-   */
-  const [filteredData, setFilteredData] = useState<{
-    objective: string
-    events: number
-    name: string
-    color: string
-  }[]>([])
 
   return (
     <Card className="w-full max-w-5xl mx-auto">
