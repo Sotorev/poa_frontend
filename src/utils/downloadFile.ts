@@ -2,7 +2,7 @@
 import { currentUser } from '@/lib/auth';
 import { toast } from 'react-toastify';
 
-export const downloadFile = async (eventId: number, path: string = 'downloadProcessDocument'): Promise<void> => {
+export const downloadFile = async (path: string = 'downloadProcessDocument', name: string): Promise<void> => {
   const user = await currentUser();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -11,13 +11,12 @@ export const downloadFile = async (eventId: number, path: string = 'downloadProc
   }
 
   try {
-    const response = await fetch(`${apiUrl}/api/fullevent/${path}/${eventId}`, {
+    const response = await fetch(`${apiUrl}/api/fullevent/${path}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${user?.token}`,
       },
-
     });
 
     if (!response.ok) {
@@ -34,17 +33,22 @@ export const downloadFile = async (eventId: number, path: string = 'downloadProc
     // Crear un objeto URL para el blob
     const url = window.URL.createObjectURL(blob);
 
-    // Abrir el archivo en una nueva ventana o pestaña
-    window.open(url, '_blank');
+    // Crear un enlace para descargar el archivo
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
 
-    // Limpiar el objeto URL después de un tiempo para liberar memoria
+    // Limpiar el objeto URL y remover el enlace después de un tiempo para liberar memoria
     setTimeout(() => {
       window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     }, 1000);
 
-    toast.success('Archivo abierto en una nueva ventana.');
+    toast.success('Archivo descargado exitosamente.');
   } catch (error: any) {
-    console.error('Error al abrir el archivo:', error);
-    toast.error(error.message || 'Error al abrir el archivo. Por favor, intenta de nuevo.');
+    console.error('Error al descargar el archivo:', error);
+    toast.error(error.message || 'Error al descargar el archivo. Por favor, intenta de nuevo.');
   }
 };

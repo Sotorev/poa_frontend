@@ -5,17 +5,17 @@ import { Download } from 'lucide-react';
 import { downloadFile } from '@/utils/downloadFile';
 
 interface DownloadButtonProps {
-  eventId: number;
   className?: string;
-  path?: string; // Nueva propiedad opcional para especificar la ruta de descarga
+  path?: string; 
+  name: string; 
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ eventId, className, path }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ className, path, name }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownload = async () => {
     setIsLoading(true);
-    await downloadFile(eventId, path); // Pasar la ruta personalizada si se proporciona
+    await downloadFile(path, name); // Pasar la ruta personalizada si se proporciona
     setIsLoading(false);
   };
 
