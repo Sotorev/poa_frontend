@@ -64,7 +64,6 @@ export function PoaDashboardMain() {
 
   useEffect(() => {
     if (!user) {
-      console.log("No estás autenticado.");
       alert("No estás autenticado.");
       return;
     }

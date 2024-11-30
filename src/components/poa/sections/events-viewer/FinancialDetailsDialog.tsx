@@ -17,13 +17,11 @@ interface FinancialDetailsDialogProps {
 const fetchFinancing = async (user: any) => {
   try {
     const financing = await getFinancingSources(user?.token || '');
-    console.log("financing", financing);
 
     const otherFinancing = financing.filter(
       (source) => source.category === 'Otra' && !source.isDeleted
     );
 
-    console.log("otherFinancing at fetch", otherFinancing);
 
     const umesFinancing = financing.filter(
       (source) => source.category === 'UMES' && !source.isDeleted
@@ -44,7 +42,6 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
   React.useEffect(() => {
     const loadFinancing = async () => {
       const result = await fetchFinancing(user);
-      console.log("result", result);
       if (result) {
         setFinancing(result);
       }

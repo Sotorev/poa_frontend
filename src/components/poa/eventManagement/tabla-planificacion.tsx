@@ -813,9 +813,9 @@ export function TablaPlanificacionComponent() {
 
 
   // Nueva implementación de handleDownload utilizando la función de utilidad
-  const handleDownload = (entityId: number, type: 'process' | 'costDetail') => {
+  const handleDownload = (type: 'process' | 'costDetail', name: string) => {
     const path = type === 'process' ? 'downloadProcessDocument' : 'downloadCostDetailDocument';
-    downloadFile(entityId, path);
+    downloadFile(path, name);
   };
 
   /**
@@ -1200,7 +1200,7 @@ export function TablaPlanificacionComponent() {
                     <div className="flex items-center space-x-2 mt-2">
                       <span
                         className="cursor-pointer text-blue-600 hover:underline"
-                        onClick={() => handleDownload(fila.entityId!, 'costDetail')}
+                        onClick={() => handleDownload('costDetail', fila.evento)}
                       >
                         Descargar Detalle de Costos
                       </span>
@@ -1285,7 +1285,7 @@ export function TablaPlanificacionComponent() {
                     <div className="flex items-center space-x-2 mt-2">
                       <span
                         className="cursor-pointer text-blue-600 hover:underline"
-                        onClick={() => handleDownload(fila.entityId!, 'process')}
+                        onClick={() => handleDownload('process', fila.evento)}
                       >
                         Descargar Detalle del Proceso
                       </span>
