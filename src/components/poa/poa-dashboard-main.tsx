@@ -102,6 +102,11 @@ export function PoaDashboardMain() {
   }
 
   useEffect(() => {
+    handleSetStatusApproval();
+  }, [user, poaId]);
+
+
+  useEffect(() => {
     if (!user) {
       console.log("No estás autenticado.");
       alert("No estás autenticado.");
@@ -378,7 +383,6 @@ export function PoaDashboardMain() {
 
         {/* Renderizar las secciones */}
         {poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
-          handleSetStatusApproval(),
           <section.component
             key={section.name}
             name={section.name}
@@ -388,7 +392,7 @@ export function PoaDashboardMain() {
             userId={userId ?? 0} // Pasar el userId a cada sección
             rolId={rolId ?? 0} // Pasar el rolId a cada sección
             isEditable={isEditable} // Pasar la prop isEditable
-            aprovalStatuses={ approvalStatuses } // Pasar el estado de aprobación
+            aprovalStatuses={approvalStatuses} // Pasar el estado de aprobación
             onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
           />
         ))}
