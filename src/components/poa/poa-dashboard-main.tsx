@@ -27,11 +27,17 @@ import { FodaSection } from './sections/foda-section'
 import { OtrosDocumentos } from './sections/sections-otros-documentos'
 import EventsViewerComponent from './sections/events-viewer/events-viewer'
 import { CostReport } from './sections/cost-report'
-import ApprovalStatus from './sections/approvalStatus'
+import ApprovalStatusSection from './sections/approvalStatus'
 
 import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { getPoaApprovals } from '@/services/poa/aprovalStatus'
 
+// Types
+import type { ApprovalStatus } from '@/types/approvalStatus'
+
+
+// Props
 export interface SectionProps {
   name: string
   isActive: boolean
@@ -51,7 +57,7 @@ const sections = [
   { name: "Agregar/confirmar otros documentos", icon: FilePlus, component: OtrosDocumentos },
   { name: "Visualizar eventos", icon: ListTodo, component: EventsViewerComponent },
   { name: "Informe de costos del POA", icon: Wallet, component: CostReport },
-  { name: "Estado de aprobación", icon: Activity, component: ApprovalStatus },
+  { name: "Estado de aprobación", icon: Activity, component: ApprovalStatusSection },
   { name: "Aprobar POA", icon: CheckCheck, component: PoaApproval }
 ]
 
@@ -67,6 +73,33 @@ export function PoaDashboardMain() {
   const [userId, setUserId] = useState<number>(); // Estado para almacenar el userId
   const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
   const [isEditable, setIsEditable] = useState<boolean>(false); // Estado para habilitar o deshabilitar el botón
+  const [approvalStatuses, setApprovalStatuses] = useState<ApprovalStatus[]>([]);
+
+  /**
+   * Obtiene y establece los estados de aprobación del POA.
+   * Realiza una llamada asíncrona para obtener las aprobaciones del POA usando el token del usuario y el ID del POA.
+   * Actualiza el estado de las aprobaciones si la solicitud es exitosa.
+   * 
+   * @remarks
+   * Esta función requiere tanto un objeto usuario válido con token como un poaId definido para funcionar correctamente.
+   * 
+   * @throws {Error} Registra el error en la consola si falla la obtención del estado de aprobación
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
+  const handleSetStatusApproval = async () => {
+    try {
+      console.log("user and poaId", user, poaId);
+      if (user && poaId !== undefined) {
+        const approvals = await getPoaApprovals(user.token, poaId);
+        setApprovalStatuses(approvals);
+      }
+    }
+    catch (error) {
+      console.error('Error al obtener los estados de aprobación:', error);
+    }
+  }
 
   useEffect(() => {
     if (!user) {
@@ -345,6 +378,7 @@ export function PoaDashboardMain() {
 
         {/* Renderizar las secciones */}
         {poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
+          handleSetStatusApproval(),
           <section.component
             key={section.name}
             name={section.name}
@@ -354,6 +388,7 @@ export function PoaDashboardMain() {
             userId={userId ?? 0} // Pasar el userId a cada sección
             rolId={rolId ?? 0} // Pasar el rolId a cada sección
             isEditable={isEditable} // Pasar la prop isEditable
+            aprovalStatuses={ approvalStatuses } // Pasar el estado de aprobación
             onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
           />
         ))}
