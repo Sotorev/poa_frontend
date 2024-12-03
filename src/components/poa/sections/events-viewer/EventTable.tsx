@@ -41,8 +41,8 @@ const EventTable: React.FC<EventTableProps> = ({
     <div className="overflow-x-auto">
       {showCommentThread && currentEntityId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <CommentThread 
-            isOpen={showCommentThread} 
+          <CommentThread
+            isOpen={showCommentThread}
             onClose={() => setShowCommentThread(false)}
             entityId={currentEntityId}
             entityName={currentEntityName}
@@ -72,25 +72,28 @@ const EventTable: React.FC<EventTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {events.map(event => (
-            <EventRow
-              key={event.id}
-              event={event}
-              isPending={isPending}
-              onApprove={onApprove}
-              onReject={onReject}
-              onRequestCorrection={onRequestCorrection}
-              onRevert={onRevert}
-              showComments={showComments}
-              showActions={showActions}
-              showCorrectionsActions={showCorrectionsActions} // Pasar nueva prop
-              onEdit={onEdit}                                       // Pasar nueva prop
-              onDelete={onDelete}                                   // Pasar nueva prop
-              setShowCommentThread={setShowCommentThread}
-              setCurrentEntityId={setCurrentEntityId}
-              setCurrentEntityName={setCurrentEntityName}
-            />
-          ))}
+          <>
+            {console.log('eventos en tabla', events)}
+            {events.map(event => (
+              <EventRow
+                key={event.id}
+                event={event}
+                isPending={isPending}
+                onApprove={onApprove}
+                onReject={onReject}
+                onRequestCorrection={onRequestCorrection}
+                onRevert={onRevert}
+                showComments={showComments}
+                showActions={showActions}
+                showCorrectionsActions={showCorrectionsActions} // Pasar nueva prop
+                onEdit={onEdit}                                       // Pasar nueva prop
+                onDelete={onDelete}                                   // Pasar nueva prop
+                setShowCommentThread={setShowCommentThread}
+                setCurrentEntityId={setCurrentEntityId}
+                setCurrentEntityName={setCurrentEntityName}
+              />
+            ))}
+          </>
         </TableBody>
       </Table>
     </div>

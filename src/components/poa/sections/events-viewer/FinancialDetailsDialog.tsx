@@ -17,13 +17,11 @@ interface FinancialDetailsDialogProps {
 const fetchFinancing = async (user: any) => {
   try {
     const financing = await getFinancingSources(user?.token || '');
-    console.log("financing", financing);
 
     const otherFinancing = financing.filter(
       (source) => source.category === 'Otra' && !source.isDeleted
     );
 
-    console.log("otherFinancing at fetch", otherFinancing);
 
     const umesFinancing = financing.filter(
       (source) => source.category === 'UMES' && !source.isDeleted
@@ -44,7 +42,6 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
   React.useEffect(() => {
     const loadFinancing = async () => {
       const result = await fetchFinancing(user);
-      console.log("result", result);
       if (result) {
         setFinancing(result);
       }
@@ -132,18 +129,25 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
             <Card className="border">
               <CardContent className="pt-4">
                 <div className="space-y-4">
-                    <div>
+                  <div>
                     <p className="text-lg font-semibold mb-1">
                       Tipo de Compra: <span className="text-md text-[#014A2D]">{event.tipoCompra}</span>
                     </p>
-                    </div>
+                  </div>
                   
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">Detalle de Presupuesto</h3>
-                    <DownloadButton
-                      eventId={Number(event.id)}
-                      path="downloadCostDetailDocument"
-                    />
+                    <h3 className="text-lg font-semibold mb-2">Archivos del Evento</h3>
+                    <div className="space-y-2">
+                      {event.detalle.map((file) => (
+                        <div key={file.id}>
+                          <h4 className="text-md font-medium mb-1">{file.name}</h4>
+                          <DownloadButton
+                            name={file.name}
+                            path={`downloadEventCostDetailDocumentById/${file.id}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -156,3 +160,4 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
 };
 
 export default FinancialDetailsDialog;
+

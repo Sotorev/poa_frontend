@@ -121,33 +121,33 @@ const EventRow: React.FC<EventRowProps> = ({
         ))}
       </TableCell>
       <TableCell className="whitespace-normal break-words">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="bg-[#014A2D] text-white hover:bg-opacity-90"
           onClick={() => setIsAportesPEIOpen(true)}
         >
           Ver
         </Button>
-        <AportesPEIDialog 
-          isOpen={isAportesPEIOpen} 
-          onClose={() => setIsAportesPEIOpen(false)} 
-          aportesPEI={event.aportesPEI} 
+        <AportesPEIDialog
+          isOpen={isAportesPEIOpen}
+          onClose={() => setIsAportesPEIOpen(false)}
+          aportesPEI={event.aportesPEI}
         />
       </TableCell>
       <TableCell className="whitespace-normal break-words">Q{event.costoTotal.toLocaleString()}</TableCell>
       <TableCell className="whitespace-normal break-words">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="bg-[#014A2D] text-white hover:bg-opacity-90"
           onClick={() => setIsFinancialDetailsOpen(true)}
         >
           Ver
         </Button>
-        <FinancialDetailsDialog 
-          isOpen={isFinancialDetailsOpen} 
-          onClose={() => setIsFinancialDetailsOpen(false)} 
+        <FinancialDetailsDialog
+          isOpen={isFinancialDetailsOpen}
+          onClose={() => setIsFinancialDetailsOpen(false)}
           event={event}
         />
       </TableCell>
@@ -197,21 +197,38 @@ const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell className="whitespace-normal break-words">{event.recursos}</TableCell>
       <TableCell className="whitespace-normal break-words">
-        <DownloadButton eventId={Number(event.id)} />
+      {event.detalleProceso && (
+        <>
+          {console.log('Detalle Proceso:', event.detalleProceso)}
+          {console.log('evento', event)}
+          {event.detalleProceso.map((file) => {
+        console.log('File:', file);
+        return (
+          <div key={file.id}>
+            <h4 className="text-md font-medium mb-1">{file.name}</h4>
+            <DownloadButton
+          name={file.name}
+          path={`downloadEventFileById/${file.id}`}
+            />
+          </div>
+        );
+          })}
+        </>
+      )}
       </TableCell>
       <TableCell className="whitespace-normal break-words">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="bg-[#014A2D] text-white hover:bg-opacity-90"
           onClick={() => setIsProponentDetailsOpen(true)}
         >
           Ver
         </Button>
-        <ProponentDetailsDialog 
-          isOpen={isProponentDetailsOpen} 
-          onClose={() => setIsProponentDetailsOpen(false)} 
-          event={event} 
+        <ProponentDetailsDialog
+          isOpen={isProponentDetailsOpen}
+          onClose={() => setIsProponentDetailsOpen(false)}
+          event={event}
         />
       </TableCell>
       {showComments && (
@@ -235,12 +252,12 @@ const EventRow: React.FC<EventRowProps> = ({
       )}
       {showActions && (
         <TableCell className="whitespace-normal break-words">
-          <ActionButtons 
-            event={event} 
-            isPending={isPending} 
-            onApprove={onApprove} 
-            onReject={onReject} 
-            onRequestCorrection={onRequestCorrection} 
+          <ActionButtons
+            event={event}
+            isPending={isPending}
+            onApprove={onApprove}
+            onReject={onReject}
+            onRequestCorrection={onRequestCorrection}
             onRevert={onRevert}
           />
         </TableCell>

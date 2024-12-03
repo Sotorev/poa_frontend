@@ -913,7 +913,7 @@ export default function PlanificacionFormComponent() {
                     <div className="flex items-center space-x-2 mt-2">
                       <span
                         className="cursor-pointer text-blue-600 hover:underline"
-                        onClick={() => downloadFile(fila.entityId!, 'downloadCostDetailDocument')}
+                        onClick={() => downloadFile(`downloadEventCostDetailDocumentById/${fila.entityId}`, fila.evento)}
                       >
                         Descargar Detalle de Costos
                       </span>
@@ -988,7 +988,7 @@ export default function PlanificacionFormComponent() {
                 <div className="flex items-center space-x-2 mt-2">
                   <span
                     className="cursor-pointer text-blue-600 hover:underline"
-                    onClick={() => downloadFile(fila.entityId!, 'downloadProcessDocument')}
+                    onClick={() => downloadFile(`downloadEventFileById/${fila.entityId}`, fila.evento)}
                   >
                     Descargar Detalle del Proceso
                   </span>

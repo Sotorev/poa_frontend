@@ -59,7 +59,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     },
     recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
     indicadorLogro: apiEvent.achievementIndicator,
-    detalleProceso: [], // Ajusta según los datos reales
+    detalleProceso: apiEvent.files?.map(file => ({ id: file.fileId, name: file.fileName })) || [],
     comentarioDecano: '', // Ajusta según los datos reales
     propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
     fechaCreacion: apiEvent.createdAt,
