@@ -7,12 +7,11 @@ import { Card } from "@/components/ui/card"
 import { ChevronDown, ChevronUp, CheckCircle2, Clock, Send } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { format, isValid } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 //types
 import type { ApprovalStatus } from '@/types/approvalStatus'
-
 
 //Props
 interface ApprovalStatusProps {
@@ -39,6 +38,13 @@ export default function ApprovalStatus({ name, isActive, aprovalStatuses = [] }:
     icon: (status.status === 'Aprobado' && status.role === 'Decanatura') ? Send : status.status === 'Pendiente' ? Clock : CheckCircle2,
     date: status.date
   }))
+
+  function formatDateSafe(dateString: string | null | undefined) {
+    if (!dateString) return 'Pendiente';
+    const date = new Date(dateString);
+    if (!isValid(date)) return 'Pendiente';
+    return format(date, "d 'de' MMMM, yyyy", { locale: es });
+  }
 
   return (
     <div id={name} className="mb-6">
@@ -96,7 +102,7 @@ export default function ApprovalStatus({ name, isActive, aprovalStatuses = [] }:
                             {item.status}
                           </span>
                           <span className="text-sm font-medium text-gray-700">
-                            {item.date ? format(new Date(item.date), "d 'de' MMMM, yyyy", { locale: es }) : 'Pendiente'}
+                            {formatDateSafe(item.date)}
                           </span>
                         </div>
                       </div>
@@ -111,4 +117,3 @@ export default function ApprovalStatus({ name, isActive, aprovalStatuses = [] }:
     </div>
   )
 }
-
