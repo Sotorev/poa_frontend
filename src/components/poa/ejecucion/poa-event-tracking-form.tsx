@@ -34,7 +34,10 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// Types
+import { ApiEvent } from '@/types/interfaces'
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5MB
 
 const formSchema = z.object({
   eventId: z.string({
@@ -52,16 +55,8 @@ const formSchema = z.object({
   files: z.array(z.instanceof(File)).optional(),
 })
 
-type EventData = {
-  id: string;
-  name: string;
-  executionDate: Date;
-  actualExpenses: string;
-  files?: File[];
-};
-
 type PoaEventTrackingFormProps = {
-  events: EventData[];
+  events: ApiEvent[];
   onSubmit: (data: z.infer<typeof formSchema>) => void;
   initialData?: z.infer<typeof formSchema>;
   open: boolean;
@@ -72,7 +67,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   const [query, setQuery] = useState('')
   const [searchDate, setSearchDate] = useState<Date | undefined>(undefined)
   const [files, setFiles] = useState<File[]>([]);
-  const [filteredEvents, setFilteredEvents] = useState<EventData[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<ApiEvent[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -115,7 +110,11 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     if (events) {
       const filtered = events.filter((event) => {
         const matchesQuery = event.name.toLowerCase().includes(query.toLowerCase());
-        const matchesDate = !searchDate || (event.executionDate && event.executionDate.getTime() === searchDate.getTime());
+        const matchesDate = !searchDate || (event.dates && event.dates.some(date => {
+          const startDate = new Date(date.startDate);
+          const endDate = new Date(date.endDate);
+          return searchDate >= startDate && searchDate <= endDate;
+        }));
         return matchesQuery && matchesDate;
       });
       setFilteredEvents(filtered);
@@ -129,8 +128,8 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     onOpenChange(false);
   }
 
-  const handleEventSelect = (event: EventData) => {
-    form.setValue('eventId', event.id);
+  const handleEventSelect = (event: ApiEvent) => {
+    form.setValue('eventId', event.eventId.toString());
     form.setValue('eventName', event.name);
     setQuery(event.name);
   };
@@ -207,7 +206,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                     <ul className="mt-1 border rounded-md divide-y max-h-32 overflow-y-auto">
                       {filteredEvents.map((event) => (
                         <li
-                          key={event.id}
+                          key={event.eventId}
                           className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
                           onClick={() => handleEventSelect(event)}
                         >
