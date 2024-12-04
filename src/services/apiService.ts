@@ -217,8 +217,8 @@ export async function createFullEvent(formData: FormData, token: string): Promis
   return response.json();
 }
 
-export async function getFullEvents(token: string): Promise<ApiEvent[]> {
-  const response = await fetch(`${API_URL}/api/fullevent/`, {
+export async function getFullEvents(token: string, poaId: number): Promise<ApiEvent[]> {
+  const response = await fetch(`${API_URL}/api/fullevent/poa/${poaId}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
