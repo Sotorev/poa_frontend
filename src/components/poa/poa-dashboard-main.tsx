@@ -29,13 +29,15 @@ import EventsViewerComponent from './sections/events-viewer/events-viewer'
 import { CostReport } from './sections/cost-report'
 import ApprovalStatusSection from './sections/approvalStatus'
 
-import { PoaApproval } from './sections/sections-dean-poa-approval'
-import { useCurrentUser } from '@/hooks/use-current-user'
-import { getPoaApprovals } from '@/services/poa/aprovalStatus'
-
 // Types
 import type { ApprovalStatus } from '@/types/approvalStatus'
 
+
+// Imports for charge data
+import { PoaApproval } from './sections/sections-dean-poa-approval'
+import { useCurrentUser } from '@/hooks/use-current-user'
+import { getPoaApprovals } from '@/services/poa/aprovalStatus'
+import { getPoaByFacultyAndYear } from '@/services/apiService'
 
 // Props
 export interface SectionProps {
@@ -140,7 +142,7 @@ export function PoaDashboardMain() {
 
         // Asegurarse de que facultyId no sea null antes de llamar a getPoaByFacultyAndYear
         if (fetchedFacultyId) {
-          getPoaByFacultyAndYear(fetchedFacultyId);
+          handleGetPoa(fetchedFacultyId);
         }
 
       } catch (error: any) {
@@ -175,42 +177,28 @@ export function PoaDashboardMain() {
 
 
   const handleReloadData = useCallback(() => {
-    if (facultyId) {
-      getPoaByFacultyAndYear(facultyId.toString());
+    if (facultyId && user?.token) {
+      getPoaByFacultyAndYear(facultyId, new Date().getFullYear(), user.token);
+    
     }
-  }, [facultyId]);
+  }, [facultyId, user]);
 
   // Obtener el POA actual si ya fue creado
-  const getPoaByFacultyAndYear = async (facultyId: string) => {
-    const currentYear = new Date().getFullYear();
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${facultyId}/${currentYear-1}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
-        },
-      });
 
-      if (!response.ok) {
-        throw new Error('Error al obtener el POA para la facultad y año especificado.');
-      }
+  const handleGetPoa = async (facultyId: number) => {
+    if (!user?.token) return;
 
-      const poaData = await response.json();
-      setPoaId(poaData.poaId);
+    const poa = await getPoaByFacultyAndYear(facultyId, new Date().getFullYear() ,user.token);
+    setPoaId(poa.poaId);
 
-      // Verificar el estado del POA y actualizar la habilitación del botón
-      const status = poaData.status;
-      if (status === "Abierto") {
-        setIsEditable(true); // Habilitar edición
-      } else {
-        setIsEditable(false); // Deshabilitar edición
-      }
-
-    } catch (error: any) {
-      console.error('Error al realizar la consulta del POA:', error);
+    // Verificar el estado del POA y actualizar la habilitación del botón
+    const status = poa.status;
+    if (status === "Abierto") {
+      setIsEditable(true); // Habilitar edición
+    } else {
+      setIsEditable(false); // Deshabilitar edición
     }
-  };
+  }
 
   const handleCreatePoa = async () => {
     try {
