@@ -188,7 +188,7 @@ export async function getUserById(userId: number, token: string): Promise<User> 
 }
 
 export async function getPoaByFacultyAndYear(facultyId: number, year: number, token: string): Promise<Poa> {
-  const response = await fetch(`${API_URL}/api/poas/${facultyId}/${year}`, {
+  const response = await fetch(`${API_URL}/api/poas/${facultyId}/${year-1}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
