@@ -26,6 +26,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 import { Role } from "@/types/Permission"
+import { NotificationButton } from "@/components/NotificationButton"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
 
@@ -160,9 +161,9 @@ export default function Header() {
 					</SheetContent>
 				</Sheet>
 				<div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-					<div className="w-full flex-1 md:w-auto md:flex-none">
-						{/* Add search functionality here if needed */}
-					</div>
+					<nav className="flex items-center space-x-2">
+						<NotificationButton/>
+					</nav>
 					<nav className="flex items-center space-x-2">
 						<AccountButton username={user?.username} />
 					</nav>
