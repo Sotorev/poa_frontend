@@ -92,6 +92,16 @@ const navItems: NavItem[] = [
 			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ["Administrador"], icon: Settings },
 		],
 	},
+	{
+		title: "Ejecución",
+		href: "poa/ejecucion",
+		icon: CheckSquare,
+		description: "Ejecución del POA",
+		requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'],
+		subItems: [
+			{ title: "Eventos", href: "/poa/ejecucion", description: "Eventos ejecutados", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+		],
+	}
 ]
 
 export default function Header() {
