@@ -5,7 +5,7 @@ import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NotificationPanel } from './NotificationPanel'
-import { useNotifications, useNotificationAnimation } from '../hooks/notificationHooks'
+import { useNotificationAnimation, useNotifications } from '@/hooks/notificationHooks'
 
 export function NotificationButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -31,10 +31,10 @@ export function NotificationButton() {
     style.textContent = `
       @keyframes expand-pulse {
         0% {
-          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+          box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
         }
         100% {
-          box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+          box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
         }
       }
       .animate-expand-pulse {
@@ -54,14 +54,14 @@ export function NotificationButton() {
         size="icon"
         className={`relative ${
           unreadCount > 0 
-            ? 'ring-[3px] ring-green-500 text-green-500 animate-expand-pulse' 
+            ? 'ring-[3px] ring-primary text-primary animate-expand-pulse' 
             : ''
         }`}
         onClick={handleClick}
         aria-label="Notificaciones"
         key={animationKey}
       >
-        <Bell className={`h-5 w-5 ${unreadCount > 0 ? 'text-green-500' : ''}`} />
+        <Bell className={`h-5 w-5 ${unreadCount > 0 ? 'text-primary' : ''}`} />
         {unreadCount > 0 && (
           <Badge 
             variant="destructive" 
