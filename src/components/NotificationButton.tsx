@@ -74,7 +74,7 @@ export function NotificationButton() {
       <NotificationPanel 
         isOpen={isOpen} 
         onClose={handleClose}
-        notifications={notifications}
+        notifications={notifications ?? []}
         onMarkAsRead={handleMarkAsRead}
         onDelete={handleDelete}
       />

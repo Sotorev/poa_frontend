@@ -1,28 +1,63 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Notification } from '@/types/notificationTypes';
-import { initialNotifications } from '@/mookes/notificationData';
+import { useState, useMemo, useEffect, use } from 'react';
+import { Notification, NotificationResponse } from '@/types/notificationTypes';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { getNotifications } from '@/services/notificationService';
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
+  const user = useCurrentUser();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const data = await getNotifications(user.token, user.userId);
+        const mappedNotifications = mapNotifications(data);
+        setNotifications(mappedNotifications);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchNotifications();
+  }, [user]);
+
+
+
+  function mapNotifications(data: NotificationResponse[]): Notification[] {
+    return data.map(n => ({
+      id: n.id,
+      message: n.message,
+      description: n.message,
+      read: n.isRead,
+      date: n.createdAt.split('T')[0],
+      time: n.createdAt.split('T')[1].substring(0, 5),
+    }));
+  }
 
   const filteredNotifications = useMemo(() => {
-    return notifications.filter(notification => 
+    return (notifications ?? []).filter(notification =>
       (notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        notification.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (activeTab === 'unread' ? !notification.read : notification.read)
     );
   }, [notifications, searchTerm, activeTab]);
 
   const handleMarkAsRead = (id: number) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
+    if (notifications) {
+      setNotifications(notifications.map(n =>
+        n.id === id ? { ...n, read: true } : n
+      ));
+    }
   };
 
   const handleDelete = (id: number) => {
-    setNotifications(notifications.filter(n => n.id !== id));
+    if (notifications) {
+      setNotifications(notifications.filter(n => n.id !== id));
+    }
   };
 
   return {
@@ -33,7 +68,7 @@ export function useNotifications() {
     setActiveTab,
     handleMarkAsRead,
     handleDelete,
-    unreadCount: notifications.filter(n => !n.read).length,
+    unreadCount: notifications ? notifications.filter(n => !n.read).length : 0,
   };
 }
 

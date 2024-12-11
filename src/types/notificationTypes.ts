@@ -1,3 +1,5 @@
+// src/types/notificationTypes.ts
+
 export interface Notification {
   id: number;
   message: string;
@@ -7,3 +9,10 @@ export interface Notification {
   time: string;
 }
 
+export interface NotificationResponse {
+  id: number;
+  userId: number;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
