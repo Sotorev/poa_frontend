@@ -173,62 +173,35 @@ export interface ApiFile {
  */
 /** Interface que define la estructura principal de un evento en la API */
 export interface ApiEvent {
-  /** ID único del evento */
-  eventId: number;
-  /** Nombre del evento */
-  name: string;
-  /** Tipo de evento */
-  type: string;
-  /** ID del POA asociado */
-  poaId: number;
-  /** Porcentaje de completitud del evento */
-  completionPercentage: number;
-  /** ID del campus donde se realiza */
-  campusId: number;
-  /** Naturaleza o categoría del evento */
-  eventNature: string;
-  /** Indica si el evento está eliminado */
-  isDeleted: boolean;
-  /** Objetivo principal del evento */
-  objective: string;
-  /** Indica si el evento está retrasado */
-  isDelayed: boolean;
-  /** Indicador de logro o cumplimiento */
-  achievementIndicator: string;
-  /** ID del tipo de compra asociado */
-  purchaseTypeId: number;
-  /** Costo total del evento */
-  totalCost: number;
-  /** Fecha de creación */
-  createdAt: string;
-  /** Fecha de última actualización */
-  updatedAt: string | null;
-  /** ID del usuario creador */
-  userId: number;
-  /** Fechas asociadas al evento */
-  dates: ApiEventDate[];
-  /** Fuentes de financiamiento */
-  financings: ApiEventFinancing[];
-  /** Responsables del evento */
-  responsibles: ApiEventResponsible[];
-  /** Detalles de costos */
-  costDetails: ApiCostDetail[];
-  /** Archivos adjuntos */
-  files: ApiFile[];
-  /** Información del campus */
-  campus: ApiCampus;
-  /** Intervenciones asociadas */
-  interventions: ApiIntervention[];
-  /** Objetivos de Desarrollo Sostenible */
-  ods: ApiOds[];
-  /** Aprobaciones del evento */
-  eventApprovals: ApiEventApproval[];
-  /** Información del usuario creador */
-  user: ApiUser;
-  /** Tipo de compra */
-  purchaseType: ApiPurchaseType;
-  /** Recursos institucionales requeridos */
-  institutionalResources: ApiInstitutionalResource[];
+  eventId: number;                           /** ID único del evento */
+  name: string;                              /** Nombre del evento */
+  type: string;                              /** Tipo de evento */
+  poaId: number;                            /** ID del POA asociado */
+  completionPercentage: number;              /** Porcentaje de completitud del evento */
+  campusId: number;                          /** ID del campus donde se realiza */
+  eventNature: string;                       /** Naturaleza o categoría del evento */
+  isDeleted: boolean;                        /** Indica si el evento está eliminado */
+  objective: string;                         /** Objetivo principal del evento */
+  isDelayed: boolean;                        /** Indica si el evento está retrasado */
+  achievementIndicator: string;              /** Indicador de logro o cumplimiento */
+  purchaseTypeId: number;                    /** ID del tipo de compra asociado */
+  totalCost: number;                         /** Costo total del evento */
+  createdAt: string;                         /** Fecha de creación */
+  updatedAt: string | null;                  /** Fecha de última actualización */
+  userId: number;                            /** ID del usuario creador */
+  statusId: number;                          /** ID del estado actual del evento (ejecutado, planificado, finalizado) */
+  dates: ApiEventDate[];                     /** Fechas asociadas al evento */
+  financings: ApiEventFinancing[];           /** Fuentes de financiamiento */
+  responsibles: ApiEventResponsible[];       /** Responsables del evento */
+  costDetails: ApiCostDetail[];              /** Detalles de costos */
+  files: ApiFile[];                          /** Archivos adjuntos */
+  campus: ApiCampus;                         /** Información del campus (sede) */
+  interventions: ApiIntervention[];          /** Intervenciones asociadas */
+  ods: ApiOds[];                            /** Objetivos de Desarrollo Sostenible */
+  eventApprovals: ApiEventApproval[];        /** Aprobaciones del evento */
+  user: ApiUser;                             /** Información del usuario creador */
+  purchaseType: ApiPurchaseType;             /** Tipo de compra */
+  institutionalResources: ApiInstitutionalResource[]; /** Recursos institucionales requeridos */
 }
 
 // Interfaces existentes

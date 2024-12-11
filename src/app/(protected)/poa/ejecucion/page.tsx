@@ -24,52 +24,40 @@ import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFacultyByUserId } from '@/services/faculty/currentFaculty'
 
-// Datos de ejemplo - en una aplicación real, estos vendrían de una API o base de datos
-const executedEventsExample = [
-  {
-    id: '1',
-    name: 'Evento 1',
-    executionDate: new Date(2023, 5, 15),
-    actualExpenses: "1000.00",
-    files: [new File([""], "documento1.pdf", { type: "application/pdf" })]
-  },
-  {
-    id: '2',
-    name: 'Evento 2',
-    executionDate: new Date(2023, 6, 20),
-    actualExpenses: "1500.00",
-    files: [new File([""], "imagen1.jpg", { type: "image/jpeg" }), new File([""], "documento2.pdf", { type: "application/pdf" })]
-  },
-];
-
 /**
- * Componente que gestiona y muestra los eventos ejecutados del POA (Plan Operativo Anual).
- * 
- * @component
+ * @component PoaTrackingPage
  * @description
- * Este componente proporciona funcionalidad para ver, agregar y editar eventos ejecutados en el sistema POA.
- * Incluye una tabla de visualización de eventos y un diálogo de formulario para la gestión de eventos.
+ * Página que muestra y gestiona el seguimiento de eventos ejecutados del POA.
+ * Permite visualizar, crear y editar eventos que han sido ejecutados.
+ * Los eventos se filtran por estado, mostrando eventos activos (statusId: 1) y ejecutados (statusId: 2).
  * 
- * @características
- * - Muestra una tabla de eventos ejecutados con detalles como nombre, fecha de ejecución, gastos y archivos
- * - Permite agregar nuevos eventos a través de un formulario en diálogo
- * - Permite editar eventos existentes
- * - Se integra con la autenticación de usuarios
- * - Maneja archivos adjuntos
+ * @features
+ * - Carga automática de la facultad del usuario actual
+ * - Carga del POA correspondiente al año actual
+ * - Carga de eventos filtrados por estado
+ * - Creación de nuevos eventos ejecutados
+ * - Edición de eventos existentes
+ * - Visualización en tabla con información detallada
+ * - Gestión de archivos adjuntos por evento
  * 
- * @estado
- * - events: Almacena la lista de eventos POA
- * - executedEvents: Mantiene los datos de eventos ejecutados
- * - isDialogOpen: Controla la visibilidad del diálogo del formulario de eventos
- * - editingEvent: Contiene los datos del evento que se está editando actualmente
+ * @state
+ * - events: Lista de eventos activos
+ * - executedEvents: Lista de eventos ejecutados
+ * - isDialogOpen: Control de visibilidad del diálogo de edición
+ * - editingEvent: Evento actual en edición
+ * - facultyId: ID de la facultad del usuario
+ * - poa: Datos del POA actual
  * 
- * @returns {JSX.Element} Un componente de página con una tabla de eventos ejecutados y controles de gestión
+ * @requires
+ * - Usuario autenticado
+ * - Permisos de facultad
+ * - Acceso a API de POA
  */
 export default function PoaTrackingPage() {
   const [events, setEvents] = useState<ApiEvent[]>([]);
-  const [executedEvents, setExecutedEvents] = useState(executedEventsExample);
+  const [executedEvents, setExecutedEvents] = useState<ApiEvent[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<typeof executedEvents[0] | undefined>();
+  const [editingEvent, setEditingEvent] = useState<ApiEvent>();
   const [facultyId, setFacultyId] = useState<any>();
   const [poa, setPoa] = useState<any>();
   const user = useCurrentUser();
@@ -103,7 +91,11 @@ export default function PoaTrackingPage() {
 
   /**
    * @description
-   * Carga los eventos completos desde la API al montar el componente.
+   * Carga los eventos desde la API al montar el componente.
+   * Los eventos se filtran por su statusId:
+   * - statusId 1: Eventos activos (pendientes de ejecución)
+   * - statusId 2: Eventos ejecutados
+   * Los resultados filtrados se almacenan en los estados 'events' y 'executedEvents' respectivamente.
    */
   useEffect(() => {
     if (user === undefined || poa === undefined) return;
@@ -112,7 +104,8 @@ export default function PoaTrackingPage() {
 
     getFullEvents(user.token, poa.poaId)
       .then((events: ApiEvent[]) => {
-        setEvents(events);
+        setEvents(events.filter(event => event.statusId === 1));
+        setExecutedEvents(events.filter(event => event.statusId === 2));
       });
   }, [user, poa]);
 
@@ -130,17 +123,17 @@ export default function PoaTrackingPage() {
       files: data.files || []
     };
 
-    if (editingEvent) {
-      // Actualizar evento existente
-      setExecutedEvents(prevEvents =>
-        prevEvents.map(event =>
-          event.id === formattedData.id ? formattedData : event
-        )
-      );
-    } else {
-      // Agregar nuevo evento
-      setExecutedEvents([...executedEventsExample, formattedData]);
-    }
+    // if (editingEvent) {
+    //   // Actualizar evento existente
+    //   setExecutedEvents(prevEvents =>
+    //     prevEvents.map(event =>
+    //       event.eventId === formattedData.id ? formattedData : event
+    //     )
+    //   );
+    // } else {
+    //   // Agregar nuevo evento
+    //   setExecutedEvents([...executedEventsExample, formattedData]);
+    // }
     setEditingEvent(undefined);
     setIsDialogOpen(false);
   };
@@ -173,10 +166,10 @@ export default function PoaTrackingPage() {
           </TableHeader>
           <TableBody>
             {executedEvents.map((event) => (
-              <TableRow key={event.id}>
+              <TableRow key={event.eventId}>
                 <TableCell>{event.name}</TableCell>
-                <TableCell>{format(event.executionDate, "PPP", { locale: es })}</TableCell>
-                <TableCell>Q{event.actualExpenses}</TableCell>
+                {/* <TableCell>{format(event.executionDate, "PPP", { locale: es })}</TableCell>
+                <TableCell>Q{event.actualExpenses}</TableCell> */}
                 <TableCell>{event.files?.length || 0} archivo(s)</TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -197,11 +190,11 @@ export default function PoaTrackingPage() {
         events={events}
         onSubmit={handleSubmit}
         initialData={editingEvent ? {
-          eventId: editingEvent.id,
+          eventId: `${editingEvent.eventId}`,
           eventName: editingEvent.name,
-          actualExpenses: editingEvent.actualExpenses,
-          executionDate: editingEvent.executionDate,
-          files: editingEvent.files
+          actualExpenses: "0",
+          executionDate: new Date("1/1/2021"),
+          files: undefined
         } : undefined}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
