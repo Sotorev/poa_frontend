@@ -28,14 +28,17 @@ export function useNotifications() {
 
 
   function mapNotifications(data: NotificationResponse[]): Notification[] {
-    return data.map(n => ({
-      id: n.id,
-      message: n.message,
-      description: n.message,
-      read: n.isRead,
-      date: n.createdAt.split('T')[0],
-      time: n.createdAt.split('T')[1].substring(0, 5),
-    }));
+    return data.map(n => {
+      const [message, ...descriptionParts] = n.message.split(':');
+      return {
+        id: n.id,
+        message: `${message}:`,
+        description: descriptionParts.join(':').trim(),
+        read: n.isRead,
+        date: n.createdAt.split('T')[0],
+        time: n.createdAt.split('T')[1].substring(0, 5),
+      };
+    });
   }
 
   const filteredNotifications = useMemo(() => {
