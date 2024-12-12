@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Bell, CheckCircle2, Trash2, Check, Search } from 'lucide-react'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Notification } from '../types/notificationTypes'
+import { Notification } from '../../types/notificationTypes'
 
 interface NotificationPanelProps {
   isOpen: boolean

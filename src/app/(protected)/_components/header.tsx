@@ -26,7 +26,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 import { Role } from "@/types/Permission"
-import { NotificationButton } from "@/components/NotificationButton"
+import { NotificationButton } from "@/components/notifications/NotificationButton"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
 
