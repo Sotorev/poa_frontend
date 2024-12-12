@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
@@ -20,22 +20,21 @@ import { Notification } from '../types/notificationTypes'
 interface NotificationPanelProps {
   isOpen: boolean
   onClose: () => void
-  notifications: Notification[]
-  onMarkAsRead: (id: number) => void
-  onDelete: (id: number) => void
 }
 
-export function NotificationPanel({ isOpen, onClose, notifications, onMarkAsRead, onDelete }: NotificationPanelProps) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState('unread')
+// importa activeTab y setActiveTab de @/hooks/notificationHooks
+import { useNotifications } from '@/hooks/notificationHooks'
 
-  const filteredNotifications = useMemo(() => {
-    return notifications.filter(notification => 
-      (notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (activeTab === 'unread' ? !notification.read : notification.read)
-    )
-  }, [notifications, searchTerm, activeTab])
+export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
+  const {
+    activeTab,
+    searchTerm,
+    setSearchTerm,
+    setActiveTab,
+    filteredNotifications,
+    handleMarkAsRead: onMarkAsRead,
+    handleDelete: onDelete
+  } = useNotifications()
 
   const renderNotifications = () => {
     if (filteredNotifications.length === 0) {
@@ -45,8 +44,8 @@ export function NotificationPanel({ isOpen, onClose, notifications, onMarkAsRead
           <CardContent>
             <h3 className="text-xl font-semibold mb-2">No hay notificaciones</h3>
             <p className="text-muted-foreground">
-              {searchTerm 
-                ? 'No se encontraron notificaciones que coincidan con tu búsqueda.' 
+              {searchTerm
+                ? 'No se encontraron notificaciones que coincidan con tu búsqueda.'
                 : activeTab === 'unread'
                   ? 'No tienes notificaciones sin leer.'
                   : 'No tienes notificaciones leídas.'}
@@ -59,13 +58,12 @@ export function NotificationPanel({ isOpen, onClose, notifications, onMarkAsRead
     return (
       <div className="space-y-4">
         {filteredNotifications.map((notification) => (
-          <Card 
-            key={notification.id} 
-            className={`overflow-hidden transition-all duration-300 ${
-              notification.read 
-                ? 'bg-background/50' 
-                : 'bg-primary/5 border-primary shadow-lg'
-            }`}
+          <Card
+            key={notification.id}
+            className={`overflow-hidden transition-all duration-300 ${notification.read
+              ? 'bg-background/50'
+              : 'bg-primary/5 border-primary shadow-lg'
+              }`}
           >
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-2">
@@ -81,9 +79,9 @@ export function NotificationPanel({ isOpen, onClose, notifications, onMarkAsRead
             </CardContent>
             <CardFooter className="bg-muted/50 p-2 flex justify-end space-x-2">
               {!notification.read && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onMarkAsRead(notification.id)}
                   className="text-primary hover:text-primary/80"
                 >
@@ -91,8 +89,8 @@ export function NotificationPanel({ isOpen, onClose, notifications, onMarkAsRead
                   Marcar como leído
                 </Button>
               )}
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => onDelete(notification.id)}
                 className="text-destructive hover:text-destructive/80"
@@ -129,7 +127,7 @@ export function NotificationPanel({ isOpen, onClose, notifications, onMarkAsRead
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Tabs defaultValue="unread" onValueChange={setActiveTab}>
+          <Tabs defaultValue="unread" onValueChange={(value) => setActiveTab(value as "unread" | "read")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="unread">No leídas</TabsTrigger>
               <TabsTrigger value="read">Leídas</TabsTrigger>
@@ -148,4 +146,3 @@ export function NotificationPanel({ isOpen, onClose, notifications, onMarkAsRead
     </Sheet>
   )
 }
-

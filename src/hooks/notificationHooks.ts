@@ -25,8 +25,6 @@ export function useNotifications() {
     fetchNotifications();
   }, [user]);
 
-
-
   function mapNotifications(data: NotificationResponse[]): Notification[] {
     return data.map(n => {
       const [message, ...descriptionParts] = n.message.split(':');
@@ -42,11 +40,10 @@ export function useNotifications() {
   }
 
   const filteredNotifications = useMemo(() => {
-    return (notifications ?? []).filter(notification =>
-      (notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        notification.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (activeTab === 'unread' ? !notification.read : notification.read)
-    );
+    return (notifications ?? []).filter(notification => 
+      (activeTab === 'read' ? notification.read : !notification.read) && (notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notification.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );    
   }, [notifications, searchTerm, activeTab]);
 
   const handleMarkAsRead = (id: number) => {
@@ -64,13 +61,14 @@ export function useNotifications() {
   };
 
   return {
-    notifications: filteredNotifications,
+    notifications: notifications ?? [],
     searchTerm,
     setSearchTerm,
     activeTab,
     setActiveTab,
     handleMarkAsRead,
     handleDelete,
+    filteredNotifications,
     unreadCount: notifications ? notifications.filter(n => !n.read).length : 0,
   };
 }

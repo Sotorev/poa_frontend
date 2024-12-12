@@ -10,12 +10,7 @@ import { useNotificationAnimation, useNotifications } from '@/hooks/notification
 export function NotificationButton() {
   const [isOpen, setIsOpen] = useState(false)
   const { animationKey, triggerAnimation } = useNotificationAnimation()
-  const {
-    notifications,
-    handleMarkAsRead,
-    handleDelete,
-    unreadCount
-  } = useNotifications()
+  const { unreadCount } = useNotifications()
 
   const handleClick = () => {
     setIsOpen(true)
@@ -52,31 +47,27 @@ export function NotificationButton() {
       <Button
         variant="outline"
         size="icon"
-        className={`relative ${
-          unreadCount > 0 
-            ? 'ring-[3px] ring-primary text-primary animate-expand-pulse' 
-            : ''
-        }`}
+        className={`relative ${unreadCount > 0
+          ? 'ring-[3px] ring-primary text-primary animate-expand-pulse'
+          : ''
+          }`}
         onClick={handleClick}
         aria-label="Notificaciones"
         key={animationKey}
       >
         <Bell className={`h-5 w-5 ${unreadCount > 0 ? 'text-primary' : ''}`} />
         {unreadCount > 0 && (
-          <Badge 
-            variant="destructive" 
+          <Badge
+            variant="destructive"
             className="absolute -top-2 -right-2 px-2 py-1 text-xs"
           >
             {unreadCount}
           </Badge>
         )}
       </Button>
-      <NotificationPanel 
-        isOpen={isOpen} 
+      <NotificationPanel
+        isOpen={isOpen}
         onClose={handleClose}
-        notifications={notifications ?? []}
-        onMarkAsRead={handleMarkAsRead}
-        onDelete={handleDelete}
       />
     </>
   )
