@@ -89,7 +89,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   Marcar como leído
                 </Button>
               )}
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onDelete(notification.id)}
@@ -97,7 +97,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Eliminar
-              </Button>
+              </Button> */}
             </CardFooter>
           </Card>
         ))}

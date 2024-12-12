@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, use } from 'react';
 import { Notification, NotificationResponse } from '@/types/notificationTypes';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import { getNotifications } from '@/services/notificationService';
+import { getNotifications, markAsRead } from '@/services/notificationService';
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>();
@@ -47,7 +47,8 @@ export function useNotifications() {
   }, [notifications, searchTerm, activeTab]);
 
   const handleMarkAsRead = (id: number) => {
-    if (notifications) {
+    if (notifications && user) {
+      markAsRead(user.token, id);
       setNotifications(notifications.map(n =>
         n.id === id ? { ...n, read: true } : n
       ));

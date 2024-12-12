@@ -16,3 +16,17 @@ export async function getNotifications(token: string, userId: number): Promise<N
 
   return response.json();
 }
+
+export async function markAsRead(token: string, notificationId: number): Promise<void> {
+  const response = await fetch(`${API_URL}/api/notifications/${notificationId}/read`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error al marcar notificación como leída: ${response.statusText}`);
+  }
+}
