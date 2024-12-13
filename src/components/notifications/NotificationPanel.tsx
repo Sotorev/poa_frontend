@@ -15,14 +15,13 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Bell, CheckCircle2, Trash2, Check, Search } from 'lucide-react'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Notification } from '../../types/notificationTypes'
 
 interface NotificationPanelProps {
   isOpen: boolean
   onClose: () => void
 }
 
-// importa activeTab y setActiveTab de @/hooks/notificationHooks
+
 import { useNotifications } from '@/hooks/notificationHooks'
 
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
@@ -89,7 +88,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   Marcar como leído
                 </Button>
               )}
-              {/* <Button
+              <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onDelete(notification.id)}
@@ -97,7 +96,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Eliminar
-              </Button> */}
+              </Button>
             </CardFooter>
           </Card>
         ))}
