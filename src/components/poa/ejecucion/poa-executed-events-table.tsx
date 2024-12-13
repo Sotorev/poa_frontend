@@ -39,7 +39,7 @@ export function PoaExecutedEventsTable({ events, onEdit }: PoaExecutedEventsTabl
             </TableRow>
           </TableHeader>
           <TableBody>
-            {events.map((event) => (
+            {events?.map((event) => (
               <TableRow key={event.id}>
                 <TableCell className="whitespace-nowrap">{event.name}</TableCell>
                 <TableCell className="whitespace-nowrap">{format(event.executionDate, "dd/MM/yyyy", { locale: es })}</TableCell>

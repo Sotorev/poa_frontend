@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import { Plus } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
@@ -165,7 +163,7 @@ export default function PoaTrackingPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {executedEvents.map((event) => (
+            {executedEvents?.map((event) => (
               <TableRow key={event.eventId}>
                 <TableCell>{event.name}</TableCell>
                 {/* <TableCell>{format(event.executionDate, "PPP", { locale: es })}</TableCell>
