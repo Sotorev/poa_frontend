@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm, useFieldArray, useWatch } from "react-hook-form"
-import { X, Search, Plus, Trash } from 'lucide-react'
+import { useForm, useFieldArray, useWatch, Path } from "react-hook-form"
+import { X, Search, Plus, Trash, Check, AlertCircle } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
 import {
@@ -30,10 +30,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 import { ApiEvent } from '@/types/interfaces'
 import { formSchema, FormValues } from '@/schemas/poa-event-tracking-schema'
+import { Aporte, FormFieldPaths } from '@/types/poa-event-tracking'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -45,6 +48,123 @@ type PoaEventTrackingFormProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+function StepIndicator({ currentStep, onStepClick, errors }: { 
+  currentStep: number; 
+  onStepClick: (step: number) => void;
+  errors: Record<string, any>;
+}) {
+  const steps = [
+    { 
+      number: 1, 
+      title: "Selección de Evento",
+      fields: ['eventId', 'eventName', 'executionResponsible', 'campus'] as const
+    },
+    { 
+      number: 2, 
+      title: "Gestión de Gastos",
+      fields: ['aportesUmes', 'aportesOtros'] as const
+    },
+    { 
+      number: 3, 
+      title: "Fechas de Ejecución",
+      fields: ['fechas'] as const
+    }
+  ]
+
+  const hasStepErrors = (stepFields: readonly FormFieldPaths[]) => {
+    return stepFields.some(field => {
+      if (field.includes('.')) {
+        return !!errors[field as Path<FormValues>];
+      }
+      return !!errors[field];
+    });
+  };
+
+  return (
+    <div className="w-full mb-8">
+      <div className="relative flex justify-between">
+        {steps.map((step, index) => {
+          const isStepWithError = hasStepErrors(step.fields);
+          return (
+            <div 
+              key={step.number} 
+              className={cn(
+                "flex flex-col items-center relative group",
+                "cursor-pointer" // Siempre cursor-pointer
+              )}
+              onClick={() => {
+                onStepClick(step.number)
+              }}
+            >
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-full border-2 flex items-center justify-center font-semibold relative z-10 bg-background transition-colors group-hover:border-primary/70",
+                  currentStep > step.number
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : currentStep === step.number
+                    ? "border-primary text-primary"
+                    : "border-muted text-muted-foreground",
+                  isStepWithError && "border-destructive"
+                )}
+              >
+                {isStepWithError ? (
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                ) : currentStep > step.number ? (
+                  <Check className="h-5 w-5" />
+                ) : (
+                  step.number
+                )}
+              </div>
+              <span
+                className={cn(
+                  "mt-2 text-sm font-medium transition-colors",
+                  currentStep >= step.number
+                    ? "text-primary group-hover:text-primary/70"
+                    : "text-muted-foreground",
+                  isStepWithError && "text-destructive"
+                )}
+              >
+                {step.title}
+              </span>
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    "absolute top-5 left-full w-full h-[2px] -translate-y-1/2 transition-colors",
+                    currentStep > step.number
+                      ? "bg-primary"
+                      : "bg-muted"
+                  )}
+                  style={{ width: "calc(100% - 2.5rem)" }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )
+}
+
+function EventDetails({ event }: { event: ApiEvent }) {
+  return (
+    <div className="mt-4 space-y-2">
+      <p><strong>Nombre del evento:</strong> {event.name}</p>
+      <p><strong>Objetivo:</strong> {event.objective}</p>
+      <p><strong>Campus:</strong> {event.campus.name}</p>
+      <p><strong>Responsable de ejecución:</strong> {event.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || 'No especificado'}</p>
+      <p><strong>Costo total:</strong> Q{event.totalCost.toFixed(2)}</p>
+      <p><strong>Fechas:</strong></p>
+      <ul className="list-disc list-inside">
+        {event.dates.map((date, index) => (
+          <li key={index}>
+            {new Date(date.startDate).toLocaleDateString()} - {new Date(date.endDate).toLocaleDateString()}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOpenChange }: PoaEventTrackingFormProps) {
   const [query, setQuery] = useState('')
   const [showResults, setShowResults] = useState(false)
@@ -52,6 +172,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   const [archivosGastos, setArchivosGastos] = useState<File[]>([])
   const [costoTotal, setCostoTotal] = useState(0)
   const [selectedEvent, setSelectedEvent] = useState<ApiEvent | null>(null);
+  const [currentStep, setCurrentStep] = useState(1)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,25 +186,66 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
       archivosGastos: [],
       fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
     },
-  })
-
-  const { fields: fechasFields, append: appendFecha, remove: removeFecha } = useFieldArray({
-    control: form.control,
-    name: "fechas",
-  })
-
-  const { fields: aportesUmesFields, append: appendAporteUmes, remove: removeAporteUmes } = useFieldArray({
-    control: form.control,
-    name: "aportesUmes",
-  })
-
-  const { fields: aportesOtrosFields, append: appendAporteOtros, remove: removeAporteOtros } = useFieldArray({
-    control: form.control,
-    name: "aportesOtros",
+    mode: "onChange" 
   })
 
   const aportesUmes = useWatch({ control: form.control, name: "aportesUmes" });
   const aportesOtros = useWatch({ control: form.control, name: "aportesOtros" });
+
+  const { toast } = useToast()
+
+  const { formState: { errors, isValid } } = form;
+
+  const validateCurrentStep = async (): Promise<boolean> => {
+    let fieldsToValidate: Array<FormFieldPaths> = [];
+    switch(currentStep) {
+      case 1:
+        fieldsToValidate = ['eventId', 'eventName', 'executionResponsible', 'campus'];
+        break;
+      case 2:
+        const aportesUmesFields: Array<FormFieldPaths> = aportesUmes.map((_, index) => `aportesUmes.${index}.tipo` as FormFieldPaths).concat(
+          aportesUmes.map((_, index) => `aportesUmes.${index}.monto` as FormFieldPaths)
+        );
+        const aportesOtrosFields: Array<FormFieldPaths> = aportesOtros.map((_, index) => `aportesOtros.${index}.tipo` as FormFieldPaths).concat(
+          aportesOtros.map((_, index) => `aportesOtros.${index}.monto` as FormFieldPaths)
+        );
+        fieldsToValidate = ['aportesUmes', 'aportesOtros', ...aportesUmesFields, ...aportesOtrosFields];
+        break;
+      case 3:
+        const fechasFields: Array<FormFieldPaths> = form.getValues("fechas").map((_, index) => `fechas.${index}.fecha` as FormFieldPaths);
+        fieldsToValidate = ['fechas', ...fechasFields];
+        break;
+      default:
+        fieldsToValidate = [];
+    }
+
+    if (fieldsToValidate.length === 0) return true; // Si no hay campos que validar, asume true
+
+    const stepIsValid = await form.trigger(fieldsToValidate);
+    return stepIsValid;
+  };
+
+  const handleStepClick = async (step: number) => {
+    if (step === currentStep) return;
+
+    if (step < currentStep) {
+      // Paso anterior, cambiar directamente
+      setCurrentStep(step);
+    } else {
+      // Paso siguiente o uno posterior
+      const stepValid = await validateCurrentStep();
+      if (stepValid) {
+        setCurrentStep(step);
+      } else {
+        toast({
+          title: "Error de validación",
+          description: "Por favor complete todos los campos requeridos antes de continuar",
+          variant: "destructive",
+        });
+        // No se cambia el paso, se permanece en el actual
+      }
+    }
+  };
 
   useEffect(() => {
     const total = [...aportesUmes, ...aportesOtros].reduce((sum, aporte) => {
@@ -93,25 +255,16 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     setCostoTotal(total);
   }, [aportesUmes, aportesOtros]);
 
-  const resetForm = () => {
-    setSelectedEvent(null);
-    form.reset({
-      eventId: "",
-      eventName: "",
-      executionResponsible: "",
-      campus: "",
-      aportesUmes: [{ tipo: "", monto: "" }],
-      aportesOtros: [{ tipo: "", monto: "" }],
-      archivosGastos: [],
-      fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
-    });
-    setQuery('');
-    setShowResults(false);
-    setArchivosGastos([]);
-    setCostoTotal(0);
-  };
+  // Eliminamos el reset del formulario en handleCloseForm para no perder datos
+  const handleCloseForm = () => {
+    // Solo cerramos el diálogo
+    onOpenChange(false);
+    // No llamamos a resetForm aquí para no perder información
+  }
 
   useEffect(() => {
+    // Al abrir el diálogo, si tenemos initialData, las usamos, sino dejamos las existentes.
+    // Esto evita que se pierdan los datos al cambiar de pestaña.
     if (open) {
       if (initialData) {
         form.reset(initialData);
@@ -124,9 +277,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             setShowResults(false);
           }
         }
-      } 
-      // Importante: Ya no hacemos resetForm aquí si no hay initialData.
-      // De esta forma no se pierden los datos al cambiar de pestaña.
+      }
     }
   }, [open, initialData, form, events]);
 
@@ -143,11 +294,58 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     }
   }, [query, events, selectedEvent]);
 
-  function handleSubmit(values: FormValues) {
+  const goToNextStep = async () => {
+    const stepValid = await validateCurrentStep();
+    if (stepValid) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      toast({
+        title: "Error de validación",
+        description: "Por favor complete todos los campos requeridos antes de continuar",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const goToPreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    } else {
+      // Si presiona "Cancelar" en el primer paso, aquí podemos resetear si es lo que se desea.
+      // Eso depende de la experiencia que quieras. 
+      // Por ahora, no reseteamos el form al cerrar, para no perder datos al cambiar de pestaña.
+      handleCloseForm();
+    }
+  };
+
+  async function handleSubmit(values: FormValues) {
+    const result = formSchema.safeParse(values);
+    if (!result.success) {
+      result.error.issues.forEach((issue) => {
+        toast({
+          title: "Error de validación",
+          description: issue.message,
+          variant: "destructive",
+        });
+      });
+      return;
+    }
+
     onSubmit(values);
     onOpenChange(false);
-    // Después de enviar, reseteamos el formulario
-    resetForm();
+    // Solo al terminar exitosamente, reseteamos el formulario
+    form.reset();
+    setSelectedEvent(null);
+    setQuery('');
+    setShowResults(false);
+    setArchivosGastos([]);
+    setCostoTotal(0);
+    setCurrentStep(1);
+    toast({
+      title: "Éxito",
+      description: "Seguimiento guardado exitosamente",
+      variant: "success",
+    });
   }
 
   const handleEventSelect = (event: ApiEvent) => {
@@ -165,7 +363,11 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   const handleClearSelection = () => {
     setSelectedEvent(null);
     setQuery('');
-    resetForm();
+    // No se hace resetForm aquí, solo limpiamos los datos del evento seleccionado.
+    form.setValue('eventId', "");
+    form.setValue('eventName', "");
+    form.setValue('executionResponsible', "");
+    form.setValue('campus', "");
     setShowResults(false);
   };
 
@@ -184,100 +386,316 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   const renderAporteFields = (
     fields: Record<"id", string>[],
     name: "aportesUmes" | "aportesOtros",
-    append: (value: { tipo: string, monto: string }) => void,
+    append: (value: Aporte) => void,
     remove: (index: number) => void
   ) => {
     return (
-      <div className="space-y-4">
-        <h4 className="text-md font-semibold">
-          {name === "aportesUmes" ? "Detalles de Aporte UMES" : "Detalles de Aporte Otros"}
-        </h4>
-        {fields.map((field, index) => (
-          <div key={field.id} className="flex flex-col sm:flex-row gap-4 items-end">
-            <FormField
-              control={form.control}
-              name={`${name}.${index}.tipo`}
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>{index === 0 ? `Tipo de Aporte ${name === "aportesUmes" ? "UMES" : "Otros"}` : ""}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">
+            {name === "aportesUmes" ? "Detalles de Aporte UMES" : "Detalles de Aporte Otros"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex flex-col sm:flex-row gap-4 items-end">
+              <FormField
+                control={form.control}
+                name={`${name}.${index}.tipo` as Path<FormValues>}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>{index === 0 ? `Tipo de Aporte ${name === "aportesUmes" ? "UMES" : "Otros"}` : ""}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione el tipo de aporte" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="monetario">Monetario</SelectItem>
+                        <SelectItem value="especie">Especie</SelectItem>
+                        {name === "aportesOtros" && (
+                          <>
+                            <SelectItem value="donacion">Donación</SelectItem>
+                            <SelectItem value="patrocinio">Patrocinio</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`${name}.${index}.monto` as Path<FormValues>}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>{index === 0 ? "Monto" : ""}</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione el tipo de aporte" />
-                      </SelectTrigger>
+                      <Input
+                        type="text"
+                        placeholder="0.00"
+                        {...field}
+                        onChange={(e) => {
+                          const formattedValue = formatDecimal(e.target.value);
+                          field.onChange(formattedValue);
+                        }}
+                        className={cn(
+                          "pr-8",
+                          errors[name]?.[index]?.monto && "border-destructive"
+                        )}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="monetario">Monetario</SelectItem>
-                      <SelectItem value="especie">Especie</SelectItem>
-                      {name === "aportesOtros" && (
-                        <>
-                          <SelectItem value="donacion">Donación</SelectItem>
-                          <SelectItem value="patrocinio">Patrocinio</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={`${name}.${index}.monto`}
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>{index === 0 ? "Monto" : ""}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="0.00"
-                      {...field}
-                      onChange={(e) => {
-                        const formattedValue = formatDecimal(e.target.value);
-                        field.onChange(formattedValue);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => remove(index)}
-              className="shrink-0"
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => append({ tipo: "", monto: "" })}
-          className="mt-2"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Agregar Aporte {name === "aportesUmes" ? "UMES" : "Otros"}
-        </Button>
-      </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => remove(index)}
+                className="shrink-0"
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append({ tipo: "", monto: "" })}
+            className="mt-2"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar Aporte {name === "aportesUmes" ? "UMES" : "Otros"}
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
-  const handleCloseForm = () => {
-    onOpenChange(false);
-    resetForm();
-  }
+  const { fields: fechasFields, append: appendFecha, remove: removeFecha } = useFieldArray({
+    control: form.control,
+    name: "fechas",
+  })
+
+  const { fields: aportesUmesFields, append: appendAporteUmes, remove: removeAporteUmes } = useFieldArray({
+    control: form.control,
+    name: "aportesUmes",
+  })
+
+  const { fields: aportesOtrosFields, append: appendAporteOtros, remove: removeAporteOtros } = useFieldArray({
+    control: form.control,
+    name: "aportesOtros",
+  })
+
+  const renderStepContent = () => (
+    <div className="space-y-4">
+      {currentStep === 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Selección de Evento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="eventName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Evento</FormLabel>
+                  <div className="relative">
+                    <Input
+                      placeholder="Buscar un evento..."
+                      value={query}
+                      onChange={(e) => {
+                        setQuery(e.target.value);
+                        field.onChange(e.target.value);
+                        if (selectedEvent) {
+                          setSelectedEvent(null);
+                          form.setValue('eventId', "");
+                          form.setValue('executionResponsible', "");
+                          form.setValue('campus', "");
+                        }
+                      }}
+                      className={cn(
+                        "pr-8",
+                        errors.eventName && "border-destructive"
+                      )}
+                    />
+                    <div className="absolute right-2.5 top-2.5 flex items-center gap-2">
+                      {selectedEvent ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0"
+                          onClick={handleClearSelection}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                  {showResults && filteredEvents.length > 0 && query && (
+                    <ul className="mt-1 border rounded-md divide-y max-h-32 overflow-y-auto">
+                      {filteredEvents.map((event) => (
+                        <li
+                          key={event.eventId}
+                          className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleEventSelect(event)}
+                        >
+                          {event.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <FormDescription>
+                    Busque y seleccione el evento al que desea dar seguimiento
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {selectedEvent && <EventDetails event={selectedEvent} />}
+          </CardContent>
+        </Card>
+      )}
+      {currentStep === 2 && (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold">Gestión de Gastos</h3>
+          {renderAporteFields(aportesUmesFields, "aportesUmes", appendAporteUmes, removeAporteUmes)}
+          {renderAporteFields(aportesOtrosFields, "aportesOtros", appendAporteOtros, removeAporteOtros)}
+          <Card className="bg-primary/10">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Costo Total</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-primary">Q{costoTotal.toFixed(2)}</p>
+            </CardContent>
+          </Card>
+          <FormField
+            control={form.control}
+            name="archivosGastos"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Archivos de Gastos</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    multiple
+                    onChange={(e) => {
+                      const files = e.target.files
+                        ? Array.from(e.target.files).filter(file => file.size <= MAX_FILE_SIZE)
+                        : [];
+                      if (files.length !== (e.target.files?.length || 0)) {
+                        toast({
+                          title: "Error",
+                          description: "Algunos archivos exceden el tamaño máximo permitido de 10MB.",
+                          variant: "destructive",
+                        });
+                      }
+                      setArchivosGastos(prevFiles => [...prevFiles, ...files]);
+                      field.onChange([...archivosGastos, ...files]);
+                    }}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Suba documentos relacionados con los gastos (máximo 10MB por archivo)
+                </FormDescription>
+                {archivosGastos.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {archivosGastos.map((file, index) => (
+                      <li key={index} className="flex items-center justify-between text-sm">
+                        <span className="truncate">{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updatedFiles = archivosGastos.filter((_, i) => i !== index);
+                            setArchivosGastos(updatedFiles);
+                            field.onChange(updatedFiles);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )}
+      {currentStep === 3 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Fechas de Ejecución</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {fechasFields.map((field, index) => (
+              <FormField
+                key={field.id}
+                control={form.control}
+                name={`fechas.${index}.fecha` as Path<FormValues>}
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className={cn(index !== 0 && "sr-only")}>
+                      Fecha de Ejecución
+                    </FormLabel>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="date"
+                        value={field.value}
+                        onChange={(e) => {
+                          const date = e.target.value;
+                          if (date) {
+                            field.onChange(date);
+                          }
+                        }}
+                        className="w-full sm:w-[280px]"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeFecha(index)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendFecha({ fecha: new Date().toISOString().split('T')[0] })}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar Fecha
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 
   return (
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          // Cierra el formulario y resetea
           handleCloseForm();
         } else {
           onOpenChange(isOpen);
@@ -293,206 +711,57 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             Complete los detalles del seguimiento del evento POA
           </DialogDescription>
         </DialogHeader>
+
+        <StepIndicator 
+          currentStep={currentStep} 
+          onStepClick={handleStepClick}
+          errors={errors}
+        />
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {/* Sección 1: Buscar y seleccionar evento */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Selección de Evento</h3>
-              <FormField
-                control={form.control}
-                name="eventName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Evento</FormLabel>
-                    <div className="relative">
-                      <Input
-                        placeholder="Buscar un evento..."
-                        value={query}
-                        onChange={(e) => {
-                          setQuery(e.target.value);
-                          field.onChange(e.target.value);
-                          if (selectedEvent) {
-                            setSelectedEvent(null);
-                            form.setValue('eventId', "");
-                            form.setValue('executionResponsible', "");
-                            form.setValue('campus', "");
-                          }
-                        }}
-                        className="pr-8"
-                      />
-                      <div className="absolute right-2.5 top-2.5 flex items-center gap-2">
-                        {selectedEvent ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-4 w-4 p-0"
-                            onClick={handleClearSelection}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Search className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                    {showResults && filteredEvents.length > 0 && query && (
-                      <ul className="mt-1 border rounded-md divide-y max-h-32 overflow-y-auto">
-                        {filteredEvents.map((event) => (
-                          <li
-                            key={event.eventId}
-                            className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
-                            onClick={() => handleEventSelect(event)}
-                          >
-                            {event.name}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <FormDescription>
-                      Busque y seleccione el evento al que desea dar seguimiento
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Información del evento seleccionado */}
-            {selectedEvent && (
-              <div className="mt-4 p-4 bg-gray-100 rounded-md">
-                <h4 className="text-lg font-semibold mb-2">Evento Seleccionado</h4>
-                <p><strong>Nombre:</strong> {selectedEvent.name}</p>
-                <p><strong>Responsable de Ejecución:</strong> {form.watch('executionResponsible')}</p>
-                <p><strong>Campus:</strong> {selectedEvent.campus.name}</p>
-              </div>
-            )}
-
-            {/* Sección 2: Gestión de gastos */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Gestión de Gastos</h3>
-              {renderAporteFields(aportesUmesFields, "aportesUmes", appendAporteUmes, removeAporteUmes)}
-              {renderAporteFields(aportesOtrosFields, "aportesOtros", appendAporteOtros, removeAporteOtros)}
-              <div className="mt-4 p-4 bg-gray-100 rounded-md">
-                <h4 className="text-lg font-semibold mb-2">Costo Total</h4>
-                <p className="text-2xl font-bold">Q{costoTotal.toFixed(2)}</p>
-              </div>
-              <FormField
-                control={form.control}
-                name="archivosGastos"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Archivos de Gastos</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        multiple
-                        onChange={(e) => {
-                          const files = e.target.files
-                            ? Array.from(e.target.files).filter(file => file.size <= MAX_FILE_SIZE)
-                            : [];
-                          setArchivosGastos(prevFiles => [...prevFiles, ...files]);
-                          field.onChange([...archivosGastos, ...files]);
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Suba documentos relacionados con los gastos (máximo 10MB por archivo)
-                    </FormDescription>
-                    {archivosGastos.length > 0 && (
-                      <ul className="mt-2 space-y-1">
-                        {archivosGastos.map((file, index) => (
-                          <li key={index} className="flex items-center justify-between text-sm">
-                            <span className="truncate">{file.name}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const updatedFiles = archivosGastos.filter((_, i) => i !== index);
-                                setArchivosGastos(updatedFiles);
-                                field.onChange(updatedFiles);
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Sección 3: Registro de fechas múltiples */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Fechas de Ejecución</h3>
-              {fechasFields.map((field, index) => (
-                <FormField
-                  key={field.id}
-                  control={form.control}
-                  name={`fechas.${index}.fecha`}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel className={cn(index !== 0 && "sr-only")}>
-                        Fecha de Ejecución
-                      </FormLabel>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="date"
-                          value={field.value}
-                          onChange={(e) => {
-                            const date = e.target.value;
-                            if (date) {
-                              field.onChange(date);
-                            }
-                          }}
-                          className="w-[280px]"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeFecha(index)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendFecha({ fecha: new Date().toISOString().split('T')[0] })}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Fecha
-              </Button>
-            </div>
+            {renderStepContent()}
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  handleCloseForm();
+                  if (currentStep === 1) {
+                    // Si se cancela desde el primer paso, aquí sí podemos resetear si se desea.
+                    form.reset();
+                    setSelectedEvent(null);
+                    setQuery('');
+                    setShowResults(false);
+                    setArchivosGastos([]);
+                    setCostoTotal(0);
+                    setCurrentStep(1);
+                    handleCloseForm();
+                  } else {
+                    goToPreviousStep();
+                  }
                 }}
                 className="sm:w-auto"
               >
-                Cancelar
+                {currentStep === 1 ? 'Cancelar' : 'Anterior'}
               </Button>
-              <Button
-                type="submit"
-                className="sm:w-auto"
-              >
-                {initialData ? 'Actualizar Seguimiento' : 'Guardar Seguimiento'}
-              </Button>
+              {currentStep < 3 ? (
+                <Button
+                  type="button"
+                  onClick={goToNextStep}
+                  className="sm:w-auto"
+                >
+                  Siguiente
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  className="sm:w-auto"
+                  disabled={!isValid}
+                >
+                  {initialData ? 'Actualizar Seguimiento' : 'Guardar Seguimiento'}
+                </Button>
+              )}
             </div>
           </form>
         </Form>
