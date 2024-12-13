@@ -126,7 +126,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Tabs defaultValue="unread" onValueChange={(value) => setActiveTab(value as "unread" | "read")}>
+          <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as "unread" | "read")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="unread">No leídas</TabsTrigger>
               <TabsTrigger value="read">Leídas</TabsTrigger>
