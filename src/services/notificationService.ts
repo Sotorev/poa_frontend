@@ -30,3 +30,17 @@ export async function markAsRead(token: string, notificationId: number): Promise
     throw new Error(`Error al marcar notificación como leída: ${response.statusText}`);
   }
 }
+
+export async function deleteNotification(token: string, notificationId: number): Promise<void> {
+  const response = await fetch(`${API_URL}/api/notifications/delete/${notificationId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error al eliminar notificación: ${response.statusText}`);
+  }
+}

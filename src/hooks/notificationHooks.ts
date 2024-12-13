@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, use } from 'react';
 import { Notification, NotificationResponse } from '@/types/notificationTypes';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import { getNotifications, markAsRead } from '@/services/notificationService';
+import { getNotifications, markAsRead, deleteNotification } from '@/services/notificationService';
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>();
@@ -56,8 +56,9 @@ export function useNotifications() {
   };
 
   const handleDelete = (id: number) => {
-    if (notifications) {
+    if (notifications && user?.token) {
       setNotifications(notifications.filter(n => n.id !== id));
+      deleteNotification(user.token, id);
     }
   };
 
