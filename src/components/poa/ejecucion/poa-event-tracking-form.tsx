@@ -37,6 +37,10 @@ import { useToast } from "@/hooks/use-toast"
 import { ApiEvent } from '@/types/interfaces'
 import { formSchema, FormValues } from '@/schemas/poa-event-tracking-schema'
 import { Aporte, FormFieldPaths } from '@/types/poa-event-tracking'
+import { FinancingSource } from '@/types/FinancingSource'
+
+import { useCurrentUser } from '@/hooks/use-current-user'
+import { getFinancingSources } from '@/services/apiService'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -172,7 +176,10 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   const [archivosGastos, setArchivosGastos] = useState<File[]>([])
   const [costoTotal, setCostoTotal] = useState(0)
   const [selectedEvent, setSelectedEvent] = useState<ApiEvent | null>(null);
+  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [currentStep, setCurrentStep] = useState(1)
+
+  const user = useCurrentUser();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -255,11 +262,10 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     setCostoTotal(total);
   }, [aportesUmes, aportesOtros]);
 
-  // Eliminamos el reset del formulario en handleCloseForm para no perder datos
   const handleCloseForm = () => {
-    // Solo cerramos el diálogo
+    form.reset(initialData);
     onOpenChange(false);
-    // No llamamos a resetForm aquí para no perder información
+
   }
 
   useEffect(() => {
@@ -280,6 +286,15 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
       }
     }
   }, [open, initialData, form, events]);
+
+  useEffect(() => {
+    if (user) {
+      getFinancingSources(user.token)
+        .then((sources) => {
+          setFinancingSources(sources);
+        });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (events && query.length > 0 && !selectedEvent) {
@@ -361,13 +376,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   };
 
   const handleClearSelection = () => {
-    setSelectedEvent(null);
-    setQuery('');
-    // No se hace resetForm aquí, solo limpiamos los datos del evento seleccionado.
-    form.setValue('eventId', "");
-    form.setValue('eventName', "");
-    form.setValue('executionResponsible', "");
-    form.setValue('campus', "");
+    form.reset(initialData);
     setShowResults(false);
   };
 
@@ -412,14 +421,13 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="monetario">Monetario</SelectItem>
-                        <SelectItem value="especie">Especie</SelectItem>
-                        {name === "aportesOtros" && (
-                          <>
-                            <SelectItem value="donacion">Donación</SelectItem>
-                            <SelectItem value="patrocinio">Patrocinio</SelectItem>
-                          </>
-                        )}
+                        {financingSources
+                          .filter(source => source.category === (name === "aportesUmes" ? "UMES" : "Otra"))
+                          .map((source) => (
+                            <SelectItem key={source.financingSourceId} value={source.financingSourceId.toString()}>
+                              {source.name}
+                            </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
