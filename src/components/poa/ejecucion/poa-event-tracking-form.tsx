@@ -35,14 +35,37 @@ import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
 import { ApiEvent } from '@/types/interfaces'
-import { formSchema, FormValues } from '@/schemas/poa-event-tracking-schema'
 import { Aporte, FormFieldPaths } from '@/types/poa-event-tracking'
 import { FinancingSource } from '@/types/FinancingSource'
-
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFinancingSources } from '@/services/apiService'
 
+// Ajusta el esquema de validación para requerir al menos un aporte en UMES y al menos uno en Otros
+import { z } from 'zod'
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+// Ajustamos el schema agregando .min(1, "Falta agregar al menos un detalle ...")
+const formSchema = z.object({
+  eventId: z.string().nonempty("El ID del evento es requerido"),
+  eventName: z.string().nonempty("El nombre del evento es requerido"),
+  executionResponsible: z.string().nonempty("El responsable de ejecución es requerido"),
+  campus: z.string().nonempty("El campus es requerido"),
+  aportesUmes: z.array(z.object({
+    tipo: z.string().nonempty("Debe seleccionar el tipo de aporte UMES"),
+    monto: z.string().nonempty("El monto es requerido")
+  })).min(1, "Falta agregar al menos un detalle en Aporte UMES."),
+  aportesOtros: z.array(z.object({
+    tipo: z.string().nonempty("Debe seleccionar el tipo de aporte Otros"),
+    monto: z.string().nonempty("El monto es requerido")
+  })).min(1, "Falta agregar al menos un detalle en Aporte Otros."),
+  archivosGastos: z.array(z.any()),
+  fechas: z.array(z.object({
+    fecha: z.string().nonempty("La fecha es requerida"),
+  })).nonempty("Debe haber al menos una fecha de ejecución"),
+})
+
+type FormValues = z.infer<typeof formSchema>
 
 type PoaEventTrackingFormProps = {
   events: ApiEvent[];
@@ -94,7 +117,7 @@ function StepIndicator({ currentStep, onStepClick, errors }: {
               key={step.number} 
               className={cn(
                 "flex flex-col items-center relative group",
-                "cursor-pointer" // Siempre cursor-pointer
+                "cursor-pointer"
               )}
               onClick={() => {
                 onStepClick(step.number)
@@ -200,7 +223,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   const aportesOtros = useWatch({ control: form.control, name: "aportesOtros" });
 
   const { toast } = useToast()
-
   const { formState: { errors, isValid } } = form;
 
   const validateCurrentStep = async (): Promise<boolean> => {
@@ -210,12 +232,12 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
         fieldsToValidate = ['eventId', 'eventName', 'executionResponsible', 'campus'];
         break;
       case 2:
-        const aportesUmesFields: Array<FormFieldPaths> = aportesUmes.map((_, index) => `aportesUmes.${index}.tipo` as FormFieldPaths).concat(
-          aportesUmes.map((_, index) => `aportesUmes.${index}.monto` as FormFieldPaths)
-        );
-        const aportesOtrosFields: Array<FormFieldPaths> = aportesOtros.map((_, index) => `aportesOtros.${index}.tipo` as FormFieldPaths).concat(
-          aportesOtros.map((_, index) => `aportesOtros.${index}.monto` as FormFieldPaths)
-        );
+        // Validamos todos los aportes UMES y Otros
+        const aportesUmesFields: Array<FormFieldPaths> = aportesUmes.map((_, index) => `aportesUmes.${index}.tipo` as FormFieldPaths)
+          .concat(aportesUmes.map((_, index) => `aportesUmes.${index}.monto` as FormFieldPaths));
+        const aportesOtrosFields: Array<FormFieldPaths> = aportesOtros.map((_, index) => `aportesOtros.${index}.tipo` as FormFieldPaths)
+          .concat(aportesOtros.map((_, index) => `aportesOtros.${index}.monto` as FormFieldPaths));
+
         fieldsToValidate = ['aportesUmes', 'aportesOtros', ...aportesUmesFields, ...aportesOtrosFields];
         break;
       case 3:
@@ -234,12 +256,9 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
 
   const handleStepClick = async (step: number) => {
     if (step === currentStep) return;
-
     if (step < currentStep) {
-      // Paso anterior, cambiar directamente
       setCurrentStep(step);
     } else {
-      // Paso siguiente o uno posterior
       const stepValid = await validateCurrentStep();
       if (stepValid) {
         setCurrentStep(step);
@@ -249,7 +268,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
           description: "Por favor complete todos los campos requeridos antes de continuar",
           variant: "destructive",
         });
-        // No se cambia el paso, se permanece en el actual
       }
     }
   };
@@ -263,14 +281,26 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   }, [aportesUmes, aportesOtros]);
 
   const handleCloseForm = () => {
-    form.reset(initialData);
+    form.reset({
+      eventId: "",
+      eventName: "",
+      executionResponsible: "",
+      campus: "",
+      aportesUmes: [{ tipo: "", monto: "" }],
+      aportesOtros: [{ tipo: "", monto: "" }],
+      archivosGastos: [],
+      fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
+    });
+    setSelectedEvent(null);
+    setQuery('');
+    setShowResults(false);
+    setArchivosGastos([]);
+    setCostoTotal(0);
+    setCurrentStep(1);
     onOpenChange(false);
-
   }
 
   useEffect(() => {
-    // Al abrir el diálogo, si tenemos initialData, las usamos, sino dejamos las existentes.
-    // Esto evita que se pierdan los datos al cambiar de pestaña.
     if (open) {
       if (initialData) {
         form.reset(initialData);
@@ -310,6 +340,19 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   }, [query, events, selectedEvent]);
 
   const goToNextStep = async () => {
+    if (currentStep === 2) {
+      // Validación específica para la etapa 2
+      const isStep2Valid = await form.trigger(['aportesUmes', 'aportesOtros']);
+      if (!isStep2Valid) {
+        toast({
+          title: "Error de validación",
+          description: "Por favor complete correctamente todos los campos de aportes antes de continuar",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const stepValid = await validateCurrentStep();
     if (stepValid) {
       setCurrentStep(prev => prev + 1);
@@ -326,9 +369,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     } else {
-      // Si presiona "Cancelar" en el primer paso, aquí podemos resetear si es lo que se desea.
-      // Eso depende de la experiencia que quieras. 
-      // Por ahora, no reseteamos el form al cerrar, para no perder datos al cambiar de pestaña.
       handleCloseForm();
     }
   };
@@ -347,15 +387,23 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     }
 
     onSubmit(values);
-    onOpenChange(false);
-    // Solo al terminar exitosamente, reseteamos el formulario
-    form.reset();
+    form.reset({
+      eventId: "",
+      eventName: "",
+      executionResponsible: "",
+      campus: "",
+      aportesUmes: [{ tipo: "", monto: "" }],
+      aportesOtros: [{ tipo: "", monto: "" }],
+      archivosGastos: [],
+      fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
+    });
     setSelectedEvent(null);
     setQuery('');
     setShowResults(false);
     setArchivosGastos([]);
     setCostoTotal(0);
     setCurrentStep(1);
+    onOpenChange(false);
     toast({
       title: "Éxito",
       description: "Seguimiento guardado exitosamente",
@@ -376,8 +424,40 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   };
 
   const handleClearSelection = () => {
-    form.reset(initialData);
-    setShowResults(false);
+    if (initialData) {
+      form.reset(initialData);
+      setQuery(initialData.eventName || '');
+      if (initialData.eventId) {
+        const initEvent = events.find(e => e.eventId.toString() === initialData.eventId);
+        if (initEvent) {
+          setSelectedEvent(initEvent);
+          setShowResults(false);
+        } else {
+          setSelectedEvent(null);
+          setShowResults(false);
+        }
+      } else {
+        setSelectedEvent(null);
+        setShowResults(false);
+      }
+    } else {
+      form.reset({
+        eventId: "",
+        eventName: "",
+        executionResponsible: "",
+        campus: "",
+        aportesUmes: [{ tipo: "", monto: "" }],
+        aportesOtros: [{ tipo: "", monto: "" }],
+        archivosGastos: [],
+        fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
+      });
+      setSelectedEvent(null);
+      setQuery('');
+      setShowResults(false);
+      setArchivosGastos([]);
+      setCostoTotal(0);
+      setCurrentStep(1);
+    }
   };
 
   const formatDecimal = (value: string) => {
@@ -392,12 +472,28 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     return formatted;
   };
 
+  const { fields: fechasFields, append: appendFecha, remove: removeFecha } = useFieldArray({
+    control: form.control,
+    name: "fechas",
+  })
+
+  const { fields: aportesUmesFields, append: appendAporteUmes, remove: removeAporteUmes } = useFieldArray({
+    control: form.control,
+    name: "aportesUmes",
+  })
+
+  const { fields: aportesOtrosFields, append: appendAporteOtros, remove: removeAporteOtros } = useFieldArray({
+    control: form.control,
+    name: "aportesOtros",
+  })
+
   const renderAporteFields = (
     fields: Record<"id", string>[],
     name: "aportesUmes" | "aportesOtros",
     append: (value: Aporte) => void,
     remove: (index: number) => void
   ) => {
+    const errorMessage = errors[name]?.message as string | undefined;
     return (
       <Card className="w-full">
         <CardHeader>
@@ -406,6 +502,12 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {errors[name] && typeof errors[name] === 'object' && 'message' in errors[name] && (
+            <div className="text-destructive text-sm flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {errors[name].message}
+            </div>
+          )}
           {fields.map((field, index) => (
             <div key={field.id} className="flex flex-col sm:flex-row gap-4 items-end">
               <FormField
@@ -416,7 +518,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                     <FormLabel>{index === 0 ? `Tipo de Aporte ${name === "aportesUmes" ? "UMES" : "Otros"}` : ""}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className={cn(errors[name]?.[index]?.tipo && "border-destructive")}>
                           <SelectValue placeholder="Seleccione el tipo de aporte" />
                         </SelectTrigger>
                       </FormControl>
@@ -484,21 +586,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
       </Card>
     )
   }
-
-  const { fields: fechasFields, append: appendFecha, remove: removeFecha } = useFieldArray({
-    control: form.control,
-    name: "fechas",
-  })
-
-  const { fields: aportesUmesFields, append: appendAporteUmes, remove: removeAporteUmes } = useFieldArray({
-    control: form.control,
-    name: "aportesUmes",
-  })
-
-  const { fields: aportesOtrosFields, append: appendAporteOtros, remove: removeAporteOtros } = useFieldArray({
-    control: form.control,
-    name: "aportesOtros",
-  })
 
   const renderStepContent = () => (
     <div className="space-y-4">
@@ -736,14 +823,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 variant="outline"
                 onClick={() => {
                   if (currentStep === 1) {
-                    // Si se cancela desde el primer paso, aquí sí podemos resetear si se desea.
-                    form.reset();
-                    setSelectedEvent(null);
-                    setQuery('');
-                    setShowResults(false);
-                    setArchivosGastos([]);
-                    setCostoTotal(0);
-                    setCurrentStep(1);
                     handleCloseForm();
                   } else {
                     goToPreviousStep();
@@ -756,7 +835,10 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               {currentStep < 3 ? (
                 <Button
                   type="button"
-                  onClick={goToNextStep}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goToNextStep();
+                  }}
                   className="sm:w-auto"
                 >
                   Siguiente
@@ -777,3 +859,4 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     </Dialog>
   )
 }
+
