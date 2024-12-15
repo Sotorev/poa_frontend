@@ -40,32 +40,10 @@ import { FinancingSource } from '@/types/FinancingSource'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFinancingSources } from '@/services/apiService'
 
-// Ajusta el esquema de validación para requerir al menos un aporte en UMES y al menos uno en Otros
-import { z } from 'zod'
+import { formSchema, FormValues } from '@/schemas/poa-event-tracking-schema'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// Ajustamos el schema agregando .min(1, "Falta agregar al menos un detalle ...")
-const formSchema = z.object({
-  eventId: z.string().nonempty("El ID del evento es requerido"),
-  eventName: z.string().nonempty("El nombre del evento es requerido"),
-  executionResponsible: z.string().nonempty("El responsable de ejecución es requerido"),
-  campus: z.string().nonempty("El campus es requerido"),
-  aportesUmes: z.array(z.object({
-    tipo: z.string().nonempty("Debe seleccionar el tipo de aporte UMES"),
-    monto: z.string().nonempty("El monto es requerido")
-  })).min(1, "Falta agregar al menos un detalle en Aporte UMES."),
-  aportesOtros: z.array(z.object({
-    tipo: z.string().nonempty("Debe seleccionar el tipo de aporte Otros"),
-    monto: z.string().nonempty("El monto es requerido")
-  })).min(1, "Falta agregar al menos un detalle en Aporte Otros."),
-  archivosGastos: z.array(z.any()),
-  fechas: z.array(z.object({
-    fecha: z.string().nonempty("La fecha es requerida"),
-  })).nonempty("Debe haber al menos una fecha de ejecución"),
-})
-
-type FormValues = z.infer<typeof formSchema>
 
 type PoaEventTrackingFormProps = {
   events: ApiEvent[];
@@ -232,7 +210,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
         fieldsToValidate = ['eventId', 'eventName', 'executionResponsible', 'campus'];
         break;
       case 2:
-        // Validamos todos los aportes UMES y Otros
         const aportesUmesFields: Array<FormFieldPaths> = aportesUmes.map((_, index) => `aportesUmes.${index}.tipo` as FormFieldPaths)
           .concat(aportesUmes.map((_, index) => `aportesUmes.${index}.monto` as FormFieldPaths));
         const aportesOtrosFields: Array<FormFieldPaths> = aportesOtros.map((_, index) => `aportesOtros.${index}.tipo` as FormFieldPaths)
@@ -248,9 +225,24 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
         fieldsToValidate = [];
     }
 
-    if (fieldsToValidate.length === 0) return true; // Si no hay campos que validar, asume true
+    if (fieldsToValidate.length === 0) return true;
 
     const stepIsValid = await form.trigger(fieldsToValidate);
+
+    if (currentStep === 2) {
+      // Validación adicional para los aportes
+      const aportesUmesValid = aportesUmes.every(aporte => {
+        const isNoAplica = financingSources.find(source => source.financingSourceId.toString() === aporte.tipo)?.name.toLowerCase() === 'no aplica';
+        return isNoAplica || parseFloat(aporte.monto) > 0;
+      });
+      const aportesOtrosValid = aportesOtros.every(aporte => {
+        const isNoAplica = financingSources.find(source => source.financingSourceId.toString() === aporte.tipo)?.name.toLowerCase() === 'no aplica';
+        return isNoAplica || parseFloat(aporte.monto) > 0;
+      });
+
+      return stepIsValid && aportesUmesValid && aportesOtrosValid;
+    }
+
     return stepIsValid;
   };
 
@@ -341,7 +333,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
 
   const goToNextStep = async () => {
     if (currentStep === 2) {
-      // Validación específica para la etapa 2
       const isStep2Valid = await form.trigger(['aportesUmes', 'aportesOtros']);
       if (!isStep2Valid) {
         toast({
@@ -516,7 +507,16 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>{index === 0 ? `Tipo de Aporte ${name === "aportesUmes" ? "UMES" : "Otros"}` : ""}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        const isNoAplica = financingSources.find(source => source.financingSourceId.toString() === value)?.name.toLowerCase() === 'no aplica';
+                        if (isNoAplica) {
+                          form.setValue(`${name}.${index}.monto` as Path<FormValues>, "0");
+                        }
+                      }} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className={cn(errors[name]?.[index]?.tipo && "border-destructive")}>
                           <SelectValue placeholder="Seleccione el tipo de aporte" />
@@ -547,6 +547,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                         type="text"
                         placeholder="0.00"
                         {...field}
+                        disabled={financingSources.find(source => source.financingSourceId.toString() === form.watch(`${name}.${index}.tipo`))?.name.toLowerCase() === 'no aplica'}
                         onChange={(e) => {
                           const formattedValue = formatDecimal(e.target.value);
                           field.onChange(formattedValue);
@@ -859,4 +860,3 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     </Dialog>
   )
 }
-
