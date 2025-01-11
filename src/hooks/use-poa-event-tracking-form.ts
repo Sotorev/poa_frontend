@@ -77,7 +77,28 @@ export function usePoaEventTrackingFormLogic(
     name: "aportesOtros",
   })
 
-  // Carga de fuentes de financiamiento
+  useEffect(() => {
+    if (currentStep === 2 && selectedEvent) {
+      const setAportes = (field: "aportesUmes" | "aportesOtros", ids: number[]) => {
+        const mapped = selectedEvent.financings
+          ?.filter(item => ids.includes(item.financingSourceId))
+          .map(item => ({
+            tipo: String(item.financingSourceId),
+            monto: String(item.amount),
+          })) || [{ tipo: "", monto: "" }];
+
+        form.setValue(
+          field,
+          mapped.length > 0 ? mapped : [{ tipo: "", monto: "" }]
+        );
+      };
+
+      setAportes("aportesUmes", [1, 4, 5, 7]);
+      setAportes("aportesOtros", [2, 3, 6]);
+    }
+  }, [currentStep, selectedEvent, form]);
+
+  // Carga de tipos de fuentes de financiamiento
   useEffect(() => {
     if (user) {
       getFinancingSources(user.token)
