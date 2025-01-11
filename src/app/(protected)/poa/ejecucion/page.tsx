@@ -98,8 +98,6 @@ export default function PoaTrackingPage() {
   useEffect(() => {
     if (user === undefined || poa === undefined) return;
 
-    console.log('POA:', poa);
-
     getFullEvents(user.token, poa.poaId)
       .then((events: ApiEvent[]) => {
         setEvents(events.filter(event => event.statusId === 1));

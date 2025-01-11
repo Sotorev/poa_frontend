@@ -76,7 +76,7 @@ function StepIndicator({
     return stepFields.some(field => {
       return !!errors[field as keyof FormValues];
     });
-  };  
+  };
 
   return (
     <div className="w-full mb-8">
@@ -184,7 +184,7 @@ type PoaEventTrackingFormProps = {
 };
 
 export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOpenChange }: PoaEventTrackingFormProps) {
-  
+
   // Uso del hook personalizado con toda la lógica encapsulada
   const {
     form,
