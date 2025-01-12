@@ -412,6 +412,7 @@ export function usePoaEventTrackingFormLogic(
     form.setValue("campus", event.campus.name);
 
     setShowResults(false);
+    setQuery(""); // Limpiar la búsqueda para permitir una nueva búsqueda
   };
 
   const handleClearSelection = () => {
@@ -474,6 +475,7 @@ export function usePoaEventTrackingFormLogic(
     showResults,
     filteredEvents,
     selectedEvent,
+    setSelectedEvent,
     handleEventSelect,
     handleClearSelection,
     archivosGastos,

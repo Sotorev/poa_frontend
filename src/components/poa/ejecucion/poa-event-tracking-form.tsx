@@ -124,8 +124,7 @@ function StepIndicator({
                     ? "text-primary group-hover:text-primary/70"
                     : "text-muted-foreground",
                   isStepWithError && "text-destructive"
-                )}
-              >
+                )}>
                 {step.title}
               </span>
               {index < steps.length - 1 && (
@@ -263,6 +262,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     showResults,
     filteredEvents,
     selectedEvent,
+    setSelectedEvent,
     handleEventSelect,
     handleClearSelection,
     archivosGastos,
@@ -417,6 +417,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                           form.setValue('eventId', "");
                           form.setValue('executionResponsible', "");
                           form.setValue('campus', "");
+                          setSelectedEvent(null); // Permitir selección de un nuevo evento
                         }
                       }}
                       className={cn(
