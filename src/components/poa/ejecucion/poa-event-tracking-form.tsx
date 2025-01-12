@@ -150,25 +150,89 @@ function StepIndicator({
 /** 
  * Detalles del evento seleccionado (UI pura).
  */
+function parseDateString(dateString: string) {
+  const [year, month, day] = dateString.split('-')
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day) + 1))
+}
+
 function EventDetails({ event }: { event: ApiEvent }) {
   return (
-    <div className="mt-4 space-y-2">
-      <p><strong>Nombre del evento:</strong> {event.name}</p>
-      <p><strong>Objetivo:</strong> {event.objective}</p>
-      <p><strong>Campus:</strong> {event.campus.name}</p>
-      <p><strong>Responsable de ejecución:</strong> {event.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || 'No especificado'}</p>
-      <p><strong>Costo total:</strong> Q{event.totalCost.toFixed(2)}</p>
-      <p><strong>Fechas:</strong></p>
-      <ul className="list-disc list-inside">
-        {event.dates.map((date, index) => (
-          <li key={index}>
-            {new Date(date.startDate).toLocaleDateString()} - {new Date(date.endDate).toLocaleDateString()}
-          </li>
-        ))}
-      </ul>
+    <div className="mt-4 grid gap-4">
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-primary/5 pb-4">
+          <CardTitle className="text-lg font-semibold text-primary">
+            {event.name}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="grid gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Objetivo</p>
+                <p className="font-medium">{event.objective}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Campus</p>
+                <p className="font-medium">{event.campus.name}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Responsable de ejecución</p>
+                <p className="font-medium">
+                  {event.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || 'No especificado'}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Costo total</p>
+                <p className="font-medium text-primary">
+                  Q{event.totalCost.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Fechas</p>
+              <div className="grid gap-2">
+                {event.dates.map((date, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center gap-2 p-2 rounded-md bg-secondary/50"
+                  >
+                    <div className="h-2 w-2 rounded-full bg-primary/70" />
+                    <p className="text-sm">
+                      {parseDateString(date.startDate).toLocaleDateString('es-ES')} - {parseDateString(date.endDate).toLocaleDateString('es-ES')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+function SearchResults({ filteredEvents, handleEventSelect }: { filteredEvents: ApiEvent[]; handleEventSelect: (event: ApiEvent) => void }) {
+  return (
+    <ul className="mt-1 border rounded-md divide-y max-h-32 overflow-y-auto bg-card">
+      {filteredEvents.map((event) => (
+        <li
+          key={event.eventId}
+          className="p-3 text-sm hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-2"
+          onClick={() => handleEventSelect(event)}
+        >
+          <div className="h-2 w-2 rounded-full bg-primary/70" />
+          <span>{event.name}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export { EventDetails, SearchResults };
 
 /**
  * Componente Principal (UI + Uso del Hook):
