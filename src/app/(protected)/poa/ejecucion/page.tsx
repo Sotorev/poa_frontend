@@ -16,11 +16,13 @@ import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-track
 
 // Types
 import { ApiEvent } from '@/types/interfaces'
+import { RequestEventExecution } from '@/types/approvalStatus'
 
 // Imports for charge data
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFacultyByUserId } from '@/services/faculty/currentFaculty'
+import { eventExecuted } from '@/services/poa/eventExecuted'
 
 /**
  * @component PoaTrackingPage
@@ -100,7 +102,7 @@ export default function PoaTrackingPage() {
 
     getFullEvents(user.token, poa.poaId)
       .then((events: ApiEvent[]) => {
-        setEvents(events.filter(event => event.statusId === 1));
+        setEvents(events.filter(event => (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)));
         setExecutedEvents(events.filter(event => event.statusId === 2));
       });
   }, [user, poa]);
@@ -110,26 +112,43 @@ export default function PoaTrackingPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (data: { eventId: string; eventName: string; actualExpenses: string; executionDate: Date; files?: File[] }) => {
+  const handleSubmit = (data: { eventId: string; eventName: string; executionResponsible: string; campus: string; aportesUmes: {tipo: string; monto: string;}[]; aportesOtros: { tipo: string; monto: string; }[]; archivosGastos: any[]; fechas: any[] }) => {
     const formattedData = {
       id: data.eventId || (events.length + 1).toString(),
       name: data.eventName,
-      actualExpenses: data.actualExpenses,
-      executionDate: data.executionDate,
-      files: data.files || []
+      executionResponsible: data.executionResponsible,
+      campus: data.campus,
+      aportesUmes: data.aportesUmes,
+      aportesOtros: data.aportesOtros,
+      archivosGastos: data.archivosGastos,
+      fechas: data.fechas
     };
 
-    // if (editingEvent) {
-    //   // Actualizar evento existente
-    //   setExecutedEvents(prevEvents =>
-    //     prevEvents.map(event =>
-    //       event.eventId === formattedData.id ? formattedData : event
-    //     )
-    //   );
-    // } else {
-    //   // Agregar nuevo evento
-    //   setExecutedEvents([...executedEventsExample, formattedData]);
-    // }
+    const requestPayload: RequestEventExecution = {
+      eventId: parseInt(data.eventId, 10),
+      eventExecutionDates: data.fechas.map(f => ({
+        eventId: parseInt(data.eventId, 10),
+        startDate: f.fecha,
+        endDate: f.fecha,
+      })),
+      eventExecutionFinancings: [
+        ...data.aportesUmes.map((um) => ({
+          eventId: parseInt(data.eventId, 10),
+          amount: parseFloat(um.monto),
+          percentage: 0,
+          financingSourceId: 1,
+        })),
+        ...data.aportesOtros.map((ot) => ({
+          eventId: parseInt(data.eventId, 10),
+          amount: parseFloat(ot.monto),
+          percentage: 0,
+          financingSourceId: 2,
+        })),
+      ],
+    }
+
+    eventExecuted(requestPayload, data.archivosGastos as File[])
+
     setEditingEvent(undefined);
     setIsDialogOpen(false);
   };
@@ -188,9 +207,12 @@ export default function PoaTrackingPage() {
         initialData={editingEvent ? {
           eventId: `${editingEvent.eventId}`,
           eventName: editingEvent.name,
-          actualExpenses: "0",
-          executionDate: new Date("1/1/2021"),
-          files: undefined
+          executionResponsible: "",
+          campus: "",
+          aportesUmes: [{ tipo: "", monto: "" }],
+          aportesOtros: [{ tipo: "", monto: "" }],
+          archivosGastos: [],
+          fechas: [{ fecha: "" }]
         } : undefined}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
