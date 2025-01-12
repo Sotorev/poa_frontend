@@ -11,9 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
-import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
-import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
@@ -41,7 +38,7 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent';
 import { CampusSelector } from './fields/campus-selector';
 
-// Importamos los tipos necesarios
+// Types
 import { Campus } from '@/types/Campus';
 import { PlanningEvent } from '@/types/interfaces';
 import { Intervention } from '@/types/Intervention';
@@ -50,7 +47,12 @@ import { PurchaseType } from '@/types/PurchaseType';
 import { Resource } from '@/types/Resource';
 import { Strategy } from '@/types/Strategy';
 
-import { downloadFile } from '@/utils/downloadFile'; // Importar la función de utilidad
+// Schemas
+import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
+import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
+import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema';
+
+import { downloadFile, descargarArchivo } from '@/utils/downloadFile'; // Importar la función de utilidad
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
@@ -169,27 +171,7 @@ export function TablaPlanificacionComponent() {
   const [isEstrategiasDisabled, setIsEstrategiasDisabled] = useState<boolean>(true);
   const [isIntervencionesDisabled, setIsIntervencionesDisabled] = useState<boolean>(true);
 
-  // Función auxiliar para descargar y convertir archivos a objetos File
-  const descargarArchivo = async (url: string, nombreArchivo: string): Promise<File | null> => {
-    try {
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${user?.token}`
-        }
-      });
-      if (!response.ok) {
-        console.error(`Error al descargar el archivo desde ${url}: ${response.statusText}`);
-        return null;
-      }
-      const blob = await response.blob();
-      // Inferir el tipo de archivo desde el blob
-      const tipo = blob.type || 'application/octet-stream';
-      return new File([blob], nombreArchivo, { type: tipo });
-    } catch (error) {
-      console.error(`Error al descargar el archivo desde ${url}:`, error);
-      return null;
-    }
-  };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -923,7 +905,7 @@ export function TablaPlanificacionComponent() {
         comentarioDecano: '', // Added this property
       };
 
-      // // Actualización del estado con la nueva fila
+      // Actualización del estado con la nueva fila
       setFilas([nuevaFila]);
       toast.info("Evento cargado para edición.");
 
@@ -931,43 +913,32 @@ export function TablaPlanificacionComponent() {
       setIsEstrategiasDisabled(!nuevaFila.objetivoEstrategico);
       setIsIntervencionesDisabled(nuevaFila.estrategias.length === 0);
 
-      // Descarga y vinculación de archivos adjuntos
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-      if (!baseUrl) {
-        console.error("URL de la API no definida.");
-        return;
-      }
-
-      // Download cost detail documents
-      const costDetailDownloads = event.detalle.map(async (doc) => {
-        const url = `${baseUrl}/api/fullEvent/downloadEventCostDetailDocumentById/${doc.id}`;
-        return descargarArchivo(url, doc.name);
-      });
-
-      // Download process detail documents
-      const processDetailDownloads = event.detalleProceso.map(async (doc) => {
-        const url = `${baseUrl}/api/fullEvent/downloadEventFileById/${doc.id}`;
-        return descargarArchivo(url, doc.name);
-      });
+      // Descargar documentos de detalle y proceso
+      const downloadDocuments = async (docs: any[], type: 'cost' | 'process'): Promise<(File | null)[]> => {
+        return Promise.all(docs.map(async (doc) => {
+          const url = type === 'cost'
+            ? `/api/fullEvent/downloadEventCostDetailDocumentById/${doc.id}`
+            : `/api/fullEvent/downloadEventFileById/${doc.id}`;
+          const file = await descargarArchivo(url, doc.name, user?.token);
+          return file;
+        }));
+      };
 
       try {
         const [costDetailFiles, processFiles] = await Promise.all([
-          Promise.all(costDetailDownloads),
-          Promise.all(processDetailDownloads)
+          downloadDocuments(event.detalle, 'cost'),
+          downloadDocuments(event.detalleProceso, 'process'),
         ]);
 
- 
         // Filter out any null values from failed downloads
         const validCostDetailFiles = costDetailFiles.filter((file): file is File => file !== null);
         const validProcessFiles = processFiles.filter((file): file is File => file !== null);
 
-        console.log("Cost detail files:", validCostDetailFiles);
-        console.log("Process files:", validProcessFiles);
-        // Update the fila with the downloaded files
+        // Actualizar estado con archivos descargados
         updateEditingEventCostDetails(nuevaFila.id, validCostDetailFiles);
         updateEditingEventProcessDocuments(nuevaFila.id, validProcessFiles);
 
-        if (validCostDetailFiles.length > 0 || validProcessFiles.length > 0) {
+        if (validCostDetailFiles.length || validProcessFiles.length) {
           toast.success("Archivos cargados correctamente.");
         } else {
           toast.warn("No se pudieron cargar algunos archivos.");
@@ -979,13 +950,11 @@ export function TablaPlanificacionComponent() {
 
 
     } catch (error) {
-      console.error("Error en handleEditEvent:", error);
       toast.error("Ocurrió un error al editar el evento.");
     }
   };
 
   const updateEditingEventCostDetails = (id: string, files: File[]) => {
-    console.log("Editing event id", id);
     setFilas(prevFilas =>
       prevFilas.map(fila => {
         if (fila.id === id) {

@@ -102,7 +102,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 }
 
-const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId, onEditEvent }) => {
+const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, onEditEvent }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [eventsByStatus, setEventsByStatus] = useState<{
         revision: PlanningEvent[];
@@ -151,7 +151,6 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
         fetchData();
     }, [poaId, user?.token]);
 
-    // Definir handlers para editar y eliminar
     const handleEdit = (id: string) => {
         // Buscar el evento en los eventos cargados
         const event =
