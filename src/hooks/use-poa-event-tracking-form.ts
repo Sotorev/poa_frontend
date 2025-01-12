@@ -1,25 +1,31 @@
 // src/hooks/use-poa-event-tracking-form.ts
-import { useState, useEffect, FormEvent } from 'react'
-import { useForm, useFieldArray, Path, useWatch } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useToast } from "@/hooks/use-toast"
-import { useCurrentUser } from '@/hooks/use-current-user'
+import { useState, useEffect, FormEvent } from "react";
+import { useForm, useFieldArray, Path, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-import { formSchema, FormValues } from '@/schemas/poa-event-tracking-schema'
-import { ApiEvent } from '@/types/interfaces'
-import { FinancingSource } from '@/types/FinancingSource'
-import { getFinancingSources } from '@/services/apiService'
-import { FormFieldPaths } from '@/types/poa-event-tracking'
+// charge data
+import { useToast } from "@/hooks/use-toast";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { descargarArchivo } from "@/utils/downloadFile";
+
+// Schemas
+import { formSchema, FormValues } from "@/schemas/poa-event-tracking-schema";
+
+// Types
+import { ApiEvent } from "@/types/interfaces";
+import { FinancingSource } from "@/types/FinancingSource";
+import { getFinancingSources } from "@/services/apiService";
+import { FormFieldPaths } from "@/types/poa-event-tracking";
 
 /**
  * Hook personalizado que encapsula toda la lógica y el estado del formulario de seguimiento POA.
- * 
+ *
  * @param events Lista de eventos disponibles.
  * @param onSubmit Función a ejecutar al enviar el formulario con datos válidos.
  * @param initialData Datos iniciales del formulario (opcional).
  * @param open Indica si el modal está abierto.
  * @param onOpenChange Función para cambiar el estado del modal.
- * 
+ *
  * @returns Objeto con todos los estados, funciones y handlers necesarios para el componente UI.
  */
 export function usePoaEventTrackingFormLogic(
@@ -30,17 +36,19 @@ export function usePoaEventTrackingFormLogic(
   onOpenChange: (open: boolean) => void
 ) {
   // Estados locales
-  const [query, setQuery] = useState('')
-  const [showResults, setShowResults] = useState(false)
-  const [filteredEvents, setFilteredEvents] = useState<ApiEvent[]>([])
-  const [archivosGastos, setArchivosGastos] = useState<File[]>([])
-  const [costoTotal, setCostoTotal] = useState(0)
+  const [query, setQuery] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const [filteredEvents, setFilteredEvents] = useState<ApiEvent[]>([]);
+  const [archivosGastos, setArchivosGastos] = useState<File[]>([]);
+  const [costoTotal, setCostoTotal] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<ApiEvent | null>(null);
-  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([])
-  const [currentStep, setCurrentStep] = useState(1)
+  const [financingSources, setFinancingSources] = useState<FinancingSource[]>(
+    []
+  );
+  const [currentStep, setCurrentStep] = useState(1);
 
   const user = useCurrentUser();
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   // Configuración del formulario
   const form = useForm<FormValues>({
@@ -53,36 +61,57 @@ export function usePoaEventTrackingFormLogic(
       aportesUmes: [{ tipo: "", monto: "" }],
       aportesOtros: [{ tipo: "", monto: "" }],
       archivosGastos: [],
-      fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
+      fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
     },
-    mode: "onChange"
-  })
+    mode: "onChange",
+  });
 
-  const { formState: { errors, isValid } } = form;
+  const {
+    formState: { errors, isValid },
+  } = form;
   const aportesUmes = useWatch({ control: form.control, name: "aportesUmes" });
-  const aportesOtros = useWatch({ control: form.control, name: "aportesOtros" });
-
-  const { fields: fechasFields, append: appendFecha, remove: removeFecha } = useFieldArray({
-    control: form.control,
-    name: "fechas",
-  })
-
-  const { fields: aportesUmesFields, append: appendAporteUmes, remove: removeAporteUmes } = useFieldArray({
-    control: form.control,
-    name: "aportesUmes",
-  })
-
-  const { fields: aportesOtrosFields, append: appendAporteOtros, remove: removeAporteOtros } = useFieldArray({
+  const aportesOtros = useWatch({
     control: form.control,
     name: "aportesOtros",
-  })
+  });
 
+  const {
+    fields: fechasFields,
+    append: appendFecha,
+    remove: removeFecha,
+  } = useFieldArray({
+    control: form.control,
+    name: "fechas",
+  });
+
+  const {
+    fields: aportesUmesFields,
+    append: appendAporteUmes,
+    remove: removeAporteUmes,
+  } = useFieldArray({
+    control: form.control,
+    name: "aportesUmes",
+  });
+
+  const {
+    fields: aportesOtrosFields,
+    append: appendAporteOtros,
+    remove: removeAporteOtros,
+  } = useFieldArray({
+    control: form.control,
+    name: "aportesOtros",
+  });
+
+  // Carga las fuentes de financiamiento y los archivos de costos en el paso 2
   useEffect(() => {
     if (currentStep === 2 && selectedEvent) {
-      const setAportes = (field: "aportesUmes" | "aportesOtros", ids: number[]) => {
+      const setAportes = (
+        field: "aportesUmes" | "aportesOtros",
+        ids: number[]
+      ) => {
         const mapped = selectedEvent.financings
-          ?.filter(item => ids.includes(item.financingSourceId))
-          .map(item => ({
+          ?.filter((item) => ids.includes(item.financingSourceId))
+          .map((item) => ({
             tipo: String(item.financingSourceId),
             monto: String(item.amount),
           })) || [{ tipo: "", monto: "" }];
@@ -95,16 +124,34 @@ export function usePoaEventTrackingFormLogic(
 
       setAportes("aportesUmes", [1, 4, 5, 7]);
       setAportes("aportesOtros", [2, 3, 6]);
+
+      const fetchCostFiles = async () => {
+        const costFiles = await Promise.all(
+          selectedEvent.costDetails.map(async (detail) => {
+            return await descargarArchivo(
+              `/api/fullevent/downloadEventCostDetailDocumentById/${detail.costDetailId}`,
+              detail.fileName,
+              user?.token
+            );
+          })
+        ).then((files) => files.filter((file): file is File => file !== null));
+
+        console.log("costFiles", costFiles);
+
+        form.setValue("archivosGastos", costFiles);
+        setArchivosGastos(costFiles);
+      };
+
+      fetchCostFiles();
     }
-  }, [currentStep, selectedEvent, form]);
+  }, [currentStep, selectedEvent, form, user?.token]);
 
   // Carga de tipos de fuentes de financiamiento
   useEffect(() => {
     if (user) {
-      getFinancingSources(user.token)
-        .then((sources) => {
-          setFinancingSources(sources);
-        });
+      getFinancingSources(user.token).then((sources) => {
+        setFinancingSources(sources);
+      });
     }
   }, [user]);
 
@@ -141,26 +188,28 @@ export function usePoaEventTrackingFormLogic(
       aportesUmes: [{ tipo: "", monto: "" }],
       aportesOtros: [{ tipo: "", monto: "" }],
       archivosGastos: [],
-      fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
+      fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
     });
     setSelectedEvent(null);
-    setQuery('');
+    setQuery("");
     setShowResults(false);
     setArchivosGastos([]);
     setCostoTotal(0);
     setCurrentStep(1);
     onOpenChange(false);
-  }
+  };
 
   // Ajustes al abrir el diálogo
   useEffect(() => {
     if (open) {
       if (initialData) {
         form.reset(initialData);
-        setQuery(initialData.eventName || '');
+        setQuery(initialData.eventName || "");
         setArchivosGastos(initialData.archivosGastos || []);
         if (initialData.eventId) {
-          const initEvent = events.find(e => e.eventId.toString() === initialData.eventId);
+          const initEvent = events.find(
+            (e) => e.eventId.toString() === initialData.eventId
+          );
           if (initEvent) {
             setSelectedEvent(initEvent);
             setShowResults(false);
@@ -176,18 +225,40 @@ export function usePoaEventTrackingFormLogic(
     let fieldsToValidate: Array<FormFieldPaths> = [];
     switch (currentStep) {
       case 1:
-        fieldsToValidate = ['eventId', 'eventName', 'executionResponsible', 'campus'];
+        fieldsToValidate = [
+          "eventId",
+          "eventName",
+          "executionResponsible",
+          "campus",
+        ];
         break;
       case 2:
-        const aportesUmesFieldsPaths: Array<FormFieldPaths> = aportesUmes.map((_, i) => `aportesUmes.${i}.tipo` as FormFieldPaths)
-          .concat(aportesUmes.map((_, i) => `aportesUmes.${i}.monto` as FormFieldPaths));
-        const aportesOtrosFieldsPaths: Array<FormFieldPaths> = aportesOtros.map((_, i) => `aportesOtros.${i}.tipo` as FormFieldPaths)
-          .concat(aportesOtros.map((_, i) => `aportesOtros.${i}.monto` as FormFieldPaths));
-        fieldsToValidate = ['aportesUmes', 'aportesOtros', ...aportesUmesFieldsPaths, ...aportesOtrosFieldsPaths];
+        const aportesUmesFieldsPaths: Array<FormFieldPaths> = aportesUmes
+          .map((_, i) => `aportesUmes.${i}.tipo` as FormFieldPaths)
+          .concat(
+            aportesUmes.map(
+              (_, i) => `aportesUmes.${i}.monto` as FormFieldPaths
+            )
+          );
+        const aportesOtrosFieldsPaths: Array<FormFieldPaths> = aportesOtros
+          .map((_, i) => `aportesOtros.${i}.tipo` as FormFieldPaths)
+          .concat(
+            aportesOtros.map(
+              (_, i) => `aportesOtros.${i}.monto` as FormFieldPaths
+            )
+          );
+        fieldsToValidate = [
+          "aportesUmes",
+          "aportesOtros",
+          ...aportesUmesFieldsPaths,
+          ...aportesOtrosFieldsPaths,
+        ];
         break;
       case 3:
-        const fechasFieldsPaths: Array<FormFieldPaths> = form.getValues("fechas").map((_, i) => `fechas.${i}.fecha` as FormFieldPaths);
-        fieldsToValidate = ['fechas', ...fechasFieldsPaths];
+        const fechasFieldsPaths: Array<FormFieldPaths> = form
+          .getValues("fechas")
+          .map((_, i) => `fechas.${i}.fecha` as FormFieldPaths);
+        fieldsToValidate = ["fechas", ...fechasFieldsPaths];
         break;
       default:
         fieldsToValidate = [];
@@ -199,12 +270,22 @@ export function usePoaEventTrackingFormLogic(
 
     if (currentStep === 2) {
       // Validación adicional para los aportes
-      const aportesUmesValid = aportesUmes.every(aporte => {
-        const isNoAplica = financingSources.find(source => source.financingSourceId.toString() === aporte.tipo)?.name.toLowerCase() === 'no aplica';
+      const aportesUmesValid = aportesUmes.every((aporte) => {
+        const isNoAplica =
+          financingSources
+            .find(
+              (source) => source.financingSourceId.toString() === aporte.tipo
+            )
+            ?.name.toLowerCase() === "no aplica";
         return isNoAplica || parseFloat(aporte.monto) > 0;
       });
-      const aportesOtrosValid = aportesOtros.every(aporte => {
-        const isNoAplica = financingSources.find(source => source.financingSourceId.toString() === aporte.tipo)?.name.toLowerCase() === 'no aplica';
+      const aportesOtrosValid = aportesOtros.every((aporte) => {
+        const isNoAplica =
+          financingSources
+            .find(
+              (source) => source.financingSourceId.toString() === aporte.tipo
+            )
+            ?.name.toLowerCase() === "no aplica";
         return isNoAplica || parseFloat(aporte.monto) > 0;
       });
 
@@ -225,7 +306,8 @@ export function usePoaEventTrackingFormLogic(
       } else {
         toast({
           title: "Error de validación",
-          description: "Por favor complete todos los campos requeridos antes de continuar",
+          description:
+            "Por favor complete todos los campos requeridos antes de continuar",
           variant: "destructive",
         });
       }
@@ -234,11 +316,12 @@ export function usePoaEventTrackingFormLogic(
 
   const goToNextStep = async () => {
     if (currentStep === 2) {
-      const isStep2Valid = await form.trigger(['aportesUmes', 'aportesOtros']);
+      const isStep2Valid = await form.trigger(["aportesUmes", "aportesOtros"]);
       if (!isStep2Valid) {
         toast({
           title: "Error de validación",
-          description: "Por favor complete correctamente todos los campos de aportes antes de continuar",
+          description:
+            "Por favor complete correctamente todos los campos de aportes antes de continuar",
           variant: "destructive",
         });
         return;
@@ -247,11 +330,12 @@ export function usePoaEventTrackingFormLogic(
 
     const stepValid = await validateCurrentStep();
     if (stepValid) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep((prev) => prev + 1);
     } else {
       toast({
         title: "Error de validación",
-        description: "Por favor complete todos los campos requeridos antes de continuar",
+        description:
+          "Por favor complete todos los campos requeridos antes de continuar",
         variant: "destructive",
       });
     }
@@ -259,7 +343,7 @@ export function usePoaEventTrackingFormLogic(
 
   const goToPreviousStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
+      setCurrentStep((prev) => prev - 1);
     } else {
       handleCloseForm();
     }
@@ -287,10 +371,10 @@ export function usePoaEventTrackingFormLogic(
       aportesUmes: [{ tipo: "", monto: "" }],
       aportesOtros: [{ tipo: "", monto: "" }],
       archivosGastos: [],
-      fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
+      fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
     });
     setSelectedEvent(null);
-    setQuery('');
+    setQuery("");
     setShowResults(false);
     setArchivosGastos([]);
     setCostoTotal(0);
@@ -305,12 +389,17 @@ export function usePoaEventTrackingFormLogic(
 
   const handleEventSelect = (event: ApiEvent) => {
     setSelectedEvent(event);
-    form.setValue('eventId', event.eventId.toString());
-    form.setValue('eventName', event.name);
+    form.setValue("eventId", event.eventId.toString());
+    form.setValue("eventName", event.name);
 
-    const executionResponsible = event.responsibles.find(r => r.responsibleRole === 'Ejecución');
-    form.setValue('executionResponsible', executionResponsible ? executionResponsible.name : 'No especificado');
-    form.setValue('campus', event.campus.name);
+    const executionResponsible = event.responsibles.find(
+      (r) => r.responsibleRole === "Ejecución"
+    );
+    form.setValue(
+      "executionResponsible",
+      executionResponsible ? executionResponsible.name : "No especificado"
+    );
+    form.setValue("campus", event.campus.name);
 
     setShowResults(false);
   };
@@ -318,9 +407,11 @@ export function usePoaEventTrackingFormLogic(
   const handleClearSelection = () => {
     if (initialData) {
       form.reset(initialData);
-      setQuery(initialData.eventName || '');
+      setQuery(initialData.eventName || "");
       if (initialData.eventId) {
-        const initEvent = events.find(e => e.eventId.toString() === initialData.eventId);
+        const initEvent = events.find(
+          (e) => e.eventId.toString() === initialData.eventId
+        );
         if (initEvent) {
           setSelectedEvent(initEvent);
           setShowResults(false);
@@ -341,10 +432,10 @@ export function usePoaEventTrackingFormLogic(
         aportesUmes: [{ tipo: "", monto: "" }],
         aportesOtros: [{ tipo: "", monto: "" }],
         archivosGastos: [],
-        fechas: [{ fecha: new Date().toISOString().split('T')[0] }],
+        fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
       });
       setSelectedEvent(null);
-      setQuery('');
+      setQuery("");
       setShowResults(false);
       setArchivosGastos([]);
       setCostoTotal(0);
@@ -353,13 +444,13 @@ export function usePoaEventTrackingFormLogic(
   };
 
   const formatDecimal = (value: string) => {
-    let formatted = value.replace(/[^\d.]/g, '');
-    const parts = formatted.split('.');
+    let formatted = value.replace(/[^\d.]/g, "");
+    const parts = formatted.split(".");
     if (parts.length > 2) {
-      formatted = parts[0] + '.' + parts.slice(1).join('');
+      formatted = parts[0] + "." + parts.slice(1).join("");
     }
     if (parts.length === 2 && parts[1].length > 2) {
-      formatted = parts[0] + '.' + parts[1].slice(0, 2);
+      formatted = parts[0] + "." + parts[1].slice(0, 2);
     }
     return formatted;
   };
