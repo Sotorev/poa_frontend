@@ -43,7 +43,7 @@ export interface ApiEventResource {
 export interface ApiEventResponsible {
   eventResponsibleId: number;
   eventId: number;
-  responsibleRole: 'Principal' | 'Ejecución' | 'Seguimiento';
+  responsibleRole: "Principal" | "Ejecución" | "Seguimiento";
   isDeleted: boolean;
   name: string;
 }
@@ -173,35 +173,35 @@ export interface ApiFile {
  */
 /** Interface que define la estructura principal de un evento en la API */
 export interface ApiEvent {
-  eventId: number;                           /** ID único del evento */
-  name: string;                              /** Nombre del evento */
-  type: string;                              /** Tipo de evento */
-  poaId: number;                            /** ID del POA asociado */
-  completionPercentage: number;              /** Porcentaje de completitud del evento */
-  campusId: number;                          /** ID del campus donde se realiza */
-  eventNature: string;                       /** Naturaleza o categoría del evento */
-  isDeleted: boolean;                        /** Indica si el evento está eliminado */
-  objective: string;                         /** Objetivo principal del evento */
-  isDelayed: boolean;                        /** Indica si el evento está retrasado */
-  achievementIndicator: string;              /** Indicador de logro o cumplimiento */
-  purchaseTypeId: number;                    /** ID del tipo de compra asociado */
-  totalCost: number;                         /** Costo total del evento */
-  createdAt: string;                         /** Fecha de creación */
-  updatedAt: string | null;                  /** Fecha de última actualización */
-  userId: number;                            /** ID del usuario creador */
-  statusId: number;                          /** ID del estado actual del evento (ejecutado, planificado, finalizado) */
-  dates: ApiEventDate[];                     /** Fechas asociadas al evento */
-  financings: ApiEventFinancing[];           /** Fuentes de financiamiento */
-  responsibles: ApiEventResponsible[];       /** Responsables del evento */
-  costDetails: ApiCostDetail[];              /** Detalles de costos */
-  files: ApiFile[];                          /** Archivos adjuntos */
-  campus: ApiCampus;                         /** Información del campus (sede) */
-  interventions: ApiIntervention[];          /** Intervenciones asociadas */
-  ods: ApiOds[];                            /** Objetivos de Desarrollo Sostenible */
-  eventApprovals: ApiEventApproval[];        /** Aprobaciones del evento */
-  user: ApiUser;                             /** Información del usuario creador */
-  purchaseType: ApiPurchaseType;             /** Tipo de compra */
-  institutionalResources: ApiInstitutionalResource[]; /** Recursos institucionales requeridos */
+  eventId: number /** ID único del evento */;
+  name: string /** Nombre del evento */;
+  type: string /** Tipo de evento */;
+  poaId: number /** ID del POA asociado */;
+  completionPercentage: number /** Porcentaje de completitud del evento */;
+  campusId: number /** ID del campus donde se realiza */;
+  eventNature: string /** Naturaleza o categoría del evento */;
+  isDeleted: boolean /** Indica si el evento está eliminado */;
+  objective: string /** Objetivo principal del evento */;
+  isDelayed: boolean /** Indica si el evento está retrasado */;
+  achievementIndicator: string /** Indicador de logro o cumplimiento */;
+  purchaseTypeId: number /** ID del tipo de compra asociado */;
+  totalCost: number /** Costo total del evento */;
+  createdAt: string /** Fecha de creación */;
+  updatedAt: string | null /** Fecha de última actualización */;
+  userId: number /** ID del usuario creador */;
+  statusId: number /** ID del estado actual del evento (ejecutado, planificado, finalizado) */;
+  dates: ApiEventDate[] /** Fechas asociadas al evento */;
+  financings: ApiEventFinancing[] /** Fuentes de financiamiento */;
+  responsibles: ApiEventResponsible[] /** Responsables del evento */;
+  costDetails: ApiCostDetail[] /** Detalles de costos */;
+  files: ApiFile[] /** Archivos adjuntos */;
+  campus: ApiCampus /** Información del campus (sede) */;
+  interventions: ApiIntervention[] /** Intervenciones asociadas */;
+  ods: ApiOds[] /** Objetivos de Desarrollo Sostenible */;
+  eventApprovals: ApiEventApproval[] /** Aprobaciones del evento */;
+  user: ApiUser /** Información del usuario creador */;
+  purchaseType: ApiPurchaseType /** Tipo de compra */;
+  institutionalResources: ApiInstitutionalResource[] /** Recursos institucionales requeridos */;
 }
 
 // Interfaces existentes
@@ -214,105 +214,63 @@ export interface DateInterval {
  * Interfaz que define la estructura de una fila de la tabla de eventos del POA
  */
 export interface PlanningEvent {
-  /** Identificador único del evento */
-  id: string;
-  /** Área estratégica asociada */
+  id: string; // Identificador único del evento
   areaEstrategica: string;
-  /** Objetivo estratégico asociado */
   objetivoEstrategico: string;
-  /** Estrategias relacionadas */
   estrategias: string;
-  /** Intervención específica */
   intervencion: string;
-  /** Objetivos de Desarrollo Sostenible relacionados */
   ods: string;
-  /** Tipo de evento: puede ser actividad o proyecto */
-  tipoEvento: 'actividad' | 'proyecto';
-  /** Nombre del evento */
-  evento: string;
-  /** Objetivo principal del evento */
-  objetivo: string;
-  /** Intervalos de fechas del evento */
-  fechas: DateInterval[];
-  /** Costo total del evento */
+  tipoEvento: "actividad" | "proyecto";
+  evento: string; // Nombre del evento
+  objetivo: string; // Objetivo principal del evento
+  fechas: DateInterval[]; // Fechas de inicio y fin del evento
   costoTotal: number;
-  /** Aporte económico de UMES */
   aporteUMES: {
-    "financingSourceId": number,
-    "percentage": number,
-    "amount": number
+    financingSourceId: number;
+    percentage: number;
+    amount: number;
   }[];
-  /** Aportes económicos de otras fuentes */
   aporteOtros: {
-    "financingSourceId": number,
-    "percentage": number,
-    "amount": number
+    financingSourceId: number;
+    percentage: number;
+    amount: number;
   }[];
-  /** Clasificación del tipo de compra */
   tipoCompra: string;
-  /** Detalles adicionales del evento */
   detalle: {
     id: number;
     name: string;
   }[];
-  /** Responsables del evento */
   responsables: {
-    /** Responsable principal del evento */
     principal: string;
-    /** Responsable de la ejecución */
     ejecucion: string;
-    /** Responsable del seguimiento */
     seguimiento: string;
   };
-  /** Recursos necesarios para el evento */
   recursos: string;
-  /** Indicadores de logro del evento */
   indicadorLogro: string;
-  /** Detalles del proceso */
   detalleProceso: {
     id: number;
     name: string;
   }[];
-  /** Comentarios del decano */
   comentarioDecano: string;
-  /** Usuario que propuso el evento */
   propuestoPor: string;
-  /** Fecha de creación del evento */
-  fechaCreacion: string;
-  /** Fecha de última edición */
-  fechaEdicion: string;
-  /** Estado actual del evento */
-  estado: 'revision' | 'aprobado' | 'rechazado' | 'correccion';
-  /** Estructura jerárquica de aportes al PEI */
+  fechaCreacion: string; // Fecha de creación del evento
+  fechaEdicion: string; // Fecha de última edición del evento
+  estado: "revision" | "aprobado" | "rechazado" | "correccion";
   aportesPEI: {
     event: {
-      /** ID del evento en PEI */
       eventId: number;
-      /** Nombre del evento */
       name: string;
-      /** Array de intervenciones */
       interventions: Array<{
-        /** ID de la intervención */
         interventionId: number;
-        /** Nombre de la intervención */
         name: string;
-        /** Array de estrategias */
         strategies: Array<{
-          /** ID de la estrategia */
           strategyId: number;
-          /** Descripción de la estrategia */
           description: string;
-          /** Objetivo estratégico */
           strategicObjective: {
-            /** ID del objetivo estratégico */
             strategicObjectiveId: number;
-            /** Descripción del objetivo estratégico */
-            description: string;
-            /** Área estratégica */
+            description: string; // Descripción del objetivo estratégico
             strategicArea: {
-              /** ID del área estratégica */
               strategicAreaId: number;
-              /** Nombre del área estratégica */
               name: string;
             };
           };
@@ -320,10 +278,8 @@ export interface PlanningEvent {
       }>;
     };
   };
-  /** Campus donde se realiza el evento */
   campus: string;
-  /** Naturaleza o tipo del evento */
-  naturalezaEvento: string;
+  naturalezaEvento: string; // Naturaleza del evento Planificado o No planificado
 }
 
 export interface SectionProps {
