@@ -2,7 +2,7 @@
 
 'use client'
 
-import { AlertCircle, Check, Plus, Search, Trash, X } from "lucide-react"
+import { AlertCircle, Check, Plus, Search, Trash, X, FileSpreadsheet, FileText, File, XIcon, PlusIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,9 +32,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { usePoaEventTrackingFormLogic } from "@/hooks/use-poa-event-tracking-form"
 import { FieldErrors } from "react-hook-form"
+
+import { FormValues } from "@/schemas/poa-event-tracking-schema"
+import { downloadFile } from "@/utils/downloadFile"
+
+// Types
 import { ApiEvent } from "@/types/interfaces"
 import { FormFieldPaths } from "@/types/poa-event-tracking"
-import { FormValues } from "@/schemas/poa-event-tracking-schema"
 
 /**
  * Componentes puros de UI:
@@ -409,57 +413,122 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               <p className="text-2xl font-bold text-primary">Q{costoTotal.toFixed(2)}</p>
             </CardContent>
           </Card>
-          <FormField
-            control={form.control}
-            name="archivosGastos"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Archivos de Gastos</FormLabel>
-                <FormControl>
-                  <Input
-                    type="file"
-                    multiple
-                    onChange={(e) => {
-                      const files = e.target.files
-                        ? Array.from(e.target.files).filter(file => file.size <= MAX_FILE_SIZE)
-                        : [];
-                      if (files.length !== (e.target.files?.length || 0)) {
-                        // Si algún archivo excede el tamaño, aquí se podría notificar, 
-                        // pero se mantiene la funcionalidad.
-                      }
-                      setArchivosGastos(prevFiles => [...prevFiles, ...files]);
-                      field.onChange([...archivosGastos, ...files]);
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Suba documentos relacionados con los gastos (máximo 10MB por archivo)
-                </FormDescription>
-                {archivosGastos.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {archivosGastos.map((file, index) => (
-                      <li key={index} className="flex items-center justify-between text-sm">
-                        <span className="truncate">{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const updatedFiles = archivosGastos.filter((_, i) => i !== index);
-                            setArchivosGastos(updatedFiles);
-                            field.onChange(updatedFiles);
-                          }}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Archivos de Gastos</CardTitle>
+              <FormDescription>
+                Suba los documentos que respaldan los gastos del evento (máximo 10MB por archivo)
+              </FormDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="archivosGastos"
+                render={({ field }) => (
+                  <FormItem className="space-y-4">
+                    <div className="grid w-full gap-4">
+                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg px-6 py-8 text-center hover:border-primary/50 transition-colors">
+                        <FormControl>
+                          <Input
+                            type="file"
+                            multiple
+                            className="hidden"
+                            id="file-upload"
+                            onChange={(e) => {
+                              const files = e.target.files
+                                ? Array.from(e.target.files).filter(file => file.size <= MAX_FILE_SIZE)
+                                : [];
+                              if (files.length !== (e.target.files?.length || 0)) {
+                                // Aquí se podría mostrar una notificación de archivos ignorados por tamaño
+                              }
+                              setArchivosGastos(prevFiles => [...prevFiles, ...files]);
+                              field.onChange([...archivosGastos, ...files]);
+                            }}
+                          />
+                        </FormControl>
+                        <label
+                          htmlFor="file-upload"
+                          className="flex flex-col items-center gap-2 cursor-pointer"
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
+                          <div className="rounded-full bg-primary/10 p-3">
+                            <PlusIcon className="h-6 w-6 text-primary" />
+                          </div>
+                          <span className="text-sm font-medium">
+                            Haga clic para seleccionar archivos
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            o arrastre y suelte aquí
+                          </span>
+                        </label>
+                      </div>
+                      {archivosGastos.length > 0 && (
+                        <div className="border rounded-lg p-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {archivosGastos.map((file, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="p-1">
+                                    {(() => {
+                                      const extension = file.name.split('.').pop()?.toLowerCase();
+                                      switch (extension) {
+                                        case 'xlsx':
+                                        case 'xls':
+                                          return <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />;
+                                        case 'pdf':
+                                          return <FileText className="h-3.5 w-3.5 text-red-600" />;
+                                        case 'doc':
+                                        case 'docx':
+                                          return <FileText className="h-3.5 w-3.5 text-blue-600" />;
+                                        default:
+                                          return <File className="h-3.5 w-3.5 text-gray-400" />;
+                                      }
+                                    })()}
+                                  </div>
+                                  <span
+                                    onClick={() => {
+                                      const costDetail = selectedEvent?.costDetails.find(
+                                        c => c.fileName === file.name
+                                      );
+                                      if (costDetail) {
+                                        downloadFile(
+                                          `downloadEventCostDetailDocumentById/${costDetail.costDetailId}`,
+                                          file.name
+                                        );
+                                      }
+                                    }}
+                                    className="text-sm font-medium hover:underline cursor-pointer truncate"
+                                  >
+                                    {file.name}
+                                  </span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    const updatedFiles = archivosGastos.filter((_, i) => i !== index);
+                                    setArchivosGastos(updatedFiles);
+                                    field.onChange(updatedFiles);
+                                  }}
+                                >
+                                  <XIcon className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              />
+            </CardContent>
+          </Card>
         </div>
       )}
       {currentStep === 3 && (
