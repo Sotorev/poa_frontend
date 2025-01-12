@@ -153,7 +153,6 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
         fetchData();
     }, [poaId, user?.token]);
 
-    // Definir handlers para editar y eliminar
     const handleEdit = (id: string) => {
         // Buscar el evento en los eventos cargados
         const event =

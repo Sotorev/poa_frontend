@@ -5,7 +5,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ActionButtons from './ActionButtons';
-import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections'; // Importar el nuevo componente
+import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections';
 import AportesPEIDialog from './AportesPEIDialog';
 import FinancialDetailsDialog from './FinancialDetailsDialog';
 import ProponentDetailsDialog from './ProponentDetailsDialog';
