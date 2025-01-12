@@ -4,9 +4,8 @@ import React, { useState } from 'react';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X } from 'lucide-react';
 import ActionButtons from './ActionButtons';
-import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections'; // Importar el nuevo componente
+import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections';
 import AportesPEIDialog from './AportesPEIDialog';
 import FinancialDetailsDialog from './FinancialDetailsDialog';
 import ProponentDetailsDialog from './ProponentDetailsDialog';
@@ -197,24 +196,17 @@ const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell className="whitespace-normal break-words">{event.recursos}</TableCell>
       <TableCell className="whitespace-normal break-words">
-      {event.detalleProceso && (
-        <>
-          {console.log('Detalle Proceso:', event.detalleProceso)}
-          {console.log('evento', event)}
-          {event.detalleProceso.map((file) => {
-        console.log('File:', file);
-        return (
-          <div key={file.id}>
-            <h4 className="text-md font-medium mb-1">{file.name}</h4>
-            <DownloadButton
-          name={file.name}
-          path={`downloadEventFileById/${file.id}`}
-            />
-          </div>
-        );
-          })}
-        </>
-      )}
+        {event.detalleProceso && (
+          event.detalleProceso.map((file) => (
+            <div key={file.id}>
+              <h4 className="text-md font-medium mb-1">{file.name}</h4>
+              <DownloadButton
+                name={file.name}
+                path={`downloadEventFileById/${file.id}`}
+              />
+            </div>
+          ))
+        )}
       </TableCell>
       <TableCell className="whitespace-normal break-words">
         <Button

@@ -72,8 +72,6 @@ const EventTable: React.FC<EventTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          <>
-            {console.log('eventos en tabla', events)}
             {events.map(event => (
               <EventRow
                 key={event.id}
@@ -93,7 +91,6 @@ const EventTable: React.FC<EventTableProps> = ({
                 setCurrentEntityName={setCurrentEntityName}
               />
             ))}
-          </>
         </TableBody>
       </Table>
     </div>
