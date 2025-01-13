@@ -1,4 +1,4 @@
-import { ApprovalStatus } from '../../types/approvalStatus'
+import { ApprovalStatus } from "@/types/approvalStatus";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function getPoaApprovals(token: string, poaId: number): Promise<ApprovalStatus[]> {
