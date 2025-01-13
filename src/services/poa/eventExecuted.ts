@@ -1,9 +1,8 @@
 import { currentUser } from '@/lib/auth';
-import { RequestEventExecution } from '@/types/approvalStatus';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export const eventExecuted = async (eventExecuted: RequestEventExecution, files: File[]) => {
+export const eventExecuted = async (eventExecuted: any, files: File[]) => {
   const user = await currentUser();
   const formData = new FormData();
   formData.append('data', JSON.stringify(eventExecuted));

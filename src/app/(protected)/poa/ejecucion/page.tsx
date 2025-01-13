@@ -16,7 +16,7 @@ import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-track
 
 // Types
 import { ApiEvent } from '@/types/interfaces'
-import { RequestEventExecution } from '@/types/approvalStatus'
+import { EventExecution, RequestEventExecution } from '@/types/eventExecution.type'
 
 // Imports for charge data
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
@@ -54,10 +54,10 @@ import { eventExecuted } from '@/services/poa/eventExecuted'
  * - Acceso a API de POA
  */
 export default function PoaTrackingPage() {
-  const [events, setEvents] = useState<ApiEvent[]>([]);
-  const [executedEvents, setExecutedEvents] = useState<ApiEvent[]>([]);
+  const [events, setEvents] = useState<EventExecution[]>([]);
+  const [executedEvents, setExecutedEvents] = useState<EventExecution[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<ApiEvent>();
+  const [editingEvent, setEditingEvent] = useState<EventExecution>();
   const [facultyId, setFacultyId] = useState<any>();
   const [poa, setPoa] = useState<any>();
   const user = useCurrentUser();
@@ -96,25 +96,45 @@ export default function PoaTrackingPage() {
    * - statusId 1: Eventos activos (pendientes de ejecución)
    * - statusId 2: Eventos ejecutados
    * Los resultados filtrados se almacenan en los estados 'events' y 'executedEvents' respectivamente.
+   * Los eventos se transforman al tipo EventExecution.
    */
   useEffect(() => {
     if (user === undefined || poa === undefined) return;
 
     getFullEvents(user.token, poa.poaId)
       .then((events: ApiEvent[]) => {
-        setEvents(events.filter(event => (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)));
-        setExecutedEvents(events.filter(event => event.statusId === 2));
+        const mappedEvents = events.map(event => ({
+          eventId: event.eventId,
+          name: event.name,
+          objective: event.objective,
+          campus: event.campus,
+          responsibles: event.responsibles,
+          totalCost: event.totalCost,
+          dates: event.dates,
+          financings: event.financings,
+          costDetails: event.costDetails,
+          statusId: event.statusId,
+          eventApprovals: event.eventApprovals,
+          files: [] // Initialize as empty File array since ApiFiles can't be directly converted
+        } as EventExecution));
+
+        setEvents(mappedEvents.filter(event => 
+          (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+        ));
+        setExecutedEvents(mappedEvents.filter(event => 
+          event.statusId === 2
+        ));
       });
   }, [user, poa]);
 
-  const handleEdit = (event: typeof executedEvents[0]) => {
+  const handleEdit = (event: EventExecution) => {
     setEditingEvent(event);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (data: { eventId: string; eventName: string; executionResponsible: string; campus: string; aportesUmes: {tipo: string; monto: string;}[]; aportesOtros: { tipo: string; monto: string; }[]; archivosGastos: any[]; fechas: any[] }) => {
     const formattedData = {
-      id: data.eventId || (events.length + 1).toString(),
+      id: data.eventId || (executedEvents.length + 1).toString(),
       name: data.eventName,
       executionResponsible: data.executionResponsible,
       campus: data.campus,
@@ -185,7 +205,7 @@ export default function PoaTrackingPage() {
                 <TableCell>{event.name}</TableCell>
                 {/* <TableCell>{format(event.executionDate, "PPP", { locale: es })}</TableCell>
                 <TableCell>Q{event.actualExpenses}</TableCell> */}
-                <TableCell>{event.files?.length || 0} archivo(s)</TableCell>
+                <TableCell>{event.costDetails?.length || 0} archivo(s)</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="outline"
@@ -220,4 +240,3 @@ export default function PoaTrackingPage() {
     </div>
   )
 }
-

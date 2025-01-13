@@ -1,6 +1,7 @@
 // src/schemas/poa-event-tracking-schema.ts
 
 import { z } from 'zod';
+import { FormValues } from '@/types/eventExecution.type';
 
 export const formSchema = z.object({
   eventId: z.string().nonempty("El ID del evento es requerido"),
@@ -20,5 +21,3 @@ export const formSchema = z.object({
     fecha: z.string().nonempty("La fecha es requerida"),
   })).nonempty("Debe haber al menos una fecha de ejecución"),
 });
-
-export type FormValues = z.infer<typeof formSchema>;
