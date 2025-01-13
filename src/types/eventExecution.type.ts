@@ -7,8 +7,8 @@ export interface FormValues {
   eventName: string;
   executionResponsible: string;
   campus: string;
-  aportesUmes: { tipo: string; monto: string }[];
-  aportesOtros: { tipo: string; monto: string }[];
+  aportesUmes: eventExecutionFinancings[];
+  aportesOtros: eventExecutionFinancings[];
   archivosGastos: File[];
   fechas: { fecha: string }[];
 }
@@ -21,7 +21,7 @@ export interface EventExecution {
   responsibles: { responsibleRole: string; name: string }[];
   totalCost: number;
   dates: { startDate: string; endDate: string }[];
-  financings: { financingSourceId: number; amount: number }[];
+  financings: eventExecutionFinancings[];
   statusId: number;
   eventApprovals: { approvalStatusId: number }[];
   costDetails?: ApiCostDetail[];
@@ -33,6 +33,13 @@ export interface FinancingSource {
   category: string;
 }
 
+export interface eventExecutionFinancings {
+  eventId: number;
+  amount: number;
+  percentage: number;
+  financingSourceId: number;
+};
+
 export interface RequestEventExecution {
   eventId: number;
   eventExecutionDates: {
@@ -40,12 +47,7 @@ export interface RequestEventExecution {
     startDate: string;
     endDate: string;
   }[];
-  eventExecutionFinancings: {
-    eventId: number;
-    amount: number;
-    percentage: number;
-    financingSourceId: number;
-  }[];
+  eventExecutionFinancings: eventExecutionFinancings[];
 }
 
 export type Aporte = {
@@ -63,8 +65,12 @@ export type FormFieldPaths =
   | "aportesOtros"
   | "archivosGastos"
   | "fechas"
-  | `aportesUmes.${number}.tipo`
-  | `aportesUmes.${number}.monto`
-  | `aportesOtros.${number}.tipo`
-  | `aportesOtros.${number}.monto`
-  | `fechas.${number}.fecha`;
+  | `fechas.${number}.fecha`
+  | `aportesUmes.${number}.eventId`
+  | `aportesUmes.${number}.amount`
+  | `aportesUmes.${number}.percentage`
+  | `aportesUmes.${number}.financingSourceId`
+  | `aportesOtros.${number}.eventId`
+  | `aportesOtros.${number}.amount`
+  | `aportesOtros.${number}.percentage`
+  | `aportesOtros.${number}.financingSourceId`;

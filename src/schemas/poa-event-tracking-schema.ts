@@ -9,13 +9,17 @@ export const formSchema = z.object({
   executionResponsible: z.string().nonempty("El responsable de ejecución es requerido"),
   campus: z.string().nonempty("El campus es requerido"),
   aportesUmes: z.array(z.object({
-    tipo: z.string().nonempty("El tipo de aporte es requerido"),
-    monto: z.string().nonempty("El monto es requerido").transform(v => v.replace(/[^\d.]/g, '')),
+    eventId: z.number().optional(),
+    financingSourceId: z.coerce.number().min(1, "Seleccione una fuente de financiamiento"),
+    amount: z.coerce.number().min(0, "El monto debe ser un valor positivo"),
+    percentage: z.coerce.number().optional(),
   })).nonempty("Debe haber al menos un aporte UMES"),
   aportesOtros: z.array(z.object({
-    tipo: z.string().nonempty("El tipo de aporte es requerido"),
-    monto: z.string().nonempty("El monto es requerido").transform(v => v.replace(/[^\d.]/g, '')),
-  })),
+    eventId: z.number().optional(),
+    financingSourceId: z.coerce.number().min(1, "Seleccione una fuente de financiamiento"),
+    amount: z.coerce.number().min(0, "El monto debe ser un valor positivo"),
+    percentage: z.coerce.number().optional(),
+  })).optional(),
   archivosGastos: z.array(z.any()),
   fechas: z.array(z.object({
     fecha: z.string().nonempty("La fecha es requerida"),
