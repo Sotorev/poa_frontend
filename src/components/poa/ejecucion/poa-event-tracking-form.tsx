@@ -33,12 +33,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { usePoaEventTrackingFormLogic } from "@/hooks/use-poa-event-tracking-form"
 import { FieldErrors } from "react-hook-form"
 
-import { FormValues } from "@/schemas/poa-event-tracking-schema"
+import { FormValues, EventExecution, FormFieldPaths } from '@/types/eventExecution.type';
 import { downloadFile } from "@/utils/downloadFile"
-
-// Types
-import { ApiEvent } from "@/types/interfaces"
-import { FormFieldPaths } from "@/types/poa-event-tracking"
 
 /**
  * Componentes puros de UI:
@@ -154,7 +150,7 @@ function parseDateString(dateString: string) {
   return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day) + 1))
 }
 
-function EventDetails({ event }: { event: ApiEvent }) {
+function EventDetails({ event }: { event: EventExecution }) {
   return (
     <div className="mt-4 grid gap-4">
       <Card className="overflow-hidden">
@@ -214,7 +210,7 @@ function EventDetails({ event }: { event: ApiEvent }) {
   );
 }
 
-function SearchResults({ filteredEvents, handleEventSelect }: { filteredEvents: ApiEvent[]; handleEventSelect: (event: ApiEvent) => void }) {
+function SearchResults({ filteredEvents, handleEventSelect }: { filteredEvents: EventExecution[]; handleEventSelect: (event: EventExecution) => void }) {
   return (
     <ul className="mt-1 border rounded-md divide-y max-h-32 overflow-y-auto bg-card">
       {filteredEvents.map((event) => (
@@ -243,7 +239,7 @@ export { EventDetails, SearchResults };
  */
 
 type PoaEventTrackingFormProps = {
-  events: ApiEvent[];
+  events: EventExecution[];
   onSubmit: (data: FormValues) => void;
   initialData?: FormValues;
   open: boolean;
@@ -554,7 +550,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                                   </div>
                                   <span
                                     onClick={() => {
-                                      const costDetail = selectedEvent?.costDetails.find(
+                                      const costDetail = selectedEvent?.costDetails?.find(
                                         c => c.fileName === file.name
                                       );
                                       if (costDetail) {

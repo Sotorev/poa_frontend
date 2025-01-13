@@ -7,15 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { descargarArchivo } from "@/utils/downloadFile";
+import { getFinancingSources } from "@/services/apiService";
 
 // Schemas
-import { formSchema, FormValues } from "@/schemas/poa-event-tracking-schema";
+import { formSchema } from "@/schemas/poa-event-tracking-schema";
 
 // Types
-import { ApiEvent } from "@/types/interfaces";
-import { FinancingSource } from "@/types/FinancingSource";
-import { getFinancingSources } from "@/services/apiService";
-import { FormFieldPaths } from "@/types/poa-event-tracking";
+import { FormValues, EventExecution, FinancingSource, FormFieldPaths } from '@/types/eventExecution.type';
+
 
 /**
  * Hook personalizado que encapsula toda la lógica y el estado del formulario de seguimiento POA.
@@ -29,7 +28,7 @@ import { FormFieldPaths } from "@/types/poa-event-tracking";
  * @returns Objeto con todos los estados, funciones y handlers necesarios para el componente UI.
  */
 export function usePoaEventTrackingFormLogic(
-  events: ApiEvent[],
+  events: EventExecution[],
   onSubmit: (data: FormValues) => void,
   initialData: FormValues | undefined,
   open: boolean,
@@ -38,10 +37,10 @@ export function usePoaEventTrackingFormLogic(
   // Estados locales
   const [query, setQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
-  const [filteredEvents, setFilteredEvents] = useState<ApiEvent[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<EventExecution[]>([]);
   const [archivosGastos, setArchivosGastos] = useState<File[]>([]);
   const [costoTotal, setCostoTotal] = useState(0);
-  const [selectedEvent, setSelectedEvent] = useState<ApiEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventExecution | null>(null);
   const [financingSources, setFinancingSources] = useState<FinancingSource[]>(
     []
   );
@@ -127,7 +126,7 @@ export function usePoaEventTrackingFormLogic(
 
       const fetchCostFiles = async () => {
         const costFiles = await Promise.all(
-          selectedEvent.costDetails.map(async (detail) => {
+          (selectedEvent.costDetails || []).map(async (detail) => {
             return await descargarArchivo(
               `/api/fullevent/downloadEventCostDetailDocumentById/${detail.costDetailId}`,
               detail.fileName,
@@ -397,7 +396,7 @@ export function usePoaEventTrackingFormLogic(
     });
   }
 
-  const handleEventSelect = (event: ApiEvent) => {
+  const handleEventSelect = (event: EventExecution) => {
     setSelectedEvent(event);
     form.setValue("eventId", event.eventId.toString());
     form.setValue("eventName", event.name);
