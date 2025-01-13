@@ -57,8 +57,8 @@ export function usePoaEventTrackingFormLogic(
       eventName: "",
       executionResponsible: "",
       campus: "",
-      aportesUmes: [{ tipo: "", monto: "" }],
-      aportesOtros: [{ tipo: "", monto: "" }],
+      aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
+      aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
       fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
     },
@@ -111,13 +111,15 @@ export function usePoaEventTrackingFormLogic(
         const mapped = selectedEvent.financings
           ?.filter((item) => ids.includes(item.financingSourceId))
           .map((item) => ({
-            tipo: String(item.financingSourceId),
-            monto: String(item.amount),
-          })) || [{ tipo: "", monto: "" }];
+            eventId: selectedEvent.eventId,
+            amount: Number(item.amount),
+            percentage: item.percentage,
+            financingSourceId: item.financingSourceId
+          })) || [{ eventId: selectedEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }];
 
         form.setValue(
           field,
-          mapped.length > 0 ? mapped : [{ tipo: "", monto: "" }]
+          mapped.length > 0 ? mapped : [{ eventId: selectedEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }]
         );
       };
 
@@ -145,7 +147,6 @@ export function usePoaEventTrackingFormLogic(
 
   useEffect(() => {
     if (currentStep === 3 && selectedEvent) {
-      console.log(selectedEvent.dates);
 
       const defaultDate = { fecha: "" };
       const eventDates = selectedEvent.dates.map(date => ({
@@ -181,7 +182,7 @@ export function usePoaEventTrackingFormLogic(
   // Cálculo de costo total
   useEffect(() => {
     const total = [...aportesUmes, ...aportesOtros].reduce((sum, aporte) => {
-      const monto = parseFloat(aporte.monto) || 0;
+      const monto = aporte.amount || 0;
       return sum + monto;
     }, 0);
     setCostoTotal(total);
@@ -194,8 +195,8 @@ export function usePoaEventTrackingFormLogic(
       eventName: "",
       executionResponsible: "",
       campus: "",
-      aportesUmes: [{ tipo: "", monto: "" }],
-      aportesOtros: [{ tipo: "", monto: "" }],
+      aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
+      aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
       fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
     });
@@ -231,7 +232,7 @@ export function usePoaEventTrackingFormLogic(
 
   // Validación por pasos
   const validateCurrentStep = async (): Promise<boolean> => {
-    let fieldsToValidate: Array<FormFieldPaths> = [];
+    let fieldsToValidate: Array<Exclude<FormFieldPaths, undefined>> = [];
     switch (currentStep) {
       case 1:
         fieldsToValidate = [
@@ -283,19 +284,19 @@ export function usePoaEventTrackingFormLogic(
         const isNoAplica =
           financingSources
             .find(
-              (source) => source.financingSourceId.toString() === aporte.tipo
+              (source) => source.financingSourceId === aporte.financingSourceId
             )
             ?.name.toLowerCase() === "no aplica";
-        return isNoAplica || parseFloat(aporte.monto) > 0;
+        return isNoAplica || aporte.amount > 0;
       });
       const aportesOtrosValid = aportesOtros.every((aporte) => {
         const isNoAplica =
           financingSources
             .find(
-              (source) => source.financingSourceId.toString() === aporte.tipo
+              (source) => source.financingSourceId === aporte.financingSourceId
             )
             ?.name.toLowerCase() === "no aplica";
-        return isNoAplica || parseFloat(aporte.monto) > 0;
+        return isNoAplica || aporte.amount > 0;
       });
 
       return stepIsValid && aportesUmesValid && aportesOtrosValid;
@@ -377,8 +378,8 @@ export function usePoaEventTrackingFormLogic(
       eventName: "",
       executionResponsible: "",
       campus: "",
-      aportesUmes: [{ tipo: "", monto: "" }],
-      aportesOtros: [{ tipo: "", monto: "" }],
+      aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
+      aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
       fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
     });
@@ -439,8 +440,8 @@ export function usePoaEventTrackingFormLogic(
         eventName: "",
         executionResponsible: "",
         campus: "",
-        aportesUmes: [{ tipo: "", monto: "" }],
-        aportesOtros: [{ tipo: "", monto: "" }],
+        aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
+        aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
         archivosGastos: [],
         fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
       });

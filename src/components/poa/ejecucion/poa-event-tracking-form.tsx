@@ -33,7 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { usePoaEventTrackingFormLogic } from "@/hooks/use-poa-event-tracking-form"
 import { FieldErrors } from "react-hook-form"
 
-import { FormValues, EventExecution, FormFieldPaths } from '@/types/eventExecution.type';
+import { FormValues, EventExecution, FormFieldPaths, eventExecutionFinancings } from '@/types/eventExecution.type';
 import { downloadFile } from "@/utils/downloadFile"
 
 /**
@@ -286,9 +286,9 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
   const renderAporteFields = (
-    fields: Record<"id", string>[],
+    fields: { id: string }[],
     name: "aportesUmes" | "aportesOtros",
-    append: (value: { tipo: string; monto: string }) => void,
+    append: (value: eventExecutionFinancings) => void,
     remove: (index: number) => void
   ) => {
     return (
@@ -303,7 +303,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             <div key={field.id} className="flex flex-col sm:flex-row gap-4 items-end">
               <FormField
                 control={form.control}
-                name={`${name}.${index}.tipo`}
+                name={`${name}.${index}.financingSourceId`}
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>{index === 0 ? `Tipo de Aporte ${name === "aportesUmes" ? "UMES" : "Otros"}` : ""}</FormLabel>
@@ -312,13 +312,13 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                         field.onChange(value);
                         const isNoAplica = financingSources.find(source => source.financingSourceId.toString() === value)?.name.toLowerCase() === 'no aplica';
                         if (isNoAplica) {
-                          form.setValue(`${name}.${index}.monto`, "0");
+                          form.setValue(`${name}.${index}.amount`, 0);
                         }
                       }}
-                      value={field.value}
+                      value={field.value?.toString() || ''}
                     >
                       <FormControl>
-                        <SelectTrigger className={cn(errors[name]?.[index]?.tipo && "border-destructive")}>
+                        <SelectTrigger className={cn(errors[name]?.[index]?.financingSourceId && "border-destructive")}>
                           <SelectValue placeholder="Seleccione el tipo de aporte" />
                         </SelectTrigger>
                       </FormControl>
@@ -338,7 +338,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               />
               <FormField
                 control={form.control}
-                name={`${name}.${index}.monto`}
+                name={`${name}.${index}.amount`}
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>{index === 0 ? "Monto" : ""}</FormLabel>
@@ -347,14 +347,14 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                         type="text"
                         placeholder="0.00"
                         {...field}
-                        disabled={financingSources.find(source => source.financingSourceId.toString() === form.watch(`${name}.${index}.tipo`))?.name.toLowerCase() === 'no aplica'}
+                        disabled={financingSources.find(source => source.financingSourceId === Number(form.watch(`${name}.${index}.financingSourceId`)))?.name.toLowerCase() === 'no aplica'}
                         onChange={(e) => {
                           const formattedValue = formatDecimal(e.target.value);
                           field.onChange(formattedValue);
                         }}
                         className={cn(
                           "pr-8",
-                          errors[name]?.[index]?.monto && "border-destructive"
+                          errors[name]?.[index]?.amount && "border-destructive"
                         )}
                       />
                     </FormControl>
@@ -377,7 +377,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ tipo: "", monto: "" })}
+            onClick={() => append({ eventId: 0, financingSourceId: 0, amount: 0, percentage: 0 })}
             className="mt-2"
           >
             <Plus className="h-4 w-4 mr-2" />

@@ -16,7 +16,7 @@ import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-track
 
 // Types
 import { ApiEvent } from '@/types/interfaces'
-import { EventExecution, RequestEventExecution } from '@/types/eventExecution.type'
+import { EventExecution, FormValues, RequestEventExecution } from '@/types/eventExecution.type'
 
 // Imports for charge data
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
@@ -132,7 +132,8 @@ export default function PoaTrackingPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (data: { eventId: string; eventName: string; executionResponsible: string; campus: string; aportesUmes: {tipo: string; monto: string;}[]; aportesOtros: { tipo: string; monto: string; }[]; archivosGastos: any[]; fechas: any[] }) => {
+  const handleSubmit = (data: FormValues) => {
+    console.log(data);
     const formattedData = {
       id: data.eventId || (executedEvents.length + 1).toString(),
       name: data.eventName,
@@ -154,15 +155,15 @@ export default function PoaTrackingPage() {
       eventExecutionFinancings: [
         ...data.aportesUmes.map((um) => ({
           eventId: parseInt(data.eventId, 10),
-          amount: parseFloat(um.monto),
-          percentage: 0,
-          financingSourceId: 1,
+          amount: um.amount,
+          percentage: um.percentage,
+          financingSourceId: um.financingSourceId,
         })),
         ...data.aportesOtros.map((ot) => ({
           eventId: parseInt(data.eventId, 10),
-          amount: parseFloat(ot.monto),
-          percentage: 0,
-          financingSourceId: 2,
+          amount: ot.amount,
+          percentage: ot.percentage,
+          financingSourceId: ot.financingSourceId,
         })),
       ],
     }
@@ -229,8 +230,8 @@ export default function PoaTrackingPage() {
           eventName: editingEvent.name,
           executionResponsible: "",
           campus: "",
-          aportesUmes: [{ tipo: "", monto: "" }],
-          aportesOtros: [{ tipo: "", monto: "" }],
+          aportesUmes: [{ eventId: editingEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }],
+          aportesOtros: [{ eventId: editingEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }],
           archivosGastos: [],
           fechas: [{ fecha: "" }]
         } : undefined}
