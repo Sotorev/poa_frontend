@@ -58,16 +58,15 @@ const CustomXAxisTick = ({
   x,
   y,
   payload,
-  index,
   getTickFontSize
 }: {
   x: number
   y: number
   payload: any
-  index: number
   getTickFontSize: () => number
 }) => {
-  const { objectiveId, objectiveName } = payload.value
+  const { value } = payload;
+  const description = "Obj. Estratégico No. ";
 
   return (
     <g transform={`translate(${x},${y})`}>
@@ -75,25 +74,16 @@ const CustomXAxisTick = ({
         x={0}
         y={0}
         dy={16}
-        textAnchor="middle"
+        textAnchor="end"
         fill="hsl(var(--foreground))"
         fontSize={getTickFontSize()}
+        transform="rotate(-45)"
       >
-        {objectiveId}
-      </text>
-      <text
-        x={0}
-        y={0}
-        dy={30}
-        textAnchor="middle"
-        fill="hsl(var(--foreground))"
-        fontSize={getTickFontSize()}
-      >
-        {objectiveName}
+        {description + value}
       </text>
     </g>
-  )
-}
+  );
+};
 
 /**
  * Componente que muestra un gráfico de barras de los Costos por Objetivo Estratégico del POA.
@@ -353,7 +343,7 @@ export default function PoaCostChart() {
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(142, 60%, 92%)" />
                 <XAxis
-                  dataKey="objectiveName"
+                  dataKey="objectiveId"
                   height={100}
                   tick={(props) => <CustomXAxisTick {...props} getTickFontSize={getTickFontSize} />}
                   stroke="hsl(var(--muted))"
@@ -371,7 +361,7 @@ export default function PoaCostChart() {
                       const { objectiveId, objectiveDescription, cost } = payload[0].payload
                       return (
                         <div className="bg-white p-2 border rounded shadow">
-                          <p className="font-semibold">ID del Objetivo: {objectiveId}</p>
+                          <p className="font-semibold">Objetivo Estratégico No. {objectiveId}</p>
                           <p className="font-semibold mt-1">Descripción:</p>
                           <p>{objectiveDescription || "No hay descripción disponible."}</p>
                           <p className="mt-1">Costo: {formatCurrency(cost)}</p>

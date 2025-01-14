@@ -334,7 +334,7 @@ export default function PoaChart() {
                       const { objectiveId, objectiveDescription, events } = payload[0].payload
                       return (
                         <div className="bg-white p-2 border rounded shadow">
-                          <p className="font-semibold">ID del Objetivo: {objectiveId}</p>
+                          <p className="font-semibold">Objetivo Estratégico No. {objectiveId}</p>
                           <p className="font-semibold mt-1">Descripción:</p>
                           <p>{objectiveDescription || "No hay descripción disponible."}</p>
                           <p className="mt-1">Eventos: {events}</p>
