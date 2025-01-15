@@ -324,7 +324,7 @@ export function TablaPlanificacionComponent() {
         const fetchedFacultyId = dataUser.facultyId;
         setFacultyId(fetchedFacultyId);
 
-        const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getFullYear()-1;
 
         // Fetch POA
         setLoadingPoa(true);
