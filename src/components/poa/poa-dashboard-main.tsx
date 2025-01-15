@@ -184,7 +184,7 @@ export function PoaDashboardMain() {
   const getPoaByFacultyAndYear = async (facultyId: string) => {
     const currentYear = new Date().getFullYear();
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${facultyId}/${currentYear}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/${facultyId}/${currentYear-1}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
