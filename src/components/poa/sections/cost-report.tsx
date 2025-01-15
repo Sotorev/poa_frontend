@@ -376,10 +376,31 @@ export function CostReport({ name, isActive, poaId }: CostReportProps) {
             'Responsables': event.responsibles.map(responsible => responsible.name).join(', ')
           }));
     
-          const wsEventos = XLSX.utils.json_to_sheet(eventosData, { header: ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)', 'Indicador de logro'], skipHeader: false });
+          const wsEventos = XLSX.utils.json_to_sheet(eventosData, { 
+            header: [
+            'ID Evento', 
+            'Nombre del Evento',  
+            'Costo Total (GTQ)',
+            'Objetivo del Evento',
+            'Indicador de Logro',
+            'Naturaleza del Evento',
+            'Campus',
+            'Fecha de Inicio',
+            'Fecha de Fin',
+            'Responsables'], skipHeader: false });
     
           // Ajustar ancho de columnas
-          const eventosCols = calculateColumnWidths(eventosData, ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)',]);
+          const eventosCols = calculateColumnWidths(eventosData, [
+            'ID Evento', 
+            'Nombre del Evento',  
+            'Costo Total (GTQ)',
+            'Objetivo del Evento',
+            'Indicador de Logro',
+            'Naturaleza del Evento',
+            'Campus',
+            'Fecha de Inicio',
+            'Fecha de Fin',
+            'Responsables']);
           wsEventos['!cols'] = eventosCols;
     
           // Formatear celdas en la hoja de Eventos Aprobados
