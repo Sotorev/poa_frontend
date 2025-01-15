@@ -18,12 +18,43 @@ interface EventApproval {
   approvalStatusId: number
 }
 
+interface Campus {
+  campusId: number
+  name: string
+}
+
+interface EventDate {
+  eventDateId: number
+  eventId: number
+  startDate: string
+  endDate: string
+  isDeleted: boolean
+}
+
+interface Responsible {
+  eventResponsibleId: number
+  eventId: number
+  responsibleRole: string
+  isDeleted: boolean
+  name: string
+}
+
 interface Event {
   eventId: number
   name: string
+  type: string
+  objective: string
+  achievementIndicator: string
+  eventNature: string
   totalCost: number
+  campusId: number
   eventApprovals: EventApproval[]
+  dates: EventDate[]
+  responsibles: Responsible[]
+  campus: Campus
 }
+
+
 
 interface FinancingSource {
   name: string
@@ -334,13 +365,21 @@ export function CostReport({ name, isActive, poaId }: CostReportProps) {
            const eventosData = approvedEvents.map(event => ({
             'ID Evento': event.eventId,
             'Nombre del Evento': event.name,
+            'Tipo': event.type,
+            'Objetivo': event.objective,
+            'Indicador de logro': event.achievementIndicator,
+            'Naturaleza': event.eventNature,
             'Costo Total (GTQ)': event.totalCost,
+            'Campus': event.campus.name,
+            'Fecha de Inicio': event.dates.length > 0 ? event.dates[0].startDate : '',
+            'Fecha de Fin': event.dates.length > 0 ? event.dates[0].endDate : '',
+            'Responsables': event.responsibles.map(responsible => responsible.name).join(', ')
           }));
     
-          const wsEventos = XLSX.utils.json_to_sheet(eventosData, { header: ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)'], skipHeader: false });
+          const wsEventos = XLSX.utils.json_to_sheet(eventosData, { header: ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)', 'Indicador de logro'], skipHeader: false });
     
           // Ajustar ancho de columnas
-          const eventosCols = calculateColumnWidths(eventosData, ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)']);
+          const eventosCols = calculateColumnWidths(eventosData, ['ID Evento', 'Nombre del Evento', 'Costo Total (GTQ)',]);
           wsEventos['!cols'] = eventosCols;
     
           // Formatear celdas en la hoja de Eventos Aprobados
