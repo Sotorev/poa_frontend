@@ -52,3 +52,24 @@ export const getEventExecutedByPoa = async (
   );
   return response.json();
 };
+
+export const revertEventExecuted = async (eventId: number) => {
+  try {
+    const user = await currentUser();
+    const response = await fetch(
+      `${API_URL}/api/fullexecution/resetStatus/${eventId}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    throw error;
+  }
+};
