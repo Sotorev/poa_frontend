@@ -22,7 +22,7 @@ import { EventExecution, FormValues, RequestEventExecution, ResponseExecutedEven
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFacultyByUserId } from '@/services/faculty/currentFaculty'
-import { postEventExecuted, getEventExecutedByPoa } from '@/services/poa/eventExecuted'
+import { postEventExecuted, getEventExecutedByPoa, revertEventExecuted } from '@/services/poa/eventExecuted'
 import { PoaExecutedEventsTable } from '@/components/poa/ejecucion/poa-executed-events-table'
 
 /**
@@ -192,8 +192,7 @@ export default function PoaTrackingPage() {
   };
 
   const handleRestore = (eventId: number) => {
-    // TODO: Implement restore functionality
-    console.log("Restore event:", eventId);
+    revertEventExecuted(eventId);
   }
 
   return (
