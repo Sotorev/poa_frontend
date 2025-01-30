@@ -191,6 +191,11 @@ export default function PoaTrackingPage() {
     setIsDialogOpen(true);
   };
 
+  const handleRestore = (eventId: number) => {
+    // TODO: Implement restore functionality
+    console.log("Restore event:", eventId);
+  }
+
   return (
     <div className="container mx-auto py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
@@ -202,7 +207,8 @@ export default function PoaTrackingPage() {
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <PoaExecutedEventsTable executedEvents={executedEvents} onEdit={handleEdit} />
+        <PoaExecutedEventsTable executedEvents={executedEvents} onEdit={handleEdit} onRestore={handleRestore}/>
+
       </div>
 
       <PoaEventTrackingForm
