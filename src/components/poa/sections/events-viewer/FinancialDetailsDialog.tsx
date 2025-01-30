@@ -1,3 +1,5 @@
+// src/components/poa/sections/events-viewer/FinancialDetailsDialog.tsx
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { X } from 'lucide-react';
@@ -47,7 +49,7 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
       }
     };
     loadFinancing();
-  }, []);
+  }, [user]);
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(amount);
