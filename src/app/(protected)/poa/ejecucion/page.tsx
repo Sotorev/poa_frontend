@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
@@ -16,13 +16,14 @@ import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-track
 
 // Types
 import { ApiEvent } from '@/types/interfaces'
-import { EventExecution, FormValues, RequestEventExecution } from '@/types/eventExecution.type'
+import { EventExecution, FormValues, RequestEventExecution, ResponseExecutedEvent } from '@/types/eventExecution.type'
 
 // Imports for charge data
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFacultyByUserId } from '@/services/faculty/currentFaculty'
-import { eventExecuted } from '@/services/poa/eventExecuted'
+import { postEventExecuted, getEventExecutedByPoa } from '@/services/poa/eventExecuted'
+import { PoaExecutedEventsTable } from '@/components/poa/ejecucion/poa-executed-events-table'
 
 /**
  * @component PoaTrackingPage
@@ -55,9 +56,9 @@ import { eventExecuted } from '@/services/poa/eventExecuted'
  */
 export default function PoaTrackingPage() {
   const [events, setEvents] = useState<EventExecution[]>([]);
-  const [executedEvents, setExecutedEvents] = useState<EventExecution[]>([]);
+  const [executedEvents, setExecutedEvents] = useState<ResponseExecutedEvent[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<EventExecution>();
+  const [editingEvent, setEditingEvent] = useState<ResponseExecutedEvent>();
   const [facultyId, setFacultyId] = useState<any>();
   const [poa, setPoa] = useState<any>();
   const user = useCurrentUser();
@@ -91,12 +92,21 @@ export default function PoaTrackingPage() {
 
   /**
    * @description
-   * Carga los eventos desde la API al montar el componente.
-   * Los eventos se filtran por su statusId:
-   * - statusId 1: Eventos activos (pendientes de ejecución)
-   * - statusId 2: Eventos ejecutados
-   * Los resultados filtrados se almacenan en los estados 'events' y 'executedEvents' respectivamente.
-   * Los eventos se transforman al tipo EventExecution.
+   * Carga y gestiona los eventos desde la API cuando el componente se monta o cuando cambian user/poa.
+   * 
+   * Proceso:
+   * 1. Obtiene eventos completos usando getFullEvents
+   * 2. Transforma los eventos API al formato EventExecution
+   * 3. Filtra eventos por:
+   *    - Eventos activos (statusId: 1)
+   *    - Eventos aprobados (approvalStatusId: 1)
+   * 4. Si existe un POA, carga eventos ejecutados usando getEventExecutedByPoa
+   * 
+   * Estados actualizados:
+   * - events: Almacena eventos activos filtrados
+   * - executedEvents: Almacena eventos ya ejecutados
+   * 
+   * @dependencies user, poa
    */
   useEffect(() => {
     if (user === undefined || poa === undefined) return;
@@ -121,13 +131,15 @@ export default function PoaTrackingPage() {
         setEvents(mappedEvents.filter(event => 
           (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
         ));
-        setExecutedEvents(mappedEvents.filter(event => 
-          event.statusId === 2
-        ));
+        if (poa?.poaId) {
+          getEventExecutedByPoa(poa.poaId).then((executedEvents) => {
+            setExecutedEvents(executedEvents);
+          });
+        }
       });
   }, [user, poa]);
 
-  const handleEdit = (event: EventExecution) => {
+  const handleEdit = (event: ResponseExecutedEvent) => {
     setEditingEvent(event);
     setIsDialogOpen(true);
   };
@@ -168,7 +180,7 @@ export default function PoaTrackingPage() {
       ],
     }
 
-    eventExecuted(requestPayload, data.archivosGastos as File[])
+    postEventExecuted(requestPayload, data.archivosGastos as File[])
 
     setEditingEvent(undefined);
     setIsDialogOpen(false);
@@ -190,36 +202,7 @@ export default function PoaTrackingPage() {
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre del Evento</TableHead>
-              <TableHead>Fecha de Ejecución</TableHead>
-              <TableHead>Gastos Reales</TableHead>
-              <TableHead>Archivos</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {executedEvents?.map((event) => (
-              <TableRow key={event.eventId}>
-                <TableCell>{event.name}</TableCell>
-                {/* <TableCell>{format(event.executionDate, "PPP", { locale: es })}</TableCell>
-                <TableCell>Q{event.actualExpenses}</TableCell> */}
-                <TableCell>{event.costDetails?.length || 0} archivo(s)</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(event)}
-                  >
-                    Editar
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <PoaExecutedEventsTable executedEvents={executedEvents} onEdit={handleEdit} />
       </div>
 
       <PoaEventTrackingForm

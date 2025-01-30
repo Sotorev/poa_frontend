@@ -50,6 +50,40 @@ export interface RequestEventExecution {
   eventExecutionFinancings: eventExecutionFinancings[];
 }
 
+interface EventExecutionFile {
+  fileId: number;
+  fileName: string;
+  filePath: string;
+  uploadedAt: string;
+}
+
+interface ResponseEventExecutionDate {
+  eventExecutionDateId: number;
+  startDate: string;
+  endDate: string;
+  reasonForChange: string | null;
+  isDeleted: boolean;
+}
+
+interface ResponseEventExecutionFinancing {
+  eventExecutionFinancingId: number;
+  financingSourceId: number;
+  amount: number;
+  percentage: number;
+  reasonForChange: string | null;
+  isDeleted: boolean;
+}
+
+export interface ResponseExecutedEvent {
+  eventId: number;
+  name: string;
+  eventExecutionDates: ResponseEventExecutionDate[];
+  eventExecutionFinancings: ResponseEventExecutionFinancing[];
+  eventExecutionFiles: EventExecutionFile[];
+}
+
+
+
 export type Aporte = {
   tipo: string;
   monto: string;

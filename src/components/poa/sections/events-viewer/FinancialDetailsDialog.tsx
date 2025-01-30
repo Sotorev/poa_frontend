@@ -1,3 +1,5 @@
+// src/components/poa/sections/events-viewer/FinancialDetailsDialog.tsx
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { X } from 'lucide-react';
