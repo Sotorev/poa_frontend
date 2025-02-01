@@ -171,7 +171,7 @@ function EventDetails({ event }: { event: EventExecution }) {
                 <p className="font-medium">{event.campus.name}</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Responsable de ejecución</p>
@@ -191,7 +191,7 @@ function EventDetails({ event }: { event: EventExecution }) {
               <p className="text-sm text-muted-foreground">Fechas</p>
               <div className="grid gap-2">
                 {event.dates.map((date, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="flex items-center gap-2 p-2 rounded-md bg-secondary/50"
                   >
@@ -377,7 +377,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ eventId: 0, financingSourceId: 0, amount: 0, percentage: 0 })}
+            onClick={() => append({ eventId: 0, eventExecutionFinancingId: 0, financingSourceId: 0, amount: 0, percentage: 0 })}
             className="mt-2"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -602,7 +602,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               <FormField
                 key={field.id}
                 control={form.control}
-                name={`fechas.${index}.fecha`}
+                name={`fechas.${index}.startDate`}
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel className={cn(index !== 0 && "sr-only")}>
@@ -633,7 +633,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => appendFecha({ fecha: new Date().toISOString().split('T')[0] })}
+              onClick={() => appendFecha({ eventExecutionDateId: 0, startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0], reasonForChange: null, isDeleted: false })}
             >
               <Plus className="h-4 w-4 mr-2" />
               Agregar Fecha
@@ -672,10 +672,11 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
         />
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+
+          <form onSubmit={(e) => { e.preventDefault(); console.log("form", form.getValues()); form.handleSubmit(handleFormSubmit)(); }} className="space-y-6">
             {renderStepContent()}
 
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end </form>gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"

@@ -8,13 +8,13 @@ import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-track
 
 // Types
 import { ApiEvent } from '@/types/interfaces'
-import { EventExecution, FormValues, RequestEventExecution, ResponseExecutedEvent } from '@/types/eventExecution.type'
+import { EventExecution, FormValues, RequestEventExecution, UpdateEventExecutedPayload, ResponseExecutedEvent } from '@/types/eventExecution.type'
 
 // Imports for charge data
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFacultyByUserId } from '@/services/faculty/currentFaculty'
-import { postEventExecuted, getEventExecutedByPoa, revertEventExecuted } from '@/services/poa/eventExecuted'
+import { postEventExecuted, getEventExecutedByPoa, revertEventExecuted, updateEventExecuted } from '@/services/poa/eventExecuted'
 import { PoaExecutedEventsTable } from '@/components/poa/ejecucion/poa-executed-events-table'
 
 /**
@@ -113,14 +113,20 @@ export default function PoaTrackingPage() {
           responsibles: event.responsibles,
           totalCost: event.totalCost,
           dates: event.dates,
-          financings: event.financings,
+          financings: event.financings.map((f: any) => ({
+            eventExecutionFinancingId: f.eventFinancingId, // default value
+            eventId: f.eventId,
+            amount: f.amount,
+            percentage: f.percentage,
+            financingSourceId: f.financingSourceId,
+          })),
           costDetails: event.costDetails,
           statusId: event.statusId,
           eventApprovals: event.eventApprovals,
-          files: [] // Initialize as empty File array since ApiFiles can't be directly converted
+          files: []
         } as EventExecution));
 
-        setEvents(mappedEvents.filter(event => 
+        setEvents(mappedEvents.filter(event =>
           (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
         ));
         if (poa?.poaId) {
@@ -137,43 +143,64 @@ export default function PoaTrackingPage() {
   };
 
   const handleSubmit = (data: FormValues) => {
-    console.log(data);
-    const formattedData = {
-      id: data.eventId || (executedEvents.length + 1).toString(),
-      name: data.eventName,
-      executionResponsible: data.executionResponsible,
-      campus: data.campus,
-      aportesUmes: data.aportesUmes,
-      aportesOtros: data.aportesOtros,
-      archivosGastos: data.archivosGastos,
-      fechas: data.fechas
-    };
-
-    const requestPayload: RequestEventExecution = {
-      eventId: parseInt(data.eventId, 10),
-      eventExecutionDates: data.fechas.map(f => ({
+    console.log("data", data);
+    if (editingEvent) {
+      const updatePayload: UpdateEventExecutedPayload = {
         eventId: parseInt(data.eventId, 10),
-        startDate: f.fecha,
-        endDate: f.fecha,
-      })),
-      eventExecutionFinancings: [
-        ...data.aportesUmes.map((um) => ({
-          eventId: parseInt(data.eventId, 10),
-          amount: um.amount,
-          percentage: um.percentage,
-          financingSourceId: um.financingSourceId,
+        eventExecutionDates: data.fechas.map(f => ({
+          eventExecutionDateId: f.eventExecutionDateId,
+          startDate: f.startDate,
+          endDate: f.endDate,
+          reasonForChange: "", // default value or collect from form if needed
+          isDeleted: false,
         })),
-        ...data.aportesOtros.map((ot) => ({
+        eventExecutionFinancings: [
+          ...data.aportesUmes.map(um => ({
+            eventExecutionFinancingId: um.eventExecutionFinancingId,
+            financingSourceId: um.financingSourceId,
+            amount: um.amount,
+            percentage: um.percentage,
+            reasonForChange: "",
+            isDeleted: false,
+          })),
+          ...data.aportesOtros.map(ot => ({
+            eventExecutionFinancingId: ot.eventExecutionFinancingId, 
+            financingSourceId: ot.financingSourceId,
+            amount: ot.amount,
+            percentage: ot.percentage,
+            reasonForChange: "",
+            isDeleted: false,
+          })),
+        ],
+      };
+      updateEventExecuted(parseInt(data.eventId, 10), updatePayload, data.archivosGastos as File[]);
+    } else {
+      const requestPayload: RequestEventExecution = {
+        eventId: parseInt(data.eventId, 10),
+        eventExecutionDates: data.fechas.map(f => ({
           eventId: parseInt(data.eventId, 10),
-          amount: ot.amount,
-          percentage: ot.percentage,
-          financingSourceId: ot.financingSourceId,
+          startDate: f.startDate,
+          endDate: f.endDate,
         })),
-      ],
+        eventExecutionFinancings: [
+          ...data.aportesUmes.map(um => ({
+            eventExecutionFinancingId: um.eventExecutionFinancingId,
+            eventId: parseInt(data.eventId, 10),
+            amount: um.amount,
+            percentage: um.percentage,
+            financingSourceId: um.financingSourceId,
+          })),
+          ...data.aportesOtros.map(ot => ({
+            eventExecutionFinancingId: ot.eventExecutionFinancingId,
+            eventId: parseInt(data.eventId, 10),
+            amount: ot.amount,
+            percentage: ot.percentage,
+            financingSourceId: ot.financingSourceId,
+          })),
+        ],
+      };
+      postEventExecuted(requestPayload, data.archivosGastos as File[]);
     }
-
-    postEventExecuted(requestPayload, data.archivosGastos as File[])
-
     setEditingEvent(undefined);
     setIsDialogOpen(false);
   };
@@ -198,31 +225,31 @@ export default function PoaTrackingPage() {
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <PoaExecutedEventsTable executedEvents={executedEvents} onEdit={handleEdit} onRestore={handleRestore}/>
+        <PoaExecutedEventsTable executedEvents={executedEvents} onEdit={handleEdit} onRestore={handleRestore} />
 
       </div>
 
       <PoaEventTrackingForm
-      events={events}
-      onSubmit={handleSubmit}
-      initialData={editingEvent ? {
-        eventId: editingEvent.eventId.toString(),
-        eventName: editingEvent.name,
-        executionResponsible: editingEvent.eventResponsibles.find(r => r.responsibleRole === "Ejecución")?.name || "",
-        campus: editingEvent.campus || "",
-        aportesUmes: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 1).map(f => ({
-          ...f,
-          eventId: editingEvent.eventId
-        })) || [],
-        aportesOtros: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 2).map(f => ({
-          ...f,
-          eventId: editingEvent.eventId
-        })) || [],
-        archivosGastos: editingEvent.eventExecutionFiles?.map(f => new File([], f.fileName)) || [],
-        fechas: editingEvent.eventExecutionDates?.map(d => ({ fecha: d.startDate })) || [{ fecha: "" }]
-      } : undefined}
-      open={isDialogOpen}
-      onOpenChange={setIsDialogOpen}
+        events={events}
+        onSubmit={handleSubmit}
+        initialData={editingEvent ? {
+          eventId: editingEvent.eventId.toString(),
+          eventName: editingEvent.name,
+          executionResponsible: editingEvent.eventResponsibles.find(r => r.responsibleRole === "Ejecución")?.name || "",
+          campus: editingEvent.campus || "",
+          aportesUmes: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 1).map(f => ({
+            ...f,
+            eventId: editingEvent.eventId
+          })) || [],
+          aportesOtros: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 2).map(f => ({
+            ...f,
+            eventId: editingEvent.eventId
+          })) || [],
+          archivosGastos: editingEvent.eventExecutionFiles?.map(f => new File([], f.fileName)) || [],
+          fechas: editingEvent.eventExecutionDates || []
+        } : undefined}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
       />
     </div>
   )
