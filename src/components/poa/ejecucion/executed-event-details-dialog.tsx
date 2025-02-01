@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import type { ResponseExecutedEvent } from "@/types/eventExecution.type"
 import { getFinancingSources } from "@/services/apiService"
 import { useCurrentUser } from "@/hooks/use-current-user"
-import DownloadButton from "../sections/events-viewer/DownloadButton"
+import DownloadExecutedEventButton from "./DownloadExecutedEventButton"
 
 interface ExecutedEventDetailsDialogProps {
   isOpen: boolean
@@ -137,12 +137,10 @@ const ExecutedEventDetailsDialog: React.FC<ExecutedEventDetailsDialogProps> = ({
                       {event.eventExecutionFiles?.map((file) => (
                         <div key={file.fileId}>
                           <h4 className="text-md font-medium mb-1">{file.fileName}</h4>
-                          {/* 
-                          COMENTADO TEMPORALMENTE PQ  NO EXISTE EL ENDPOINT
-                          <DownloadButton
+                          <DownloadExecutedEventButton
                             name={file.fileName}
-                            path={`downloadEventCostDetailDocumentById/${file.fileId}`}
-                          /> */}
+                            path={`/files/${file.fileId}/download`}
+                          />
                         </div>
                       ))}
                     </div>
