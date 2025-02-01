@@ -182,8 +182,8 @@ export function usePoaEventTrackingFormLogic(
   // Cálculo de costo total
   useEffect(() => {
     const total = [...aportesUmes, ...aportesOtros].reduce((sum, aporte) => {
-      const monto = aporte.amount || 0;
-      return sum + monto;
+      const monto = parseFloat(aporte.amount?.toString() || "0");
+      return sum + (isNaN(monto) ? 0 : monto);
     }, 0);
     setCostoTotal(total);
   }, [aportesUmes, aportesOtros]);

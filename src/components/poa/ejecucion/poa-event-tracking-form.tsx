@@ -471,7 +471,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               <CardTitle className="text-lg font-semibold">Costo Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-primary">Q{costoTotal.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-primary">Q{Number(costoTotal).toFixed(2)}</p>
             </CardContent>
           </Card>
           <Card>
