@@ -74,15 +74,23 @@ interface ResponseEventExecutionFinancing {
   isDeleted: boolean;
 }
 
+interface EventResponsible {
+  eventResponsibleId: number;
+  responsibleRole: string;
+  name: string;
+}
+
 export interface ResponseExecutedEvent {
   eventId: number;
   name: string;
+  objective: string;
+  campus: string;
+  totalCost: number;
   eventExecutionDates: ResponseEventExecutionDate[];
   eventExecutionFinancings: ResponseEventExecutionFinancing[];
   eventExecutionFiles: EventExecutionFile[];
+  eventResponsibles: EventResponsible[];
 }
-
-
 
 export type Aporte = {
   tipo: string;
