@@ -203,20 +203,26 @@ export default function PoaTrackingPage() {
       </div>
 
       <PoaEventTrackingForm
-        events={events}
-        onSubmit={handleSubmit}
-        initialData={editingEvent ? {
-          eventId: `${editingEvent.eventId}`,
-          eventName: editingEvent.name,
-          executionResponsible: "",
-          campus: "",
-          aportesUmes: [{ eventId: editingEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }],
-          aportesOtros: [{ eventId: editingEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }],
-          archivosGastos: [],
-          fechas: [{ fecha: "" }]
-        } : undefined}
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+      events={events}
+      onSubmit={handleSubmit}
+      initialData={editingEvent ? {
+        eventId: editingEvent.eventId.toString(),
+        eventName: editingEvent.name,
+        executionResponsible: editingEvent.eventResponsibles.find(r => r.responsibleRole === "Ejecución")?.name || "",
+        campus: editingEvent.campus || "",
+        aportesUmes: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 1).map(f => ({
+          ...f,
+          eventId: editingEvent.eventId
+        })) || [],
+        aportesOtros: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 2).map(f => ({
+          ...f,
+          eventId: editingEvent.eventId
+        })) || [],
+        archivosGastos: editingEvent.eventExecutionFiles?.map(f => new File([], f.fileName)) || [],
+        fechas: editingEvent.eventExecutionDates?.map(d => ({ fecha: d.startDate })) || [{ fecha: "" }]
+      } : undefined}
+      open={isDialogOpen}
+      onOpenChange={setIsDialogOpen}
       />
     </div>
   )
