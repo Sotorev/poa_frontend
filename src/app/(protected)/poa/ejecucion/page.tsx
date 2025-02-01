@@ -4,14 +4,6 @@ import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-tracking-form"
 
 // Types
