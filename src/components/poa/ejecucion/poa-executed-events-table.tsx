@@ -43,11 +43,11 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
           </TableRow>
         </TableHeader>
         <TableBody>
-          {executedEvents?.map((executedEvent) => (
-            <TableRow key={executedEvent.eventId}>
-              <TableCell className="font-medium text-gray-900">{executedEvent.name}</TableCell>
-              <TableCell>
-                <div className="space-y-2">
+            {Array.isArray(executedEvents) ? executedEvents.map((executedEvent) => (
+              <TableRow key={executedEvent.eventId}>
+                <TableCell className="font-medium text-gray-900">{executedEvent.name}</TableCell>
+                <TableCell>
+                  <div className="space-y-2">
                   {executedEvent.eventExecutionDates.map((date) => (
                     <div key={date.eventExecutionDateId} className="text-sm text-gray-600 font-medium">
                       {formatDate(date.startDate)}
@@ -108,7 +108,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                 </TooltipProvider>
               </TableCell>
             </TableRow>
-          ))}
+            )) : null}
         </TableBody>
       </Table>
 

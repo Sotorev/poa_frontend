@@ -129,12 +129,13 @@ export default function PoaTrackingPage() {
         setEvents(mappedEvents.filter(event =>
           (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
         ));
-        if (poa?.poaId) {
-          getEventExecutedByPoa(poa.poaId).then((executedEvents) => {
-            setExecutedEvents(executedEvents);
-          });
-        }
       });
+
+    if (poa?.poaId) {
+      getEventExecutedByPoa(poa.poaId).then((executedEvents) => {
+        setExecutedEvents(executedEvents);
+      });
+    }
   }, [user, poa]);
 
   const handleEdit = (event: ResponseExecutedEvent) => {
@@ -164,7 +165,7 @@ export default function PoaTrackingPage() {
             isDeleted: false,
           })),
           ...data.aportesOtros.map(ot => ({
-            eventExecutionFinancingId: ot.eventExecutionFinancingId, 
+            eventExecutionFinancingId: ot.eventExecutionFinancingId,
             financingSourceId: ot.financingSourceId,
             amount: ot.amount,
             percentage: ot.percentage,
@@ -173,7 +174,13 @@ export default function PoaTrackingPage() {
           })),
         ],
       };
-      updateEventExecuted(parseInt(data.eventId, 10), updatePayload, data.archivosGastos as File[]);
+      updateEventExecuted(parseInt(data.eventId, 10), updatePayload, data.archivosGastos as File[])
+        .then(() => {
+          if (!poa) return
+          getEventExecutedByPoa(poa.poaId).then((updatedExecutedEvents) => {
+            setExecutedEvents(updatedExecutedEvents)
+          })
+        })
     } else {
       const requestPayload: RequestEventExecution = {
         eventId: parseInt(data.eventId, 10),
@@ -199,7 +206,43 @@ export default function PoaTrackingPage() {
           })),
         ],
       };
-      postEventExecuted(requestPayload, data.archivosGastos as File[]);
+      postEventExecuted(requestPayload, data.archivosGastos as File[])
+        .then(() => {
+          if (!poa) return
+          getEventExecutedByPoa(poa.poaId).then((updatedExecutedEvents) => {
+            setExecutedEvents(updatedExecutedEvents)
+          })
+
+          if (!user) return
+          getFullEvents(user.token, poa.poaId)
+            .then((events: ApiEvent[]) => {
+              const mappedEvents = events.map(event => ({
+                eventId: event.eventId,
+                name: event.name,
+                objective: event.objective,
+                campus: event.campus,
+                responsibles: event.responsibles,
+                totalCost: event.totalCost,
+                dates: event.dates,
+                financings: event.financings.map((f: any) => ({
+                  eventExecutionFinancingId: f.eventFinancingId, // default value
+                  eventId: f.eventId,
+                  amount: f.amount,
+                  percentage: f.percentage,
+                  financingSourceId: f.financingSourceId,
+                })),
+                costDetails: event.costDetails,
+                statusId: event.statusId,
+                eventApprovals: event.eventApprovals,
+                files: []
+              } as EventExecution));
+
+              setEvents(mappedEvents.filter(event =>
+                (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+              ));
+            });
+
+        })
     }
     setEditingEvent(undefined);
     setIsDialogOpen(false);
@@ -211,7 +254,42 @@ export default function PoaTrackingPage() {
   };
 
   const handleRestore = (eventId: number) => {
-    revertEventExecuted(eventId);
+    revertEventExecuted(eventId)
+      .then(() => {
+        if (!poa) return
+        getEventExecutedByPoa(poa.poaId).then((updatedExecutedEvents) => {
+          setExecutedEvents(updatedExecutedEvents)
+        })
+
+        if (!user) return
+        getFullEvents(user.token, poa.poaId)
+          .then((events: ApiEvent[]) => {
+            const mappedEvents = events.map(event => ({
+              eventId: event.eventId,
+              name: event.name,
+              objective: event.objective,
+              campus: event.campus,
+              responsibles: event.responsibles,
+              totalCost: event.totalCost,
+              dates: event.dates,
+              financings: event.financings.map((f: any) => ({
+                eventExecutionFinancingId: f.eventFinancingId, // default value
+                eventId: f.eventId,
+                amount: f.amount,
+                percentage: f.percentage,
+                financingSourceId: f.financingSourceId,
+              })),
+              costDetails: event.costDetails,
+              statusId: event.statusId,
+              eventApprovals: event.eventApprovals,
+              files: []
+            } as EventExecution));
+
+            setEvents(mappedEvents.filter(event =>
+              (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+            ));
+          });
+      })
   }
 
   return (
@@ -237,11 +315,11 @@ export default function PoaTrackingPage() {
           eventName: editingEvent.name,
           executionResponsible: editingEvent.eventResponsibles.find(r => r.responsibleRole === "Ejecución")?.name || "",
           campus: editingEvent.campus || "",
-          aportesUmes: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 1).map(f => ({
+          aportesUmes: editingEvent.eventExecutionFinancings?.filter(f => [1, 4, 5, 7].includes(f.financingSourceId)).map(f => ({
             ...f,
             eventId: editingEvent.eventId
           })) || [],
-          aportesOtros: editingEvent.eventExecutionFinancings?.filter(f => f.financingSourceId === 2).map(f => ({
+          aportesOtros: editingEvent.eventExecutionFinancings?.filter(f => [2, 3, 6].includes(f.financingSourceId)).map(f => ({
             ...f,
             eventId: editingEvent.eventId
           })) || [],
