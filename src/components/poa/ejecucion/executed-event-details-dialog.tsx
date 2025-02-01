@@ -127,6 +127,14 @@ const ExecutedEventDetailsDialog: React.FC<ExecutedEventDetailsDialogProps> = ({
                 ))}
               </CardContent>
             </Card>
+            <Card className="bg-primary/10">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">Costo Total</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-primary">Q{Number(event.totalCost).toFixed(2)}</p>
+              </CardContent>
+            </Card>
 
             <Card className="border">
               <CardContent className="pt-4">
