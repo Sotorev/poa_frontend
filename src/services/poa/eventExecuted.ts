@@ -1,5 +1,5 @@
 import { currentUser } from "@/lib/auth";
-import { ResponseExecutedEvent } from "@/types/eventExecution.type";
+import { ResponseExecutedEvent, UpdateEventExecutedPayload } from "@/types/eventExecution.type";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -72,4 +72,23 @@ export const revertEventExecuted = async (eventId: number) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const updateEventExecuted = async (eventId: number, eventExecuted: UpdateEventExecutedPayload, files: File[]) => {
+  const user = await currentUser();
+  const formData = new FormData();
+  formData.append("data", JSON.stringify(eventExecuted));
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await fetch(`${API_URL}/api/fullexecution/${eventId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${user?.token}`,
+    },
+    body: formData,
+  });
+
+  return response.json();
 };

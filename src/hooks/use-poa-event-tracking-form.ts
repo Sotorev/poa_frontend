@@ -60,7 +60,13 @@ export function usePoaEventTrackingFormLogic(
       aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
-      fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
+      fechas: [{
+        eventExecutionDateId: 0,
+        startDate: new Date().toISOString().split("T")[0],
+        endDate: new Date().toISOString().split("T")[0],
+        reasonForChange: null,
+        isDeleted: false,
+      }],
     },
     mode: "onChange",
   });
@@ -111,15 +117,16 @@ export function usePoaEventTrackingFormLogic(
         const mapped = selectedEvent.financings
           ?.filter((item) => ids.includes(item.financingSourceId))
           .map((item) => ({
+            eventExecutionFinancingId: item.eventExecutionFinancingId,
             eventId: selectedEvent.eventId,
             amount: Number(item.amount),
             percentage: item.percentage,
             financingSourceId: item.financingSourceId
-          })) || [{ eventId: selectedEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }];
+          })) || [{ eventExecutionFinancingId: 0, eventId: selectedEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }];
 
         form.setValue(
           field,
-          mapped.length > 0 ? mapped : [{ eventId: selectedEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }]
+          mapped.length > 0 ? mapped : [{ eventExecutionFinancingId: 0, eventId: selectedEvent.eventId, amount: 0, percentage: 0, financingSourceId: 0 }]
         );
       };
 
@@ -146,15 +153,25 @@ export function usePoaEventTrackingFormLogic(
   }, [currentStep, selectedEvent, form, user?.token]);
 
   useEffect(() => {
-    if (currentStep === 3 && selectedEvent) {
-
-      const defaultDate = { fecha: "" };
-      const eventDates = selectedEvent.dates.map(date => ({
-        fecha: date.startDate.split('T')[0]
-      }));
-      form.setValue('fechas', eventDates.length > 0 ? [eventDates[0], ...eventDates.slice(1)] : [defaultDate]);
-    }
-  }, [currentStep, selectedEvent, form]);
+      if (currentStep === 3 && selectedEvent) {
+  
+        const defaultDate = {
+          eventExecutionDateId: 0,
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0],
+          reasonForChange: null,
+          isDeleted: false,
+        };
+        const eventDates = selectedEvent.dates.map(date => ({
+          eventExecutionDateId: initialData?.fechas.find((f) => f.startDate === date.startDate && f.endDate === date.endDate)?.eventExecutionDateId || 0,
+          startDate: date.startDate.split('T')[0],
+          endDate: date.endDate.split('T')[0],
+          reasonForChange: "",
+          isDeleted: false,
+        }));
+        form.setValue('fechas', eventDates.length > 0 ? [eventDates[0], ...eventDates.slice(1)] : [defaultDate]);
+      }
+    }, [currentStep, selectedEvent, form, initialData?.fechas]);
 
   // Carga de tipos de fuentes de financiamiento
   useEffect(() => {
@@ -198,7 +215,13 @@ export function usePoaEventTrackingFormLogic(
       aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
-      fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
+      fechas: [{
+        eventExecutionDateId: 0,
+        startDate: new Date().toISOString().split("T")[0],
+        endDate: new Date().toISOString().split("T")[0],
+        reasonForChange: null,
+        isDeleted: false,
+      }],
     });
     setSelectedEvent(null);
     setQuery("");
@@ -265,9 +288,12 @@ export function usePoaEventTrackingFormLogic(
         ];
         break;
       case 3:
-        const fechasFieldsPaths: Array<FormFieldPaths> = form
+        const fechasFieldsPaths = form
           .getValues("fechas")
-          .map((_, i) => `fechas.${i}.fecha` as FormFieldPaths);
+          .flatMap((_, i) => [
+            `fechas.${i}.startDate`,
+            `fechas.${i}.endDate`,
+          ] as FormFieldPaths[]);
         fieldsToValidate = ["fechas", ...fechasFieldsPaths];
         break;
       default:
@@ -373,6 +399,8 @@ export function usePoaEventTrackingFormLogic(
     }
 
     onSubmit(values);
+
+
     form.reset({
       eventId: "",
       eventName: "",
@@ -381,7 +409,13 @@ export function usePoaEventTrackingFormLogic(
       aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
-      fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
+      fechas: [{
+        eventExecutionDateId: 0,
+        startDate: new Date().toISOString().split("T")[0],
+        endDate: new Date().toISOString().split("T")[0],
+        reasonForChange: null,
+        isDeleted: false,
+      }],
     });
     setSelectedEvent(null);
     setQuery("");
@@ -443,7 +477,13 @@ export function usePoaEventTrackingFormLogic(
         aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
         aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
         archivosGastos: [],
-        fechas: [{ fecha: new Date().toISOString().split("T")[0] }],
+        fechas: [{
+          eventExecutionDateId: 0,
+          startDate: new Date().toISOString().split("T")[0],
+          endDate: new Date().toISOString().split("T")[0],
+          reasonForChange: null,
+          isDeleted: false,
+        }],
       });
       setSelectedEvent(null);
       setQuery("");

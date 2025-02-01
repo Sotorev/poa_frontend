@@ -10,7 +10,7 @@ export interface FormValues {
   aportesUmes: eventExecutionFinancings[];
   aportesOtros: eventExecutionFinancings[];
   archivosGastos: File[];
-  fechas: { fecha: string }[];
+  fechas: ResponseEventExecutionDate[];
 }
 
 export interface EventExecution {
@@ -34,6 +34,7 @@ export interface FinancingSource {
 }
 
 export interface eventExecutionFinancings {
+  eventExecutionFinancingId: number;
   eventId: number;
   amount: number;
   percentage: number;
@@ -107,7 +108,8 @@ export type FormFieldPaths =
   | "aportesOtros"
   | "archivosGastos"
   | "fechas"
-  | `fechas.${number}.fecha`
+  | `fechas.${number}.startDate`
+  | `fechas.${number}.endDate`
   | `aportesUmes.${number}.eventId`
   | `aportesUmes.${number}.amount`
   | `aportesUmes.${number}.percentage`
@@ -116,3 +118,22 @@ export type FormFieldPaths =
   | `aportesOtros.${number}.amount`
   | `aportesOtros.${number}.percentage`
   | `aportesOtros.${number}.financingSourceId`;
+
+export interface UpdateEventExecutedPayload {
+  eventId: number;
+  eventExecutionDates: {
+    eventExecutionDateId: number;
+    startDate: string;
+    endDate: string;
+    reasonForChange: string;
+    isDeleted: boolean;
+  }[];
+  eventExecutionFinancings: {
+    eventExecutionFinancingId: number;
+    financingSourceId: number;
+    amount: number;
+    percentage: number;
+    reasonForChange: string;
+    isDeleted: boolean;
+  }[];
+}
