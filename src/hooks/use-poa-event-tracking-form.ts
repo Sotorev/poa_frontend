@@ -52,22 +52,6 @@ export function usePoaEventTrackingFormLogic(
   // Configuración del formulario
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      eventId: "",
-      eventName: "",
-      executionResponsible: "",
-      campus: "",
-      aportesUmes: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
-      aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
-      archivosGastos: [],
-      fechas: [{
-        eventExecutionDateId: 0,
-        startDate: new Date().toISOString().split("T")[0],
-        endDate: new Date().toISOString().split("T")[0],
-        reasonForChange: null,
-        isDeleted: false,
-      }],
-    },
     mode: "onChange",
   });
 
@@ -198,6 +182,7 @@ export function usePoaEventTrackingFormLogic(
 
   // Cálculo de costo total
   useEffect(() => {
+    if(!aportesUmes || !aportesOtros) return;
     const total = [...aportesUmes, ...aportesOtros].reduce((sum, aporte) => {
       const monto = parseFloat(aporte.amount?.toString() || "0");
       return sum + (isNaN(monto) ? 0 : monto);
@@ -303,30 +288,6 @@ export function usePoaEventTrackingFormLogic(
     if (fieldsToValidate.length === 0) return true;
 
     const stepIsValid = await form.trigger(fieldsToValidate);
-
-    if (currentStep === 2) {
-      // Validación adicional para los aportes
-      const aportesUmesValid = aportesUmes.every((aporte) => {
-        const isNoAplica =
-          financingSources
-            .find(
-              (source) => source.financingSourceId === aporte.financingSourceId
-            )
-            ?.name.toLowerCase() === "no aplica";
-        return isNoAplica || aporte.amount > 0;
-      });
-      const aportesOtrosValid = aportesOtros.every((aporte) => {
-        const isNoAplica =
-          financingSources
-            .find(
-              (source) => source.financingSourceId === aporte.financingSourceId
-            )
-            ?.name.toLowerCase() === "no aplica";
-        return isNoAplica || aporte.amount > 0;
-      });
-
-      return stepIsValid && aportesUmesValid && aportesOtrosValid;
-    }
 
     return stepIsValid;
   };

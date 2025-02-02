@@ -289,10 +289,11 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     fields: { id: string }[],
     name: "aportesUmes" | "aportesOtros",
     append: (value: eventExecutionFinancings) => void,
-    remove: (index: number) => void
+    remove: (index: number) => void,
+    error: string
   ) => {
     return (
-      <Card className="w-full">
+      <Card className={cn(error && "border border-destructive")}>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
             {name === "aportesUmes" ? "Detalles de Aporte UMES" : "Detalles de Aporte Otros"}
@@ -373,6 +374,11 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               </Button>
             </div>
           ))}
+          {error && (
+            <p className="mt-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -464,8 +470,8 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
       {currentStep === 2 && (
         <div className="space-y-6">
           <h3 className="text-lg font-semibold">Gestión de Gastos</h3>
-          {renderAporteFields(aportesUmesFields, "aportesUmes", appendAporteUmes, removeAporteUmes)}
-          {renderAporteFields(aportesOtrosFields, "aportesOtros", appendAporteOtros, removeAporteOtros)}
+          {renderAporteFields(aportesUmesFields, "aportesUmes", appendAporteUmes, removeAporteUmes, errors.aportesUmes?.message || "")}
+          {renderAporteFields(aportesOtrosFields, "aportesOtros", appendAporteOtros, removeAporteOtros, errors.aportesOtros?.message || "")}
           <Card className="bg-primary/10">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Costo Total</CardTitle>
@@ -593,7 +599,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
         </div>
       )}
       {currentStep === 3 && (
-        <Card>
+        <Card className={cn(errors.fechas && "border border-destructive")}>
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Fechas de Ejecución</CardTitle>
           </CardHeader>
@@ -629,6 +635,11 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 )}
               />
             ))}
+            {errors.fechas && (
+              <p className="mt-2 text-sm text-destructive">
+                {errors.fechas.message}
+              </p>
+            )}
             <Button
               type="button"
               variant="outline"
