@@ -11,9 +11,11 @@ import { deleteEvent } from '@/services/apiService';
 
 
 
+
 // Modificar SectionProps para incluir onEditEvent
 interface SectionProps extends OriginalSectionProps {
     onEditEvent: (event: PlanningEvent) => void;
+
 }
 
 // Función para mapear datos de la API a PlanningEvent
@@ -102,7 +104,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 }
 
-const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, facultyId, isEditable, userId, onEditEvent }) => {
+const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, onEditEvent }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [eventsByStatus, setEventsByStatus] = useState<{
         revision: PlanningEvent[];

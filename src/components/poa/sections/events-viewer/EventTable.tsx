@@ -1,10 +1,17 @@
 // src/components/poa/sections/events-viewer/EventTable.tsx
 
-import React from 'react';
+import React, { use, useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CommentThread } from '../../eventManagement/fields/comment-thread';
 import EventRow from './EventRow';
+
+// Types
+import { FinancingSource } from '@/types/FinancingSource'; // Nueva importación
 import { PlanningEvent } from '@/types/interfaces';
+
+// Charge Data
+import { getFinancingSources } from '@/services/apiService';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 interface EventTableProps {
   events: PlanningEvent[];
@@ -33,9 +40,21 @@ const EventTable: React.FC<EventTableProps> = ({
   showComments = true,
   showActions = true
 }) => {
-  const [showCommentThread, setShowCommentThread] = React.useState(false);
-  const [currentEntityId, setCurrentEntityId] = React.useState<number | null>(null);
-  const [currentEntityName, setCurrentEntityName] = React.useState<string>("");
+  const [showCommentThread, setShowCommentThread] = useState(false);
+  const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
+  const [currentEntityName, setCurrentEntityName] = useState<string>("");
+  const [user] = useState(useCurrentUser());
+  const [otherFinancing, setOtherFinancing] = useState<FinancingSource[]>(); 
+  const [umesFinancing, setUmesFinancing] = useState<FinancingSource[]>();
+
+  useEffect(() => {
+    if (user) {
+      getFinancingSources(user?.token).then(sources => {
+      setUmesFinancing(sources.filter(source => source.category === 'UMES'));
+      setOtherFinancing(sources.filter(source => source.category !== 'Otra'));
+      });
+    }
+  }, [user]);
 
   return (
     <div className="overflow-x-auto">
@@ -75,6 +94,8 @@ const EventTable: React.FC<EventTableProps> = ({
           <>
             {events.map(event => (
               <EventRow
+                otherFinancing={otherFinancing || []} 
+                umesFinancing={umesFinancing || []}
                 key={event.id}
                 event={event}
                 isPending={isPending}

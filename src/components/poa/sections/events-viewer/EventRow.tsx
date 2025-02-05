@@ -4,18 +4,22 @@ import React, { useState } from 'react';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X } from 'lucide-react';
 import ActionButtons from './ActionButtons';
 import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections'; // Importar el nuevo componente
 import AportesPEIDialog from './AportesPEIDialog';
 import FinancialDetailsDialog from './FinancialDetailsDialog';
 import ProponentDetailsDialog from './ProponentDetailsDialog';
-import { PlanningEvent } from '@/types/interfaces';
+
 import { toast } from 'react-toastify';
 import DownloadButton from './DownloadButton';
 
+import { PlanningEvent } from '@/types/interfaces';
+import { FinancingSource } from '@/types/FinancingSource';
+
 interface EventRowProps {
   event: PlanningEvent;
+  otherFinancing: FinancingSource[]; 
+  umesFinancing: FinancingSource[];
   isPending: boolean;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
@@ -33,6 +37,8 @@ interface EventRowProps {
 
 const EventRow: React.FC<EventRowProps> = ({
   event,
+  otherFinancing,
+  umesFinancing,
   isPending,
   onApprove,
   onReject,
@@ -149,6 +155,8 @@ const EventRow: React.FC<EventRowProps> = ({
           isOpen={isFinancialDetailsOpen}
           onClose={() => setIsFinancialDetailsOpen(false)}
           event={event}
+          otherFinancing={otherFinancing}
+          umesFinancing={umesFinancing}
         />
       </TableCell>
       <TableCell className="whitespace-normal break-words">

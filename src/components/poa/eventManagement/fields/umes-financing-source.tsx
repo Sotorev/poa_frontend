@@ -1,7 +1,7 @@
 // /src/components/poa/components/columns/umes-financing-source.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -19,7 +19,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FinancingSource } from '@/types/FinancingSource';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import { getFinancingSources } from '@/services/apiService';
 
 const umesFinancingSchema = z.object({
   financingSourceId: z.number({
@@ -53,13 +52,16 @@ interface umesFinancingProps {
   contributions: UMESContribution[];
   onChangeContributions: (aportes: UMESContribution[]) => void;
   totalCost: number;
+  financingSources: FinancingSource[]; // Nueva prop
 }
 
-export function UMESFinancingComponent({ contributions, onChangeContributions, totalCost }: umesFinancingProps) {
+export function UMESFinancingComponent({
+  contributions,
+  onChangeContributions,
+  totalCost,
+  financingSources, // Usamos la nueva prop
+}: umesFinancingProps) {
   const [isAdding, setIsAdding] = useState(false);
-  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const user = useCurrentUser();
 
   const {
@@ -77,25 +79,10 @@ export function UMESFinancingComponent({ contributions, onChangeContributions, t
     },
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const data = await getFinancingSources(user?.token || '');
-        const filteredData = data.filter(
-          (source) => source.category === 'UMES' && !source.isDeleted
-        );
-        setFinancingSources(filteredData);
-      } catch (err) {
-        console.error(err);
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user?.token]);
+  // Filtra aquí las fuentes UMES
+  const filteredSources = financingSources.filter(
+    (source) => source.category === 'UMES' && !source.isDeleted
+  );
 
   const onSubmit = (data: UmesContributionForm) => {
     try {
@@ -123,9 +110,6 @@ export function UMESFinancingComponent({ contributions, onChangeContributions, t
     onChangeContributions(newAportes);
   };
 
-  if (loading) return <div className="text-green-600">Cargando fuentes de financiamiento...</div>;
-  if (error) return <div className="text-red-500">Error: {error}</div>;
-
   return (
     <div className="space-y-4">
       {!isAdding && (
@@ -143,7 +127,7 @@ export function UMESFinancingComponent({ contributions, onChangeContributions, t
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {financingSources.map((source) => (
+                  {filteredSources.map((source) => (
                     <SelectItem key={source.financingSourceId} value={source.financingSourceId.toString()}>
                       {source.name}
                     </SelectItem>
@@ -178,7 +162,7 @@ export function UMESFinancingComponent({ contributions, onChangeContributions, t
 
       <div className="space-y-2">
         {contributions.map((contribution, index) => {
-          const source = financingSources.find(source => source.financingSourceId === contribution.financingSourceId)?.name || contribution.financingSourceId;
+          const source = filteredSources.find(source => source.financingSourceId === contribution.financingSourceId)?.name || contribution.financingSourceId;
           return (
             <div key={index} className="flex items-center justify-between bg-green-100 p-2 rounded-md">
               <span className="text-green-800">

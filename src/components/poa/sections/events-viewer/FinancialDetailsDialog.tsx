@@ -3,51 +3,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { X } from 'lucide-react';
 import DownloadButton from './DownloadButton';
 import { PlanningEvent } from '@/types/interfaces';
-import { getFinancingSources } from '@/services/apiService';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FinancingSource } from '@/types/FinancingSource';
 
 interface FinancialDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   event: PlanningEvent;
+  otherFinancing: FinancingSource[]; 
+  umesFinancing: FinancingSource[];
 }
 
-const fetchFinancing = async (user: any) => {
-  try {
-    const financing = await getFinancingSources(user?.token || '');
-
-    const otherFinancing = financing.filter(
-      (source) => source.category === 'Otra' && !source.isDeleted
-    );
-
-
-    const umesFinancing = financing.filter(
-      (source) => source.category === 'UMES' && !source.isDeleted
-    );
-
-    return { otherFinancing, umesFinancing };
-
-  } catch (err) {
-    console.error(err);
-    return { otherFinancing: [], umesFinancing: [] };
-  }
-};
-
-const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen, onClose, event }) => {
-  const [financing, setFinancing] = React.useState<{ otherFinancing: any[]; umesFinancing: any[]; }>({ otherFinancing: [], umesFinancing: [] });
+const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen, onClose, event, otherFinancing, umesFinancing }) => {
   const user = useCurrentUser();
-
-  React.useEffect(() => {
-    const loadFinancing = async () => {
-      const result = await fetchFinancing(user);
-      if (result) {
-        setFinancing(result);
-      }
-    };
-    loadFinancing();
-  }, []);
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(amount);
@@ -85,7 +55,7 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
                     className="flex items-center justify-between rounded-md bg-muted/60 p-2 text-sm transition-colors hover:bg-muted"
                   >
                     <span className="font-medium text-muted-foreground">
-                      {financing.umesFinancing
+                      {umesFinancing
                         .filter((financingSource) => financingSource.financingSourceId === aporte.financingSourceId)
                         .map((source) => source.name)}
                     </span>
@@ -111,7 +81,7 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
                     className="flex items-center justify-between rounded-md bg-muted/60 p-2 text-sm transition-colors hover:bg-muted"
                   >
                     <span className="font-medium text-muted-foreground">
-                      {financing.otherFinancing
+                      {otherFinancing
                         .filter((financingSource) => financingSource.financingSourceId === aporte.financingSourceId)
                         .map((source) => source.name)}
                     </span>

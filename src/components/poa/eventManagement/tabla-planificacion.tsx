@@ -32,16 +32,18 @@ import { ObjetivoComponent } from './fields/objetivo';
 import { ObjetivosEstrategicosSelectorComponent } from './fields/objetivos-estrategicos-selector';
 import { OdsSelector } from './fields/ods-selector';
 import { OtherFinancingSourceComponent } from './fields/other-financing-source';
+import { UMESFinancingComponent } from './fields/umes-financing-source';
 import { RecursosSelectorComponent } from './fields/recursos-selector';
 import { ResponsablesComponent } from './fields/responsables';
 import TipoDeCompraComponent from './fields/tipo-de-compra';
-import { UMESFinancingComponent } from './fields/umes-financing-source';
+
 
 import { useCurrentUser } from '@/hooks/use-current-user';
 import EventsCorrectionsComponent from '../sections/events-viewer/EventsCorrectionsComponent';
 import { CampusSelector } from './fields/campus-selector';
 
 // Importamos los tipos necesarios
+import { FinancingSource } from '@/types/FinancingSource';
 import { Campus } from '@/types/Campus';
 import { PlanningEvent } from '@/types/interfaces';
 import { Intervention } from '@/types/Intervention';
@@ -67,14 +69,6 @@ interface DetalleProcesoFileWithStatus {
   originalName: string;
 }
 
-// New interface for detalle
-interface DetalleFileWithStatus {
-  id: number;
-  file: File;
-  isEdited: boolean;
-  originalName: string;
-}
-
 // Updated FilaPlanificacion interface
 interface FilaPlanificacion extends FilaPlanificacionForm {
   id: string; // Added this property
@@ -89,13 +83,6 @@ interface FilaPlanificacion extends FilaPlanificacionForm {
 
 interface FilaError {
   [key: string]: string;
-}
-
-interface FinancingSource {
-  financingSourceId: number;
-  name: string;
-  category: string;
-  isDeleted: boolean;
 }
 
 const getColumnName = (field: string): string => {
@@ -1169,6 +1156,7 @@ export function TablaPlanificacionComponent() {
                     contributions={fila.aporteUMES}
                     onChangeContributions={(aportes) => actualizarFila(fila.id, 'aporteUMES', aportes)}
                     totalCost={fila.costoTotal}
+                    financingSources={financingSources}
                   />
                   {filaErrors[fila.id]?.aporteUMES && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteUMES}</span>
@@ -1179,6 +1167,7 @@ export function TablaPlanificacionComponent() {
                     contributions={fila.aporteOtros}
                     onChangeContributions={(aportes) => actualizarFila(fila.id, 'aporteOtros', aportes)}
                     totalCost={fila.costoTotal}
+                    financingSources={financingSources}
                   />
                   {filaErrors[fila.id]?.aporteOtros && (
                     <span className="text-red-500 text-sm">{filaErrors[fila.id].aporteOtros}</span>
@@ -1351,6 +1340,7 @@ export function TablaPlanificacionComponent() {
       {poaId && facultyId && userId ? (
         <EventsCorrectionsComponent
           name="Revisión de eventos"
+
           isActive={false}
           poaId={poaId}
           facultyId={facultyId}
