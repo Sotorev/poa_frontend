@@ -197,24 +197,21 @@ const EventRow: React.FC<EventRowProps> = ({
       </TableCell>
       <TableCell className="whitespace-normal break-words">{event.recursos}</TableCell>
       <TableCell className="whitespace-normal break-words">
-      {event.detalleProceso && (
-        <>
-          {console.log('Detalle Proceso:', event.detalleProceso)}
-          {console.log('evento', event)}
-          {event.detalleProceso.map((file) => {
-        console.log('File:', file);
-        return (
-          <div key={file.id}>
-            <h4 className="text-md font-medium mb-1">{file.name}</h4>
-            <DownloadButton
-          name={file.name}
-          path={`downloadEventFileById/${file.id}`}
-            />
-          </div>
-        );
-          })}
-        </>
-      )}
+        {event.detalleProceso && (
+          <>
+            {event.detalleProceso.map((file) => {
+              return (
+                <div key={file.id}>
+                  <h4 className="text-md font-medium mb-1">{file.name}</h4>
+                  <DownloadButton
+                    name={file.name}
+                    path={`downloadEventFileById/${file.id}`}
+                  />
+                </div>
+              );
+            })}
+          </>
+        )}
       </TableCell>
       <TableCell className="whitespace-normal break-words">
         <Button

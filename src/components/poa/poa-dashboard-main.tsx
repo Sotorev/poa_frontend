@@ -90,7 +90,7 @@ export function PoaDashboardMain() {
    */
   const handleSetStatusApproval = async () => {
     try {
-      console.log("user and poaId", user, poaId);
+
       if (user && poaId !== undefined) {
         const approvals = await getPoaApprovals(user.token, poaId);
         setApprovalStatuses(approvals);

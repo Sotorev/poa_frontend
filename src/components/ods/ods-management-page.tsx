@@ -346,7 +346,7 @@ export default function OdsManagement() {
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         responseData = await response.json();
-        console.log("Response data:", responseData);
+       
       }
 
       if (response.ok) {

@@ -50,7 +50,7 @@ export function ResourceManagementComponent({ name, isActive, poaId, isEditable 
         throw new Error('Error al obtener los recursos.');
       }
       const data: PoaResource[] = await response.json();
-      console.log('Recursos obtenidos:', data); // Depuración
+   
       setResources(data);
     } catch (error: any) {
       console.error('Error al obtener los recursos:', error); // Depuración
@@ -169,7 +169,7 @@ export function ResourceManagementComponent({ name, isActive, poaId, isEditable 
         const errorData = await response.json();
         throw new Error(errorData.message || 'Error al eliminar el recurso.');
       }
-      console.log('Recurso eliminado con ID:', id); // Depuración
+   
       setResources(prev => prev.filter(r => r.poaResourceId !== id));
       toast({
         title: "Éxito",
@@ -265,11 +265,6 @@ export function ResourceManagementComponent({ name, isActive, poaId, isEditable 
       await deleteResource(id);
     }
   };
-
-  // Opcional: Loguear el estado de recursos cada vez que cambia
-  useEffect(() => {
-    console.log('Estado de recursos actualizado:', resources);
-  }, [resources]);
 
   return (
     <div id={name} className="mb-6">

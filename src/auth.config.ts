@@ -67,14 +67,14 @@ export default {
 						});
 
 						if (!res.ok) {
-							// console.log(`HTTP error! status: ${res.status}`);
+						
 							return null;
 						}
 						const user = await res.json();
 						return user;
 					}
 					else {
-						// console.log("Error validating fields", validatedFields.error.errors[0].message);
+						
 						return null
 					}
 				} catch (error) {

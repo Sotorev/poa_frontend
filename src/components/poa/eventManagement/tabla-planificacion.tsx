@@ -129,7 +129,8 @@ const getColumnName = (field: string): string => {
 };
 
 export function TablaPlanificacionComponent() {
-  const user = useCurrentUser();
+
+  const [user] = useState(useCurrentUser());
   const loadingAuth = user === null;
   const userId = user?.userId;
 
@@ -178,7 +179,7 @@ export function TablaPlanificacionComponent() {
         }
       });
       if (!response.ok) {
-        console.error(`Error al descargar el archivo desde ${url}: ${response.statusText}`);
+       
         return null;
       }
       const blob = await response.blob();
@@ -186,7 +187,7 @@ export function TablaPlanificacionComponent() {
       const tipo = blob.type || 'application/octet-stream';
       return new File([blob], nombreArchivo, { type: tipo });
     } catch (error) {
-      console.error(`Error al descargar el archivo desde ${url}:`, error);
+
       return null;
     }
   };
@@ -225,7 +226,7 @@ export function TablaPlanificacionComponent() {
           if (areaMatched) {
             map[obj.strategicObjectiveId.toString()] = areaMatched.name;
           } else {
-            console.warn(`No se encontró Área Estratégica para el Objetivo Estratégico ID: ${obj.strategicObjectiveId}`);
+           
           }
         });
         setObjetivoToAreaMap(map);
@@ -288,7 +289,7 @@ export function TablaPlanificacionComponent() {
       } catch (err) {
         if (err instanceof z.ZodError) {
           setError("Error en la validación de datos.");
-          console.error(err.errors);
+
         } else {
           setError((err as Error).message);
         }
@@ -335,14 +336,14 @@ export function TablaPlanificacionComponent() {
         setPoaId(fetchedPoaId);
       } catch (err) {
         setErrorPoa((err as Error).message);
-        console.error(err);
+
       } finally {
         setLoadingPoa(false);
       }
     };
 
     fetchFacultyAndPoa();
-  }, [userId, loadingAuth]);
+  }, [userId, loadingAuth, user?.token]);
 
   const agregarFila = () => {
     const nuevaFila: FilaPlanificacion = {
@@ -507,7 +508,7 @@ export function TablaPlanificacionComponent() {
         [createdObjetivo.strategicObjectiveId.toString()]: area.name,
       }));
     } else {
-      console.warn(`No se encontró Área Estratégica para el nuevo Objetivo Estratégico ID: ${createdObjetivo.strategicObjectiveId}`);
+    
     }
     toast.success("Nuevo objetivo estratégico agregado.");
   };
@@ -530,7 +531,7 @@ export function TablaPlanificacionComponent() {
 
     const fila = filas.find(fila => fila.id === id);
     if (!fila) {
-      console.error(`Fila con ID ${id} no encontrada.`);
+
       toast.error("La fila no se encontró.");
       return;
     }
@@ -554,7 +555,7 @@ export function TablaPlanificacionComponent() {
       setModalErrorList(errorsList);
       setIsErrorModalOpen(true);
       toast.error("Hay errores en la fila. Por favor, revisa los campos.");
-      console.error("Error de validación:", validation.error.errors);
+
       return;
     }
 
@@ -579,7 +580,7 @@ export function TablaPlanificacionComponent() {
     if (!fila.entityId) {
       throw new Error("No se puede actualizar un evento sin entityId");
     }
-    console.log("Actualizando evento:", fila);
+
     const url = `${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/${fila.entityId}`;
 
     // Construcción del objeto eventData con todos los campos necesarios
@@ -636,9 +637,9 @@ export function TablaPlanificacionComponent() {
     // Preparación del FormData para envío de archivos
     const formData = new FormData();
     formData.append('data', JSON.stringify(eventData));
-    console.log(fila.costDetailDocuments);
-    console.log(fila.processDocument);
+
     // Filtrar y agregar solo los archivos editados de 'detalle'
+
     if (fila.costDetailDocuments) {
       fila.costDetailDocuments.forEach((file: File) => {
         formData.append('costDetailDocuments', file);
@@ -729,12 +730,15 @@ export function TablaPlanificacionComponent() {
     formData.append('data', JSON.stringify(eventData));
 
     if (fila.costDetailDocuments) {
-      fila.costDetailDocuments.forEach(file => {
-        formData.append('costDetailDocuments', file.file);
+      fila.costDetailDocuments.forEach((file: File) => {
+        formData.append('costDetailDocuments', file);
       });
     }
 
-    if (fila.processDocument) {
+    if (fila.processDocuments) {
+      fila.processDocuments.forEach(file => {
+        formData.append('processDocuments', file)
+      })
     }
 
     const response = await fetch(url, {
@@ -764,7 +768,7 @@ export function TablaPlanificacionComponent() {
         throw new Error("La URL de la API no está definida.");
       }
 
-      console.log('Enviando datos:', fila);
+ 
 
       // Determina si crear o actualizar basado en la existencia de entityId
       const result = fila.entityId
@@ -788,7 +792,7 @@ export function TablaPlanificacionComponent() {
       toast.success(fila.entityId ? "Actividad actualizada exitosamente." : "Actividad enviada exitosamente.");
       setFilaErrors(prevErrors => ({ ...prevErrors, [fila.id]: {} }));
     } catch (err) {
-      console.error(err);
+
       toast.error(`Error al enviar la actividad: ${(err as Error).message}`);
     }
   };
@@ -869,7 +873,7 @@ export function TablaPlanificacionComponent() {
       const tipoCompraId = tipoCompraObj ? tipoCompraObj.purchaseTypeId.toString() : '';
 
 
-      console.log("event.aporteUMES", event.aporteUMES);
+
       // Cálculo de aportes financieros
       const aporteUMES = Array.isArray(event.aporteUMES) ? event.aporteUMES.map(aporte => ({
         financingSourceId: aporte.financingSourceId,
@@ -877,7 +881,7 @@ export function TablaPlanificacionComponent() {
         amount: aporte.amount,
       })) : [];
 
-      console.log("Aporte UMES:", aporteUMES);
+
 
       const aporteOtros = Array.isArray(event.aporteOtros) ? event.aporteOtros.map(aporte => ({
         financingSourceId: aporte.financingSourceId,
@@ -885,7 +889,7 @@ export function TablaPlanificacionComponent() {
         amount: aporte.amount,
       })) : [];
 
-      console.log("Aporte Otros:", aporteOtros);
+
 
       // Formateo de fechas
       const fechas = event.fechas.map(interval => ({
@@ -934,7 +938,7 @@ export function TablaPlanificacionComponent() {
       // Descarga y vinculación de archivos adjuntos
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!baseUrl) {
-        console.error("URL de la API no definida.");
+
         return;
       }
 
@@ -961,8 +965,7 @@ export function TablaPlanificacionComponent() {
         const validCostDetailFiles = costDetailFiles.filter((file): file is File => file !== null);
         const validProcessFiles = processFiles.filter((file): file is File => file !== null);
 
-        console.log("Cost detail files:", validCostDetailFiles);
-        console.log("Process files:", validProcessFiles);
+
         // Update the fila with the downloaded files
         updateEditingEventCostDetails(nuevaFila.id, validCostDetailFiles);
         updateEditingEventProcessDocuments(nuevaFila.id, validProcessFiles);
@@ -973,19 +976,19 @@ export function TablaPlanificacionComponent() {
           toast.warn("No se pudieron cargar algunos archivos.");
         }
       } catch (error) {
-        console.error("Error al descargar los archivos:", error);
+
         toast.error("Error al cargar los archivos del evento.");
       }
 
 
     } catch (error) {
-      console.error("Error en handleEditEvent:", error);
+
       toast.error("Ocurrió un error al editar el evento.");
     }
   };
 
   const updateEditingEventCostDetails = (id: string, files: File[]) => {
-    console.log("Editing event id", id);
+
     setFilas(prevFilas =>
       prevFilas.map(fila => {
         if (fila.id === id) {

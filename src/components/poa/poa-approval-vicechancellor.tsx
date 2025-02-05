@@ -165,7 +165,7 @@ export function PoaAcademicApproval() {
         const sidebarWidth = sidebarRef.current.offsetWidth
         const shouldShow = event.clientX <= sidebarWidth + 20
         setIsSidebarVisible(shouldShow)
-        console.log(`MouseX: ${event.clientX}, SidebarWidth: ${sidebarWidth}, Show: ${shouldShow}`)
+        
       }
     }
 

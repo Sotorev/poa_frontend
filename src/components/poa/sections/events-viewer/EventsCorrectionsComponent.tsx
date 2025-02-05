@@ -28,7 +28,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
 
     const estado = estadoMap[apiEvent.eventApprovals[0]?.approvalStatus?.name || 'Pendiente'] || 'revision';
 
-    console.log("apiEvent.financings", apiEvent.financings);
+
 
 
     return {
@@ -161,7 +161,7 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
             eventsByStatus.correccion.find(event => event.id === id);
 
         if (event) {
-            console.log(`Editing event:`, event);
+
             onEditEvent(event);
         } else {
             console.error(`Event with id ${id} not found.`);

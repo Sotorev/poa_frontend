@@ -43,7 +43,7 @@ export default function PEIModule() {
 				title: "Éxito",
 				description: "¡PEI enviado con éxito!",
 			})
-			console.log('PEI enviado:', data)
+		
 		} catch (error) {
 			console.error('Error al enviar PEI:', error)
 			toast({
@@ -71,7 +71,7 @@ export default function PEIModule() {
 		}
 
 		const data = await response.json()
-		console.log('Período de registro de POA enviado:', data)
+	
 	}
 
 	return (

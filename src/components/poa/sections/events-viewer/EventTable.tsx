@@ -73,7 +73,6 @@ const EventTable: React.FC<EventTableProps> = ({
         </TableHeader>
         <TableBody>
           <>
-            {console.log('eventos en tabla', events)}
             {events.map(event => (
               <EventRow
                 key={event.id}

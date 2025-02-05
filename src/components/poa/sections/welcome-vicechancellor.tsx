@@ -42,7 +42,7 @@ export function WelcomeVicechancellor({ onSelectFaculty }: WelcomeVicechancellor
     const fetchUserData = async () => {
 
       if (!user) {
-        console.log("No estás autenticado.");
+
         return;
       }
 

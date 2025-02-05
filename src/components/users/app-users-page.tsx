@@ -555,7 +555,6 @@ export default function UserManagement() {
 
       // Obtener y mostrar la respuesta completa
       const responseData = await response.json();
-      console.log("Response data:", responseData);
 
       if (response.ok) {
         // Refrescar la lista de usuarios según la vista actual

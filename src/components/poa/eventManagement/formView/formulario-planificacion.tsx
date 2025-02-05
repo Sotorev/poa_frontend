@@ -359,7 +359,7 @@ export default function PlanificacionFormComponent() {
         amount: aporte.amount,
       })) : [];
 
-      console.log("Aporte UMES:", aporteUMES);
+    
 
       const aporteOtros = Array.isArray(event.aporteOtros) ? event.aporteOtros.map(aporte => ({
         financingSourceId: aporte.financingSourceId,
@@ -367,7 +367,7 @@ export default function PlanificacionFormComponent() {
         amount: aporte.amount,
       })) : [];
 
-      console.log("Aporte Otros:", aporteOtros);
+  
 
       const fechas = event.fechas.map(interval => ({
         start: new Date(interval.inicio),
