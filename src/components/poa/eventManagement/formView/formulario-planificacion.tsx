@@ -867,22 +867,22 @@ export default function PlanificacionFormComponent() {
                 </div>
                 <div>
                   <label className="block font-medium mb-2">Aporte de UMES</label>
-                  <UMESFinancingComponent
+                  {/* <UMESFinancingComponent
                     contributions={fila.aporteUMES}
                     onChangeContributions={(aportes) => actualizarFila('aporteUMES', aportes)}
                     totalCost={fila.costoTotal}
-                  />
+                  /> */}
                   {filaErrors?.aporteUMES && (
                     <span className="text-red-500 text-sm">{filaErrors.aporteUMES}</span>
                   )}
                 </div>
                 <div>
                   <label className="block font-medium mb-2">Aporte de otros</label>
-                  <OtherFinancingSourceComponent
+                  {/* <OtherFinancingSourceComponent
                     contributions={fila.aporteOtros}
                     onChangeContributions={(aportes) => actualizarFila('aporteOtros', aportes)}
                     totalCost={fila.costoTotal}
-                  />
+                  /> */}
                   {filaErrors?.aporteOtros && (
                     <span className="text-red-500 text-sm">{filaErrors.aporteOtros}</span>
                   )}
