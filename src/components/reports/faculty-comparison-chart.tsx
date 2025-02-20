@@ -33,7 +33,7 @@ export default function FacultyComparisonChart() {
   const [sortBy, setSortBy] = useState<"totalBudget" | "totalStudents">("totalBudget")
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010"
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
   const user = useCurrentUser()
 
   useEffect(() => {
