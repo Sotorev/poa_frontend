@@ -8,12 +8,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer
 } from "recharts"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DollarSign, Users } from "lucide-react"
+import { useCurrentUser } from "@/hooks/use-current-user" // Asegúrate de tener este hook para obtener el token
 
 interface FacultyData {
   facultyId: number;
@@ -25,30 +25,62 @@ interface FacultyData {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("es-GT", { style: "currency", currency: "GTQ" }).format(value)
 
-const formatNumber = (value: number) => new Intl.NumberFormat("es-GT").format(value)
-
-async function fetchFacultyData(apiUrl: string): Promise<FacultyData[]> {
-  const response = await fetch(`${apiUrl}/api/reports/faculty/faculty-report/`)
-  if (!response.ok) {
-    throw new Error("Error fetching data")
-  }
-  return response.json()
-}
+const formatNumber = (value: number) =>
+  new Intl.NumberFormat("es-GT").format(value)
 
 export default function FacultyComparisonChart() {
   const [data, setData] = useState<FacultyData[]>([])
   const [sortBy, setSortBy] = useState<"totalBudget" | "totalStudents">("totalBudget")
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010"
+  const user = useCurrentUser()
 
   useEffect(() => {
-    fetchFacultyData(API_URL)
-      .then((fetchedData) => setData(fetchedData))
-      .catch((error) => console.error("Error fetching data:", error))
-  }, [API_URL])
+    const fetchAndMapData = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const endpoint = `${API_URL}/api/reports/faculty/faculty-report/`
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${user?.token}`
+          }
+        })
+        if (!response.ok) {
+          throw new Error("Error fetching faculty data")
+        }
+        const fetchedData: FacultyData[] = await response.json()
+        setData(fetchedData)
+      } catch (err: any) {
+        setError(err.message || "Error desconocido al obtener los datos de facultades.")
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const sortedData = useMemo(() => [...data].sort((a, b) => b[sortBy] - a[sortBy]), [data, sortBy])
-  const totalBudget = useMemo(() => data.reduce((sum, faculty) => sum + faculty.totalBudget, 0), [data])
-  const totalStudents = useMemo(() => data.reduce((sum, faculty) => sum + faculty.totalStudents, 0), [data])
+    if (user?.token) {
+      fetchAndMapData()
+    } else {
+      setData([])
+      setError("No autenticado. Por favor, inicia sesión para ver los datos.")
+    }
+  }, [API_URL, user?.token])
+
+  const sortedData = useMemo(
+    () => [...data].sort((a, b) => b[sortBy] - a[sortBy]),
+    [data, sortBy]
+  )
+  const totalBudget = useMemo(
+    () => data.reduce((sum, faculty) => sum + faculty.totalBudget, 0),
+    [data]
+  )
+  const totalStudents = useMemo(
+    () => data.reduce((sum, faculty) => sum + faculty.totalStudents, 0),
+    [data]
+  )
 
   return (
     <Card className="w-full shadow-md bg-white">
@@ -58,6 +90,8 @@ export default function FacultyComparisonChart() {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {error && <p className="mb-4 text-center text-red-500">{error}</p>}
+        {loading && <p className="mb-4 text-center text-gray-600">Cargando datos...</p>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="bg-green-50 border border-green-200">
             <CardContent className="flex items-center justify-between p-4">
@@ -109,8 +143,18 @@ export default function FacultyComparisonChart() {
               angle={-45}
               tick={{ fill: "#4b5563", textAnchor: "end", fontSize: 12 }}
             />
-            <YAxis yAxisId="left" orientation="left" stroke="#34d399" tick={{ fill: "#4b5563" }} />
-            <YAxis yAxisId="right" orientation="right" stroke="#60a5fa" tick={{ fill: "#4b5563" }} />
+            <YAxis
+              yAxisId="left"
+              orientation="left"
+              stroke="#34d399"
+              tick={{ fill: "#4b5563" }}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke="#60a5fa"
+              tick={{ fill: "#4b5563" }}
+            />
             <Tooltip
               formatter={(value, name) => {
                 if (name === "Presupuesto") return formatCurrency(value as number)
@@ -118,8 +162,18 @@ export default function FacultyComparisonChart() {
               }}
               contentStyle={{ backgroundColor: "#f0f9ff", border: "1px solid #e0f2fe" }}
             />
-            <Bar yAxisId="left" dataKey="totalBudget" fill="#34d399" name="Presupuesto" />
-            <Bar yAxisId="right" dataKey="totalStudents" fill="#60a5fa" name="Estudiantes" />
+            <Bar
+              yAxisId="left"
+              dataKey="totalBudget"
+              fill="#34d399"
+              name="Presupuesto"
+            />
+            <Bar
+              yAxisId="right"
+              dataKey="totalStudents"
+              fill="#60a5fa"
+              name="Estudiantes"
+            />
           </BarChart>
         </ResponsiveContainer>
         <div className="flex justify-center space-x-4 mt-4">
