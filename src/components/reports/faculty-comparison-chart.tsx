@@ -37,7 +37,8 @@ export default function FacultyComparisonChart() {
   const user = useCurrentUser()
 
   useEffect(() => {
-    const fetchAndMapData = async () => {
+    const fetchAndMapData = 
+    async () => {
       setLoading(true)
       setError(null)
       try {
