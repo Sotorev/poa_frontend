@@ -85,8 +85,10 @@ export default function GraficoMatriculaUniversitaria() {
         const registro = datos.find(d => d.facultyName === facultad && d.year === año)
         if (registro) {
           fila[facultad] = registro.studentCount
+          fila[`${facultad}-variation`] = registro.annualVariation
         } else {
           fila[facultad] = 0
+          fila[`${facultad}-variation`] = 0
         }
       })
       return fila
@@ -95,9 +97,9 @@ export default function GraficoMatriculaUniversitaria() {
 
   // Sumar total de estudiantes por año
   const sumaTotalEstudiantes = (fila: { [key: string]: string | number }) => {
-    return Object.keys(fila).reduce((sum, facultad) => {
-      if (facultad !== 'año') { // No sumamos el año
-        sum += fila[facultad] as number
+    return Object.keys(fila).reduce((sum, key) => {
+      if (key !== 'año' && !key.endsWith('-variation')) {
+        return sum + (fila[key] as number)
       }
       return sum
     }, 0)
@@ -170,20 +172,34 @@ export default function GraficoMatriculaUniversitaria() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {datosBrutos.map((fila, index) => (
-                    <React.Fragment key={fila.año}>
-                      <TableRow>
-                        <TableCell className="text-center font-medium">{fila.año}</TableCell>
-                        {Object.keys(colores).map((facultad) => (
-                          <TableCell key={facultad} className="text-center font-medium">
-                            {fila[facultad as keyof typeof fila]}
-                          </TableCell>
-                        ))}
-                        <TableCell className="text-center font-bold">
-                          {sumaTotalEstudiantes(fila)} {/* Suma de estudiantes */}
+                  {datosBrutos
+                  .filter((fila) => fila.año !== undefined && fila.año !== null)
+                  .map((fila) => (
+                    <TableRow key={String(fila.año)}>
+                      <TableCell className="text-center font-medium">{fila.año}</TableCell>
+                      {Object.keys(colores).map((facultad) => (
+                        <TableCell key={facultad} className="text-center font-medium">
+                          <div>{fila[facultad as keyof typeof fila]}</div>
+                          <div
+                            className={`text-sm ${
+                              Number(fila[`${facultad}-variation` as keyof typeof fila]) > 0
+                                ? "text-green-500"
+                                : Number(fila[`${facultad}-variation` as keyof typeof fila]) < 0
+                                ? "text-red-500"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {(() => {
+                              const variation = Number(fila[`${facultad}-variation` as keyof typeof fila]);
+                              return variation > 0 ? `+${variation}%` : `${variation}%`;
+                            })()}
+                          </div>
                         </TableCell>
-                      </TableRow>
-                    </React.Fragment>
+                      ))}
+                      <TableCell className="text-center font-bold">
+                        {sumaTotalEstudiantes(fila)}
+                      </TableCell>
+                    </TableRow>
                   ))}
                 </TableBody>
               </Table>
