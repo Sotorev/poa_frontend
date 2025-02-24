@@ -17,7 +17,6 @@ export interface UpdatePurchaseTypeInput {
   isDeleted?: boolean;
 }
 
-
 export interface PurchaseTypeWithColor extends PurchaseType {
   color: string;
 }

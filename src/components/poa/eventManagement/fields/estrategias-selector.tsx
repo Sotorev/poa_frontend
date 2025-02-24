@@ -1,8 +1,7 @@
 // src/components/poa/components/columns/estrategias-selector.tsx
-// src/components/poa/components/columns/estrategias-selector.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, useContext } from 'react';
 import {
   Select,
   SelectContent,
@@ -18,9 +17,15 @@ import { Search, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useCurrentUser } from '@/hooks/use-current-user';
-import { getEstrategias } from '@/services/apiService';
 
+// hooks
+import { useCurrentUser } from '@/hooks/use-current-user';
+
+// Context
+import { EventContext } from '../formView/event.context';
+
+// Types
+import { Strategy } from '@/types/Strategy';
 interface Estrategia {
   strategyId: number;
   description: string;
@@ -33,45 +38,43 @@ interface Estrategia {
 }
 
 interface EstrategiasSelectorProps {
-  selectedEstrategias: string[];
-  onSelectEstrategia: (estrategias: string[]) => void;
-  strategicObjectiveIds: number[];
-  disabled?: boolean; // Nueva propiedad
-  tooltipMessage?: string; // Mensaje del tooltip cuando está deshabilitado
+  selectedEstrategias: Strategy[];
+  onSelectEstrategia: (estrategias: Strategy[]) => void;
+  strategicObjectiveIds: number | undefined;
+  disabled?: boolean;
 }
 
 export function EstrategiasSelectorComponent({
   selectedEstrategias,
   onSelectEstrategia,
   strategicObjectiveIds,
-  disabled = false, // Por defecto, no está deshabilitado
-  tooltipMessage = "Seleccione primero un objetivo estratégico.", // Mensaje por defecto
+  disabled = false, 
 }: EstrategiasSelectorProps) {
   const [estrategiasList, setEstrategiasList] = useState<Estrategia[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const user = useCurrentUser();
+  const { strategics } = useContext(EventContext);
+
+  const fetchData = useCallback(async () => {
+    try {
+      if (!strategicObjectiveIds) return; // Si no hay objetivos estratégicos, no hacer nada
+      const filteredData = strategics.filter(est => est.strategicObjectiveId === strategicObjectiveIds);
+      setEstrategiasList(filteredData);
+
+    } catch (error) {
+      console.error('Error al obtener estrategias:', error);
+    }
+  }, [strategicObjectiveIds, strategics]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getEstrategias(user?.token || '');
-
-        // Filtrar estrategias que pertenezcan a cualquiera de los strategicObjectiveIds y que no estén eliminadas
-        const filteredData = data.filter(est => strategicObjectiveIds.includes(est.strategicObjectiveId) && !est.isDeleted);
-        setEstrategiasList(filteredData);
-      } catch (error) {
-        console.error('Error al obtener estrategias:', error);
-      }
-    };
-
     if (!disabled) { // Solo fetch si no está deshabilitado
       fetchData();
     } else {
       setEstrategiasList([]); // Limpiar la lista si está deshabilitado
     }
-  }, [strategicObjectiveIds, user?.token, disabled]);
+  }, [strategicObjectiveIds, user?.token, disabled, strategics, fetchData]);
 
   const filteredEstrategias = useMemo(() => {
     return estrategiasList.filter((est) =>
@@ -81,15 +84,22 @@ export function EstrategiasSelectorComponent({
 
   const handleSelectEstrategia = (estrategiaId: string) => {
     if (disabled) return; // No permitir cambios si está deshabilitado
-    const updatedEstrategias = selectedEstrategias.includes(estrategiaId)
-      ? selectedEstrategias.filter((id) => id !== estrategiaId)
-      : [...selectedEstrategias, estrategiaId];
+    const estrategia = estrategiasList.find(est => est.strategyId.toString() === estrategiaId);
+    if (!estrategia) return;
+    
+    const updatedEstrategias = selectedEstrategias.some(est => est.strategyId.toString() === estrategiaId)
+      ? selectedEstrategias.filter(est => est.strategyId.toString() !== estrategiaId)
+      : [...selectedEstrategias, estrategia];
+    
     onSelectEstrategia(updatedEstrategias);
   };
 
   const handleRemoveEstrategia = (id: string) => {
     if (disabled) return; // No permitir cambios si está deshabilitado
-    onSelectEstrategia(selectedEstrategias.filter((estId) => estId !== id));
+    const updatedEstrategias = selectedEstrategias.filter(est =>
+      est.strategyId.toString() !== id
+    );
+    onSelectEstrategia(updatedEstrategias);
   };
 
   useEffect(() => {
@@ -98,10 +108,6 @@ export function EstrategiasSelectorComponent({
     }
   }, [isOpen]);
 
-  // Condicional para envolver el Select con Tooltip si está deshabilitado
-  const SelectWrapper = disabled ? TooltipProvider : React.Fragment;
-  const TooltipContentMessage = disabled ? tooltipMessage : "";
-
   return (
     <TooltipProvider>
       <Tooltip>
@@ -109,13 +115,13 @@ export function EstrategiasSelectorComponent({
           <div>
             <div className="space-y-2 w-full max-w-md">
               <div className="flex flex-wrap gap-2 mb-2">
-                {selectedEstrategias.map((id) => {
-                  const estrategia = estrategiasList.find(
-                    (est) => est.strategyId.toString() === id
+                {selectedEstrategias.map((estrategia) => {
+                  const foundEstrategia = estrategiasList.find(
+                    (est) => est.strategyId === estrategia.strategyId
                   );
                   if (!estrategia) return null;
                   return (
-                    <Badge key={id} variant="secondary" className="bg-green-100 text-green-800 p-0 flex items-center">
+                    <Badge key={estrategia.strategyId} variant="secondary" className="bg-green-100 text-green-800 p-0 flex items-center">
                       <span className="text-green-500 font-bold text-xs mr-1">
                         {estrategia.strategyId}
                       </span>
@@ -123,7 +129,7 @@ export function EstrategiasSelectorComponent({
                         variant="ghost"
                         size="sm"
                         className="h-5 w-5 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
-                        onClick={() => handleRemoveEstrategia(id)}
+                        onClick={() => handleRemoveEstrategia(estrategia.strategyId.toString())}
                         disabled={disabled} // Deshabilitar el botón si está deshabilitado
                       >
                         <X className="h-3 w-3" />
@@ -169,7 +175,7 @@ export function EstrategiasSelectorComponent({
                         >
                           <div className="flex items-start w-full">
                             <Checkbox
-                              checked={selectedEstrategias.includes(est.strategyId.toString())}
+                              checked={selectedEstrategias.some(strategy => strategy.strategyId.toString() === est.strategyId.toString())}
                               onCheckedChange={() => handleSelectEstrategia(est.strategyId.toString())}
                               className="mr-2 mt-1 h-4 w-4 rounded border-green-500 text-green-500 focus:ring-green-500"
                               disabled={disabled} // Deshabilitar el checkbox si está deshabilitado
@@ -199,7 +205,7 @@ export function EstrategiasSelectorComponent({
             </div>
           </div>
         </TooltipTrigger>
-        {disabled && <TooltipContent><p>{tooltipMessage}</p></TooltipContent>}
+        {disabled && <TooltipContent><p>{"Seleccione primero un objetivo estratégico."}</p></TooltipContent>}
       </Tooltip>
     </TooltipProvider>
   );

@@ -7,6 +7,5 @@ export interface StrategicObjective {
     description: string;
     strategicAreaId: number;
     isDeleted: boolean;
-    strategicArea?: StrategicArea;
   }
   
