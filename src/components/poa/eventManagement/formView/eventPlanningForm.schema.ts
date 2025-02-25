@@ -1,4 +1,4 @@
-// src/schemas/filaPlanificacionSchema.ts
+// src/components/poa/eventManagement/formView/eventPlanningForm.schema.ts
 import { z } from "zod";
 
 // Esquema para las fechas en formato ISO (YYYY-MM-DD)
@@ -60,7 +60,7 @@ export const fullEventSchema = z
     responsibles: z
       .array(responsibleSchema)
       .min(1, "Debe asignar al menos un responsable"),
-    interventions: z.array(z.number()),
+    interventions: z.array(z.object({ intervention: z.number() })),
     ods: z.array(z.number()),
     resources: z
       .array(resourceSchema)

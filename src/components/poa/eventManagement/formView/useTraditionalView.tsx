@@ -21,7 +21,7 @@ import { filaPlanificacionSchema, FullEventRequest } from './eventPlanningForm.s
 import { StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
 import { get } from 'http'
 import { EventPlanningForm } from './eventPlanningForm'
-import { useForm } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { EventContext } from './event.context'
 
 export function useTraditionalView() {
@@ -47,13 +47,19 @@ export function useTraditionalView() {
     const [isOpen, setIsOpen] = useState<boolean>(false)
 
     // function forms
-    const { register, handleSubmit, reset, watch, control } = useForm<FullEventRequest>()
+    const { register, handleSubmit, reset, getValues, watch, control, setValue } = useForm<FullEventRequest>()
+    const { append, remove, fields } = useFieldArray<FullEventRequest, "interventions">({ control, name: 'interventions' })
 
     return {
         isOpen,
         setIsOpen,
+        fields,
+        getValues,
         watch,
         register,
+        setValue,
+        append,
+        remove,
         control,
         handleSubmit,
         reset,

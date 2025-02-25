@@ -20,7 +20,7 @@ import { ResponsablesComponent } from "../fields/responsables"
 import { RecursosSelectorComponent } from "../fields/recursos-selector"
 import { IndicadorLogroComponent } from "../fields/indicador-logro"
 import { DetalleProcesoComponent } from "../fields/detalle-proceso"
-import { Control, UseFormRegister, UseFormWatch } from "react-hook-form"
+import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form"
 import { FullEventRequest } from "./eventPlanningForm.schema"
 import { StrategicArea } from "@/types/StrategicArea"
 import { StrategicObjective } from "@/types/StrategicObjective"
@@ -35,8 +35,13 @@ interface EventPlanningFormProps {
     updateField: (field: string, value: any) => void
     addStrategicObjective: (objective: any) => void
     financingSources: any[]
+    fields: FieldArrayWithId<FullEventRequest, "interventions">[];
+    getValues: UseFormGetValues<FullEventRequest>
     watch: UseFormWatch<FullEventRequest>
     register: UseFormRegister<FullEventRequest>
+    setValue: UseFormSetValue<FullEventRequest>
+    append: UseFieldArrayAppend<FullEventRequest>
+    remove: UseFieldArrayRemove
     selectedStrategicArea: StrategicArea | undefined
     selectedStrategicObjective: StrategicObjective | undefined
     setSelectedStrategicObjective: (objective: StrategicObjective) => void
@@ -52,8 +57,13 @@ export function EventPlanningForm({
     updateField,
     addStrategicObjective,
     financingSources,
+    fields,
+    getValues,
     watch,
-    register, 
+    register,
+    setValue,
+    append,
+    remove,
     selectedStrategicArea,
     selectedStrategicObjective,
     setSelectedStrategicObjective,
@@ -69,109 +79,110 @@ export function EventPlanningForm({
                 </DialogHeader>
 
                 <>
-                <form>
-                <Tabs defaultValue="pei" className="w-full">
-                    <TabsList className="px-6">
-                        <TabsTrigger value="pei">Plan Estratégico Institucional</TabsTrigger>
-                        <TabsTrigger value="info">Información del Evento</TabsTrigger>
-                        <TabsTrigger value="finance">Financiamiento del Evento</TabsTrigger>
-                    </TabsList>
+                    <form>
+                        <Tabs defaultValue="pei" className="w-full">
+                            <TabsList className="px-6">
+                                <TabsTrigger value="pei">Plan Estratégico Institucional</TabsTrigger>
+                                <TabsTrigger value="info">Información del Evento</TabsTrigger>
+                                <TabsTrigger value="finance">Financiamiento del Evento</TabsTrigger>
+                            </TabsList>
 
-                    <ScrollArea className="h-[calc(90vh-12rem)] px-6">
-                        <TabsContent value="pei" className="mt-4 space-y-6">
-                            <StrategicObjectiveSelector
-                                selectedObjetive={selectedStrategicObjective!}
-                                onSelectObjetive={(objective) => setSelectedStrategicObjective(objective)}
-                                addStrategicObjective={addStrategicObjective}
-                            />
-                            <AreaEstrategicaComponent
-                                areaEstrategica={selectedStrategicArea?.name || ""}
-                                error={event?.errors?.areaEstrategica}
-                            />
-                            <EstrategiasSelectorComponent
-                                selectedEstrategias={selectedStrategies || []}
-                                onSelectEstrategia={(estrategias) => setSelectedStrategies(estrategias)}
-                                strategicObjectiveIds={ selectedStrategicObjective?.strategicObjectiveId}
-                                disabled={!selectedStrategicObjective}
-                            />
-                            <IntervencionesSelectorComponent
-                                register={register}
-                                watch={watch}
-                                disabled={!selectedStrategies?.length}
-                                strategyIds={selectedStrategies?.map(est => est.strategyId) || []}
-                            />
-                            <OdsSelector selectedODS={event?.ods || []} onSelectODS={(ods) => updateField("ods", ods)} />
-                        </TabsContent>
+                            <ScrollArea className="h-[calc(90vh-12rem)] px-6">
+                                <TabsContent value="pei" className="mt-4 space-y-6">
+                                    <StrategicObjectiveSelector
+                                        selectedObjetive={selectedStrategicObjective!}
+                                        onSelectObjetive={(objective) => setSelectedStrategicObjective(objective)}
+                                        addStrategicObjective={addStrategicObjective}
+                                    />
+                                    <AreaEstrategicaComponent
+                                        areaEstrategica={selectedStrategicArea?.name || ""}
+                                        error={event?.errors?.areaEstrategica}
+                                    />
+                                    <EstrategiasSelectorComponent
+                                        selectedEstrategias={selectedStrategies || []}
+                                        onSelectEstrategia={(estrategias) => setSelectedStrategies(estrategias)}
+                                        strategicObjectiveIds={selectedStrategicObjective?.strategicObjectiveId}
+                                        disabled={!selectedStrategicObjective}
+                                    />
+                                    <IntervencionesSelectorComponent
+                                        selectedIntervenciones={watch("interventions") || []}
+                                        onSelectIntervencion={(interventionId) => { append(interventionId); console.log("interventions POST actions", watch("interventions")); }}
+                                        onRemove={(interventionId) => {remove(fields.findIndex((field) => field.intervention === interventionId)); console.log("interventions POST actions", watch("interventions")); }}
+                                        disabled={!selectedStrategies?.length}
+                                        strategyIds={selectedStrategies?.map(est => est.strategyId) || []}
+                                    />
+                                    <OdsSelector selectedODS={event?.ods || []} onSelectODS={(ods) => updateField("ods", ods)} />
+                                </TabsContent>
 
-                        <TabsContent value="info" className="mt-4 space-y-6">
-                            <ActividadProyectoSelector
-                                selectedOption={event?.tipoEvento || "actividad"}
-                                onSelectOption={(tipo) => updateField("tipoEvento", tipo)}
-                                fechas={event?.fechas || []}
-                                onChangeFechas={(fechas) => updateField("fechas", fechas)}
-                                fechaProyecto={event?.fechaProyecto || { start: new Date(), end: new Date() }}
-                                onChangeFechaProyecto={(fecha) => updateField("fechaProyecto", fecha)}
-                            />
-                            <EventoComponent value={event?.evento || ""} onChange={(value) => updateField("evento", value)} />
-                            <ObjetivoComponent value={event?.objetivo || ""} onChange={(value) => updateField("objetivo", value)} />
-                            <ResponsablesComponent
-                                responsablePlanificacion={event?.responsablePlanificacion || ""}
-                                responsableEjecucion={event?.responsableEjecucion || ""}
-                                responsableSeguimiento={event?.responsableSeguimiento || ""}
-                                onChangeResponsablePlanificacion={(value: string) => updateField("responsablePlanificacion", value)}
-                                onChangeResponsableEjecucion={(value: string) => updateField("responsableEjecucion", value)}
-                                onChangeResponsableSeguimiento={(value: string) => updateField("responsableSeguimiento", value)}
-                            />
-                            <IndicadorLogroComponent
-                                value={event?.indicadorLogro || ""}
-                                onChange={(value: string) => updateField("indicadorLogro", value)}
-                            />
-                            <DetalleProcesoComponent
-                                files={event?.processDocuments || []}
-                                onFilesChange={(files: File[]) => updateField("processDocuments", files)}
-                            />
-                        </TabsContent>
+                                <TabsContent value="info" className="mt-4 space-y-6">
+                                    <ActividadProyectoSelector
+                                        selectedOption={event?.tipoEvento || "actividad"}
+                                        onSelectOption={(tipo) => updateField("tipoEvento", tipo)}
+                                        fechas={event?.fechas || []}
+                                        onChangeFechas={(fechas) => updateField("fechas", fechas)}
+                                        fechaProyecto={event?.fechaProyecto || { start: new Date(), end: new Date() }}
+                                        onChangeFechaProyecto={(fecha) => updateField("fechaProyecto", fecha)}
+                                    />
+                                    <EventoComponent value={event?.evento || ""} onChange={(value) => updateField("evento", value)} />
+                                    <ObjetivoComponent value={event?.objetivo || ""} onChange={(value) => updateField("objetivo", value)} />
+                                    <ResponsablesComponent
+                                        responsablePlanificacion={event?.responsablePlanificacion || ""}
+                                        responsableEjecucion={event?.responsableEjecucion || ""}
+                                        responsableSeguimiento={event?.responsableSeguimiento || ""}
+                                        onChangeResponsablePlanificacion={(value: string) => updateField("responsablePlanificacion", value)}
+                                        onChangeResponsableEjecucion={(value: string) => updateField("responsableEjecucion", value)}
+                                        onChangeResponsableSeguimiento={(value: string) => updateField("responsableSeguimiento", value)}
+                                    />
+                                    <IndicadorLogroComponent
+                                        value={event?.indicadorLogro || ""}
+                                        onChange={(value: string) => updateField("indicadorLogro", value)}
+                                    />
+                                    <DetalleProcesoComponent
+                                        files={event?.processDocuments || []}
+                                        onFilesChange={(files: File[]) => updateField("processDocuments", files)}
+                                    />
+                                </TabsContent>
 
-                        <TabsContent value="finance" className="mt-4 space-y-6">
-                            <div className="p-4 bg-gray-50 rounded-lg border">
-                                <label className="text-sm font-medium text-gray-700">Costo Total</label>
-                                <div className="mt-1 text-2xl font-bold text-green-600">
-                                    Q {(event?.aporteUMES + event?.aporteOtros || 0).toFixed(2)}
-                                </div>
-                            </div>
-                            <UMESFinancingComponent
-                                contributions={event?.aporteUMES || []}
-                                onChangeContributions={(aportes) => updateField("aporteUMES", aportes)}
-                                totalCost={event?.aporteUMES + event?.aporteOtros || 0}
-                                financingSources={financingSources}
-                            />
-                            <OtherFinancingSourceComponent
-                                contributions={event?.aporteOtros || []}
-                                onChangeContributions={(aportes) => updateField("aporteOtros", aportes)}
-                                totalCost={event?.aporteUMES + event?.aporteOtros || 0}
-                                financingSources={financingSources}
-                            />
-                            <TipoDeCompraComponent
-                                selectedTipo={event?.tipoCompra || ""}
-                                onSelectTipo={(tipos: string | null) => updateField("tipoCompra", tipos)}
-                            />
-                            <EventCostDetail
-                                files={event?.costDetailDocuments || []}
-                                onFilesChange={(files) => updateField("costDetailDocuments", files)}
-                            />
-                            <CampusSelector
-                                selectedCampusId={event?.campusId || ""}
-                                onSelectCampus={(campusId) => updateField("campusId", campusId)}
-                            />
-                            <RecursosSelectorComponent
-                                selectedRecursos={event?.recursos || []}
-                                onSelectRecursos={(recursos) => updateField("recursos", recursos)}
-                            />
-                        </TabsContent>
-                    </ScrollArea>
-                </Tabs>
-                <DevTool control={control} />
-                </form>
+                                <TabsContent value="finance" className="mt-4 space-y-6">
+                                    <div className="p-4 bg-gray-50 rounded-lg border">
+                                        <label className="text-sm font-medium text-gray-700">Costo Total</label>
+                                        <div className="mt-1 text-2xl font-bold text-green-600">
+                                            Q {(event?.aporteUMES + event?.aporteOtros || 0).toFixed(2)}
+                                        </div>
+                                    </div>
+                                    <UMESFinancingComponent
+                                        contributions={event?.aporteUMES || []}
+                                        onChangeContributions={(aportes) => updateField("aporteUMES", aportes)}
+                                        totalCost={event?.aporteUMES + event?.aporteOtros || 0}
+                                        financingSources={financingSources}
+                                    />
+                                    <OtherFinancingSourceComponent
+                                        contributions={event?.aporteOtros || []}
+                                        onChangeContributions={(aportes) => updateField("aporteOtros", aportes)}
+                                        totalCost={event?.aporteUMES + event?.aporteOtros || 0}
+                                        financingSources={financingSources}
+                                    />
+                                    <TipoDeCompraComponent
+                                        selectedTipo={event?.tipoCompra || ""}
+                                        onSelectTipo={(tipos: string | null) => updateField("tipoCompra", tipos)}
+                                    />
+                                    <EventCostDetail
+                                        files={event?.costDetailDocuments || []}
+                                        onFilesChange={(files) => updateField("costDetailDocuments", files)}
+                                    />
+                                    <CampusSelector
+                                        selectedCampusId={event?.campusId || ""}
+                                        onSelectCampus={(campusId) => updateField("campusId", campusId)}
+                                    />
+                                    <RecursosSelectorComponent
+                                        selectedRecursos={event?.recursos || []}
+                                        onSelectRecursos={(recursos) => updateField("recursos", recursos)}
+                                    />
+                                </TabsContent>
+                            </ScrollArea>
+                        </Tabs>
+                        <DevTool control={control} />
+                    </form>
                 </>
                 <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
                     <Button variant="outline" onClick={onClose}>

@@ -25,14 +25,14 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 
 // Types
 import { Intervention } from '@/types/Intervention';
-import { FullEventRequest } from '../formView/eventPlanningForm.schema';
 
 // Context
 import { EventContext } from '../formView/event.context';
 
 interface IntervencionesProps {
-  selectedIntervenciones: number[];
-  onSelectIntervencion: (intervenciones: number[]) => void;
+  selectedIntervenciones: { intervention: number; }[];
+  onSelectIntervencion: (intervenciones: { intervention: number; }) => void;
+  onRemove: (intervencionId: number) => void;
   disabled?: boolean; // Nueva propiedad
   tooltipMessage?: string; // Mensaje del tooltip cuando está deshabilitado
   strategyIds: number[];
@@ -41,6 +41,7 @@ interface IntervencionesProps {
 export function IntervencionesSelectorComponent({
   selectedIntervenciones,
   onSelectIntervencion,
+  onRemove,
   disabled = false, // Por defecto, no está deshabilitado
   tooltipMessage = "Por favor, seleccione al menos una estrategia primero.", // Mensaje por defecto
   strategyIds, // Nueva propiedad
@@ -73,24 +74,25 @@ export function IntervencionesSelectorComponent({
   }, [disabled, user?.token, strategyIds, interventions, fetchData]);
 
   const filteredIntervenciones = useMemo(() => {
-    return intervencionesList.filter((int) =>
-      int.name.toLowerCase().includes(searchTerm.toLowerCase())
+    return intervencionesList.filter((intervention) =>
+      intervention.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [intervencionesList, searchTerm]);
 
   const handleSelectIntervencion = (intervencionId: number) => {
     if (disabled) return; // No permitir cambios si está deshabilitado
-    const updatedIntervenciones = selectedIntervenciones.includes(intervencionId)
-      ? selectedIntervenciones.filter((id) => id !== intervencionId)
-      : [...selectedIntervenciones, intervencionId];
-    onSelectIntervencion(updatedIntervenciones);
+    console.log("interventions PREVIOUS actions", selectedIntervenciones);
+    if (selectedIntervenciones.some(item => item.intervention === intervencionId)) {
+      onRemove(intervencionId);
+    } else {
+      onSelectIntervencion({"intervention": intervencionId});
+    }
   };
 
   const handleRemoveIntervencion = (intId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (disabled) return; // No permitir cambios si está deshabilitado
-    const updatedIntervenciones = selectedIntervenciones.filter(id => id !== intId);
-    onSelectIntervencion(updatedIntervenciones);
+    if (disabled) return; 
+    onRemove(intId);
   };
 
   useEffect(() => {
@@ -106,25 +108,24 @@ export function IntervencionesSelectorComponent({
           <div>
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2 mb-2">
-                {selectedIntervenciones.map((id) => {
+                {selectedIntervenciones.map((item) => {
                   const intervencion = intervencionesList.find(
-                    (intervention) => intervention.interventionId === id
+                    (intervention) => intervention.interventionId === item.intervention
                   );
                   if (!intervencion) return null;
                   return (
                     <Badge
-                      key={id}
+                      key={item.intervention}
                       variant="secondary"
-                      className={`bg-green-100 text-green-800 flex items-center ${
-                        disabled ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`bg-green-100 text-green-800 flex items-center ${disabled ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                     >
                       {intervencion.isCustom ? `E${intervencion.interventionId}` : intervencion.interventionId}
                       <Button
                         variant="ghost"
                         size="sm"
                         className="ml-1 h-4 w-4 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
-                        onClick={(event) => handleRemoveIntervencion(id, event)}
+                        onClick={(event) => handleRemoveIntervencion(item.intervention, event)}
                         aria-label={`Eliminar ${intervencion.name}`}
                         disabled={disabled} // Deshabilitar el botón si está deshabilitado
                       >
@@ -138,8 +139,9 @@ export function IntervencionesSelectorComponent({
               <Select
                 open={isOpen}
                 onOpenChange={setIsOpen}
-                onValueChange={(value: string) => handleSelectIntervencion(Number(value))}
-                disabled={disabled} // Deshabilitar el Select si está deshabilitado
+                disabled={disabled} 
+                onValueChange={(val) => handleSelectIntervencion(Number(val))}
+                value=''
               >
                 <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
                   <SelectValue placeholder="Selecciona intervenciones" />
@@ -166,15 +168,13 @@ export function IntervencionesSelectorComponent({
                         >
                           <div className="flex items-center">
                             <Checkbox
-                              checked={selectedIntervenciones.includes(intervention.interventionId)}
-                              onCheckedChange={() => handleSelectIntervencion(intervention.interventionId)}
+                              checked={selectedIntervenciones.some(item => item.intervention === intervention.interventionId)}
                               className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
                               disabled={disabled} // Deshabilitar el checkbox si está deshabilitado
                             />
                             <div
-                              className={`w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold ${
-                                intervention.isCustom ? "bg-blue-500" : "bg-green-500"
-                              }`}
+                              className={`w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold ${intervention.isCustom ? "bg-blue-500" : "bg-green-500"
+                                }`}
                             >
                               {intervention.isCustom ? `E${intervention.interventionId}` : intervention.interventionId}
                             </div>

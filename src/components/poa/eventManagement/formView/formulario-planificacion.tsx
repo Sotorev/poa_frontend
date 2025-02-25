@@ -104,11 +104,16 @@ export function TraditionalView() {
   const {
     isOpen,
     setIsOpen,
-    watch,
+    fields,
+    getValues,
     register,
+    setValue,
     control,
     handleSubmit,
     reset,
+    watch,
+    append,
+    remove,
     selectedStrategicArea,
     selectedStrategicObjective,
     setSelectedStrategicObjective,
@@ -676,8 +681,13 @@ export function TraditionalView() {
         updateField={(field, value) => updateField(field as keyof FilaPlanificacion, value)}
         addStrategicObjective={addStrategicObjective}
         financingSources={financingSources}
+        fields={fields}
         watch={watch}
+        getValues={getValues}
         register={register}
+        setValue={setValue}
+        append={append}
+        remove={remove}
         selectedStrategicArea={selectedStrategicArea}
         selectedStrategicObjective={selectedStrategicObjective}
         setSelectedStrategicObjective={setSelectedStrategicObjective}
