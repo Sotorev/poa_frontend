@@ -148,6 +148,7 @@ export function EstrategiasSelectorComponent({
                     setSearchTerm("");
                   }
                 }}
+                value=""
                 disabled={disabled} // Deshabilitar el Select si está deshabilitado
               >
                 <SelectTrigger className="w-[300px] border-green-500 focus:ring-green-500">
