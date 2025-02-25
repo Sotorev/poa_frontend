@@ -219,10 +219,10 @@ export default function CostByFaculty() {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <Card className="w-full max-w-3xl">
+      <Card className="w-full max-w-5xl">
         <CardHeader>
-          <CardTitle className="text-green-700">Costos Totales por Facultad</CardTitle>
-          <CardDescription className="text-green-600">Plan Operativo Anual (POA) - Universidad Mesoamericana</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">Costos Totales por Facultad</CardTitle>
+          <CardDescription className="text-center">Costo del POA de eventos y recursos adicionales por todas las facultades</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -248,11 +248,11 @@ export default function CostByFaculty() {
           )}
           
           {!loading && !error && (
-            <div className="h-[450px] w-full">
+            <div className="h-[600px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={filteredData}
-                  margin={{ top: 20, right: 30, left: 65, bottom: 60 }}
+                  margin={{ top: 20, right: 30, left: 65, bottom: 250 }}
                   barSize={30}
                   maxBarSize={50}
                 >
@@ -263,7 +263,8 @@ export default function CostByFaculty() {
                     angle={-45}
                     textAnchor="end"
                     tick={{ fill: "hsl(142, 76%, 36%)", fontSize: getTickFontSize() }}
-                    tickMargin={10}
+                    tickMargin={5}
+
                   />
                   <YAxis
                     tickFormatter={formatCurrency}

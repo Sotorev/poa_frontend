@@ -118,11 +118,11 @@ export default function GraficoAlcanceEventosPorFacultad() {
   return (
     <Card className="w-full max-w-7xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">
+        <CardTitle className="text-2xl font-bold text-center">
           Alcance de Eventos por Facultad
         </CardTitle>
-        <CardDescription>
-          Análisis detallado de eventos planificados, ejecutados y finalizados
+        <CardDescription className="text-center">
+          Análisis detallado del estado de eventos entre planificados, ejecutados y finalizados
         </CardDescription>
       </CardHeader>
       <CardContent>

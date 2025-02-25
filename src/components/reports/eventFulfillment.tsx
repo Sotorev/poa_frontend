@@ -157,14 +157,6 @@ const ComplianceReportChart = () => {
       legend: {
         position: "top" as const
       },
-      title: {
-        display: true,
-        text: "Reporte de Cumplimiento por Facultad",
-        font: {
-          size: 18,
-          weight: 700
-        }
-      },
       tooltip: {
         callbacks: {
           label: (context: any) => {
@@ -215,7 +207,7 @@ const ComplianceReportChart = () => {
   return (
     <Card className="w-full max-w-7xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">
+        <CardTitle className="text-2xl font-bold text-center">
           Reporte de Cumplimiento por Facultad
         </CardTitle>
         <CardDescription className="text-center">
@@ -252,7 +244,7 @@ const ComplianceReportChart = () => {
             </Button>
           </div>
         </div>
-        <div className="h-[400px]">
+        <div className="h-[500px]">
           <Bar ref={chartRef} data={chartData} options={options} plugins={[ChartDataLabels]} />
         </div>
       </CardContent>

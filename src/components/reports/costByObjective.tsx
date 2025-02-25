@@ -285,7 +285,7 @@ export default function PoaCostChart() {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-5xl mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">
           Costos por Objetivo Estratégico

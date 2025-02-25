@@ -108,8 +108,8 @@ export default function GraficoMatriculaUniversitaria() {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>Tendencias de Matrícula Universitaria</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-2xl font-bold text-center">Tendencias de Matrícula Universitaria</CardTitle>
+        <CardDescription className="text-center">
           Matrícula de estudiantes por facultad a lo largo de los años
         </CardDescription>
       </CardHeader>
@@ -135,8 +135,11 @@ export default function GraficoMatriculaUniversitaria() {
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "white",
+                      opacity: 1,
                       borderRadius: "8px",
                       boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                      zIndex: 9999,       // Asegura que tenga prioridad visual
+                      position: "absolute"
                     }}
                     labelStyle={{ fontWeight: "bold", marginBottom: "4px" }}
                   />
