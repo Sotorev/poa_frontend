@@ -61,7 +61,7 @@ export const fullEventSchema = z
       .array(responsibleSchema)
       .min(1, "Debe asignar al menos un responsable"),
     interventions: z.array(z.object({ intervention: z.number() })),
-    ods: z.array(z.number()),
+    ods: z.array(z.object({ ods: z.number() })),
     resources: z
       .array(resourceSchema)
       .min(1, "Debe asignar al menos un recurso"),
@@ -95,9 +95,7 @@ export const filaPlanificacionSchema = z
   .object({
     id: z.string(),
     areaEstrategica: z.string().min(1, "Área Estratégica es requerida"),
-    objetivoEstrategico: z
-      .string()
-      .min(1, "Objetivo Estratégico es requerido"),
+    objetivoEstrategico: z.string().min(1, "Objetivo Estratégico es requerido"),
     estrategias: z
       .array(z.string().min(1, "La estrategia no puede estar vacía"))
       .min(1, "Debe seleccionar al menos una estrategia"),

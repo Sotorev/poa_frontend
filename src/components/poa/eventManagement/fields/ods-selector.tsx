@@ -11,11 +11,12 @@ import { getODS } from '@/services/apiService'
 import { ODS } from '@/types/ods'  // Asegúrate de importar correctamente el tipo ODS
 
 interface OdsSelectorProps {
-  selectedODS: string[]
-  onSelectODS: (ods: string[]) => void
+  selected: {"ods": number}[]
+  onSelect: (odsId: number) => void
+  onRemove: (odsId: number) => void
 }
 
-export function OdsSelector({ selectedODS, onSelectODS }: OdsSelectorProps) {
+export function OdsSelector({ selected, onSelect }: OdsSelectorProps) {
   const [odsList, setOdsList] = useState<ODS[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isOpen, setIsOpen] = useState(false)

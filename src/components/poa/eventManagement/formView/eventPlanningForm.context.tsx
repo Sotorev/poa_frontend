@@ -5,13 +5,16 @@ import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, Us
 import { FullEventRequest } from "./eventPlanningForm.schema";
 
 interface EventPlanningFormContextProps {
-    fields: FieldArrayWithId<FullEventRequest, "interventions">[];
+    fieldsInterventions: FieldArrayWithId<FullEventRequest, "interventions">[];
+    appendIntervention: UseFieldArrayAppend<FullEventRequest>
+    removeIntervention: UseFieldArrayRemove
+    fieldsODS: FieldArrayWithId<FullEventRequest, "ods">[];
+    appendODS: UseFieldArrayAppend<FullEventRequest>
+    removeODS: UseFieldArrayRemove
     getValues: UseFormGetValues<FullEventRequest>
     watch: UseFormWatch<FullEventRequest>
     register: UseFormRegister<FullEventRequest>
     setValue: UseFormSetValue<FullEventRequest>
-    append: UseFieldArrayAppend<FullEventRequest>
-    remove: UseFieldArrayRemove
     control: Control<FullEventRequest>
     handleSubmit: UseFormHandleSubmit<FullEventRequest>
     reset: UseFormReset<FullEventRequest>
@@ -24,13 +27,16 @@ const notImplemented = (name: string) => {
 };
 
 export const EventPlanningFormContext = createContext<EventPlanningFormContextProps>({
-    fields: [],
+    fieldsInterventions: [],
+    appendIntervention: notImplemented("append"),
+    removeIntervention: notImplemented("remove"),
+    fieldsODS: [],
+    appendODS: notImplemented("append"),
+    removeODS: notImplemented("remove"),
     getValues: notImplemented("getValues"),
     watch: notImplemented("watch"),
     register: notImplemented("register"),
     setValue: notImplemented("setValue"),
-    append: notImplemented("append"),
-    remove: notImplemented("remove"),
     control: {} as Control<FullEventRequest>,
     handleSubmit: notImplemented("handleSubmit"),
     reset: notImplemented("reset")
@@ -41,9 +47,13 @@ export const EventPlanningFormProvider: React.FC<{
     onSubmit: (data: FullEventRequest) => void;
 }> = ({ children, onSubmit }) => {
     const { register, handleSubmit, reset, getValues, watch, control, setValue } = useForm<FullEventRequest>()
-    const { append, remove, fields } = useFieldArray<FullEventRequest, 'interventions'>({
+    const { append: appendIntervention, remove: removeIntervention, fields: fieldsInterventions } = useFieldArray<FullEventRequest, 'interventions'>({
         control,
         name: 'interventions'
+    })
+    const { append: appendODS, remove: removeODS, fields: fieldsODS } = useFieldArray<FullEventRequest, 'ods'>({
+        control,
+        name: 'ods'
     })
 
     handleSubmit(onSubmit)
@@ -58,9 +68,12 @@ export const EventPlanningFormProvider: React.FC<{
                 watch,
                 control,
                 setValue,
-                append,
-                remove,
-                fields
+                appendIntervention,
+                removeIntervention,
+                fieldsInterventions,
+                appendODS,
+                removeODS,
+                fieldsODS
             }}
         >
             {children}

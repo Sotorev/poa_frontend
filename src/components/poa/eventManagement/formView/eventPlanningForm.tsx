@@ -1,8 +1,16 @@
+// src/components/poa/eventManagement/formView/eventPlanningForm.tsx
+
+// Libraries
+import { DevTool } from "@hookform/devtools";
+import { useContext } from "react"
+
+// Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
+// Custom Components
 import { AreaEstrategicaComponent } from "../fields/area-estrategica"
 import { StrategicObjectiveSelector } from "../fields/objetivos-estrategicos-selector"
 import { EstrategiasSelectorComponent } from "../fields/estrategias-selector"
@@ -21,12 +29,12 @@ import { RecursosSelectorComponent } from "../fields/recursos-selector"
 import { IndicadorLogroComponent } from "../fields/indicador-logro"
 import { DetalleProcesoComponent } from "../fields/detalle-proceso"
 
-import { FullEventRequest } from "./eventPlanningForm.schema"
+// Types
 import { StrategicArea } from "@/types/StrategicArea"
 import { StrategicObjective } from "@/types/StrategicObjective"
 import { Strategy } from "@/types/Strategy"
-import { DevTool } from "@hookform/devtools";
-import { useContext } from "react"
+
+// Context
 import { EventPlanningFormContext } from "./eventPlanningForm.context"
 
 
@@ -58,10 +66,13 @@ export function EventPlanningForm({
     setSelectedStrategies,
 }: EventPlanningFormProps) {
     const {
-        fields,
+        fieldsInterventions,
+        appendIntervention,
+        removeIntervention,
+        fieldsODS,
+        appendODS,
+        removeODS,
         watch,
-        append,
-        remove,
         control
     } = useContext(EventPlanningFormContext)
 
@@ -100,12 +111,16 @@ export function EventPlanningForm({
                                     />
                                     <IntervencionesSelectorComponent
                                         selectedIntervenciones={watch("interventions") || []}
-                                        onSelectIntervencion={(interventionId) => { append(interventionId); console.log("interventions POST actions", watch("interventions")); }}
-                                        onRemove={(interventionId) => { remove(fields.findIndex((field) => field.intervention === interventionId)); console.log("interventions POST actions", watch("interventions")); }}
+                                        onSelectIntervencion={(interventionId) => appendIntervention(interventionId)}
+                                        onRemove={(interventionId) => removeIntervention(fieldsInterventions.findIndex((field) => field.intervention === interventionId))}
                                         disabled={!selectedStrategies?.length}
                                         strategyIds={selectedStrategies?.map(est => est.strategyId) || []}
                                     />
-                                    <OdsSelector selectedODS={event?.ods || []} onSelectODS={(ods) => updateField("ods", ods)} />
+                                    <OdsSelector
+                                        selected={watch("ods") || []}
+                                        onSelect={(ods) => appendODS(ods)}
+                                        onRemove={(ods) => removeODS(fieldsODS.findIndex((field) => field.ods === ods))}
+                                    />
                                 </TabsContent>
 
                                 <TabsContent value="info" className="mt-4 space-y-6">
