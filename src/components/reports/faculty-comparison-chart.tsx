@@ -19,7 +19,7 @@ interface FacultyData {
   facultyId: number;
   facultyName: string;
   totalStudents: number;
-  totalBudget: number;
+  annualBudget: number;
 }
 
 const formatCurrency = (value: number) =>
@@ -30,7 +30,7 @@ const formatNumber = (value: number) =>
 
 export default function FacultyComparisonChart() {
   const [data, setData] = useState<FacultyData[]>([])
-  const [sortBy, setSortBy] = useState<"totalBudget" | "totalStudents">("totalBudget")
+  const [sortBy, setSortBy] = useState<"annualBudget" | "totalStudents">("annualBudget")
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -74,8 +74,8 @@ export default function FacultyComparisonChart() {
     () => [...data].sort((a, b) => b[sortBy] - a[sortBy]),
     [data, sortBy]
   )
-  const totalBudget = useMemo(
-    () => data.reduce((sum, faculty) => sum + faculty.totalBudget, 0),
+  const annualBudget = useMemo(
+    () => data.reduce((sum, faculty) => sum + faculty.annualBudget, 0),
     [data]
   )
   const totalStudents = useMemo(
@@ -99,7 +99,7 @@ export default function FacultyComparisonChart() {
               <div>
                 <p className="text-sm font-medium text-green-700">Presupuesto Total</p>
                 <p className="text-2xl font-semibold text-green-800">
-                  {formatCurrency(totalBudget)}
+                  {formatCurrency(annualBudget)}
                 </p>
               </div>
               <DollarSign size={30} className="text-green-500" />
@@ -119,8 +119,8 @@ export default function FacultyComparisonChart() {
         </div>
         <div className="flex justify-center space-x-4 mb-6">
           <Button
-            variant={sortBy === "totalBudget" ? "default" : "outline"}
-            onClick={() => setSortBy("totalBudget")}
+            variant={sortBy === "annualBudget" ? "default" : "outline"}
+            onClick={() => setSortBy("annualBudget")}
             className="transition-colors duration-200 bg-green-200 hover:bg-green-300 text-green-800"
           >
             Ordenar por Presupuesto
@@ -165,7 +165,7 @@ export default function FacultyComparisonChart() {
             />
             <Bar
               yAxisId="left"
-              dataKey="totalBudget"
+              dataKey="annualBudget"
               fill="#34d399"
               name="Presupuesto"
             />
