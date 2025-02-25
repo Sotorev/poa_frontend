@@ -3,7 +3,7 @@
 'use client'
 
 // Libraries
-import React, { useState, useContext, useMemo } from 'react'
+import { useState, useContext, useMemo } from 'react'
 
 // Charge data
 import { useCurrentUser } from '@/hooks/use-current-user'
@@ -21,7 +21,6 @@ import { filaPlanificacionSchema, FullEventRequest } from './eventPlanningForm.s
 import { StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
 import { get } from 'http'
 import { EventPlanningForm } from './eventPlanningForm'
-import { useForm, useFieldArray } from 'react-hook-form'
 import { EventContext } from './event.context'
 
 export function useTraditionalView() {
@@ -46,27 +45,20 @@ export function useTraditionalView() {
     const [loading, setLoading] = useState<boolean>(false)
     const [isOpen, setIsOpen] = useState<boolean>(false)
 
-    // function forms
-    const { register, handleSubmit, reset, getValues, watch, control, setValue } = useForm<FullEventRequest>()
-    const { append, remove, fields } = useFieldArray<FullEventRequest, "interventions">({ control, name: 'interventions' })
+    // Functions
+    const onSubmit = async (data: FullEventRequest) => {
+        setEventRequest(data)
+    }
 
     return {
         isOpen,
         setIsOpen,
-        fields,
-        getValues,
-        watch,
-        register,
-        setValue,
-        append,
-        remove,
-        control,
-        handleSubmit,
-        reset,
+        eventRequest,
         selectedStrategicArea,
         selectedStrategicObjective,
         setSelectedStrategicObjective,
         selectedStrategies,
         setSelectedStrategies,
+        onSubmit
     }
 }

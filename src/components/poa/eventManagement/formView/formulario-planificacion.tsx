@@ -38,6 +38,7 @@ import { EventPlanningForm } from './eventPlanningForm'
 // Hooks
 import { useToast } from '@/hooks/use-toast'
 import { useTraditionalView } from './useTraditionalView'
+import { EventPlanningFormProvider } from './eventPlanningForm.context'
 
 const getColumnName = (field: string): string => {
   const columnMap: { [key: string]: string } = {
@@ -86,7 +87,6 @@ export function TraditionalView() {
 
 
 
-  const [eventRequest, setEventRequest] = useState<FullEventRequest>()
   const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [strategicAreas, setStrategicAreas] = useState<StrategicArea[]>([])
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([])
@@ -104,21 +104,13 @@ export function TraditionalView() {
   const {
     isOpen,
     setIsOpen,
-    fields,
-    getValues,
-    register,
-    setValue,
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    append,
-    remove,
     selectedStrategicArea,
     selectedStrategicObjective,
     setSelectedStrategicObjective,
     selectedStrategies,
     setSelectedStrategies,
+    eventRequest,
+    onSubmit
   } = useTraditionalView()
 
   const { toast } = useToast()
@@ -674,27 +666,21 @@ export function TraditionalView() {
 
   return (
     <div className="container mx-auto p-4">
-      <EventPlanningForm
-        isOpen={isOpen}
-        onClose={() => { setIsOpen(false) }}
-        event={undefined}
-        updateField={(field, value) => updateField(field as keyof FilaPlanificacion, value)}
-        addStrategicObjective={addStrategicObjective}
-        financingSources={financingSources}
-        fields={fields}
-        watch={watch}
-        getValues={getValues}
-        register={register}
-        setValue={setValue}
-        append={append}
-        remove={remove}
-        selectedStrategicArea={selectedStrategicArea}
-        selectedStrategicObjective={selectedStrategicObjective}
-        setSelectedStrategicObjective={setSelectedStrategicObjective}
-        selectedStrategies={selectedStrategies}
-        setSelectedStrategies={setSelectedStrategies}
-        control={control}
-      />
+      <EventPlanningFormProvider onSubmit={onSubmit}>
+        <EventPlanningForm
+          isOpen={isOpen}
+          onClose={() => { setIsOpen(false) }}
+          event={undefined}
+          updateField={(field, value) => updateField(field as keyof FilaPlanificacion, value)}
+          addStrategicObjective={addStrategicObjective}
+          financingSources={financingSources}
+          selectedStrategicArea={selectedStrategicArea}
+          selectedStrategicObjective={selectedStrategicObjective}
+          setSelectedStrategicObjective={setSelectedStrategicObjective}
+          selectedStrategies={selectedStrategies}
+          setSelectedStrategies={setSelectedStrategies}
+        />
+      </EventPlanningFormProvider>
 
       <div className="flex justify-center">
         <Button onClick={() => { setIsOpen(true) }} className="px-8 my-2 mb-6">Agregar Evento</Button>

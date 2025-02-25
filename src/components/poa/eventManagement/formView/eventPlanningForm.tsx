@@ -20,12 +20,14 @@ import { ResponsablesComponent } from "../fields/responsables"
 import { RecursosSelectorComponent } from "../fields/recursos-selector"
 import { IndicadorLogroComponent } from "../fields/indicador-logro"
 import { DetalleProcesoComponent } from "../fields/detalle-proceso"
-import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form"
+
 import { FullEventRequest } from "./eventPlanningForm.schema"
 import { StrategicArea } from "@/types/StrategicArea"
 import { StrategicObjective } from "@/types/StrategicObjective"
 import { Strategy } from "@/types/Strategy"
 import { DevTool } from "@hookform/devtools";
+import { useContext } from "react"
+import { EventPlanningFormContext } from "./eventPlanningForm.context"
 
 
 interface EventPlanningFormProps {
@@ -35,19 +37,11 @@ interface EventPlanningFormProps {
     updateField: (field: string, value: any) => void
     addStrategicObjective: (objective: any) => void
     financingSources: any[]
-    fields: FieldArrayWithId<FullEventRequest, "interventions">[];
-    getValues: UseFormGetValues<FullEventRequest>
-    watch: UseFormWatch<FullEventRequest>
-    register: UseFormRegister<FullEventRequest>
-    setValue: UseFormSetValue<FullEventRequest>
-    append: UseFieldArrayAppend<FullEventRequest>
-    remove: UseFieldArrayRemove
     selectedStrategicArea: StrategicArea | undefined
     selectedStrategicObjective: StrategicObjective | undefined
     setSelectedStrategicObjective: (objective: StrategicObjective) => void
     selectedStrategies: Strategy[] | undefined
     setSelectedStrategies: (strategies: Strategy[]) => void
-    control: Control<FullEventRequest>
 }
 
 export function EventPlanningForm({
@@ -57,20 +51,20 @@ export function EventPlanningForm({
     updateField,
     addStrategicObjective,
     financingSources,
-    fields,
-    getValues,
-    watch,
-    register,
-    setValue,
-    append,
-    remove,
     selectedStrategicArea,
     selectedStrategicObjective,
     setSelectedStrategicObjective,
     selectedStrategies,
     setSelectedStrategies,
-    control
 }: EventPlanningFormProps) {
+    const {
+        fields,
+        watch,
+        append,
+        remove,
+        control
+    } = useContext(EventPlanningFormContext)
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[90vh] p-0">
@@ -107,7 +101,7 @@ export function EventPlanningForm({
                                     <IntervencionesSelectorComponent
                                         selectedIntervenciones={watch("interventions") || []}
                                         onSelectIntervencion={(interventionId) => { append(interventionId); console.log("interventions POST actions", watch("interventions")); }}
-                                        onRemove={(interventionId) => {remove(fields.findIndex((field) => field.intervention === interventionId)); console.log("interventions POST actions", watch("interventions")); }}
+                                        onRemove={(interventionId) => { remove(fields.findIndex((field) => field.intervention === interventionId)); console.log("interventions POST actions", watch("interventions")); }}
                                         disabled={!selectedStrategies?.length}
                                         strategyIds={selectedStrategies?.map(est => est.strategyId) || []}
                                     />
