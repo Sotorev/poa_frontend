@@ -1,139 +1,237 @@
-// src/components/poa/components/columns/actividad-proyecto-selector.tsx
-'use client';
+"use client"
 
-import * as React from "react";
-import { useState } from "react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon, Trash2Icon, ChevronLeft, ChevronRight } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
-interface DatePair {
-  start: Date;
-  end: Date;
+// Types
+import type { DateSchema } from "../formView/eventPlanningForm.schema"
+
+interface ActivityProjectSelectorProps {
+  selectedOption: "Actividad" | "Proyecto"
+  onSelectOption: (option: "Actividad" | "Proyecto") => void
+  dates: DateSchema[]
+  defaultDate: Date
+  onReplaceDates: (dates: DateSchema[]) => void
+  onAppendDate: (date: DateSchema) => void
+  onChangeDate: (index: number, date: DateSchema) => void
+  onRemoveDate: (index: number) => void
 }
 
-interface ActividadProyectoSelectorProps {
-  selectedOption: "actividad" | "proyecto";
-  onSelectOption: (tipo: "actividad" | "proyecto") => void;
-  fechas: DatePair[]; // Para actividades (múltiples fechas)
-  onChangeFechas: (fechas: DatePair[]) => void;
-  fechaProyecto: DatePair; // Para proyectos (una sola fecha)
-  onChangeFechaProyecto: (fecha: DatePair) => void;
-}
-
-export function ActividadProyectoSelector({
+export function ActivityProjectSelector({
   selectedOption,
   onSelectOption,
-  fechas,
-  onChangeFechas,
-  fechaProyecto,
-  onChangeFechaProyecto,
-}: ActividadProyectoSelectorProps) {
+  dates,
+  defaultDate,
+  onReplaceDates,
+  onAppendDate,
+  onChangeDate,
+  onRemoveDate,
+}: ActivityProjectSelectorProps) {
+  // Estado local para manejar la fecha que se está editando actualmente
+  const [currentDateIndex, setCurrentDateIndex] = useState<number | null>(null)
+  const [isStartDateOpen, setIsStartDateOpen] = useState(false)
+  const [isEndDateOpen, setIsEndDateOpen] = useState(false)
+
+  // Función para manejar el cambio de opción (actividad o proyecto)
+  const handleOptionChange = (value: string) => {
+    onSelectOption(value as "Actividad" | "Proyecto")
+
+    // Si cambia a proyecto y hay múltiples fechas, mantener solo la primera
+    if (value === "Proyecto" && dates.length > 1) {
+      onReplaceDates([dates[0]])
+    }
+  }
+
+  // Función para añadir un nuevo rango de fechas
+  const handleAddDateRange = (): void => {
+    // Si es modo proyecto y ya hay una fecha, no permitir añadir más
+    if (selectedOption === "Proyecto" && dates.length > 0) {
+      return
+    }
+
+    const newDate: DateSchema = {
+      startDate: "",
+      endDate: "",
+    }
+
+    onAppendDate(newDate)
+    setCurrentDateIndex(dates.length)
+    setIsStartDateOpen(true)
+  }
+
+  // Función para eliminar un rango de fechas
+  const handleDeleteDateRange = (index: number) => {
+    onRemoveDate(index)
+
+    if (currentDateIndex === index) {
+      setCurrentDateIndex(null)
+    }
+  }
+
+  // Función para actualizar una fecha de inicio
+  const handleStartDateChange = (date: Date | undefined, index: number) => {
+
+    if (date) {
+      const newDates = [...dates]
+      newDates[index] = {
+        ...newDates[index],
+        startDate: date.toISOString(),
+      }
+      onChangeDate(index, newDates[index])
+      setIsStartDateOpen(false)
+
+      // Si no hay fecha de fin, abrir automáticamente el selector de fecha de fin
+      if (!dates[index].endDate) {
+        setIsEndDateOpen(true)
+      }
+    }
+  }
+
+  // Función para actualizar una fecha de fin
+  const handleEndDateChange = (date: Date | undefined, index: number) => {
+
+    if (date) {
+      const newDates = [...dates]
+      newDates[index] = {
+        ...newDates[index],
+        endDate: date.toISOString(),
+      }
+      onChangeDate(index, newDates[index])
+      setIsEndDateOpen(false)
+      setCurrentDateIndex(null)
+    }
+  }
+
+  // Función para formatear la fecha para mostrar
+  const formatDateDisplay = (dateString: string) => {
+    if (!dateString) return "Seleccionar"
+    return format(new Date(dateString), "dd/MM/yyyy", { locale: es })
+  }
+
   return (
     <div className="space-y-4">
-      <RadioGroup
-        value={selectedOption}
-        onValueChange={(value) => onSelectOption(value as "actividad" | "proyecto")}
-        className="flex space-x-4"
-      >
+      {/* Selector de Actividad/Proyecto */}
+      <RadioGroup value={selectedOption} onValueChange={handleOptionChange} className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="actividad" id="actividad" className="border-green-500 text-green-600" />
-          <Label htmlFor="actividad" className="text-green-700">
+          <RadioGroupItem value="Actividad" id="Actividad" />
+          <Label htmlFor="Actividad" className="text-green-600 font-medium">
             Actividad
           </Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="proyecto" id="proyecto" className="border-green-500 text-green-600" />
-          <Label htmlFor="proyecto" className="text-green-700">
+          <RadioGroupItem value="Proyecto" id="Proyecto" />
+          <Label htmlFor="Proyecto" className="text-green-600 font-medium">
             Proyecto
           </Label>
         </div>
       </RadioGroup>
 
-      <div className="space-y-2">
-        {selectedOption === "actividad" ? (
-          <>
-            {fechas.map((datePair, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <Input
-                  type="date"
-                  value={format(datePair.start, "yyyy-MM-dd")}
-                  className="w-auto max-w-[150px] border-green-300 text-green-700 focus:ring-green-500 text-sm px-2 py-1"
-                  onChange={(e) => {
-                    const date = new Date(e.target.value);
-                    if (!isNaN(date.getTime())) {
-                      const newFechas = [...fechas];
-                      newFechas[index] = { ...newFechas[index], start: date };
-                      onChangeFechas(newFechas);
-                    }
-                  }}
-                />
-                <span className="text-green-700">-</span>
-                <Input
-                  type="date"
-                  value={format(datePair.end, "yyyy-MM-dd")}
-                  className="w-auto max-w-[150px] border-green-300 text-green-700 focus:ring-green-500 text-sm px-2 py-1"
-                  onChange={(e) => {
-                    const date = new Date(e.target.value);
-                    if (!isNaN(date.getTime())) {
-                      const newFechas = [...fechas];
-                      newFechas[index] = { ...newFechas[index], end: date };
-                      onChangeFechas(newFechas);
-                    }
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const newFechas = fechas.filter((_, i) => i !== index);
-                    onChangeFechas(newFechas);
-                  }}
-                >
-                  Eliminar
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                onChangeFechas([...fechas, { start: new Date(), end: new Date() }]);
+      {/* Lista de rangos de fechas */}
+      <div className="space-y-3">
+        {dates.map((dateRange, index) => (
+          <div key={index} className="flex items-center space-x-2">
+            {/* Selector de fecha de inicio */}
+            <Popover
+              open={currentDateIndex === index && isStartDateOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  setCurrentDateIndex(index)
+                  setIsStartDateOpen(true)
+                  setIsEndDateOpen(false)
+                } else {
+                  setIsStartDateOpen(false)
+                }
               }}
             >
-              Añadir Fecha
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[140px] justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDateDisplay(dateRange.startDate)}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={dateRange.startDate ? new Date(dateRange.startDate) : undefined}
+                  defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
+                  onSelect={(date) => handleStartDateChange(date, index)}
+                  initialFocus
+                  captionLayout="dropdown-buttons"
+                  fromYear={new Date().getFullYear()} 
+                  toYear={new Date().getFullYear() + 10}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span>-</span>
+
+            {/* Selector de fecha de fin */}
+            <Popover
+              open={currentDateIndex === index && isEndDateOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  setCurrentDateIndex(index)
+                  setIsEndDateOpen(true)
+                  setIsStartDateOpen(false)
+                } else {
+                  setIsEndDateOpen(false)
+                }
+              }}
+            >
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[140px] justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDateDisplay(dateRange.endDate)}
+                </Button>
+              </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={dateRange.endDate ? new Date(dateRange.endDate) : undefined}
+                  onSelect={(date) => handleEndDateChange(date, index)}
+                  defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
+                  captionLayout="dropdown-buttons"
+                  fromYear={new Date().getFullYear()} 
+                  toYear={new Date().getFullYear() + 10}
+                  initialFocus
+                  disabled={(date) => {
+                  // Deshabilitar fechas anteriores a la fecha de inicio
+                  if (dateRange.startDate) {
+                    return date < new Date(dateRange.startDate)
+                  }
+                  return false
+                  }}
+                  className="rounded-md border"
+                />
+                </PopoverContent>
+            </Popover>
+
+            {/* Botón para eliminar el rango de fechas */}
+            <Button type="button" variant="ghost" size="icon" onClick={() => handleDeleteDateRange(index)} className="h-8 w-8">
+              <Trash2Icon className="h-4 w-4" />
             </Button>
-          </>
-        ) : (
-          <div className="flex items-center space-x-2">
-            <Input
-              type="date"
-              value={format(fechaProyecto.start, "yyyy-MM-dd")}
-              className="w-auto max-w-[150px] border-green-300 text-green-700 focus:ring-green-500 text-sm px-2 py-1"
-              onChange={(e) => {
-                const date = new Date(e.target.value);
-                if (!isNaN(date.getTime())) {
-                  onChangeFechaProyecto({ ...fechaProyecto, start: date });
-                }
-              }}
-            />
-            <span className="text-green-700">-</span>
-            <Input
-              type="date"
-              value={format(fechaProyecto.end, "yyyy-MM-dd")}
-              className="w-auto max-w-[150px] border-green-300 text-green-700 focus:ring-green-500 text-sm px-2 py-1"
-              onChange={(e) => {
-                const date = new Date(e.target.value);
-                if (!isNaN(date.getTime())) {
-                  onChangeFechaProyecto({ ...fechaProyecto, end: date });
-                }
-              }}
-            />
           </div>
-        )}
+        ))}
       </div>
+
+      {/* Botón para añadir un nuevo rango de fechas */}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleAddDateRange}
+        disabled={selectedOption === "Proyecto" && dates.length > 0}
+        className="mt-2"
+      >
+        Añadir Fecha
+      </Button>
     </div>
-  );
+  )
 }
+

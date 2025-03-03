@@ -16,7 +16,7 @@ import { StrategicObjectiveSelector } from "../fields/objetivos-estrategicos-sel
 import { EstrategiasSelectorComponent } from "../fields/estrategias-selector"
 import { IntervencionesSelectorComponent } from "../fields/intervenciones-selector"
 import { OdsSelector } from "../fields/ods-selector"
-import { ActividadProyectoSelector } from "../fields/actividad-proyecto-selector"
+import { ActivityProjectSelector } from "../fields/actividad-proyecto-selector";
 import { EventoComponent } from "../fields/evento"
 import { ObjetivoComponent } from "../fields/objetivo"
 import { UMESFinancingComponent } from "../fields/umes-financing-source"
@@ -72,7 +72,12 @@ export function EventPlanningForm({
         fieldsODS,
         appendODS,
         removeODS,
+        appendDate,
+        updateDate,
+        removeDate,
+        replaceDates,
         watch,
+        setValue,
         control
     } = useContext(EventPlanningFormContext)
 
@@ -124,13 +129,15 @@ export function EventPlanningForm({
                                 </TabsContent>
 
                                 <TabsContent value="info" className="mt-4 space-y-6">
-                                    <ActividadProyectoSelector
-                                        selectedOption={event?.tipoEvento || "actividad"}
-                                        onSelectOption={(tipo) => updateField("tipoEvento", tipo)}
-                                        fechas={event?.fechas || []}
-                                        onChangeFechas={(fechas) => updateField("fechas", fechas)}
-                                        fechaProyecto={event?.fechaProyecto || { start: new Date(), end: new Date() }}
-                                        onChangeFechaProyecto={(fecha) => updateField("fechaProyecto", fecha)}
+                                    <ActivityProjectSelector
+                                        selectedOption={watch("type") || ""}
+                                        onSelectOption={(option) => setValue("type", option)}
+                                        dates={watch("dates") || []}
+                                        defaultDate={new Date((new Date().getFullYear() + 1), 0, 1)}
+                                        onReplaceDates={(dates) => replaceDates(dates)}
+                                        onAppendDate={(date) => appendDate(date)}
+                                        onChangeDate={(index, date) => updateDate(index, date)}
+                                        onRemoveDate={(index) => removeDate(index)}
                                     />
                                     <EventoComponent value={event?.evento || ""} onChange={(value) => updateField("evento", value)} />
                                     <ObjetivoComponent value={event?.objetivo || ""} onChange={(value) => updateField("objetivo", value)} />

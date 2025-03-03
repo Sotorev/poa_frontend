@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch, useForm, useFieldArray, UseFormHandleSubmit, UseFormReset } from "react-hook-form"
+import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch, useForm, useFieldArray, UseFormHandleSubmit, UseFormReset, UseFieldArrayUpdate, UseFieldArrayReplace } from "react-hook-form"
 
 // Types
 import { FullEventRequest } from "./eventPlanningForm.schema";
@@ -11,6 +11,11 @@ interface EventPlanningFormContextProps {
     fieldsODS: FieldArrayWithId<FullEventRequest, "ods">[];
     appendODS: UseFieldArrayAppend<FullEventRequest>
     removeODS: UseFieldArrayRemove
+    fieldsDates: FieldArrayWithId<FullEventRequest, "dates">[];
+    appendDate: UseFieldArrayAppend<FullEventRequest>
+    updateDate: UseFieldArrayUpdate<FullEventRequest>
+    removeDate: UseFieldArrayRemove
+    replaceDates: UseFieldArrayReplace<FullEventRequest>
     getValues: UseFormGetValues<FullEventRequest>
     watch: UseFormWatch<FullEventRequest>
     register: UseFormRegister<FullEventRequest>
@@ -21,7 +26,7 @@ interface EventPlanningFormContextProps {
 }
 
 const notImplemented = (name: string) => {
-    return (...args: any[]) => { 
+    return (...args: any[]) => {
         throw new Error(`${name} has not been implemented. Did you forget to wrap your component in EventPlanningFormProvider?`)
     }
 };
@@ -33,6 +38,11 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
     fieldsODS: [],
     appendODS: notImplemented("append"),
     removeODS: notImplemented("remove"),
+    fieldsDates: [],
+    appendDate: notImplemented("append"),
+    updateDate: notImplemented("update"),
+    removeDate: notImplemented("remove"),
+    replaceDates: notImplemented("remove"),
     getValues: notImplemented("getValues"),
     watch: notImplemented("watch"),
     register: notImplemented("register"),
@@ -42,18 +52,26 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
     reset: notImplemented("reset")
 })
 
-export const EventPlanningFormProvider: React.FC<{ 
+export const EventPlanningFormProvider: React.FC<{
     children: React.ReactNode;
     onSubmit: (data: FullEventRequest) => void;
 }> = ({ children, onSubmit }) => {
     const { register, handleSubmit, reset, getValues, watch, control, setValue } = useForm<FullEventRequest>()
+
+    // Field arrays
     const { append: appendIntervention, remove: removeIntervention, fields: fieldsInterventions } = useFieldArray<FullEventRequest, 'interventions'>({
         control,
         name: 'interventions'
     })
+
     const { append: appendODS, remove: removeODS, fields: fieldsODS } = useFieldArray<FullEventRequest, 'ods'>({
         control,
         name: 'ods'
+    })
+
+    const { append: appendDate, update: updateDate, remove: removeDate, replace: replaceDates, fields: fieldsDates } = useFieldArray<FullEventRequest, 'dates'>({
+        control,
+        name: 'dates'
     })
 
     handleSubmit(onSubmit)
@@ -73,7 +91,12 @@ export const EventPlanningFormProvider: React.FC<{
                 fieldsInterventions,
                 appendODS,
                 removeODS,
-                fieldsODS
+                fieldsODS,
+                appendDate,
+                updateDate,
+                removeDate,
+                replaceDates,
+                fieldsDates
             }}
         >
             {children}

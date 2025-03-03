@@ -11,6 +11,8 @@ const dateSchema = z.object({
   }),
 });
 
+export type DateSchema = z.infer<typeof dateSchema>;
+
 // Esquema para financiamientos
 const financingSchema = z.object({
   financingSourceId: z.number(),
