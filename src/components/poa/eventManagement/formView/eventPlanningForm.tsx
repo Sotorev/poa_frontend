@@ -2,6 +2,7 @@
 
 // Libraries
 import { DevTool } from "@hookform/devtools";
+import { Controller } from 'react-hook-form';
 import { useContext } from "react"
 
 // Components
@@ -17,14 +18,14 @@ import { EstrategiasSelectorComponent } from "../fields/estrategias-selector"
 import { IntervencionesSelectorComponent } from "../fields/intervenciones-selector"
 import { OdsSelector } from "../fields/ods-selector"
 import { ActivityProjectSelector } from "../fields/actividad-proyecto-selector";
-import { EventoComponent } from "../fields/evento"
-import { ObjetivoComponent } from "../fields/objetivo"
+import { EventNameComponent } from "../fields/evento"
+import { ObjectiveComponent } from "../fields/objetivo"
 import { UMESFinancingComponent } from "../fields/umes-financing-source"
 import { OtherFinancingSourceComponent } from "../fields/other-financing-source"
 import TipoDeCompraComponent from "../fields/tipo-de-compra"
 import { EventCostDetail } from "../fields/detalle"
 import { CampusSelector } from "../fields/campus-selector"
-import { ResponsablesComponent } from "../fields/responsables"
+import { ResponsibleComponent } from "../fields/responsables"
 import { RecursosSelectorComponent } from "../fields/recursos-selector"
 import { IndicadorLogroComponent } from "../fields/indicador-logro"
 import { DetalleProcesoComponent } from "../fields/detalle-proceso"
@@ -129,19 +130,27 @@ export function EventPlanningForm({
                                 </TabsContent>
 
                                 <TabsContent value="info" className="mt-4 space-y-6">
-                                    <ActivityProjectSelector
-                                        selectedOption={watch("type") || ""}
-                                        onSelectOption={(option) => setValue("type", option)}
-                                        dates={watch("dates") || []}
-                                        defaultDate={new Date((new Date().getFullYear() + 1), 0, 1)}
-                                        onReplaceDates={(dates) => replaceDates(dates)}
-                                        onAppendDate={(date) => appendDate(date)}
-                                        onChangeDate={(index, date) => updateDate(index, date)}
-                                        onRemoveDate={(index) => removeDate(index)}
+                                    <Controller
+                                        name="type"
+                                        control={control}
+                                        defaultValue="Actividad"
+                                        render={({ field }) => (
+                                            <ActivityProjectSelector
+                                            selectedOption={field.value}
+                                            onSelectOption={(option) => field.onChange(option)}
+                                            dates={watch("dates") || []}
+                                            defaultDate={new Date((new Date().getFullYear() + 1), 0, 1)}
+                                            onReplaceDates={(dates) => replaceDates(dates)}
+                                            onAppendDate={(date) => appendDate(date)}
+                                            onChangeDate={(index, date) => updateDate(index, date)}
+                                            onRemoveDate={(index) => removeDate(index)}
+                                        />
+                                        )}
                                     />
-                                    <EventoComponent value={event?.evento || ""} onChange={(value) => updateField("evento", value)} />
-                                    <ObjetivoComponent value={event?.objetivo || ""} onChange={(value) => updateField("objetivo", value)} />
-                                    <ResponsablesComponent
+
+                                    <EventNameComponent value={watch("name") || ""} onChange={(value) => setValue("name", value)} />
+                                    <ObjectiveComponent value={watch("objective") || ""} onChange={(value) => setValue("objective", value)} />
+                                    <ResponsibleComponent
                                         responsablePlanificacion={event?.responsablePlanificacion || ""}
                                         responsableEjecucion={event?.responsableEjecucion || ""}
                                         responsableSeguimiento={event?.responsableSeguimiento || ""}
