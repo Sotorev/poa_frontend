@@ -119,7 +119,7 @@ export function EventPlanningForm({
                                     <OdsSelector
                                         selected={watch("ods") || []}
                                         onSelect={(ods) => appendODS(ods)}
-                                        onRemove={(ods) => removeODS(fieldsODS.findIndex((field) => field.ods === ods))}
+                                        onRemove={(odsId) => removeODS(fieldsODS.findIndex((field) => field.ods === odsId))}
                                     />
                                 </TabsContent>
 

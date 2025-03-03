@@ -20,9 +20,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 
-// Hooks
-import { useCurrentUser } from '@/hooks/use-current-user';
-
 // Types
 import { Intervention } from '@/types/Intervention';
 
@@ -51,7 +48,6 @@ export function IntervencionesSelectorComponent({
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const user = useCurrentUser();
   const { interventions } = useContext(EventContext);
 
   const fetchData = useCallback(async () => {
@@ -61,17 +57,17 @@ export function IntervencionesSelectorComponent({
       );
       setIntervencionesList(filteredIntervenciones);
     } catch (error) {
-      console.error('Error al obtener intervenciones:', error);
+
     }
   }, [interventions, strategyIds]);
 
   useEffect(() => {
-    if (!disabled && strategyIds.length > 0) { // Solo fetch si no está deshabilitado y hay estrategias seleccionadas
+    if (!disabled && strategyIds.length > 0) { 
       fetchData();
     } else {
-      setIntervencionesList([]); // Limpiar la lista si está deshabilitado o no hay estrategias
+      setIntervencionesList([]);
     }
-  }, [disabled, user?.token, strategyIds, interventions, fetchData]);
+  }, [disabled, strategyIds, interventions, fetchData]);
 
   const filteredIntervenciones = useMemo(() => {
     return intervencionesList.filter((intervention) =>
@@ -81,17 +77,16 @@ export function IntervencionesSelectorComponent({
 
   const handleSelectIntervencion = (intervencionId: number) => {
     if (disabled) return; // No permitir cambios si está deshabilitado
-    console.log("interventions PREVIOUS actions", selectedIntervenciones);
     if (selectedIntervenciones.some(item => item.intervention === intervencionId)) {
       onRemove(intervencionId);
     } else {
-      onSelectIntervencion({"intervention": intervencionId});
+      onSelectIntervencion({ "intervention": intervencionId });
     }
   };
 
   const handleRemoveIntervencion = (intId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (disabled) return; 
+    if (disabled) return;
     onRemove(intId);
   };
 
@@ -139,7 +134,7 @@ export function IntervencionesSelectorComponent({
               <Select
                 open={isOpen}
                 onOpenChange={setIsOpen}
-                disabled={disabled} 
+                disabled={disabled}
                 onValueChange={(val) => handleSelectIntervencion(Number(val))}
                 value=''
               >
