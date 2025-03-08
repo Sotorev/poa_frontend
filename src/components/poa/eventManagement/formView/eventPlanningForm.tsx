@@ -139,15 +139,15 @@ export function EventPlanningForm({
                                         defaultValue="Actividad"
                                         render={({ field }) => (
                                             <ActivityProjectSelector
-                                            selectedOption={field.value}
-                                            onSelectOption={(option) => field.onChange(option)}
-                                            dates={watch("dates") || []}
-                                            defaultDate={new Date((new Date().getFullYear() + 1), 0, 1)}
-                                            onReplaceDates={(dates) => replaceDates(dates)}
-                                            onAppendDate={(date) => appendDate(date)}
-                                            onChangeDate={(index, date) => updateDate(index, date)}
-                                            onRemoveDate={(index) => removeDate(index)}
-                                        />
+                                                selectedOption={field.value}
+                                                onSelectOption={(option) => field.onChange(option)}
+                                                dates={watch("dates") || []}
+                                                defaultDate={new Date((new Date().getFullYear() + 1), 0, 1)}
+                                                onReplaceDates={(dates) => replaceDates(dates)}
+                                                onAppendDate={(date) => appendDate(date)}
+                                                onChangeDate={(index, date) => updateDate(index, date)}
+                                                onRemoveDate={(index) => removeDate(index)}
+                                            />
                                         )}
                                     />
 
@@ -155,16 +155,30 @@ export function EventPlanningForm({
                                     <ObjectiveComponent value={watch("objective") || ""} onChange={(value) => setValue("objective", value)} />
                                     <ResponsibleComponent
                                         responsible={watch("responsibles") || []}
-                                        onAppendResponsible={(responsible) => {appendResponible(responsible); console.log(watch("responsibles"))}}
-                                        onUpdateResponsible={(index ,responsible) => {updateResponsible(index, responsible); console.log(watch("responsibles"))}}
+                                        onAppendResponsible={(responsible) => { appendResponible(responsible); console.log(watch("responsibles")) }}
+                                        onUpdateResponsible={(index, responsible) => { updateResponsible(index, responsible); console.log(watch("responsibles")) }}
                                     />
-                                    <IndicadorLogroComponent
-                                        value={event?.indicadorLogro || ""}
-                                        onChange={(value: string) => updateField("indicadorLogro", value)}
+                                    <Controller
+                                        name="achievementIndicator"
+                                        control={control}
+                                        defaultValue=""
+                                        render={({ field }) => (
+                                            <IndicadorLogroComponent
+                                                value={field.value}
+                                                onChange={(value) => field.onChange(value)}
+                                            />
+                                        )}
                                     />
-                                    <DetalleProcesoComponent
-                                        files={event?.processDocuments || []}
-                                        onFilesChange={(files: File[]) => updateField("processDocuments", files)}
+                                    <Controller
+                                        name="processDocuments"
+                                        control={control}
+                                        defaultValue={[]}
+                                        render={({ field }) => (
+                                            <DetalleProcesoComponent
+                                                files={field.value || []}
+                                                onFilesChange={(files: File[]) => {field.onChange(files); console.log(files)}}
+                                            />
+                                        )}
                                     />
                                 </TabsContent>
 
