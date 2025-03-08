@@ -16,6 +16,10 @@ interface EventPlanningFormContextProps {
     updateDate: UseFieldArrayUpdate<FullEventRequest>
     removeDate: UseFieldArrayRemove
     replaceDates: UseFieldArrayReplace<FullEventRequest>
+    appendResponible: UseFieldArrayAppend<FullEventRequest>
+    updateResponsible: UseFieldArrayUpdate<FullEventRequest>
+    removeResponsible: UseFieldArrayRemove
+    fieldsResponsibles: FieldArrayWithId<FullEventRequest, "responsibles">[];
     getValues: UseFormGetValues<FullEventRequest>
     watch: UseFormWatch<FullEventRequest>
     register: UseFormRegister<FullEventRequest>
@@ -43,6 +47,10 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
     updateDate: notImplemented("update"),
     removeDate: notImplemented("remove"),
     replaceDates: notImplemented("remove"),
+    appendResponible: notImplemented("append"),
+    updateResponsible: notImplemented("update"),
+    removeResponsible: notImplemented("remove"),
+    fieldsResponsibles: [],
     getValues: notImplemented("getValues"),
     watch: notImplemented("watch"),
     register: notImplemented("register"),
@@ -74,6 +82,11 @@ export const EventPlanningFormProvider: React.FC<{
         name: 'dates'
     })
 
+    const { append: appendResponible, remove: removeResponsible, update: updateResponsible, fields: fieldsResponsibles } = useFieldArray<FullEventRequest, 'responsibles'>({
+        control,
+        name: 'responsibles'
+    })
+
     handleSubmit(onSubmit)
 
     return (
@@ -96,7 +109,11 @@ export const EventPlanningFormProvider: React.FC<{
                 updateDate,
                 removeDate,
                 replaceDates,
-                fieldsDates
+                fieldsDates,
+                appendResponible,
+                updateResponsible,
+                removeResponsible,
+                fieldsResponsibles
             }}
         >
             {children}

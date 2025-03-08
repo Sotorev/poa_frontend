@@ -29,6 +29,8 @@ const responsibleSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
 });
 
+export type Responsible = z.infer<typeof responsibleSchema>;
+
 // Esquema para recursos
 const resourceSchema = z.object({
   resourceId: z.number(),

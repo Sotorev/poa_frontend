@@ -77,6 +77,9 @@ export function EventPlanningForm({
         updateDate,
         removeDate,
         replaceDates,
+        fieldsResponsibles,
+        appendResponible,
+        updateResponsible,
         watch,
         setValue,
         control
@@ -151,12 +154,9 @@ export function EventPlanningForm({
                                     <EventNameComponent value={watch("name") || ""} onChange={(value) => setValue("name", value)} />
                                     <ObjectiveComponent value={watch("objective") || ""} onChange={(value) => setValue("objective", value)} />
                                     <ResponsibleComponent
-                                        responsablePlanificacion={event?.responsablePlanificacion || ""}
-                                        responsableEjecucion={event?.responsableEjecucion || ""}
-                                        responsableSeguimiento={event?.responsableSeguimiento || ""}
-                                        onChangeResponsablePlanificacion={(value: string) => updateField("responsablePlanificacion", value)}
-                                        onChangeResponsableEjecucion={(value: string) => updateField("responsableEjecucion", value)}
-                                        onChangeResponsableSeguimiento={(value: string) => updateField("responsableSeguimiento", value)}
+                                        responsible={watch("responsibles") || []}
+                                        onAppendResponsible={(responsible) => {appendResponible(responsible); console.log(watch("responsibles"))}}
+                                        onUpdateResponsible={(index ,responsible) => {updateResponsible(index, responsible); console.log(watch("responsibles"))}}
                                     />
                                     <IndicadorLogroComponent
                                         value={event?.indicadorLogro || ""}

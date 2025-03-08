@@ -3,41 +3,48 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
-interface ResponsablesComponentProps {
-  responsablePlanificacion: string;
-  responsableEjecucion: string;
-  responsableSeguimiento: string;
-  onChangeResponsablePlanificacion: (value: string) => void;
-  onChangeResponsableEjecucion: (value: string) => void;
-  onChangeResponsableSeguimiento: (value: string) => void;
+// Types
+import { Responsible } from '../formView/eventPlanningForm.schema';
+
+interface ResponsibleComponentProps {
+  responsible: Responsible[];
+  onUpdateResponsible: (index: number, responsible: Responsible) => void;
+  onAppendResponsible: (responsible: Responsible) => void;
 }
 
-export function ResponsablesComponent({
-  responsablePlanificacion,
-  responsableEjecucion,
-  responsableSeguimiento,
-  onChangeResponsablePlanificacion,
-  onChangeResponsableEjecucion,
-  onChangeResponsableSeguimiento,
-}: ResponsablesComponentProps) {
+export function ResponsibleComponent({
+  responsible,
+  onUpdateResponsible,
+  onAppendResponsible
+}: ResponsibleComponentProps) {
+
+  const handleResponsibleChange = (role: "Principal" | "Ejecución" | "Seguimiento", value: string) => {
+    const existingIndex = responsible.findIndex(r => r.responsibleRole === role);
+
+    if (existingIndex >= 0) {
+      onUpdateResponsible(existingIndex, { name: value, responsibleRole: role });
+    } else {
+      onAppendResponsible({ name: value, responsibleRole: role });
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Input
         placeholder="Responsable de planificación"
-        value={responsablePlanificacion}
-        onChange={(e) => onChangeResponsablePlanificacion(e.target.value)}
+        value={responsible.find((r) => r.responsibleRole === "Principal")?.name || ""}
+        onChange={(e) => handleResponsibleChange("Principal", e.target.value)}
       />
       <Input
         placeholder="Responsable de ejecución"
-        value={responsableEjecucion}
-        onChange={(e) => onChangeResponsableEjecucion(e.target.value)}
+        value={responsible.find((r) => r.responsibleRole === "Ejecución")?.name || ""}
+        onChange={(e) => handleResponsibleChange("Ejecución", e.target.value)}
       />
       <Input
         placeholder="Responsable de seguimiento"
-        value={responsableSeguimiento}
-        onChange={(e) => onChangeResponsableSeguimiento(e.target.value)}
+        value={responsible.find((r) => r.responsibleRole === "Seguimiento")?.name || ""}
+        onChange={(e) => handleResponsibleChange("Seguimiento", e.target.value)}
       />
     </div>
   );
