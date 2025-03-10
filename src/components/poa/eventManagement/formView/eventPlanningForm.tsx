@@ -3,7 +3,8 @@
 // Libraries
 import { DevTool } from "@hookform/devtools";
 import { Controller } from 'react-hook-form';
-import { useContext } from "react"
+import { useContext, useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 // Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -33,15 +34,19 @@ import { DetalleProcesoComponent } from "../fields/detalle-proceso"
 import { StrategicArea } from "@/types/StrategicArea"
 import { StrategicObjective } from "@/types/StrategicObjective"
 import { Strategy } from "@/types/Strategy"
+import { UpdateEventRequest } from "./eventPlanningForm.schema"
+import { ResponseFullEvent } from "./eventPlanningForm.type"
 
 // Context
 import { EventPlanningFormContext } from "./eventPlanningForm.context"
 
+// Hooks
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 interface EventPlanningFormProps {
     isOpen: boolean
     onClose: () => void
-    event?: any
+    event?: UpdateEventRequest
     updateField: (field: string, value: any) => void
     addStrategicObjective: (objective: any) => void
     selectedStrategicArea: StrategicArea | undefined
@@ -49,20 +54,27 @@ interface EventPlanningFormProps {
     setSelectedStrategicObjective: (objective: StrategicObjective) => void
     selectedStrategies: Strategy[] | undefined
     setSelectedStrategies: (strategies: Strategy[]) => void
+    poaId?: number
+    onEventSaved?: (event: ResponseFullEvent) => void
 }
 
 export function EventPlanningForm({
     isOpen,
     onClose,
     event,
-    updateField,
     addStrategicObjective,
     selectedStrategicArea,
     selectedStrategicObjective,
     setSelectedStrategicObjective,
     selectedStrategies,
     setSelectedStrategies,
+    poaId,
+    onEventSaved,
 }: EventPlanningFormProps) {
+    const user = useCurrentUser();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     // Context
     const {
         fieldsInterventions,
@@ -86,8 +98,194 @@ export function EventPlanningForm({
         fieldsResources,
         watch,
         setValue,
-        control
-    } = useContext(EventPlanningFormContext)
+        control,
+        handleSubmit,
+        getValues,
+        submitEvent,
+        updateExistingEvent,
+        errors
+    } = useContext(EventPlanningFormContext);
+
+    // Función para manejar el envío del formulario
+    const onSubmitForm = async () => {
+        if (!user?.token) {
+            toast({
+                title: "Error",
+                description: "No se ha podido obtener el token de autenticación",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (!poaId) {
+            toast({
+                title: "Error",
+                description: "No se ha podido obtener el ID del POA",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const formData = getValues();
+
+            // Asegurarse de que el poaId esté establecido
+            formData.poaId = poaId;
+
+            // Asegurarse de que el userId esté establecido
+            if (user.userId) {
+                formData.userId = user.userId;
+            }
+
+            let result;
+
+            if (event?.eventId) {
+                // Actualizar evento existente
+                result = await updateExistingEvent(event.eventId, formData, user.token);
+                toast({
+                    title: "Éxito",
+                    description: "Evento actualizado exitosamente",
+                    variant: "default"
+                });
+            } else {
+                // Crear nuevo evento
+                result = await submitEvent(formData, user.token);
+                toast({
+                    title: "Éxito",
+                    description: "Evento creado exitosamente",
+                    variant: "default"
+                });
+            }
+
+            // Notificar al componente padre
+            if (onEventSaved) {
+                onEventSaved(result);
+            }
+
+            // Cerrar el modal después de enviar
+            onClose();
+
+        } catch (error) {
+            console.error("Error al enviar el formulario:", error);
+            toast({
+                title: "Error",
+                description: `Error: ${(error as Error).message}`,
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Función para validar el formulario antes de enviar
+    const validateForm = () => {
+        // Validar que los campos requeridos estén completos
+        const formData = getValues();
+
+        // Verificar campos obligatorios según la pestaña actual
+        if (!formData.name || formData.name.trim() === '') {
+            toast({
+                title: "Error de validación",
+                description: "El nombre del evento es obligatorio",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.objective || formData.objective.trim() === '') {
+            toast({
+                title: "Error de validación",
+                description: "El objetivo es obligatorio",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.achievementIndicator || formData.achievementIndicator.trim() === '') {
+            toast({
+                title: "Error de validación",
+                description: "El indicador de logro es obligatorio",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.dates || formData.dates.length === 0) {
+            toast({
+                title: "Error de validación",
+                description: "Debe agregar al menos una fecha",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.responsibles || formData.responsibles.length === 0) {
+            toast({
+                title: "Error de validación",
+                description: "Debe agregar al menos un responsable",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.totalCost || formData.totalCost <= 0) {
+            toast({
+                title: "Error de validación",
+                description: "El costo total debe ser mayor que cero",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.purchaseTypeId) {
+            toast({
+                title: "Error de validación",
+                description: "Debe seleccionar un tipo de compra",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.campusId) {
+            toast({
+                title: "Error de validación",
+                description: "Debe seleccionar un campus",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.interventions || formData.interventions.length === 0) {
+            toast({
+                title: "Error de validación",
+                description: "Debe seleccionar al menos una intervención",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.ods || formData.ods.length === 0) {
+            toast({
+                title: "Error de validación",
+                description: "Debe seleccionar al menos un ODS",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        if (!formData.resources || formData.resources.length === 0) {
+            toast({
+                title: "Error de validación",
+                description: "Debe seleccionar al menos un recurso",
+                variant: "destructive"
+            });
+            return false;
+        }
+
+        return true;
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -97,7 +295,7 @@ export function EventPlanningForm({
                 </DialogHeader>
 
                 <>
-                    <form>
+                    <form onSubmit={handleSubmit(onSubmitForm)}>
                         <Tabs defaultValue="pei" className="w-full">
                             <TabsList className="px-6">
                                 <TabsTrigger value="pei">Plan Estratégico Institucional</TabsTrigger>
@@ -114,7 +312,7 @@ export function EventPlanningForm({
                                     />
                                     <AreaEstrategicaComponent
                                         areaEstrategica={selectedStrategicArea?.name || ""}
-                                        error={event?.errors?.areaEstrategica}
+                                        error={errors?.areaEstrategica?.message}
                                     />
                                     <EstrategiasSelectorComponent
                                         selectedEstrategias={selectedStrategies || []}
@@ -155,13 +353,31 @@ export function EventPlanningForm({
                                         )}
                                     />
 
-                                    <EventNameComponent value={watch("name") || ""} onChange={(value) => setValue("name", value)} />
-                                    <ObjectiveComponent value={watch("objective") || ""} onChange={(value) => setValue("objective", value)} />
+                                    <EventNameComponent
+                                        value={watch("name") || ""}
+                                        onChange={(value) => setValue("name", value)}
+                                    />
+                                    {errors?.name && (
+                                        <span className="text-red-500 text-sm">{errors.name.message as string}</span>
+                                    )}
+
+                                    <ObjectiveComponent
+                                        value={watch("objective") || ""}
+                                        onChange={(value) => setValue("objective", value)}
+                                    />
+                                    {errors?.objective && (
+                                        <span className="text-red-500 text-sm">{errors.objective.message as string}</span>
+                                    )}
+
                                     <ResponsibleComponent
                                         responsible={watch("responsibles") || []}
                                         onAppendResponsible={(responsible) => appendResponible(responsible)}
                                         onUpdateResponsible={(index, responsible) => updateResponsible(index, responsible)}
                                     />
+                                    {errors?.responsibles && (
+                                        <span className="text-red-500 text-sm">{errors.responsibles.message as string}</span>
+                                    )}
+
                                     <Controller
                                         name="achievementIndicator"
                                         control={control}
@@ -173,6 +389,10 @@ export function EventPlanningForm({
                                             />
                                         )}
                                     />
+                                    {errors?.achievementIndicator && (
+                                        <span className="text-red-500 text-sm">{errors.achievementIndicator.message as string}</span>
+                                    )}
+
                                     <div className="p-4 bg-gray-50 rounded-lg border">
                                         <h3 className="text-md font-semibold text-gray-800">Documentos del Proceso del evento</h3>
                                     </div>
@@ -196,6 +416,10 @@ export function EventPlanningForm({
                                             Q {(watch("totalCost") || 0).toFixed(2)}
                                         </div>
                                     </div>
+                                    {errors?.totalCost && (
+                                        <span className="text-red-500 text-sm">{errors.totalCost.message as string}</span>
+                                    )}
+
                                     <FinancingSource
                                         contributions={fieldsFinancings}
                                         onAppendContribution={(contribution) => appendFinancing(contribution)}
@@ -212,6 +436,10 @@ export function EventPlanningForm({
                                         onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
                                         isUMES={false}
                                     />
+                                    {errors?.financings && (
+                                        <span className="text-red-500 text-sm">{errors.financings.message as string}</span>
+                                    )}
+
                                     <Controller
                                         name="purchaseTypeId"
                                         control={control}
@@ -223,6 +451,10 @@ export function EventPlanningForm({
                                             />
                                         )}
                                     />
+                                    {errors?.purchaseTypeId && (
+                                        <span className="text-red-500 text-sm">{errors.purchaseTypeId.message as string}</span>
+                                    )}
+
                                     <Controller
                                         name="costDetailDocuments"
                                         control={control}
@@ -245,17 +477,22 @@ export function EventPlanningForm({
                                             />
                                         )}
                                     />
+                                    {errors?.campusId && (
+                                        <span className="text-red-500 text-sm">{errors.campusId.message as string}</span>
+                                    )}
+
                                     <RecursosSelectorComponent
                                         selectedResource={watch("resources") || []}
                                         onAppendResource={(resource) => {
                                             appendResource(resource);
-                                            console.log("Appended resource", watch("resources"));
                                         }}
                                         onRemoveResource={(index) => {
                                             removeResource(index);
-                                            console.log("Removed resource", watch("resources"));
                                         }}
                                     />
+                                    {errors?.resources && (
+                                        <span className="text-red-500 text-sm">{errors.resources.message as string}</span>
+                                    )}
                                 </TabsContent>
                             </ScrollArea>
                         </Tabs>
@@ -263,19 +500,23 @@ export function EventPlanningForm({
                     </form>
                 </>
                 <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
-                    <Button variant="outline" onClick={onClose}>
+                    <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                         Cancelar
                     </Button>
                     <Button
                         onClick={() => {
-                            /* Lógica para guardar */
+                            if (validateForm()) {
+                                onSubmitForm();
+                            }
                         }}
+                        disabled={isSubmitting}
                     >
-                        Guardar
+                        {isSubmitting ? "Guardando..." : "Guardar"}
                     </Button>
                 </div>
             </DialogContent>
         </Dialog>
     )
 }
+
 

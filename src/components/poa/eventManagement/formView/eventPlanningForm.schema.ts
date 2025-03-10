@@ -90,6 +90,14 @@ export const fullEventSchema = z
 
 export type FullEventRequest = z.infer<typeof fullEventSchema>;
 
+// Esquema para actualización de eventos
+export const updateEventSchema = z.object({
+  eventId: z.number(),
+  data: fullEventSchema,
+});
+
+export type UpdateEventRequest = z.infer<typeof updateEventSchema>;
+
 // Define el esquema para DatePair
 const datePairSchema = z.object({
   start: z.date(),

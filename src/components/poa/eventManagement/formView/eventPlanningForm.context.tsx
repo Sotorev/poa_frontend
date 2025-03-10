@@ -1,9 +1,11 @@
 "use client"
 import { createContext, useEffect } from "react";
 import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch, useForm, useFieldArray, UseFormHandleSubmit, UseFormReset, UseFieldArrayUpdate, UseFieldArrayReplace } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // Types
-import { FullEventRequest } from "./eventPlanningForm.schema";
+import { FullEventRequest, fullEventSchema } from "./eventPlanningForm.schema";
+import { createEvent, updateEvent } from "./eventPlanningForm.service";
 
 interface EventPlanningFormContextProps {
     fieldsInterventions: FieldArrayWithId<FullEventRequest, "interventions">[];
@@ -35,6 +37,9 @@ interface EventPlanningFormContextProps {
     control: Control<FullEventRequest>
     handleSubmit: UseFormHandleSubmit<FullEventRequest>
     reset: UseFormReset<FullEventRequest>
+    submitEvent: (data: FullEventRequest, token: string) => Promise<any>
+    updateExistingEvent: (eventId: number, data: FullEventRequest, token: string) => Promise<any>
+    errors: any
 }
 
 const notImplemented = (name: string) => {
@@ -72,14 +77,19 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
     setValue: notImplemented("setValue"),
     control: {} as Control<FullEventRequest>,
     handleSubmit: notImplemented("handleSubmit"),
-    reset: notImplemented("reset")
+    reset: notImplemented("reset"),
+    submitEvent: notImplemented("submitEvent"),
+    updateExistingEvent: notImplemented("updateExistingEvent"),
+    errors: {}
 })
 
 export const EventPlanningFormProvider: React.FC<{
     children: React.ReactNode;
     onSubmit: (data: FullEventRequest) => void;
 }> = ({ children, onSubmit }) => {
-    const { register, handleSubmit, reset, getValues, watch, control, setValue } = useForm<FullEventRequest>()
+    const { register, handleSubmit, reset, getValues, watch, control, setValue, formState: { errors } } = useForm<FullEventRequest>({
+        resolver: zodResolver(fullEventSchema)
+    });
 
     // Field arrays
     const { append: appendIntervention, remove: removeIntervention, fields: fieldsInterventions } = useFieldArray<FullEventRequest, 'interventions'>({
@@ -112,7 +122,25 @@ export const EventPlanningFormProvider: React.FC<{
         name: 'resources'
     })
 
-    handleSubmit(onSubmit)
+    // Función para enviar un nuevo evento
+    const submitEvent = async (data: FullEventRequest, token: string) => {
+        try {
+            return await createEvent(data, token);
+        } catch (error) {
+            console.error("Error al crear el evento:", error);
+            throw error;
+        }
+    };
+
+    // Función para actualizar un evento existente
+    const updateExistingEvent = async (eventId: number, data: FullEventRequest, token: string) => {
+        try {
+            return await updateEvent(eventId, data, token);
+        } catch (error) {
+            console.error("Error al actualizar el evento:", error);
+            throw error;
+        }
+    };
 
     return (
         <EventPlanningFormContext.Provider
@@ -145,7 +173,10 @@ export const EventPlanningFormProvider: React.FC<{
                 fieldsFinancings,
                 appendResource,
                 removeResource,
-                fieldsResources
+                fieldsResources,
+                submitEvent,
+                updateExistingEvent,
+                errors
             }}
         >
             {children}

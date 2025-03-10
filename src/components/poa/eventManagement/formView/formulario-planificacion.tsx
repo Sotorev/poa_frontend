@@ -672,8 +672,8 @@ export function TraditionalView() {
           onClose={() => { setIsOpen(false) }}
           event={undefined}
           updateField={(field, value) => updateField(field as keyof FilaPlanificacion, value)}
+          poaId={poaId || undefined}
           addStrategicObjective={addStrategicObjective}
-          financingSources={financingSources}
           selectedStrategicArea={selectedStrategicArea}
           selectedStrategicObjective={selectedStrategicObjective}
           setSelectedStrategicObjective={setSelectedStrategicObjective}
