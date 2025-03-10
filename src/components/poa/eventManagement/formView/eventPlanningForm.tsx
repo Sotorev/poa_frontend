@@ -81,6 +81,9 @@ export function EventPlanningForm({
         removeFinancing,
         updateFinancing,
         fieldsFinancings,
+        appendResource,
+        removeResource,
+        fieldsResources,
         watch,
         setValue,
         control
@@ -243,8 +246,15 @@ export function EventPlanningForm({
                                         )}
                                     />
                                     <RecursosSelectorComponent
-                                        selectedRecursos={event?.recursos || []}
-                                        onSelectRecursos={(recursos) => updateField("recursos", recursos)}
+                                        selectedResource={watch("resources") || []}
+                                        onAppendResource={(resource) => {
+                                            appendResource(resource);
+                                            console.log("Appended resource", watch("resources"));
+                                        }}
+                                        onRemoveResource={(index) => {
+                                            removeResource(index);
+                                            console.log("Removed resource", watch("resources"));
+                                        }}
                                     />
                                 </TabsContent>
                             </ScrollArea>

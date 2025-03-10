@@ -25,6 +25,9 @@ interface EventPlanningFormContextProps {
     removeFinancing: UseFieldArrayRemove
     updateFinancing: UseFieldArrayUpdate<FullEventRequest>
     fieldsFinancings: FieldArrayWithId<FullEventRequest, "financings">[];
+    appendResource: UseFieldArrayAppend<FullEventRequest>
+    removeResource: UseFieldArrayRemove
+    fieldsResources: FieldArrayWithId<FullEventRequest, "resources">[];
     getValues: UseFormGetValues<FullEventRequest>
     watch: UseFormWatch<FullEventRequest>
     register: UseFormRegister<FullEventRequest>
@@ -60,6 +63,9 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
     removeFinancing: notImplemented("remove"),
     updateFinancing: notImplemented("update"),
     fieldsFinancings: [],
+    appendResource: notImplemented("append"),
+    removeResource: notImplemented("remove"),
+    fieldsResources: [],
     getValues: notImplemented("getValues"),
     watch: notImplemented("watch"),
     register: notImplemented("register"),
@@ -101,6 +107,11 @@ export const EventPlanningFormProvider: React.FC<{
         name: 'financings'
     })
 
+    const { append: appendResource, remove: removeResource, fields: fieldsResources } = useFieldArray<FullEventRequest, 'resources'>({
+        control,
+        name: 'resources'
+    })
+
     handleSubmit(onSubmit)
 
     return (
@@ -131,7 +142,10 @@ export const EventPlanningFormProvider: React.FC<{
                 appendFinancing,
                 removeFinancing,
                 updateFinancing,
-                fieldsFinancings
+                fieldsFinancings,
+                appendResource,
+                removeResource,
+                fieldsResources
             }}
         >
             {children}
