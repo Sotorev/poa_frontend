@@ -152,7 +152,6 @@ export function FinancingSource({
       // Round to 2 decimal places using Math.round to avoid floating point issues
       percentage = Math.round(percentage * 100) / 100;
 
-      console.log("percentage",percentage);
 
       onUpdateContribution(index, {
         ...contribution,

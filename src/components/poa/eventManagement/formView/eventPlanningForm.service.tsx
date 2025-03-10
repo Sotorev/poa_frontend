@@ -180,7 +180,6 @@ export const downloadFileAux = async (url: string, nombreArchivo: string, token:
       const tipo = blob.type || 'application/octet-stream';
       return new File([blob], nombreArchivo, { type: tipo });
     } catch (error) {
-      console.error(`Error al descargar el archivo desde ${url}:`, error);
       return null;
     }
   };

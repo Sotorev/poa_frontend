@@ -156,8 +156,8 @@ export function EventPlanningForm({
                                     <ObjectiveComponent value={watch("objective") || ""} onChange={(value) => setValue("objective", value)} />
                                     <ResponsibleComponent
                                         responsible={watch("responsibles") || []}
-                                        onAppendResponsible={(responsible) => { appendResponible(responsible); console.log(watch("responsibles")) }}
-                                        onUpdateResponsible={(index, responsible) => { updateResponsible(index, responsible); console.log(watch("responsibles")) }}
+                                        onAppendResponsible={(responsible) => appendResponible(responsible)}
+                                        onUpdateResponsible={(index, responsible) => updateResponsible(index, responsible)}
                                     />
                                     <Controller
                                         name="achievementIndicator"
@@ -180,7 +180,7 @@ export function EventPlanningForm({
                                         render={({ field }) => (
                                             <DetalleProcesoComponent
                                                 files={field.value || []}
-                                                onFilesChange={(files: File[]) => { field.onChange(files); console.log("detalle proceso", field.value) }}
+                                                onFilesChange={(files: File[]) => field.onChange(files)}
                                             />
                                         )}
                                     />
@@ -195,29 +195,17 @@ export function EventPlanningForm({
                                     </div>
                                     <FinancingSource
                                         contributions={fieldsFinancings}
-                                        onAppendContribution={(contribution) => { appendFinancing(contribution); console.log("appending financing", watch("financings")) }}
-                                        onRemoveContribution={(index) => {
-                                            removeFinancing(index);
-                                            console.log("Removing financing:", watch("financings"));
-                                        }}
-                                        onUpdateContribution={(index, contribution) => {
-                                            updateFinancing(index, contribution);
-                                            console.log("Updating financing:", watch("financings"));
-                                        }}
+                                        onAppendContribution={(contribution) => appendFinancing(contribution)}
+                                        onRemoveContribution={(index) => removeFinancing(index)}
+                                        onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
                                         onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
                                         isUMES={true}
                                     />
                                     <FinancingSource
                                         contributions={fieldsFinancings}
-                                        onAppendContribution={(contribution) =>  appendFinancing(contribution)}
-                                        onRemoveContribution={(index) => {
-                                            removeFinancing(index);
-                                            console.log("Removing financing:", watch("financings"));
-                                        }}
-                                        onUpdateContribution={(index, contribution) => {
-                                            updateFinancing(index, contribution);
-                                            console.log("Updating financing:", watch("financings"));
-                                        }}
+                                        onAppendContribution={(contribution) => appendFinancing(contribution)}
+                                        onRemoveContribution={(index) => removeFinancing(index)}
+                                        onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
                                         onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
                                         isUMES={false}
                                     />

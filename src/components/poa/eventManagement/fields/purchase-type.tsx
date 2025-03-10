@@ -55,7 +55,6 @@ export function PurchaseType({ selectedTipo, onSelectTipo }: PurchaseTypeProps) 
       }));
       setTiposDeCompra(mappedTipos);
     } catch (error) {
-      console.error("Error al obtener tipos de compra:", error);
       setError('No se pudieron cargar los tipos de compra.');
     } finally {
       setLoading(false);
