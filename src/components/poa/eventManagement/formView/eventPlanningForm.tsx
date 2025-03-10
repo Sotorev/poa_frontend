@@ -231,9 +231,16 @@ export function EventPlanningForm({
                                             />
                                         )}
                                     />
-                                    <CampusSelector
-                                        selectedCampusId={event?.campusId || ""}
-                                        onSelectCampus={(campusId) => updateField("campusId", campusId)}
+                                    <Controller
+                                        name="campusId"
+                                        control={control}
+                                        defaultValue={undefined}
+                                        render={({ field }) => (
+                                            <CampusSelector
+                                                selectedCampusId={field.value}
+                                                onSelectCampus={(campusId) => field.onChange(campusId)}
+                                            />
+                                        )}
                                     />
                                     <RecursosSelectorComponent
                                         selectedRecursos={event?.recursos || []}

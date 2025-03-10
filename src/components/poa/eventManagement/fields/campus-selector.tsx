@@ -7,8 +7,8 @@ import { getCampuses } from '@/services/apiService';
 import { Campus } from '@/types/Campus';
 
 interface CampusSelectorProps {
-  onSelectCampus: (campusId: string) => void;
-  selectedCampusId: string;
+  onSelectCampus: (campusId: number) => void;
+  selectedCampusId: number;
 }
 
 export function CampusSelector({ onSelectCampus, selectedCampusId }: CampusSelectorProps) {
@@ -39,7 +39,7 @@ export function CampusSelector({ onSelectCampus, selectedCampusId }: CampusSelec
   if (error) return <div className="text-red-500">Error: {error}</div>;
 
   return (
-    <Select onValueChange={onSelectCampus} value={selectedCampusId}>
+    <Select onValueChange={(value)=> onSelectCampus(Number.parseInt(value))} value={selectedCampusId?.toString()}>
       <SelectTrigger className=" border-green-300 focus:ring-green-500 focus:border-green-500">
         <SelectValue placeholder="Selecciona un campus" />
       </SelectTrigger>
