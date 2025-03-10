@@ -1,7 +1,7 @@
 // src/components/poa/components/columns/tipo-de-compra.tsx
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useContext } from "react";
 import {
   Select,
   SelectContent,
@@ -13,17 +13,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Check, X, Plus } from "lucide-react";
+import { Search, X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { getTiposDeCompra } from '@/services/apiService';
 import { PurchaseTypeWithColor } from '@/types/PurchaseType';
+import { EventContext } from "../formView/event.context";
 
-interface TipoDeCompraComponentProps {
-  selectedTipo: string | null;
-  onSelectTipo: (tipo: string | null) => void;
+interface PurchaseTypeProps {
+  selectedTipo: number | null;
+  onSelectTipo: (tipo: number | null) => void;
 }
 
 const predefinedColors: string[] = [
@@ -32,8 +31,7 @@ const predefinedColors: string[] = [
   "#064E3B", "#6B21A8", "#7E22CE", "#92400E", "#0F766E"
 ];
 
-export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: TipoDeCompraComponentProps) {
-  const user = useCurrentUser();
+export function PurchaseType({ selectedTipo, onSelectTipo }: PurchaseTypeProps) {
   const [tiposDeCompra, setTiposDeCompra] = useState<PurchaseTypeWithColor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -43,6 +41,7 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
   const newTipoInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const { purchaseTypes } = useContext(EventContext);
 
   // Función para asignar un color basado en el índice
   const getColor = (index: number): string => predefinedColors[index % predefinedColors.length];
@@ -50,9 +49,7 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
   const fetchTiposDeCompra = async () => {
     setLoading(true);
     try {
-      const data = await getTiposDeCompra(user?.token || '');
-      const activeTipos = data.filter((tipo) => !tipo.isDeleted);
-      const mappedTipos: PurchaseTypeWithColor[] = activeTipos.map((tipo, index) => ({
+      const mappedTipos: PurchaseTypeWithColor[] = purchaseTypes.map((tipo, index) => ({
         ...tipo,
         color: getColor(index),
       }));
@@ -67,7 +64,7 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
 
   useEffect(() => {
     fetchTiposDeCompra();
-  }, [user?.token]);
+  }, [purchaseTypes]);
 
   const filteredTipos = useMemo(() => {
     return tiposDeCompra.filter(tipo =>
@@ -76,41 +73,14 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
   }, [tiposDeCompra, searchTerm]);
 
   const handleSelectTipo = (tipoId: string) => {
-    onSelectTipo(selectedTipo === tipoId ? null : tipoId);
+    onSelectTipo(selectedTipo === Number(tipoId) ? null : Number(tipoId));
     setIsOpen(false);
   };
 
-  const handleRemoveTipo = (tipoId: string, event: React.MouseEvent) => {
+  const handleRemoveTipo = (tipoId: number, event: React.MouseEvent) => {
     event.stopPropagation();
     onSelectTipo(null);
   };
-
-  // const handleAddNewTipo = async () => {
-  //   if (newTipoName.trim()) {
-  //     try {
-  //       // Asumimos que el backend asigna el purchaseTypeId
-  //       const newTipo = await createPurchaseType(user?.token || '', {
-  //         name: newTipoName.trim(),
-  //         isDeleted: false,
-  //       });
-
-  //       // Asignar un color al nuevo tipo de compra
-  //       const color = getColor(tiposDeCompra.length);
-  //       const newTipoWithColor: PurchaseTypeWithColor = {
-  //         ...newTipo,
-  //         color,
-  //       };
-
-  //       setTiposDeCompra([...tiposDeCompra, newTipoWithColor]);
-  //       onSelectTipo(newTipoWithColor.purchaseTypeId.toString());
-  //       setNewTipoName("");
-  //       setIsAddingNew(false);
-  //     } catch (error) {
-  //       console.error("Error al crear nuevo tipo de compra:", error);
-  //       setError('No se pudo crear el nuevo tipo de compra.');
-  //     }
-  //   }
-  // };
 
   useEffect(() => {
     if (isOpen) {
@@ -137,10 +107,10 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
               <Badge
                 variant="secondary"
                 className="flex items-center justify-between px-2 py-1 rounded-md text-xs font-bold"
-                style={{ backgroundColor: tiposDeCompra.find(t => t.purchaseTypeId.toString() === selectedTipo)?.color || '#808080', color: 'white' }}
+                style={{ backgroundColor: tiposDeCompra.find(t => t.purchaseTypeId === selectedTipo)?.color || '#808080', color: 'white' }}
               >
                 <span className="flex items-center">
-                  {tiposDeCompra.find(t => t.purchaseTypeId.toString() === selectedTipo)?.name}
+                  {tiposDeCompra.find(t => t.purchaseTypeId === selectedTipo)?.name}
                 </span>
                 <Button
                   variant="ghost"
@@ -150,14 +120,14 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
                     e.stopPropagation();
                     onSelectTipo(null);
                   }}
-                  aria-label={`Eliminar ${tiposDeCompra.find(t => t.purchaseTypeId.toString() === selectedTipo)?.name}`}
+                  aria-label={`Eliminar ${tiposDeCompra.find(t => t.purchaseTypeId === selectedTipo)?.name}`}
                 >
                   <X className="h-3 w-3" />
                 </Button>
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{tiposDeCompra.find(t => t.purchaseTypeId.toString() === selectedTipo)?.name}</p>
+              <p>{tiposDeCompra.find(t => t.purchaseTypeId === selectedTipo)?.name}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -173,7 +143,7 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
           }
         }}
         onValueChange={handleSelectTipo}
-        value={selectedTipo || undefined}
+        value={selectedTipo ? selectedTipo.toString() : undefined}
       >
         <SelectTrigger className="border-green-500 focus:ring-green-500">
           <SelectValue placeholder="Selecciona tipos de compra" />
@@ -204,7 +174,7 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
                 >
                   <div className="flex items-center">
                     <Checkbox
-                      checked={selectedTipo === tipo.purchaseTypeId.toString()}
+                      checked={selectedTipo === tipo.purchaseTypeId}
                       onCheckedChange={() => handleSelectTipo(tipo.purchaseTypeId.toString())}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -213,7 +183,7 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
                       className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
                       style={{
                         borderColor: tipo.color,
-                        backgroundColor: selectedTipo === tipo.purchaseTypeId.toString() ? tipo.color : 'transparent',
+                        backgroundColor: selectedTipo === tipo.purchaseTypeId ? tipo.color : 'transparent',
                       }}
                     />
                     {tipo.name}
@@ -224,50 +194,6 @@ export default function TipoDeCompraComponent({ selectedTipo, onSelectTipo }: Ti
           </ScrollArea>
         </SelectContent>
       </Select>
-
-      {/* Agregar nuevo tipo de compra */}
-      <div className="flex items-center space-x-2">
-        {isAddingNew ? (
-          <div className="flex items-center space-x-2">
-            <Input
-              ref={newTipoInputRef}
-              placeholder="Nuevo tipo de compra..."
-              value={newTipoName}
-              onChange={(e) => setNewTipoName(e.target.value)}
-              className="h-8 w-[240px] border border-green-300 focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none"
-            />
-            {/* <Button
-              onClick={handleAddNewTipo}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
-            >
-              <Check className="h-4 w-4" />
-            </Button> */}
-            <Button
-              onClick={() => {
-                setIsAddingNew(false);
-                setNewTipoName("");
-              }}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <Button
-            onClick={() => setIsAddingNew(true)}
-            size="sm"
-            variant="ghost"
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Agregar nuevo tipo de compra
-          </Button>
-        )}
-      </div>
 
       {/* Mostrar errores de creación */}
       {error && (

@@ -22,7 +22,7 @@ interface FinancingSourceProps {
   isUMES: boolean
 }
 
-export default function FinancingSource({
+export function FinancingSource({
   contributions,
   onAppendContribution,
   onRemoveContribution,

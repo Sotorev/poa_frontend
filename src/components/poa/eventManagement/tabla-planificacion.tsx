@@ -35,7 +35,7 @@ import { OtherFinancingSourceComponent } from './fields/other-financing-source';
 import { UMESFinancingComponent } from './fields/financing-source';
 import { RecursosSelectorComponent } from './fields/recursos-selector';
 import { ResponsablesComponent } from './fields/responsables';
-import TipoDeCompraComponent from './fields/tipo-de-compra';
+import TipoDeCompraComponent from './fields/purchase-type';
 
 
 import { useCurrentUser } from '@/hooks/use-current-user';

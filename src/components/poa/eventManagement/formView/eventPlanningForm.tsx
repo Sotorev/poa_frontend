@@ -20,9 +20,8 @@ import { OdsSelector } from "../fields/ods-selector"
 import { ActivityProjectSelector } from "../fields/actividad-proyecto-selector";
 import { EventNameComponent } from "../fields/evento"
 import { ObjectiveComponent } from "../fields/objetivo"
-import FinancingSource from "../fields/financing-source";
-import { OtherFinancingSourceComponent } from "../fields/other-financing-source"
-import TipoDeCompraComponent from "../fields/tipo-de-compra"
+import { FinancingSource } from "../fields/financing-source";
+import { PurchaseType } from "../fields/purchase-type"
 import { EventCostDetail } from "../fields/detalle"
 import { CampusSelector } from "../fields/campus-selector"
 import { ResponsibleComponent } from "../fields/responsables"
@@ -37,7 +36,6 @@ import { Strategy } from "@/types/Strategy"
 
 // Context
 import { EventPlanningFormContext } from "./eventPlanningForm.context"
-import { EventContext } from "./event.context";
 
 
 interface EventPlanningFormProps {
@@ -182,7 +180,7 @@ export function EventPlanningForm({
                                         render={({ field }) => (
                                             <DetalleProcesoComponent
                                                 files={field.value || []}
-                                                onFilesChange={(files: File[]) => { field.onChange(files); console.log(files) }}
+                                                onFilesChange={(files: File[]) => { field.onChange(files); console.log("detalle proceso", field.value) }}
                                             />
                                         )}
                                     />
@@ -191,8 +189,8 @@ export function EventPlanningForm({
                                 <TabsContent value="finance" className="mt-4 space-y-6">
                                     <div className="p-4 bg-gray-50 rounded-lg border">
                                         <label className="text-sm font-medium text-gray-700">Costo Total</label>
-                                        <div className="mt-1 text-2xl font-bold text-green-600">
-                                            Q {(event?.aporteUMES + event?.aporteOtros || 0).toFixed(2)}
+                                        <div className="mt-1 text-2xl font-bold text-primary">
+                                            Q {(watch("totalCost") || 0).toFixed(2)}
                                         </div>
                                     </div>
                                     <FinancingSource
@@ -211,7 +209,7 @@ export function EventPlanningForm({
                                     />
                                     <FinancingSource
                                         contributions={fieldsFinancings}
-                                        onAppendContribution={(contribution) => { appendFinancing(contribution); console.log("appending financing", watch("financings")) }}
+                                        onAppendContribution={(contribution) =>  appendFinancing(contribution)}
                                         onRemoveContribution={(index) => {
                                             removeFinancing(index);
                                             console.log("Removing financing:", watch("financings"));
@@ -223,13 +221,27 @@ export function EventPlanningForm({
                                         onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
                                         isUMES={false}
                                     />
-                                    <TipoDeCompraComponent
-                                        selectedTipo={event?.tipoCompra || ""}
-                                        onSelectTipo={(tipos: string | null) => updateField("tipoCompra", tipos)}
+                                    <Controller
+                                        name="purchaseTypeId"
+                                        control={control}
+                                        defaultValue={undefined}
+                                        render={({ field }) => (
+                                            <PurchaseType
+                                                selectedTipo={field.value}
+                                                onSelectTipo={(tipo) => field.onChange(tipo)}
+                                            />
+                                        )}
                                     />
-                                    <EventCostDetail
-                                        files={event?.costDetailDocuments || []}
-                                        onFilesChange={(files) => updateField("costDetailDocuments", files)}
+                                    <Controller
+                                        name="costDetailDocuments"
+                                        control={control}
+                                        defaultValue={[]}
+                                        render={({ field }) => (
+                                            <EventCostDetail
+                                                files={field.value || []}
+                                                onFilesChange={(files) => field.onChange(files)}
+                                            />
+                                        )}
                                     />
                                     <CampusSelector
                                         selectedCampusId={event?.campusId || ""}
