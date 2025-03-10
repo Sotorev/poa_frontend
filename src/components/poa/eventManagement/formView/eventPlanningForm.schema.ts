@@ -15,13 +15,15 @@ export type DateSchema = z.infer<typeof dateSchema>;
 
 // Esquema para financiamientos
 const financingSchema = z.object({
-  financingSourceId: z.number(),
+  financingSourceId: z.number(), // 2,3,6 Otras fuentes; 1, 4, 5, 7 UMES
   percentage: z
     .number()
     .min(0, "El porcentaje no puede ser menor que 0")
     .max(100, "El porcentaje no puede ser mayor que 100"),
   amount: z.number().nonnegative("El monto no puede ser negativo"),
 });
+
+export type FinancingSourceRequest = z.infer<typeof financingSchema>;
 
 // Esquema para responsables
 const responsibleSchema = z.object({

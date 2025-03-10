@@ -1,4 +1,5 @@
-import { createContext, useContext } from "react";
+"use client"
+import { createContext, useEffect } from "react";
 import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch, useForm, useFieldArray, UseFormHandleSubmit, UseFormReset, UseFieldArrayUpdate, UseFieldArrayReplace } from "react-hook-form"
 
 // Types
@@ -20,6 +21,10 @@ interface EventPlanningFormContextProps {
     updateResponsible: UseFieldArrayUpdate<FullEventRequest>
     removeResponsible: UseFieldArrayRemove
     fieldsResponsibles: FieldArrayWithId<FullEventRequest, "responsibles">[];
+    appendFinancing: UseFieldArrayAppend<FullEventRequest>
+    removeFinancing: UseFieldArrayRemove
+    updateFinancing: UseFieldArrayUpdate<FullEventRequest>
+    fieldsFinancings: FieldArrayWithId<FullEventRequest, "financings">[];
     getValues: UseFormGetValues<FullEventRequest>
     watch: UseFormWatch<FullEventRequest>
     register: UseFormRegister<FullEventRequest>
@@ -51,6 +56,10 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
     updateResponsible: notImplemented("update"),
     removeResponsible: notImplemented("remove"),
     fieldsResponsibles: [],
+    appendFinancing: notImplemented("append"),
+    removeFinancing: notImplemented("remove"),
+    updateFinancing: notImplemented("update"),
+    fieldsFinancings: [],
     getValues: notImplemented("getValues"),
     watch: notImplemented("watch"),
     register: notImplemented("register"),
@@ -87,6 +96,11 @@ export const EventPlanningFormProvider: React.FC<{
         name: 'responsibles'
     })
 
+    const { append: appendFinancing, remove: removeFinancing, update: updateFinancing, fields: fieldsFinancings } = useFieldArray<FullEventRequest, 'financings'>({
+        control,
+        name: 'financings'
+    })
+
     handleSubmit(onSubmit)
 
     return (
@@ -113,7 +127,11 @@ export const EventPlanningFormProvider: React.FC<{
                 appendResponible,
                 updateResponsible,
                 removeResponsible,
-                fieldsResponsibles
+                fieldsResponsibles,
+                appendFinancing,
+                removeFinancing,
+                updateFinancing,
+                fieldsFinancings
             }}
         >
             {children}

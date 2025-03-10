@@ -20,7 +20,7 @@ import { OdsSelector } from "../fields/ods-selector"
 import { ActivityProjectSelector } from "../fields/actividad-proyecto-selector";
 import { EventNameComponent } from "../fields/evento"
 import { ObjectiveComponent } from "../fields/objetivo"
-import { UMESFinancingComponent } from "../fields/umes-financing-source"
+import FinancingSource from "../fields/financing-source";
 import { OtherFinancingSourceComponent } from "../fields/other-financing-source"
 import TipoDeCompraComponent from "../fields/tipo-de-compra"
 import { EventCostDetail } from "../fields/detalle"
@@ -37,6 +37,7 @@ import { Strategy } from "@/types/Strategy"
 
 // Context
 import { EventPlanningFormContext } from "./eventPlanningForm.context"
+import { EventContext } from "./event.context";
 
 
 interface EventPlanningFormProps {
@@ -45,7 +46,6 @@ interface EventPlanningFormProps {
     event?: any
     updateField: (field: string, value: any) => void
     addStrategicObjective: (objective: any) => void
-    financingSources: any[]
     selectedStrategicArea: StrategicArea | undefined
     selectedStrategicObjective: StrategicObjective | undefined
     setSelectedStrategicObjective: (objective: StrategicObjective) => void
@@ -59,13 +59,13 @@ export function EventPlanningForm({
     event,
     updateField,
     addStrategicObjective,
-    financingSources,
     selectedStrategicArea,
     selectedStrategicObjective,
     setSelectedStrategicObjective,
     selectedStrategies,
     setSelectedStrategies,
 }: EventPlanningFormProps) {
+    // Context
     const {
         fieldsInterventions,
         appendIntervention,
@@ -77,9 +77,12 @@ export function EventPlanningForm({
         updateDate,
         removeDate,
         replaceDates,
-        fieldsResponsibles,
         appendResponible,
         updateResponsible,
+        appendFinancing,
+        removeFinancing,
+        updateFinancing,
+        fieldsFinancings,
         watch,
         setValue,
         control
@@ -169,6 +172,9 @@ export function EventPlanningForm({
                                             />
                                         )}
                                     />
+                                    <div className="p-4 bg-gray-50 rounded-lg border">
+                                        <h3 className="text-md font-semibold text-gray-800">Documentos del Proceso del evento</h3>
+                                    </div>
                                     <Controller
                                         name="processDocuments"
                                         control={control}
@@ -176,7 +182,7 @@ export function EventPlanningForm({
                                         render={({ field }) => (
                                             <DetalleProcesoComponent
                                                 files={field.value || []}
-                                                onFilesChange={(files: File[]) => {field.onChange(files); console.log(files)}}
+                                                onFilesChange={(files: File[]) => { field.onChange(files); console.log(files) }}
                                             />
                                         )}
                                     />
@@ -189,17 +195,33 @@ export function EventPlanningForm({
                                             Q {(event?.aporteUMES + event?.aporteOtros || 0).toFixed(2)}
                                         </div>
                                     </div>
-                                    <UMESFinancingComponent
-                                        contributions={event?.aporteUMES || []}
-                                        onChangeContributions={(aportes) => updateField("aporteUMES", aportes)}
-                                        totalCost={event?.aporteUMES + event?.aporteOtros || 0}
-                                        financingSources={financingSources}
+                                    <FinancingSource
+                                        contributions={fieldsFinancings}
+                                        onAppendContribution={(contribution) => { appendFinancing(contribution); console.log("appending financing", watch("financings")) }}
+                                        onRemoveContribution={(index) => {
+                                            removeFinancing(index);
+                                            console.log("Removing financing:", watch("financings"));
+                                        }}
+                                        onUpdateContribution={(index, contribution) => {
+                                            updateFinancing(index, contribution);
+                                            console.log("Updating financing:", watch("financings"));
+                                        }}
+                                        onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
+                                        isUMES={true}
                                     />
-                                    <OtherFinancingSourceComponent
-                                        contributions={event?.aporteOtros || []}
-                                        onChangeContributions={(aportes) => updateField("aporteOtros", aportes)}
-                                        totalCost={event?.aporteUMES + event?.aporteOtros || 0}
-                                        financingSources={financingSources}
+                                    <FinancingSource
+                                        contributions={fieldsFinancings}
+                                        onAppendContribution={(contribution) => { appendFinancing(contribution); console.log("appending financing", watch("financings")) }}
+                                        onRemoveContribution={(index) => {
+                                            removeFinancing(index);
+                                            console.log("Removing financing:", watch("financings"));
+                                        }}
+                                        onUpdateContribution={(index, contribution) => {
+                                            updateFinancing(index, contribution);
+                                            console.log("Updating financing:", watch("financings"));
+                                        }}
+                                        onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
+                                        isUMES={false}
                                     />
                                     <TipoDeCompraComponent
                                         selectedTipo={event?.tipoCompra || ""}

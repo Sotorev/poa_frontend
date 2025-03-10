@@ -24,6 +24,7 @@ import {
     // Si existe, agregar getFinancingSources
 } from './eventPlanningForm.service'
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { getFinancingSources } from '@/services/apiService';
 
 interface EventContextProps {
     financingSources: FinancingSource[];
@@ -117,6 +118,9 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
             const responsePurchaseTypes = await getPurchaseTypes(user.token);
             setPurchaseTypes(responsePurchaseTypes);
+
+            const responseFinancingSources = await getFinancingSources(user.token);
+            setFinancingSources(responseFinancingSources);
 
             setLoading(false);
         };

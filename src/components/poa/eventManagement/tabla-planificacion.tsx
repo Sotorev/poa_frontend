@@ -32,7 +32,7 @@ import { ObjetivoComponent } from './fields/objetivo';
 import { ObjetivosEstrategicosSelectorComponent } from './fields/objetivos-estrategicos-selector';
 import { OdsSelector } from './fields/ods-selector';
 import { OtherFinancingSourceComponent } from './fields/other-financing-source';
-import { UMESFinancingComponent } from './fields/umes-financing-source';
+import { UMESFinancingComponent } from './fields/financing-source';
 import { RecursosSelectorComponent } from './fields/recursos-selector';
 import { ResponsablesComponent } from './fields/responsables';
 import TipoDeCompraComponent from './fields/tipo-de-compra';
