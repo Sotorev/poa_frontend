@@ -106,7 +106,7 @@ export default function GraficoMatriculaUniversitaria() {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-7xl mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">Tendencias de Matrícula Universitaria</CardTitle>
         <CardDescription className="text-center">

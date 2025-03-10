@@ -2,81 +2,115 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Bar } from "react-chartjs-2"
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js"
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from "chart.js"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ChartDataLabels from "chartjs-plugin-datalabels"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels)
 
 interface FacultyExpense {
+  facultyId: number
   name: string
-  planned: number
-  actual: number
+  expectedCost: number
+  actualCost: number
+  diff: number
+  percentage: number
 }
 
-const FacultyExpenseReport = () => {
+export default function FacultyExpenseReport() {
+  const user = useCurrentUser() 
+  const [data, setData] = useState<FacultyExpense[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
   const [isSorted, setIsSorted] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<string | null>(null)
   const chartRef = useRef<ChartJS<"bar">>(null)
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-  const originalData: FacultyExpense[] = [
-    { name: "Ingeniería", planned: 500000, actual: 480000 },
-    { name: "Medicina", planned: 600000, actual: 620000 },
-    { name: "Derecho", planned: 400000, actual: 390000 },
-    { name: "Economía", planned: 350000, actual: 340000 },
-    { name: "Ciencias", planned: 450000, actual: 460000 },
-  ]
+  // Conexión a la API para obtener los datos de costos
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch(`${API_URL}/api/reports/event/costs`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${user?.token}`
+          }
+        })
+        if (!response.ok) {
+          throw new Error("Error al obtener los datos de costos")
+        }
+        const responseData: FacultyExpense[] = await response.json()
+        setData(responseData)
+      } catch (err: any) {
+        setError(err.message || "Error desconocido")
+      }
+      setLoading(false)
+    }
+    fetchData()
+  }, [API_URL, user?.token])
 
-  const sortedData = [...originalData].sort((a, b) => {
-    const deviationA = (a.actual - a.planned) / a.planned
-    const deviationB = (b.actual - b.planned) / b.planned
+  // Ordenar los datos (por ejemplo, por porcentaje de cumplimiento)
+  const sortedData = [...data].sort((a, b) => b.percentage - a.percentage)
+  const currentData = isSorted ? sortedData : data
 
-    if (deviationA < 0 && deviationB >= 0) return -1
-    if (deviationA >= 0 && deviationB < 0) return 1
-    if (deviationA < 0 && deviationB < 0) return Math.abs(deviationB) - Math.abs(deviationA)
-    return 0
-  })
+  // Filtrar por facultad si se selecciona alguna
+  const filteredData = selectedFaculty
+    ? currentData.filter((faculty) => faculty.name === selectedFaculty)
+    : currentData
 
-  const currentData = isSorted ? sortedData : originalData
-
-  const filteredData = selectedFaculty ? currentData.filter((faculty) => faculty.name === selectedFaculty) : currentData
-
+  // Se recalcula la diferencia: (gasto real - gasto planificado)
   const chartData = {
     labels: filteredData.map((faculty) => faculty.name),
     datasets: [
       {
-        label: "Gastos Planificados",
-        data: filteredData.map((faculty) => faculty.planned),
+        label: "Gasto Planificado",
+        data: filteredData.map((faculty) => faculty.expectedCost),
         backgroundColor: "rgba(53, 162, 235, 0.7)",
         borderColor: "rgba(53, 162, 235, 1)",
         borderWidth: 1,
       },
       {
-        label: "Gastos Reales",
-        data: filteredData.map((faculty) => faculty.actual),
+        label: "Gasto Real",
+        data: filteredData.map((faculty) => faculty.actualCost),
         backgroundColor: "rgba(75, 192, 192, 0.7)",
         borderColor: "rgba(75, 192, 192, 1)",
         borderWidth: 1,
       },
       {
         label: "Diferencia",
-        data: filteredData.map((faculty) => faculty.actual - faculty.planned),
+        data: filteredData.map((faculty) =>
+          Math.abs(faculty.actualCost - faculty.expectedCost)
+        ),
         backgroundColor: filteredData.map((faculty) =>
-          faculty.actual > faculty.planned ? "rgba(255, 99, 132, 0.7)" : "rgba(75, 192, 192, 0.7)",
+          faculty.actualCost > faculty.expectedCost
+            ? "rgba(255, 99, 132, 0.7)" // Exceso
+            : "rgba(75, 192, 192, 0.7)"   // Ahorro
         ),
         borderColor: filteredData.map((faculty) =>
-          faculty.actual > faculty.planned ? "rgba(255, 99, 132, 1)" : "rgba(75, 192, 192, 1)",
+          faculty.actualCost > faculty.expectedCost
+            ? "rgba(255, 99, 132, 1)"
+            : "rgba(75, 192, 192, 1)"
         ),
         borderWidth: 1,
-      },
-    ],
+      }
+    ]
   }
 
-  const formatCurrency = (value: number) => {
-    return `Q${value.toLocaleString()}`
-  }
+  const formatCurrency = (value: number) => `Q${value.toLocaleString()}`
 
   const options = {
     responsive: true,
@@ -91,7 +125,9 @@ const FacultyExpenseReport = () => {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: (value: number) => formatCurrency(value),
+          callback: function (tickValue: string | number) {
+            return formatCurrency(Number(tickValue))
+          },
         },
       },
     },
@@ -99,62 +135,70 @@ const FacultyExpenseReport = () => {
       legend: {
         position: "top" as const,
       },
-      title: {
-        display: true,
-        text: "Reporte de Gastos por Facultad",
-        font: {
-          size: 18,
-          weight: "bold" as const,
-        },
-      },
       tooltip: {
+        mode: "index" as const,
+        intersect: true,
+        displayColors: false,
+        filter: (tooltipItem: any) => tooltipItem.datasetIndex === 0,
         callbacks: {
-          label: (context: any) => {
-            const datasetIndex = context.datasetIndex
-            const dataIndex = context.dataIndex
-            const value = context.dataset.data[dataIndex]
-            const planned = chartData.datasets[0].data[dataIndex]
-            const actual = chartData.datasets[1].data[dataIndex]
-
-            if (datasetIndex === 0) {
-              return `Gasto Planificado: ${formatCurrency(value)}`
-            } else if (datasetIndex === 1) {
-              const percentage = ((actual / planned) * 100).toFixed(2)
-              return [`Gasto Real: ${formatCurrency(value)}`, `Porcentaje del planificado: ${percentage}%`]
-            } else if (datasetIndex === 2) {
-              const differenceText = value > 0 ? "Exceso" : "Ahorro"
-              const differencePercentage = ((Math.abs(value) / planned) * 100).toFixed(2)
-              return [
-                `${differenceText}: ${formatCurrency(Math.abs(value))}`,
-                `Porcentaje de diferencia: ${differencePercentage}%`,
-              ]
-            }
+          title: (tooltipItems: any) => {
+            if (!tooltipItems || !tooltipItems.length) return "";
+            const index = tooltipItems[0].dataIndex;
+            return filteredData?.[index]?.name || "";
           },
+          label: (tooltipItem: any) => {
+            const index = tooltipItem.dataIndex;
+            if (index === undefined || !filteredData[index]) return "";
+            const faculty = filteredData[index];
+            const planned = faculty.expectedCost;
+            const real = faculty.actualCost;
+            const diff = real - planned;
+            const diffLabel =
+              diff > 0
+                ? `Exceso: ${formatCurrency(Math.abs(diff))}`
+                : `Ahorro: ${formatCurrency(Math.abs(diff))}`;
+            // Se retornan los datos agregados en líneas separadas
+            return [
+              `Gasto planificado: ${formatCurrency(planned)}`,
+              `Gasto real: ${formatCurrency(real)}`,
+              diffLabel,
+              `Porcentaje usado de planificacion: ${faculty.percentage}%`
+            ];
+          },
+        },
+        backgroundColor: "white",
+        titleColor: "#000",
+        bodyColor: "#000",
+        titleFont: {
+          size: 16, // Tamaño de letra mayor para el título
+        },
+        bodyFont: {
+          size: 14, // Tamaño de letra mayor para el contenido
         },
       },
       datalabels: {
-        anchor: "end",
-        align: "top",
+        anchor: "end" as const,
+        align: "top" as const,
         offset: 5,
         formatter: (value: number, context: any) => {
-          const datasetIndex = context.datasetIndex
-
-          if (datasetIndex === 2) {
-            const differenceText = value > 0 ? "Exceso" : "Ahorro"
-            return `${differenceText}\n${formatCurrency(Math.abs(value))}`
+          const diff = filteredData[context.dataIndex].actualCost - filteredData[context.dataIndex].expectedCost
+          if (context.datasetIndex === 2) {
+            if (diff > 0) {
+              return `Exceso\n${formatCurrency(Math.abs(diff))}`
+            } else {
+              return `Ahorro\n${formatCurrency(Math.abs(diff))}`
+            }
           }
-
           return formatCurrency(value)
         },
         font: {
-          weight: "bold",
+          weight: "bold" as const,
           size: 10,
         },
         color: (context: any) => {
-          const datasetIndex = context.datasetIndex
-          const value = context.dataset.data[context.dataIndex]
-          if (datasetIndex === 2) {
-            return value > 0 ? "rgba(255, 99, 132, 1)" : "rgba(75, 192, 192, 1)"
+          const diff = filteredData[context.dataIndex].actualCost - filteredData[context.dataIndex].expectedCost
+          if (context.datasetIndex === 2) {
+            return diff > 0 ? "rgba(255, 99, 132, 1)" : "rgba(75, 192, 192, 1)"
           }
           return "black"
         },
@@ -170,17 +214,17 @@ const FacultyExpenseReport = () => {
 
   useEffect(() => {
     const chart = chartRef.current
-
     if (chart) {
       chart.update()
     }
-  }, [])
+  }, [data, isSorted, selectedFaculty])
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-7xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Reporte de Gastos por Facultad</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">Reporte de Gastos por Facultad</CardTitle>
       </CardHeader>
+      <CardDescription className="text-center"> Comparación de gastos planificados y reales por facultad.</CardDescription> 
       <CardContent>
         <div className="flex justify-between items-center mb-4">
           <Select value={selectedFaculty || ""} onValueChange={setSelectedFaculty}>
@@ -189,8 +233,8 @@ const FacultyExpenseReport = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas las facultades</SelectItem>
-              {originalData.map((faculty) => (
-                <SelectItem key={faculty.name} value={faculty.name}>
+              {data.map((faculty) => (
+                <SelectItem key={faculty.facultyId} value={faculty.name}>
                   {faculty.name}
                 </SelectItem>
               ))}
@@ -200,13 +244,10 @@ const FacultyExpenseReport = () => {
             {isSorted ? "Mostrar orden original" : "Ordenar por cumplimiento de presupuesto"}
           </Button>
         </div>
-        <div className="h-[500px]">
+        <div className="h-[600px]">
           <Bar ref={chartRef} data={chartData} options={options} plugins={[ChartDataLabels]} />
         </div>
       </CardContent>
     </Card>
   )
 }
-
-export default FacultyExpenseReport
-
