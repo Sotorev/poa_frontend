@@ -197,7 +197,7 @@ export function RecursosSelectorComponent({ selectedResource, onAppendResource, 
         }}
         value=""
       >
-        <SelectTrigger className="w-[300px] border-green-500 focus:ring-green-500">
+        <SelectTrigger className="w-[300px] border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
           <SelectValue placeholder="Selecciona recursos" />
         </SelectTrigger>
         <SelectContent>
@@ -206,7 +206,7 @@ export function RecursosSelectorComponent({ selectedResource, onAppendResource, 
             <Input
               ref={searchInputRef}
               placeholder="Buscar recurso..."
-              className="h-8 w-full bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 border-none"
+              className="h-8 w-full border-primary bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

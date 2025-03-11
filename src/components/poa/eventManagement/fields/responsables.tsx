@@ -35,16 +35,19 @@ export function ResponsibleComponent({
         placeholder="Responsable de planificación"
         value={responsible.find((r) => r.responsibleRole === "Principal")?.name || ""}
         onChange={(e) => handleResponsibleChange("Principal", e.target.value)}
+        className='border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary text-black placeholder-primary'
       />
       <Input
         placeholder="Responsable de ejecución"
         value={responsible.find((r) => r.responsibleRole === "Ejecución")?.name || ""}
         onChange={(e) => handleResponsibleChange("Ejecución", e.target.value)}
+        className='border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary text-black placeholder-primary'
       />
       <Input
         placeholder="Responsable de seguimiento"
         value={responsible.find((r) => r.responsibleRole === "Seguimiento")?.name || ""}
         onChange={(e) => handleResponsibleChange("Seguimiento", e.target.value)}
+        className='border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary text-black placeholder-primary'
       />
     </div>
   );

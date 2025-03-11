@@ -95,7 +95,7 @@ export function OdsSelector({ selected, onSelect, onRemove }: OdsSelectorProps) 
                 onValueChange={(val) => handleSelectODS(Number(val))}
                 value=''
               >
-                <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <SelectTrigger className="w-[300px] border border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
                   <SelectValue placeholder="Selecciona ODS" />
                 </SelectTrigger>
                 <SelectContent>
@@ -104,7 +104,7 @@ export function OdsSelector({ selected, onSelect, onRemove }: OdsSelectorProps) 
                     <Input
                       ref={searchInputRef}
                       placeholder="Buscar ODS..."
-                      className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-green-500 border-green-300"
+                      className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-primary border-primary"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -115,7 +115,7 @@ export function OdsSelector({ selected, onSelect, onRemove }: OdsSelectorProps) 
                         <SelectItem
                           key={ods.odsId}
                           value={ods.odsId.toString()}
-                          className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
+                          className="focus:bg-primary/10 focus:text-primary hover:bg-primary/10"
                         >
                           <div className="flex items-center">
                             <Checkbox

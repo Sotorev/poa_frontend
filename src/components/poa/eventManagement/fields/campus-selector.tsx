@@ -1,8 +1,7 @@
 // src/components/poa/components/columns/campus-selector.tsx
 
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Campus } from '@/types/Campus';
 import { EventContext } from '../event.context';
 
 interface CampusSelectorProps {
@@ -16,7 +15,7 @@ export function CampusSelector({ onSelectCampus, selectedCampusId }: CampusSelec
 
   return (
     <Select onValueChange={(value) => onSelectCampus(Number.parseInt(value))} value={selectedCampusId?.toString()}>
-      <SelectTrigger className=" border-green-300 focus:ring-green-500 focus:border-green-500">
+      <SelectTrigger className=" border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
         <SelectValue placeholder="Selecciona un campus" />
       </SelectTrigger>
       <SelectContent>
@@ -24,7 +23,7 @@ export function CampusSelector({ onSelectCampus, selectedCampusId }: CampusSelec
           <SelectItem
             key={campus.campusId}
             value={campus.campusId.toString()}
-            className="text-green-700 hover:bg-green-50 focus:bg-green-100"
+            className="text-primary hover:bg-primary/10 focus:bg-primary/10"
           >
             {campus.name}
           </SelectItem>

@@ -90,7 +90,7 @@ export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
           <div className="flex text-sm text-gray-600">
             <label
               htmlFor="file-upload"
-              className="relative cursor-pointer bg-white rounded-md font-medium text-black hover:text-primary  focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+              className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:underline  focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
             >
               <span>Cargar un archivo</span>
               <Input
@@ -112,8 +112,8 @@ export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
       {localFiles?.length > 0 && (
         <div className="space-y-2">
           {localFiles.map(({ id, file }) => (
-            <div key={id} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-              <span className="text-sm text-gray-600">{file.name}</span>
+            <div key={id} className="flex items-center justify-between bg-primary/10 p-2 rounded-md">
+              <span className="text-sm text-primary">{file.name}</span>
               <Button
                 variant="ghost"
                 size="sm"

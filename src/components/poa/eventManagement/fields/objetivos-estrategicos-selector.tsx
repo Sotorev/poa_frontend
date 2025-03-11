@@ -75,7 +75,7 @@ export function StrategicObjectiveSelector({ selectedObjetive, onSelectObjetive,
         onOpenChange={setIsOpen}
         value={selectedObjetive?.description || undefined}
       >
-        <SelectTrigger className="w-full border-green-500 focus:ring-green-500">
+        <SelectTrigger className="w-full border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
           <SelectValue placeholder="Seleccionar objetivo">
             {/* selected objective */}
             {selectedObjetivo && (
@@ -83,7 +83,7 @@ export function StrategicObjectiveSelector({ selectedObjetive, onSelectObjetive,
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center w-full">
-                      <div className="flex-shrink-0 w-6 h-6 rounded bg-green-500 text-white font-bold flex items-center justify-center mr-2">
+                      <div className="flex-shrink-0 w-6 h-6 rounded bg-primary text-white font-bold flex items-center justify-center mr-2">
                         {extendedStrategicObjective.find((o) => o.strategicObjectiveId === selectedObjetivo.strategicObjectiveId)?.number}
                       </div>
                       <span className="truncate flex-grow">{selectedObjetivo.description}</span>
@@ -103,7 +103,7 @@ export function StrategicObjectiveSelector({ selectedObjetive, onSelectObjetive,
             <Input
               ref={searchInputRef}
               placeholder="Buscar objetivo..."
-              className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-green-500 border-green-300"
+              className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-primary border-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -115,10 +115,10 @@ export function StrategicObjectiveSelector({ selectedObjetive, onSelectObjetive,
                 <SelectItem
                   key={obj.strategicObjectiveId}
                   value={obj.strategicObjectiveId.toString()}
-                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-green-50"
+                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-primary/10"
                 >
                   <div className="flex items-start w-[300px]">
-                    <div className={`flex-shrink-0 w-6 h-6 rounded ${selectedObjetive ? 'bg-green-700' : 'bg-green-500'
+                      <div className={`flex-shrink-0 w-6 h-6 rounded ${selectedObjetive ? 'bg-primary' : 'bg-primary'
                       } text-white font-bold flex items-center justify-center mr-2`}>
                       {extendedStrategicObjective.find((o) => o.strategicObjectiveId === obj.strategicObjectiveId)?.number}
                     </div>

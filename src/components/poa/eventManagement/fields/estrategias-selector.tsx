@@ -121,14 +121,14 @@ export function EstrategiasSelectorComponent({
                   );
                   if (!estrategia) return null;
                   return (
-                    <Badge key={estrategia.strategyId} variant="secondary" className="bg-green-100 text-green-800 p-0 flex items-center">
-                      <span className="text-green-500 font-bold text-xs mr-1">
+                    <Badge key={estrategia.strategyId} variant="secondary" className="bg-primary/10 text-primary p-0 flex items-center">
+                      <span className="text-primary font-bold text-xs mr-1">
                         {estrategia.strategyId}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-5 w-5 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
+                        className="h-5 w-5 p-0 text-primary hover:text-primary hover:bg-primary/10"
                         onClick={() => handleRemoveEstrategia(estrategia.strategyId.toString())}
                         disabled={disabled} // Deshabilitar el botón si está deshabilitado
                       >
@@ -151,7 +151,7 @@ export function EstrategiasSelectorComponent({
                 value=""
                 disabled={disabled} // Deshabilitar el Select si está deshabilitado
               >
-                <SelectTrigger className="w-[300px] border-green-500 focus:ring-green-500">
+                <SelectTrigger className="w-[300px] border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
                   <SelectValue placeholder="Selecciona estrategias" />
                 </SelectTrigger>
                 <SelectContent>
@@ -160,7 +160,7 @@ export function EstrategiasSelectorComponent({
                     <Input
                       ref={searchInputRef}
                       placeholder="Buscar estrategia..."
-                      className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-green-500 border-green-300"
+                      className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-primary border-primary"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       disabled={disabled} // Deshabilitar el input si está deshabilitado
@@ -172,16 +172,16 @@ export function EstrategiasSelectorComponent({
                         <SelectItem
                           key={est.strategyId}
                           value={est.strategyId.toString()}
-                          className="flex items-start py-2 px-3 cursor-pointer hover:bg-green-50"
+                          className="flex items-start py-2 px-3 cursor-pointer hover:bg-primary/10"
                         >
                           <div className="flex items-start w-full">
                             <Checkbox
                               checked={selectedEstrategias.some(strategy => strategy.strategyId.toString() === est.strategyId.toString())}
                               onCheckedChange={() => handleSelectEstrategia(est.strategyId.toString())}
-                              className="mr-2 mt-1 h-4 w-4 rounded border-green-500 text-green-500 focus:ring-green-500"
+                              className="mr-2 mt-1 h-4 w-4 rounded border-primary text-primary focus:ring-primary"
                               disabled={disabled} // Deshabilitar el checkbox si está deshabilitado
                             />
-                            <div className="flex-shrink-0 w-6 h-6 rounded bg-green-500 text-white font-bold flex items-center justify-center mr-2">
+                            <div className="flex-shrink-0 w-6 h-6 rounded bg-primary text-white font-bold flex items-center justify-center mr-2">
                               {est.strategyId}
                             </div>
                             <TooltipProvider>

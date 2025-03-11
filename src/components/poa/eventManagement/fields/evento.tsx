@@ -14,7 +14,7 @@ export function EventNameComponent({ value, onChange }: EventNameComponentProps)
     <Input
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-64 border-green-300 focus:border-green-500 focus:ring-green-500 text-green-700 placeholder-green-400"
+      className="w-64 border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary text-black placeholder-primary"
       placeholder="Ingrese el nombre del evento"
     />
   );

@@ -112,14 +112,14 @@ export function IntervencionesSelectorComponent({
                     <Badge
                       key={item.intervention}
                       variant="secondary"
-                      className={`bg-green-100 text-green-800 flex items-center ${disabled ? "opacity-50 cursor-not-allowed" : ""
+                      className={`bg-primary/10 text-primary flex items-center ${disabled ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                     >
                       {intervencion.isCustom ? `E${intervencion.interventionId}` : intervencion.interventionId}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="ml-1 h-4 w-4 p-0 text-green-800 hover:text-green-900 hover:bg-green-200"
+                        className="ml-1 h-4 w-4 p-0 text-primary hover:text-primary hover:bg-primary/10"
                         onClick={(event) => handleRemoveIntervencion(item.intervention, event)}
                         aria-label={`Eliminar ${intervencion.name}`}
                         disabled={disabled} // Deshabilitar el botón si está deshabilitado
@@ -138,7 +138,7 @@ export function IntervencionesSelectorComponent({
                 onValueChange={(val) => handleSelectIntervencion(Number(val))}
                 value=''
               >
-                <SelectTrigger className="w-[300px] border border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <SelectTrigger className="w-[300px] border border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
                   <SelectValue placeholder="Selecciona intervenciones" />
                 </SelectTrigger>
                 <SelectContent>
@@ -147,7 +147,7 @@ export function IntervencionesSelectorComponent({
                     <Input
                       ref={searchInputRef}
                       placeholder="Buscar intervención..."
-                      className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-green-500 border-green-300"
+                      className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-primary border-primary"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       disabled={disabled} // Deshabilitar el input si está deshabilitado
@@ -159,16 +159,16 @@ export function IntervencionesSelectorComponent({
                         <SelectItem
                           key={intervention.interventionId}
                           value={intervention.interventionId.toString()}
-                          className="focus:bg-green-100 focus:text-green-800 hover:bg-green-50"
+                          className="focus:bg-primary/10 focus:text-primary hover:bg-primary/10"
                         >
                           <div className="flex items-center">
                             <Checkbox
                               checked={selectedIntervenciones.some(item => item.intervention === intervention.interventionId)}
-                              className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
+                              className="mr-2 h-4 w-4 rounded border-primary text-primary focus:ring-primary"
                               disabled={disabled} // Deshabilitar el checkbox si está deshabilitado
                             />
                             <div
-                              className={`w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold ${intervention.isCustom ? "bg-blue-500" : "bg-green-500"
+                              className={`w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold ${intervention.isCustom ? "bg-primary" : "bg-primary"
                                 }`}
                             >
                               {intervention.isCustom ? `E${intervention.interventionId}` : intervention.interventionId}

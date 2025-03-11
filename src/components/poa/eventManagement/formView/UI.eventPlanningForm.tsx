@@ -161,7 +161,7 @@ export function EventPlanningForm({
                             </TabsList>
 
                             <div className="flex-1 overflow-hidden">
-                            <ScrollArea ref={scrollContainerRef} className="h-64 px-6">
+                            <ScrollArea ref={scrollContainerRef} className="h-64 w-full px-12">
                                     <TabsContent value="pei" className="mt-6 space-y-8 data-[state=inactive]:hidden">
                                         <div className="space-y-6">
                                             <SectionTitle>Objetivo Estratégico</SectionTitle>
@@ -248,7 +248,7 @@ export function EventPlanningForm({
                                         <div className="space-y-6">
                                             <SectionTitle>Información General</SectionTitle>
                                             <div className="space-y-4">
-                                                <div className="space-y-2">
+                                                <div className="space-y-2 w-full px-2">
                                                     <EventNameComponent
                                                         value={watch("name") || ""}
                                                         onChange={(value) => setValue("name", value)}
@@ -258,7 +258,7 @@ export function EventPlanningForm({
                                                     )}
                                                 </div>
 
-                                                <div className="space-y-2">
+                                                <div className="space-y-2 w-full px-2">
                                                     <ObjectiveComponent
                                                         value={watch("objective") || ""}
                                                         onChange={(value) => setValue("objective", value)}
@@ -272,7 +272,7 @@ export function EventPlanningForm({
 
                                         <div className="space-y-6">
                                             <SectionTitle>Responsables</SectionTitle>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 w-full px-2">
                                                 <ResponsibleComponent
                                                     responsible={watch("responsibles") || []}
                                                     onAppendResponsible={(responsible) => appendResponible(responsible)}
@@ -286,7 +286,7 @@ export function EventPlanningForm({
 
                                         <div className="space-y-6">
                                             <SectionTitle>Indicador de Logro</SectionTitle>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 w-full px-2">
                                                 <Controller
                                                     name="achievementIndicator"
                                                     control={control}
@@ -303,7 +303,7 @@ export function EventPlanningForm({
                                             </div>
                                         </div>
 
-                                        <div className="space-y-6">
+                                        <div className="space-y-6 w-full px-2">
                                             <SectionTitle>Documentos del Proceso</SectionTitle>
                                             <Controller
                                                 name="processDocuments"
@@ -357,9 +357,9 @@ export function EventPlanningForm({
                                             )}
                                         </div>
 
-                                        <div className="space-y-6">
+                                        <div className="space-y-6 w-full px-2">
                                             <SectionTitle>Tipo de Compra</SectionTitle>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 w-full px-2">
                                                 <Controller
                                                     name="purchaseTypeId"
                                                     control={control}
@@ -376,7 +376,7 @@ export function EventPlanningForm({
                                             </div>
                                         </div>
 
-                                        <div className="space-y-6">
+                                        <div className="space-y-6 w-full px-2">
                                             <SectionTitle>Documentos de Detalle de Costos</SectionTitle>
                                             <Controller
                                                 name="costDetailDocuments"
@@ -388,7 +388,7 @@ export function EventPlanningForm({
                                             />
                                         </div>
 
-                                        <div className="space-y-6">
+                                        <div className="space-y-6 w-full px-2">
                                             <SectionTitle>Campus</SectionTitle>
                                             <Controller
                                                 name="campusId"
@@ -406,9 +406,9 @@ export function EventPlanningForm({
                                             )}
                                         </div>
 
-                                        <div className="space-y-6">
+                                        <div className="space-y-6 w-full px-2">
                                             <SectionTitle>Recursos</SectionTitle>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 w-full px-2">
                                                 <RecursosSelectorComponent
                                                     selectedResource={watch("resources") || []}
                                                     onAppendResource={(resource) => {

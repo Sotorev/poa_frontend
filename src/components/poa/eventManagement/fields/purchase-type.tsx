@@ -144,7 +144,7 @@ export function PurchaseType({ selectedTipo, onSelectTipo }: PurchaseTypeProps) 
         onValueChange={handleSelectTipo}
         value={selectedTipo ? selectedTipo.toString() : undefined}
       >
-        <SelectTrigger className="border-green-500 focus:ring-green-500">
+        <SelectTrigger className="border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
           <SelectValue placeholder="Selecciona tipos de compra" />
         </SelectTrigger>
         <SelectContent>
@@ -153,7 +153,7 @@ export function PurchaseType({ selectedTipo, onSelectTipo }: PurchaseTypeProps) 
             <Input
               ref={searchInputRef}
               placeholder="Buscar tipo de compra..."
-              className="h-8 w-full bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 border-none"
+              className="h-8 w-full border-primary bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onBlur={(e) => {

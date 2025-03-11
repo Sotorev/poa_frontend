@@ -19,7 +19,7 @@ export function AreaEstrategicaComponent({ areaEstrategica, error }: AreaEstrate
             <div className="w-full p-2 flex items-center">
               <label
                 className={`block w-full h-8 p-2 bg-background border rounded-md text-sm ${
-                  error ? 'border-red-500 text-red-500' : 'border-input text-foreground'
+                  error ? 'border-red-500 text-red-500' : 'border-primary text-black'
                 } truncate cursor-default overflow-hidden`}
               >
                 {areaEstrategica}
