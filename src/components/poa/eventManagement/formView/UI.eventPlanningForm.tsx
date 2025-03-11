@@ -1,6 +1,6 @@
 "use client"
 import { Controller } from "react-hook-form"
-import { useContext, useState } from "react"
+import { useContext } from "react"
 
 // Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -96,6 +96,12 @@ export function EventPlanningForm({
         showValidationErrors,
         setShowValidationErrors,
         handleFormSubmit,
+        activeTab,
+        setActiveTab,
+        phases,
+        handlePhaseClick,
+        getCurrentPhase,
+        scrollContainerRef,
     } = useContext(EventPlanningFormContext)
 
     const onSubmit = async () => {
@@ -107,54 +113,6 @@ export function EventPlanningForm({
             if (formErrors.hasErrors) {
                 setShowValidationErrors(true)
             }
-        }
-    }
-
-    const phases = [
-        {
-            number: 1,
-            name: "Selección de Evento",
-            hasError: formErrors.phaseErrors?.pei || false,
-        },
-        {
-            number: 2,
-            name: "Gestión de Gastos",
-            hasError: formErrors.phaseErrors?.info || false,
-        },
-        {
-            number: 3,
-            name: "Fechas de Ejecución",
-            hasError: formErrors.phaseErrors?.finance || false,
-        },
-    ]
-
-    // Get current phase based on active tab
-    const getCurrentPhase = (tab: string) => {
-        switch (tab) {
-            case "pei":
-                return 1
-            case "info":
-                return 2
-            case "finance":
-                return 3
-            default:
-                return 1
-        }
-    }
-
-    const [activeTab, setActiveTab] = useState("pei")
-
-    const handlePhaseClick = (phase: number) => {
-        switch (phase) {
-            case 1:
-                setActiveTab("pei")
-                break
-            case 2:
-                setActiveTab("info")
-                break
-            case 3:
-                setActiveTab("finance")
-                break
         }
     }
 
@@ -196,7 +154,7 @@ export function EventPlanningForm({
                             </TabsList>
 
                             <div className="flex-1 overflow-hidden">
-                                <ScrollArea className="h-[calc(90vh-12rem)] px-6">
+                                <ScrollArea ref={scrollContainerRef} className="h-64 px-6">
                                     <div className="px-6 pb-6">
                                         <TabsContent value="pei" className="mt-4 space-y-6 data-[state=inactive]:hidden">
                                             <StrategicObjectiveSelector
@@ -319,6 +277,9 @@ export function EventPlanningForm({
                                             </div>
 
                                             <div className="space-y-2">
+                                                <div className="p-4 bg-gray-50 rounded-lg border">
+                                                    <h3 className="text-md font-semibold text-primary">Financiamiento UMES</h3>
+                                                </div>
                                                 <FinancingSource
                                                     contributions={fieldsFinancings}
                                                     onAppendContribution={(contribution) => appendFinancing(contribution)}
@@ -327,6 +288,9 @@ export function EventPlanningForm({
                                                     onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
                                                     isUMES={true}
                                                 />
+                                                <div className="p-4 bg-gray-50 rounded-lg border">
+                                                    <h3 className="text-md font-semibold text-primary">Financiamiento Externo</h3>
+                                                </div>
                                                 <FinancingSource
                                                     contributions={fieldsFinancings}
                                                     onAppendContribution={(contribution) => appendFinancing(contribution)}
@@ -348,6 +312,12 @@ export function EventPlanningForm({
                                                     )}
                                                 />
                                                 {formErrors.errorList.find(e => e.field === "purchaseTypeId") && <FieldError message={formErrors.errorList.find(e => e.field === "purchaseTypeId")?.message} />}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="p-4 bg-gray-50 rounded-lg border">
+                                                    <h3 className="text-md font-semibold text-primary">Documentos del Proceso del evento</h3>
+                                                </div>
                                             </div>
 
                                             <Controller

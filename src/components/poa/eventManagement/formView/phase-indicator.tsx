@@ -41,7 +41,7 @@ export function PhaseIndicator({ phases, currentPhase, onPhaseClick }: PhaseIndi
           {index < phases.length - 1 && (
             <div
               className={cn(
-                "absolute top-6 left-[calc(100%+0.5rem)] w-[calc(200%-3rem)] h-[2px]",
+                "absolute top-6 left-[calc(100%+0.5rem)] w-[calc(100%-3rem)] h-[2px]",
                 currentPhase && phase.number < currentPhase ? "bg-primary" : "bg-gray-200",
               )}
             />
