@@ -6,7 +6,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 // Types
 import { FullEventRequest, fullEventSchema } from "./schema.eventPlanningForm";
 import { createEvent, updateEvent } from "./service.eventPlanningForm";
-import { ResponseFullEvent } from "./eventPlanningForm.type";
+import { ResponseFullEvent } from "./type.eventPlanningForm";
 import { useToast } from "@/hooks/use-toast";
 
 // Interfaz de errores para el modal

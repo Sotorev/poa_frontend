@@ -10,7 +10,7 @@ import { useCurrentUser } from '@/hooks/use-current-user'
 import { downloadFile } from '@/utils/downloadFile'
 
 // Types
-import { PlanningEvent, FilaPlanificacion, FilaError, ResponseFullEvent } from './eventPlanningForm.type'
+import { PlanningEvent, FilaPlanificacion, FilaError, ResponseFullEvent } from './type.eventPlanningForm'
 import { StrategicArea } from '@/types/StrategicArea'
 import { Strategy } from '@/types/Strategy'
 import { StrategicObjective } from '@/types/StrategicObjective'

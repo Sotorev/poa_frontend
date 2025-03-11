@@ -35,7 +35,7 @@ import { StrategicArea } from "@/types/StrategicArea"
 import { StrategicObjective } from "@/types/StrategicObjective"
 import { Strategy } from "@/types/Strategy"
 import { UpdateEventRequest } from "./schema.eventPlanningForm"
-import { ResponseFullEvent } from "./eventPlanningForm.type"
+import { ResponseFullEvent } from "./type.eventPlanningForm"
 
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"

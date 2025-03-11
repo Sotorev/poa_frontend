@@ -10,7 +10,7 @@ import { Resource } from '@/types/Resource';
 import { Campus } from '@/types/Campus';
 import { PurchaseType } from '@/types/PurchaseType';
 import { Poa } from '@/types/Poa';
-import { ResponseFullEvent } from './eventPlanningForm.type';
+import { ResponseFullEvent } from './type.eventPlanningForm';
 import { FullEventRequest, UpdateEventRequest } from './schema.eventPlanningForm';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;

@@ -18,7 +18,7 @@ import { getInterventions, getODS, getStrategicAreas, getStrategicObjectives, ge
 import { downloadFile } from '@/utils/downloadFile'
 
 // Types
-import { PlanningEvent, FilaPlanificacion, FilaError, ResponseFullEvent } from './eventPlanningForm.type'
+import { PlanningEvent, FilaPlanificacion, FilaError, ResponseFullEvent } from './type.eventPlanningForm'
 import { PurchaseType } from '@/types/PurchaseType'
 import { Strategy } from '@/types/Strategy'
 import { Intervention } from '@/types/Intervention'
