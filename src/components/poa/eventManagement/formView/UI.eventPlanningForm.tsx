@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
 
 // Custom Components
 import { AreaEstrategicaComponent } from "../fields/area-estrategica"
@@ -52,6 +53,14 @@ interface EventPlanningFormProps {
     onEventSaved?: (event: ResponseFullEvent) => void
     addStrategicObjective: (objective: any) => void
 }
+
+// Section Title Component for consistent styling
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+    <div className="mb-4">
+        <h3 className="text-lg font-semibold text-primary">{children}</h3>
+        <Separator className="mt-2" />
+    </div>
+)
 
 export function EventPlanningForm({
     isOpen,
@@ -106,10 +115,8 @@ export function EventPlanningForm({
 
     const onSubmit = async () => {
         try {
-            // Usar la función del contexto que ahora incluye los mensajes toast
             await handleFormSubmit(poaId, onEventSaved, onClose)
         } catch (error) {
-            // Si hay errores de validación, mostrar el modal
             if (formErrors.hasErrors) {
                 setShowValidationErrors(true)
             }
@@ -133,7 +140,7 @@ export function EventPlanningForm({
                         marginBottom: "1rem",
                     }}
                 >
-                    <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+                    <DialogHeader className="px-6 py-4 border-b flex-shrink-0 z-20">
                         <DialogTitle>{event ? "Editar Evento" : "Crear Nuevo Evento"}</DialogTitle>
                     </DialogHeader>
 
@@ -154,9 +161,10 @@ export function EventPlanningForm({
                             </TabsList>
 
                             <div className="flex-1 overflow-hidden">
-                                <ScrollArea ref={scrollContainerRef} className="h-64 px-6">
-                                    <div className="px-6 pb-6">
-                                        <TabsContent value="pei" className="mt-4 space-y-6 data-[state=inactive]:hidden">
+                            <ScrollArea ref={scrollContainerRef} className="h-64 px-6">
+                                    <TabsContent value="pei" className="mt-6 space-y-8 data-[state=inactive]:hidden">
+                                        <div className="space-y-6">
+                                            <SectionTitle>Objetivo Estratégico</SectionTitle>
                                             <StrategicObjectiveSelector
                                                 selectedObjetive={selectedStrategicObjective!}
                                                 onSelectObjetive={(objective) => setSelectedStrategicObjective(objective)}
@@ -166,12 +174,20 @@ export function EventPlanningForm({
                                                 areaEstrategica={selectedStrategicArea?.name || ""}
                                                 error={errors?.areaEstrategica?.message}
                                             />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <SectionTitle>Estrategias</SectionTitle>
                                             <EstrategiasSelectorComponent
                                                 selectedEstrategias={selectedStrategies || []}
                                                 onSelectEstrategia={(estrategias) => setSelectedStrategies(estrategias)}
                                                 strategicObjectiveIds={selectedStrategicObjective?.strategicObjectiveId}
                                                 disabled={!selectedStrategicObjective}
                                             />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <SectionTitle>Intervenciones</SectionTitle>
                                             <div className="space-y-2">
                                                 <IntervencionesSelectorComponent
                                                     selectedIntervenciones={watch("interventions") || []}
@@ -184,19 +200,32 @@ export function EventPlanningForm({
                                                     disabled={!selectedStrategies?.length}
                                                     strategyIds={selectedStrategies?.map((est) => est.strategyId) || []}
                                                 />
-                                                {formErrors.errorList.find(e => e.field === "interventions") && <FieldError message={formErrors.errorList.find(e => e.field === "interventions")?.message} />}
+                                                {formErrors.errorList.find((e) => e.field === "interventions") && (
+                                                    <FieldError
+                                                        message={formErrors.errorList.find((e) => e.field === "interventions")?.message}
+                                                    />
+                                                )}
                                             </div>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <SectionTitle>Objetivos de Desarrollo Sostenible</SectionTitle>
                                             <div className="space-y-2">
                                                 <OdsSelector
                                                     selected={watch("ods") || []}
                                                     onSelect={(ods) => appendODS(ods)}
                                                     onRemove={(odsId) => removeODS(fieldsODS.findIndex((field) => field.ods === odsId))}
                                                 />
-                                                {formErrors.errorList.find(e => e.field === "ods") && <FieldError message={formErrors.errorList.find(e => e.field === "ods")?.message} />}
+                                                {formErrors.errorList.find((e) => e.field === "ods") && (
+                                                    <FieldError message={formErrors.errorList.find((e) => e.field === "ods")?.message} />
+                                                )}
                                             </div>
-                                        </TabsContent>
+                                        </div>
+                                    </TabsContent>
 
-                                        <TabsContent value="info" className="mt-4 space-y-6 data-[state=inactive]:hidden">
+                                    <TabsContent value="info" className="mt-6 space-y-8 data-[state=inactive]:hidden">
+                                        <div className="space-y-6">
+                                            <SectionTitle>Tipo de Evento</SectionTitle>
                                             <Controller
                                                 name="type"
                                                 control={control}
@@ -214,29 +243,49 @@ export function EventPlanningForm({
                                                     />
                                                 )}
                                             />
+                                        </div>
 
-                                            <div className="space-y-2">
-                                                <EventNameComponent value={watch("name") || ""} onChange={(value) => setValue("name", value)} />
-                                                {formErrors.errorList.find(e => e.field === "name") && <FieldError message={formErrors.errorList.find(e => e.field === "name")?.message} />}
+                                        <div className="space-y-6">
+                                            <SectionTitle>Información General</SectionTitle>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <EventNameComponent
+                                                        value={watch("name") || ""}
+                                                        onChange={(value) => setValue("name", value)}
+                                                    />
+                                                    {formErrors.errorList.find((e) => e.field === "name") && (
+                                                        <FieldError message={formErrors.errorList.find((e) => e.field === "name")?.message} />
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <ObjectiveComponent
+                                                        value={watch("objective") || ""}
+                                                        onChange={(value) => setValue("objective", value)}
+                                                    />
+                                                    {formErrors.errorList.find((e) => e.field === "objective") && (
+                                                        <FieldError message={formErrors.errorList.find((e) => e.field === "objective")?.message} />
+                                                    )}
+                                                </div>
                                             </div>
+                                        </div>
 
-                                            <div className="space-y-2">
-                                                <ObjectiveComponent
-                                                    value={watch("objective") || ""}
-                                                    onChange={(value) => setValue("objective", value)}
-                                                />
-                                                {formErrors.errorList.find(e => e.field === "objective") && <FieldError message={formErrors.errorList.find(e => e.field === "objective")?.message} />}
-                                            </div>
-
+                                        <div className="space-y-6">
+                                            <SectionTitle>Responsables</SectionTitle>
                                             <div className="space-y-2">
                                                 <ResponsibleComponent
                                                     responsible={watch("responsibles") || []}
                                                     onAppendResponsible={(responsible) => appendResponible(responsible)}
                                                     onUpdateResponsible={(index, responsible) => updateResponsible(index, responsible)}
                                                 />
-                                                {formErrors.errorList.find(e => e.field === "responsibles") && <FieldError message={formErrors.errorList.find(e => e.field === "responsibles")?.message} />}
+                                                {formErrors.errorList.find((e) => e.field === "responsibles") && (
+                                                    <FieldError message={formErrors.errorList.find((e) => e.field === "responsibles")?.message} />
+                                                )}
                                             </div>
+                                        </div>
 
+                                        <div className="space-y-6">
+                                            <SectionTitle>Indicador de Logro</SectionTitle>
                                             <div className="space-y-2">
                                                 <Controller
                                                     name="achievementIndicator"
@@ -246,12 +295,16 @@ export function EventPlanningForm({
                                                         <IndicadorLogroComponent value={field.value} onChange={(value) => field.onChange(value)} />
                                                     )}
                                                 />
-                                                {formErrors.errorList.find(e => e.field === "achievementIndicator") && <FieldError message={formErrors.errorList.find(e => e.field === "achievementIndicator")?.message} />}
+                                                {formErrors.errorList.find((e) => e.field === "achievementIndicator") && (
+                                                    <FieldError
+                                                        message={formErrors.errorList.find((e) => e.field === "achievementIndicator")?.message}
+                                                    />
+                                                )}
                                             </div>
+                                        </div>
 
-                                            <div className="p-4 bg-gray-50 rounded-lg border">
-                                                <h3 className="text-md font-semibold text-gray-800">Documentos del Proceso del evento</h3>
-                                            </div>
+                                        <div className="space-y-6">
+                                            <SectionTitle>Documentos del Proceso</SectionTitle>
                                             <Controller
                                                 name="processDocuments"
                                                 control={control}
@@ -263,45 +316,49 @@ export function EventPlanningForm({
                                                     />
                                                 )}
                                             />
-                                        </TabsContent>
+                                        </div>
+                                    </TabsContent>
 
-                                        <TabsContent value="finance" className="mt-4 space-y-6 data-[state=inactive]:hidden">
-                                            <div className="space-y-2">
-                                                <div className="p-4 bg-gray-50 rounded-lg border">
-                                                    <label className="text-sm font-medium text-gray-700">Costo Total</label>
-                                                    <div className="mt-1 text-2xl font-bold text-primary">
-                                                        Q {(watch("totalCost") || 0).toFixed(2)}
-                                                    </div>
-                                                </div>
-                                                {formErrors.errorList.find(e => e.field === "totalCost") && <FieldError message={formErrors.errorList.find(e => e.field === "totalCost")?.message} />}
+                                    <TabsContent value="finance" className="mt-6 space-y-8 data-[state=inactive]:hidden">
+                                        <div className="space-y-6">
+                                            <SectionTitle>Costo total</SectionTitle>
+                                            <div className="mt-1 text-2xl font-bold text-primary">
+                                                Q {(watch("totalCost") || 0).toFixed(2)}
                                             </div>
+                                            {formErrors.errorList.find((e) => e.field === "totalCost") && (
+                                                <FieldError message={formErrors.errorList.find((e) => e.field === "totalCost")?.message} />
+                                            )}
+                                        </div>
 
-                                            <div className="space-y-2">
-                                                <div className="p-4 bg-gray-50 rounded-lg border">
-                                                    <h3 className="text-md font-semibold text-primary">Financiamiento UMES</h3>
-                                                </div>
-                                                <FinancingSource
-                                                    contributions={fieldsFinancings}
-                                                    onAppendContribution={(contribution) => appendFinancing(contribution)}
-                                                    onRemoveContribution={(index) => removeFinancing(index)}
-                                                    onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
-                                                    onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
-                                                    isUMES={true}
-                                                />
-                                                <div className="p-4 bg-gray-50 rounded-lg border">
-                                                    <h3 className="text-md font-semibold text-primary">Financiamiento Externo</h3>
-                                                </div>
-                                                <FinancingSource
-                                                    contributions={fieldsFinancings}
-                                                    onAppendContribution={(contribution) => appendFinancing(contribution)}
-                                                    onRemoveContribution={(index) => removeFinancing(index)}
-                                                    onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
-                                                    onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
-                                                    isUMES={false}
-                                                />
-                                                {formErrors.errorList.find(e => e.field === "financings") && <FieldError message={formErrors.errorList.find(e => e.field === "financings")?.message} />}
-                                            </div>
+                                        <div className="space-y-6">
+                                            <SectionTitle>Financiamiento UMES</SectionTitle>
+                                            <FinancingSource
+                                                contributions={fieldsFinancings}
+                                                onAppendContribution={(contribution) => appendFinancing(contribution)}
+                                                onRemoveContribution={(index) => removeFinancing(index)}
+                                                onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
+                                                onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
+                                                isUMES={true}
+                                            />
+                                        </div>
 
+                                        <div className="space-y-6">
+                                            <SectionTitle>Financiamiento Externo</SectionTitle>
+                                            <FinancingSource
+                                                contributions={fieldsFinancings}
+                                                onAppendContribution={(contribution) => appendFinancing(contribution)}
+                                                onRemoveContribution={(index) => removeFinancing(index)}
+                                                onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
+                                                onTotalCost={(totalCost) => setValue("totalCost", totalCost)}
+                                                isUMES={false}
+                                            />
+                                            {formErrors.errorList.find((e) => e.field === "financings") && (
+                                                <FieldError message={formErrors.errorList.find((e) => e.field === "financings")?.message} />
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <SectionTitle>Tipo de Compra</SectionTitle>
                                             <div className="space-y-2">
                                                 <Controller
                                                     name="purchaseTypeId"
@@ -311,15 +368,16 @@ export function EventPlanningForm({
                                                         <PurchaseType selectedTipo={field.value} onSelectTipo={(tipo) => field.onChange(tipo)} />
                                                     )}
                                                 />
-                                                {formErrors.errorList.find(e => e.field === "purchaseTypeId") && <FieldError message={formErrors.errorList.find(e => e.field === "purchaseTypeId")?.message} />}
+                                                {formErrors.errorList.find((e) => e.field === "purchaseTypeId") && (
+                                                    <FieldError
+                                                        message={formErrors.errorList.find((e) => e.field === "purchaseTypeId")?.message}
+                                                    />
+                                                )}
                                             </div>
+                                        </div>
 
-                                            <div className="space-y-2">
-                                                <div className="p-4 bg-gray-50 rounded-lg border">
-                                                    <h3 className="text-md font-semibold text-primary">Documentos del Proceso del evento</h3>
-                                                </div>
-                                            </div>
-
+                                        <div className="space-y-6">
+                                            <SectionTitle>Documentos de Detalle de Costos</SectionTitle>
                                             <Controller
                                                 name="costDetailDocuments"
                                                 control={control}
@@ -328,6 +386,10 @@ export function EventPlanningForm({
                                                     <EventCostDetail files={field.value || []} onFilesChange={(files) => field.onChange(files)} />
                                                 )}
                                             />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <SectionTitle>Campus</SectionTitle>
                                             <Controller
                                                 name="campusId"
                                                 control={control}
@@ -339,8 +401,13 @@ export function EventPlanningForm({
                                                     />
                                                 )}
                                             />
-                                            {formErrors.errorList.find(e => e.field === "campusId") && <FieldError message={formErrors.errorList.find(e => e.field === "campusId")?.message} />}
+                                            {formErrors.errorList.find((e) => e.field === "campusId") && (
+                                                <FieldError message={formErrors.errorList.find((e) => e.field === "campusId")?.message} />
+                                            )}
+                                        </div>
 
+                                        <div className="space-y-6">
+                                            <SectionTitle>Recursos</SectionTitle>
                                             <div className="space-y-2">
                                                 <RecursosSelectorComponent
                                                     selectedResource={watch("resources") || []}
@@ -351,16 +418,18 @@ export function EventPlanningForm({
                                                         removeResource(index)
                                                     }}
                                                 />
-                                                {formErrors.errorList.find(e => e.field === "resources") && <FieldError message={formErrors.errorList.find(e => e.field === "resources")?.message} />}
+                                                {formErrors.errorList.find((e) => e.field === "resources") && (
+                                                    <FieldError message={formErrors.errorList.find((e) => e.field === "resources")?.message} />
+                                                )}
                                             </div>
-                                        </TabsContent>
-                                    </div>
+                                        </div>
+                                    </TabsContent>
                                 </ScrollArea>
                             </div>
                         </Tabs>
                     </form>
 
-                    <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 flex-shrink-0 sticky bottom-0">
+                    <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 flex-shrink-0 sticky bottom-0 z-20">
                         <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                             Cancelar
                         </Button>
@@ -373,3 +442,4 @@ export function EventPlanningForm({
         </>
     )
 }
+

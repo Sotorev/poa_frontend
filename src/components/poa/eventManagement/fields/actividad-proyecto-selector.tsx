@@ -121,13 +121,13 @@ export function ActivityProjectSelector({
       <RadioGroup value={selectedOption} onValueChange={handleOptionChange} className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="Actividad" id="Actividad" />
-          <Label htmlFor="Actividad" className="text-green-600 font-medium">
+          <Label htmlFor="Actividad" className="text-primary font-medium">
             Actividad
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="Proyecto" id="Proyecto" />
-          <Label htmlFor="Proyecto" className="text-green-600 font-medium">
+          <Label htmlFor="Proyecto" className="text-primary font-medium">
             Proyecto
           </Label>
         </div>
