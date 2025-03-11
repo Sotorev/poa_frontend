@@ -6,16 +6,16 @@ interface DatePair {
 }
 
 export interface FilaPlanificacion extends FilaPlanificacionForm {
-  id: string
-  estado: 'planificado' | 'aprobado' | 'rechazado'
-  comentarioDecano: string
-  fechas: DatePair[]
-  fechaProyecto: DatePair
-  entityId: number | null
+  id: string;
+  estado: "planificado" | "aprobado" | "rechazado";
+  comentarioDecano: string;
+  fechas: DatePair[];
+  fechaProyecto: DatePair;
+  entityId: number | null;
 }
 
 export interface FilaError {
-  [key: string]: string
+  [key: string]: string;
 }
 
 export interface DateInterval {
@@ -32,7 +32,7 @@ export interface PlanningEvent {
   ods: string;
   tipoEvento: "actividad" | "proyecto";
   evento: string /** Nombre del evento */;
-  objetivo: string; /** Objetivo principal del evento */
+  objetivo: string /** Objetivo principal del evento */;
   fechas: DateInterval[];
   costoTotal: number;
   aporteUMES: {
@@ -46,14 +46,14 @@ export interface PlanningEvent {
     amount: number;
   }[];
   tipoCompra: string;
-  
+
   /** Responsables del evento */
   responsables: {
     principal: string;
     ejecucion: string;
     seguimiento: string;
   };
-  recursos: string; /** Recursos necesarios para el evento como el departamento de publicidad, coro, etc*/
+  recursos: string /** Recursos necesarios para el evento como el departamento de publicidad, coro, etc*/;
   indicadorLogro: string;
   detalleProceso: {
     id: number;
@@ -71,27 +71,27 @@ export interface PlanningEvent {
   aportesPEI: {
     event: {
       eventId: number;
-      name: string; /** Nombre del evento */
+      name: string /** Nombre del evento */;
       interventions: Array<{
         interventionId: number;
-        name: string; /** Nombre de la intervención */
+        name: string /** Nombre de la intervención */;
         strategies: Array<{
           strategyId: number;
-          description: string; /** Descripción de la estrategia */
+          description: string /** Descripción de la estrategia */;
           strategicObjective: {
             strategicObjectiveId: number;
             description: string;
             strategicArea: {
-              strategicAreaId: number;     
-              name: string; /** Nombre del área estratégica */
+              strategicAreaId: number;
+              name: string /** Nombre del área estratégica */;
             };
           };
         }>;
       }>;
     };
   };
-  campus: string; /** Campus donde se realiza el evento */
-  naturalezaEvento: string; /** Si esta planificado el evento o es un evento extraordinario */
+  campus: string /** Campus donde se realiza el evento */;
+  naturalezaEvento: string /** Si esta planificado el evento o es un evento extraordinario */;
 }
 
 // Updated Types
@@ -252,4 +252,18 @@ export interface ResponseFullEvent {
       isDeleted: boolean;
     };
   }>;
+}
+
+// Interfaz de errores para el modal
+export interface ValidationErrors {
+  hasErrors: boolean;
+  errorList: {
+    field: string;
+    message: string;
+  }[];
+  phaseErrors?: {
+    pei?: boolean;
+    info?: boolean;
+    finance?: boolean;
+  };
 }
