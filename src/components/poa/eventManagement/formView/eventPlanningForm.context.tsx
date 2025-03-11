@@ -2,11 +2,12 @@
 import { createContext, useEffect, useState } from "react";
 import { Control, FieldArrayWithId, UseFieldArrayAppend, UseFieldArrayRemove, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch, useForm, useFieldArray, UseFormHandleSubmit, UseFormReset, UseFieldArrayUpdate, UseFieldArrayReplace } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import { useCurrentUser } from "@/hooks/use-current-user";
 // Types
 import { FullEventRequest, fullEventSchema } from "./eventPlanningForm.schema";
 import { createEvent, updateEvent } from "./eventPlanningForm.service";
 import { ResponseFullEvent } from "./eventPlanningForm.type";
+import { useToast } from "@/hooks/use-toast";
 
 // Interfaz de errores para el modal
 export interface ValidationErrors {
@@ -55,6 +56,9 @@ interface EventPlanningFormContextProps {
     validateForm: () => ValidationErrors
     formErrors: ValidationErrors
     setFormErrors: (errors: ValidationErrors) => void
+    showValidationErrors: boolean
+    setShowValidationErrors: (showValidationErrors: boolean) => void
+    handleFormSubmit: (poaId?: number, onSuccess?: (result: ResponseFullEvent) => void, onClose?: () => void) => Promise<void>
 }
 
 const notImplemented = (name: string) => {
@@ -100,7 +104,10 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
     setIsSubmitting: notImplemented("setIsSubmitting"),
     validateForm: notImplemented("validateForm"),
     formErrors: { hasErrors: false, errorList: [] },
-    setFormErrors: notImplemented("setFormErrors")
+    setFormErrors: notImplemented("setFormErrors"),
+    showValidationErrors: false,
+    setShowValidationErrors: notImplemented("setShowValidationErrors"),
+    handleFormSubmit: notImplemented("handleFormSubmit")
 })
 
 export const EventPlanningFormProvider: React.FC<{
@@ -110,6 +117,9 @@ export const EventPlanningFormProvider: React.FC<{
 }> = ({ children, onSubmit, event }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formErrors, setFormErrors] = useState<ValidationErrors>({ hasErrors: false, errorList: [] });
+    const [showValidationErrors, setShowValidationErrors] = useState(false);
+    const user = useCurrentUser();
+    const { toast } = useToast();
 
     const { register, handleSubmit, reset, getValues, watch, control, setValue, formState: { errors } } = useForm<FullEventRequest>({
         resolver: zodResolver(fullEventSchema),
@@ -155,62 +165,37 @@ export const EventPlanningFormProvider: React.FC<{
     })
 
     // Función para validar el formulario antes de enviar
-    const validateForm = (): ValidationErrors => {
-        const errorList: { field: string; message: string }[] = [];
+    const validateForm = (poaId?: number): ValidationErrors => {
+        if (poaId) {
+            setValue("poaId", poaId);
+        }
+        setValue("statusId", 1);
+        setValue("completionPercentage", 0);
+        setValue("eventNature", "Planificado");
+        setValue("userId", user?.userId || 0);
+        setValue("isDelayed", false);
+
         const formData = getValues();
 
-        // Validar campos obligatorios
-        if (!formData.name || formData.name.trim() === '') {
-            errorList.push({ field: 'name', message: 'El nombre del evento es obligatorio' });
-        }
+        // Usamos Zod para validar el formulario
+        const validationResult = fullEventSchema.safeParse(formData);
 
-        if (!formData.objective || formData.objective.trim() === '') {
-            errorList.push({ field: 'objective', message: 'El objetivo es obligatorio' });
-        }
+        if (!validationResult.success) {
+            // Si hay errores, los formateamos para el modal
+            const errorList = validationResult.error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
 
-        if (!formData.achievementIndicator || formData.achievementIndicator.trim() === '') {
-            errorList.push({ field: 'achievementIndicator', message: 'El indicador de logro es obligatorio' });
-        }
-
-        if (!formData.dates || formData.dates.length === 0) {
-            errorList.push({ field: 'dates', message: 'Debe agregar al menos una fecha' });
-        }
-
-        if (formData.type === 'Proyecto' && (!formData.dates || formData.dates.length !== 1)) {
-            errorList.push({ field: 'dates', message: 'Los proyectos deben tener exactamente una fecha' });
-        }
-
-        if (!formData.responsibles || formData.responsibles.length === 0) {
-            errorList.push({ field: 'responsibles', message: 'Debe agregar al menos un responsable' });
-        }
-
-        if (!formData.totalCost || formData.totalCost <= 0) {
-            errorList.push({ field: 'totalCost', message: 'El costo total debe ser mayor que cero' });
-        }
-
-        if (!formData.purchaseTypeId) {
-            errorList.push({ field: 'purchaseTypeId', message: 'Debe seleccionar un tipo de compra' });
-        }
-
-        if (!formData.campusId) {
-            errorList.push({ field: 'campusId', message: 'Debe seleccionar un campus' });
-        }
-
-        if (!formData.interventions || formData.interventions.length === 0) {
-            errorList.push({ field: 'interventions', message: 'Debe seleccionar al menos una intervención' });
-        }
-
-        if (!formData.ods || formData.ods.length === 0) {
-            errorList.push({ field: 'ods', message: 'Debe seleccionar al menos un ODS' });
-        }
-
-        if (!formData.resources || formData.resources.length === 0) {
-            errorList.push({ field: 'resources', message: 'Debe seleccionar al menos un recurso' });
+            return {
+                hasErrors: true,
+                errorList
+            };
         }
 
         return {
-            hasErrors: errorList.length > 0,
-            errorList
+            hasErrors: false,
+            errorList: []
         };
     };
 
@@ -221,7 +206,6 @@ export const EventPlanningFormProvider: React.FC<{
             const result = await createEvent(data, token);
             return result;
         } catch (error) {
-            console.error("Error al crear el evento:", error);
             throw error;
         } finally {
             setIsSubmitting(false);
@@ -235,7 +219,109 @@ export const EventPlanningFormProvider: React.FC<{
             const result = await updateEvent(eventId, data, token);
             return result;
         } catch (error) {
-            console.error("Error al actualizar el evento:", error);
+            throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Función para manejar el envío del formulario
+    const handleFormSubmit = async (poaId?: number, onSuccess?: (result: ResponseFullEvent) => void, onClose?: () => void) => {
+        // Obtener el token del usuario desde el contexto de autenticación o de donde se guarde
+        const token = user?.token;
+
+        if (!token) {
+            // Mostrar error con toast
+            toast({
+                title: "Error",
+                description: "No se ha podido obtener el token de autenticación",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (!poaId) {
+            toast({
+                title: "Error",
+                description: "No se ha podido obtener el ID del POA",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        // Validar formulario usando Zod
+        const validationResults = validateForm(poaId);
+        if (validationResults.hasErrors) {
+            setFormErrors(validationResults);
+            // Activar la visualización del modal de errores
+            setShowValidationErrors(true);
+            return;
+        } else {
+            // Asegurarse de que no se muestre el modal de errores
+            setShowValidationErrors(false);
+        }
+
+        try {
+            setIsSubmitting(true);
+            const formData = getValues();
+
+            // Asegurarse de que el poaId esté establecido
+            formData.poaId = poaId;
+
+            const userId = user?.userId;
+
+            if (userId) {
+                formData.userId = userId;
+            }
+
+            let result;
+
+            // Verificar si estamos editando un evento existente
+            // Aquí accedemos a event.eventId si existe, o undefined si no
+            const eventId = event && 'eventId' in event ? (event as any).eventId : undefined;
+
+            if (eventId) {
+                // Actualizar evento existente
+                result = await updateExistingEvent(eventId, formData, token);
+                
+                // Mensaje de éxito para actualización
+                toast({
+                    title: "Éxito",
+                    description: "Evento actualizado exitosamente",
+                    variant: "success"
+                });
+            } else {
+                // Crear nuevo evento
+                result = await submitEvent(formData, token);
+                
+                // Mensaje de éxito para creación
+                toast({
+                    title: "Éxito",
+                    description: "Evento creado exitosamente",
+                    variant: "success"
+                });
+            }
+
+            // Callback para notificar al componente padre
+            if (onSuccess && result) {
+                onSuccess(result);
+            }
+
+            // Cerrar el modal si se proporciona un callback
+            if (onClose) {
+                onClose();
+            }
+
+        } catch (error) {
+          
+            
+            // Mostrar error con toast
+            toast({
+                title: "Error",
+                description: `Error: ${(error as Error).message}`,
+                variant: "destructive"
+            });
+            
             throw error;
         } finally {
             setIsSubmitting(false);
@@ -281,7 +367,10 @@ export const EventPlanningFormProvider: React.FC<{
                 setIsSubmitting,
                 validateForm,
                 formErrors,
-                setFormErrors
+                setFormErrors,
+                handleFormSubmit,
+                showValidationErrors,
+                setShowValidationErrors
             }}
         >
             {children}

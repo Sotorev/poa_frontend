@@ -3,8 +3,7 @@
 // Libraries
 import { DevTool } from "@hookform/devtools";
 import { Controller } from 'react-hook-form';
-import { useContext, useState } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useContext } from "react"
 
 // Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -41,14 +40,10 @@ import { ResponseFullEvent } from "./eventPlanningForm.type"
 // Context
 import { EventPlanningFormContext } from "./eventPlanningForm.context"
 
-// Hooks
-import { useCurrentUser } from "@/hooks/use-current-user"
-
 interface EventPlanningFormProps {
     isOpen: boolean
     onClose: () => void
     event?: UpdateEventRequest
-    
     selectedStrategicArea: StrategicArea | undefined
     selectedStrategicObjective: StrategicObjective | undefined
     setSelectedStrategicObjective: (objective: StrategicObjective) => void
@@ -72,9 +67,8 @@ export function EventPlanningForm({
     onEventSaved,
     addStrategicObjective
 }: EventPlanningFormProps) {
-    const user = useCurrentUser();
-    const { toast } = useToast();
-    const [showValidationErrors, setShowValidationErrors] = useState(false);
+    
+    
 
     // Context
     const {
@@ -96,99 +90,31 @@ export function EventPlanningForm({
         fieldsFinancings,
         appendResource,
         removeResource,
-        fieldsResources,
         watch,
         setValue,
         control,
         handleSubmit,
-        getValues,
-        submitEvent,
-        updateExistingEvent,
         errors,
         isSubmitting,
-        setIsSubmitting,
-        validateForm,
         formErrors,
-        setFormErrors
+        showValidationErrors,
+        setShowValidationErrors,
+        handleFormSubmit
     } = useContext(EventPlanningFormContext);
 
-    // Función para manejar el envío del formulario
-    const handleFormSubmit = async () => {
-        if (!user?.token) {
-            toast({
-                title: "Error",
-                description: "No se ha podido obtener el token de autenticación",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        if (!poaId) {
-            toast({
-                title: "Error",
-                description: "No se ha podido obtener el ID del POA",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        // Validar formulario
-        const validationResults = validateForm();
-        if (validationResults.hasErrors) {
-            setFormErrors(validationResults);
-            setShowValidationErrors(true);
-            return;
-        }
-
+    const onSubmit = async () => {        
         try {
-            setIsSubmitting(true);
-            const formData = getValues();
-
-            // Asegurarse de que el poaId esté establecido
-            formData.poaId = poaId;
-
-            // Asegurarse de que el userId esté establecido
-            if (user.userId) {
-                formData.userId = user.userId;
-            }
-
-            let result;
-
-            if (event?.eventId) {
-                // Actualizar evento existente
-                result = await updateExistingEvent(event.eventId, formData, user.token);
-                toast({
-                    title: "Éxito",
-                    description: "Evento actualizado exitosamente",
-                    variant: "success"
-                });
-            } else {
-                // Crear nuevo evento
-                result = await submitEvent(formData, user.token);
-                toast({
-                    title: "Éxito",
-                    description: "Evento creado exitosamente",
-                    variant: "success"
-                });
-            }
-
-            // Notificar al componente padre
-            if (onEventSaved) {
-                onEventSaved(result);
-            }
-
-            // Cerrar el modal después de enviar
-            onClose();
-
+            // Usar la función del contexto que ahora incluye los mensajes toast
+            await handleFormSubmit(
+                poaId, 
+                onEventSaved,
+                onClose
+            );
         } catch (error) {
-            console.error("Error al enviar el formulario:", error);
-            toast({
-                title: "Error",
-                description: `Error: ${(error as Error).message}`,
-                variant: "destructive"
-            });
-        } finally {
-            setIsSubmitting(false);
+            // Si hay errores de validación, mostrar el modal
+            if (formErrors.hasErrors) {
+                setShowValidationErrors(true);
+            }
         }
     };
 
@@ -207,7 +133,7 @@ export function EventPlanningForm({
                     </DialogHeader>
 
                     <>
-                        <form onSubmit={handleSubmit(handleFormSubmit)}>
+                        <form onSubmit={handleSubmit(onSubmit)}>
                             <Tabs defaultValue="pei" className="w-full">
                                 <TabsList className="px-6">
                                     <TabsTrigger value="pei">Plan Estratégico Institucional</TabsTrigger>
@@ -416,7 +342,7 @@ export function EventPlanningForm({
                             Cancelar
                         </Button>
                         <Button
-                            onClick={handleFormSubmit}
+                            onClick={() => onSubmit()}
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? "Guardando..." : "Guardar"}

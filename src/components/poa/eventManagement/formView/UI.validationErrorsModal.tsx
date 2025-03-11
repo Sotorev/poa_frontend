@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,7 @@ export function ValidationErrorsModal({
   onClose,
   errors
 }: ValidationErrorsModalProps) {
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -46,7 +46,7 @@ export function ValidationErrorsModal({
         </ScrollArea>
         
         <DialogFooter>
-          <Button onClick={onClose}>
+          <Button onClick={() => onClose()}>
             Entendido
           </Button>
         </DialogFooter>

@@ -277,8 +277,7 @@ export function TraditionalView() {
 
         setPoaId(fetchedPoaId);
       } catch (err) {
-        setErrorPoa((err as Error).message);
-        console.error(err);
+        setErrorPoa((err as Error).message);        
       } finally {
         setLoadingPoa(false);
       }
@@ -505,8 +504,7 @@ export function TraditionalView() {
         title: "Error",
         description: "Hay errores en el formulario. Por favor, revisa los campos.",
         variant: "destructive",
-      })
-      console.error("Error de validación:", validation.error.errors)
+      })      
       return
     }
 
@@ -671,7 +669,7 @@ export function TraditionalView() {
           isOpen={isOpen}
           onClose={() => { setIsOpen(false) }}
           event={undefined}
-          updateField={(field, value) => updateField(field as keyof FilaPlanificacion, value)}
+
           poaId={poaId || undefined}
           addStrategicObjective={addStrategicObjective}
           selectedStrategicArea={selectedStrategicArea}
