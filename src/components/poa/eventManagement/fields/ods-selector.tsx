@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Search, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Checkbox } from '@/components/ui/checkbox'
-import { EventContext } from '../event.context'
+import { EventContext } from '../context.event'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {

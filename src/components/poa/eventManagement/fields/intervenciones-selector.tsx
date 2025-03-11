@@ -24,7 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Intervention } from '@/types/Intervention';
 
 // Context
-import { EventContext } from '../event.context';
+import { EventContext } from '../context.event';
 
 interface IntervencionesProps {
   selectedIntervenciones: { intervention: number; }[];

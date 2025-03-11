@@ -24,7 +24,7 @@ interface StrategicObjectiveProps {
 }
 
 // Context
-import { EventContext } from "../event.context";
+import { EventContext } from "../context.event";
 
 interface ExtendedStrategicObjective extends StrategicObjective {
   number: number;

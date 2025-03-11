@@ -9,7 +9,7 @@ import { TraditionalView } from '@/components/poa/eventManagement/formView/UI.tr
 import { TablaPlanificacionComponent } from '@/components/poa/eventManagement/tabla-planificacion'
 
 // Context
-import { EventProvider } from '@/components/poa/eventManagement/event.context'
+import { EventProvider } from '@/components/poa/eventManagement/context.event'
 
 const CreatePOAPage = () => {
 	const [formPreference, setFormPreference] = useState<'traditional' | 'table'>('traditional')

@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Resource } from '@/types/Resource';
-import { EventContext } from '../event.context';
+import { EventContext } from '../context.event';
 
 interface ResourceWithFrontend extends Resource {
   id: number;

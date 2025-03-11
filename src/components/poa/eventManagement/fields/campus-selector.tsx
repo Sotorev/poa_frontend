@@ -2,7 +2,7 @@
 
 import React, { useState, useContext, useRef, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EventContext } from '../event.context';
+import { EventContext } from '../context.event';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';

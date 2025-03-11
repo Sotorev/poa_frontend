@@ -21,7 +21,7 @@ import { filaPlanificacionSchema, FullEventRequest } from './schema.eventPlannin
 import { StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
 import { get } from 'http'
 import { EventPlanningForm } from './UI.eventPlanningForm'
-import { EventContext } from '../event.context'
+import { EventContext } from '../context.event'
 
 export function useTraditionalView() {
     const user = useCurrentUser();
