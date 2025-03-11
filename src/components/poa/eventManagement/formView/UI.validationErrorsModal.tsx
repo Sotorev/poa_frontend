@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ValidationErrors } from './eventPlanningForm.context';
+import { ValidationErrors } from './context.eventPlanningForm';
 
 interface ValidationErrorsModalProps {
   isOpen: boolean;

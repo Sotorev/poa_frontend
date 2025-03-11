@@ -34,11 +34,11 @@ import { ValidationErrorsModal } from './UI.validationErrorsModal'
 import { StrategicArea } from "@/types/StrategicArea"
 import { StrategicObjective } from "@/types/StrategicObjective"
 import { Strategy } from "@/types/Strategy"
-import { UpdateEventRequest } from "./eventPlanningForm.schema"
+import { UpdateEventRequest } from "./schema.eventPlanningForm"
 import { ResponseFullEvent } from "./eventPlanningForm.type"
 
 // Context
-import { EventPlanningFormContext } from "./eventPlanningForm.context"
+import { EventPlanningFormContext } from "./context.eventPlanningForm"
 
 interface EventPlanningFormProps {
     isOpen: boolean

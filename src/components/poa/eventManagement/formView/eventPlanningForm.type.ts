@@ -1,4 +1,4 @@
-import { FilaPlanificacionForm } from "./eventPlanningForm.schema";
+import { FilaPlanificacionForm } from "./schema.eventPlanningForm";
 
 interface DatePair {
   start: Date;

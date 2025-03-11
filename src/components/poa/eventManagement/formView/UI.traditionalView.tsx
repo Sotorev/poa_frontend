@@ -14,7 +14,7 @@ import EventsCorrectionsComponent from '../../sections/events-viewer/EventsCorre
 
 // Charge data
 import { useCurrentUser } from '@/hooks/use-current-user'
-import { getInterventions, getODS, getStrategicAreas, getStrategicObjectives, getStrategies, getResources, getCampuses, getPurchaseTypes, getPoaByFacultyAndYear, downloadFileAux } from './eventPlanningForm.service'
+import { getInterventions, getODS, getStrategicAreas, getStrategicObjectives, getStrategies, getResources, getCampuses, getPurchaseTypes, getPoaByFacultyAndYear, downloadFileAux } from './service.eventPlanningForm'
 import { downloadFile } from '@/utils/downloadFile'
 
 // Types
@@ -30,7 +30,7 @@ import { StrategicArea } from '@/types/StrategicArea'
 
 // Schemas
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
-import { filaPlanificacionSchema, FullEventRequest } from './eventPlanningForm.schema'
+import { filaPlanificacionSchema, FullEventRequest } from './schema.eventPlanningForm'
 import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
 import { get } from 'http'
 import { EventPlanningForm } from './UI.eventPlanningForm'
@@ -38,7 +38,7 @@ import { EventPlanningForm } from './UI.eventPlanningForm'
 // Hooks
 import { useToast } from '@/hooks/use-toast'
 import { useTraditionalView } from './useTraditionalView'
-import { EventPlanningFormProvider } from './eventPlanningForm.context'
+import { EventPlanningFormProvider } from './context.eventPlanningForm'
 
 const getColumnName = (field: string): string => {
   const columnMap: { [key: string]: string } = {

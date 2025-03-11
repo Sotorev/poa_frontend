@@ -17,7 +17,7 @@ import { StrategicObjective } from '@/types/StrategicObjective'
 
 // Schemas
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
-import { filaPlanificacionSchema, FullEventRequest } from './eventPlanningForm.schema'
+import { filaPlanificacionSchema, FullEventRequest } from './schema.eventPlanningForm'
 import { StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
 import { get } from 'http'
 import { EventPlanningForm } from './UI.eventPlanningForm'

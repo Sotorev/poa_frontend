@@ -10,7 +10,7 @@ import { X, Plus } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Types
-import { FinancingSourceRequest } from "../formView/eventPlanningForm.schema"
+import { FinancingSourceRequest } from "../formView/schema.eventPlanningForm"
 
 
 interface FinancingSourceProps {

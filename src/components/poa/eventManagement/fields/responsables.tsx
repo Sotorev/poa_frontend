@@ -5,7 +5,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 
 // Types
-import { Responsible } from '../formView/eventPlanningForm.schema';
+import { Responsible } from '../formView/schema.eventPlanningForm';
 
 interface ResponsibleComponentProps {
   responsible: Responsible[];

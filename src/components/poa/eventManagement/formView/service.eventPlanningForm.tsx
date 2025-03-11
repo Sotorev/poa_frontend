@@ -11,7 +11,7 @@ import { Campus } from '@/types/Campus';
 import { PurchaseType } from '@/types/PurchaseType';
 import { Poa } from '@/types/Poa';
 import { ResponseFullEvent } from './eventPlanningForm.type';
-import { FullEventRequest, UpdateEventRequest } from './eventPlanningForm.schema';
+import { FullEventRequest, UpdateEventRequest } from './schema.eventPlanningForm';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 

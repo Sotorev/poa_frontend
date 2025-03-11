@@ -11,7 +11,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 // Types
-import type { DateSchema } from "../formView/eventPlanningForm.schema"
+import type { DateSchema } from "../formView/schema.eventPlanningForm"
 
 interface ActivityProjectSelectorProps {
   selectedOption: "Actividad" | "Proyecto"
