@@ -254,6 +254,24 @@ export interface ResponseFullEvent {
   }>;
 }
 
+export interface Session {
+  user: {
+    userId: number;
+    username: string;
+    role: {
+      roleName: string;
+      roleId: number;
+    };
+    token: string;
+    permissions: {
+      permissionId: number;
+      moduleName: string;
+      action: string;
+      description: string;
+    }[];
+  }
+}
+
 // Interfaz de errores para el modal
 export interface ValidationErrors {
   hasErrors: boolean;

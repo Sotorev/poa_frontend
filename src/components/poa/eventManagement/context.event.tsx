@@ -25,6 +25,7 @@ import {
 } from './formView/service.eventPlanningForm'
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getFinancingSources } from '@/services/apiService';
+import { PlanningEvent, Session } from './formView/type.eventPlanningForm';
 
 interface EventContextProps {
     financingSources: FinancingSource[];
@@ -37,6 +38,7 @@ interface EventContextProps {
     campuses: Campus[];
     purchaseTypes: PurchaseType[];
     loading: boolean;
+    user: Session["user"] | undefined;
 }
 
 export const EventContext = createContext<EventContextProps>({
@@ -50,6 +52,7 @@ export const EventContext = createContext<EventContextProps>({
     campuses: [],
     purchaseTypes: [],
     loading: false,
+    user: undefined,
 });
 
 interface ProviderProps {
@@ -72,28 +75,24 @@ export const EventProvider = ({ children }: ProviderProps) => {
     const user = useCurrentUser();
 
     /**
-* Effect hook to fetch initial data required for the planning form
-* 
-* Fetches and sets the following data:
-* - Strategic Areas
-* - Strategic Objectives  
-* - Strategies
-* - Interventions
-* - ODS (Sustainable Development Goals)
-* - Resources
-* - Campuses
-* - Purchase Types
-* 
-*/
+    * Effect hook to fetch initial data required for the planning form
+    * 
+    * Fetches and sets the following data:
+    * - Strategic Areas
+    * - Strategic Objectives  
+    * - Strategies
+    * - Interventions
+    * - ODS (Sustainable Development Goals)
+    * - Resources
+    * - Campuses
+    * - Purchase Types
+    * 
+    */
     useEffect(() => {
         setLoading(true);
         if (!user?.token) return;
 
         const fetchData = async () => {
-            // Nota: Si dispones de una función para obtener financingSources, agrégala aquí.
-            // Por ejemplo:
-            // const responseFinancingSources = await getFinancingSources(user.token);
-            // setFinancingSources(responseFinancingSources);
 
             const responseStrategicAreas = await getStrategicAreas(user.token);
             setStrategicAreas(responseStrategicAreas);
@@ -128,19 +127,26 @@ export const EventProvider = ({ children }: ProviderProps) => {
         fetchData();
     }, [user?.token]);
 
+    const parseFullEventRequest = (event: PlanningEvent) => {
+
+        
+    
+    }
+
     return (
         <EventContext.Provider
             value={{
-            financingSources,
-            strategicAreas,
-            strategicObjectives,
-            strategics,
-            interventions,
-            odsList,
-            resources,
-            campuses,
-            purchaseTypes,
-            loading,
+                financingSources,
+                strategicAreas,
+                strategicObjectives,
+                strategics,
+                interventions,
+                odsList,
+                resources,
+                campuses,
+                purchaseTypes,
+                loading,
+                user
             }}
         >
             {children}

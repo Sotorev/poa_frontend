@@ -4,7 +4,7 @@
 
 
 // Libraries
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 
 // Components
 import { Button } from "@/components/ui/button"
@@ -40,6 +40,8 @@ import { useToast } from '@/hooks/use-toast'
 import { useTraditionalView } from './useTraditionalView'
 import { EventPlanningFormProvider } from './context.eventPlanningForm'
 
+// Context
+import { EventContext } from '../context.event'
 const getColumnName = (field: string): string => {
   const columnMap: { [key: string]: string } = {
     areaEstrategica: "Área Estratégica",
@@ -71,7 +73,7 @@ const getColumnName = (field: string): string => {
 }
 
 export function TraditionalView() {
-  const user = useCurrentUser();
+  const { user } = useContext(EventContext)
   const [facultyId, setFacultyId] = useState<number | null>(null)
   const [poaId, setPoaId] = useState<number | null>(null)
 
