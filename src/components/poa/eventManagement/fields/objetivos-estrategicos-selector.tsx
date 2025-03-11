@@ -24,7 +24,7 @@ interface StrategicObjectiveProps {
 }
 
 // Context
-import { EventContext } from "../formView/event.context";
+import { EventContext } from "../event.context";
 
 interface ExtendedStrategicObjective extends StrategicObjective {
   number: number;

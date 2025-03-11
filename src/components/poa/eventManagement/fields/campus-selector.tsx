@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Campus } from '@/types/Campus';
-import { EventContext } from '../formView/event.context';
+import { EventContext } from '../event.context';
 
 interface CampusSelectorProps {
   onSelectCampus: (campusId: number) => void;

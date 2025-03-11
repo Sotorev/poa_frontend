@@ -20,8 +20,8 @@ import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
 import { filaPlanificacionSchema, FullEventRequest } from './eventPlanningForm.schema'
 import { StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
 import { get } from 'http'
-import { EventPlanningForm } from './eventPlanningForm'
-import { EventContext } from './event.context'
+import { EventPlanningForm } from './UI.eventPlanningForm'
+import { EventContext } from '../event.context'
 
 export function useTraditionalView() {
     const user = useCurrentUser();

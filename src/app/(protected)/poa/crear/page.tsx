@@ -5,11 +5,11 @@ import React, { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Components
-import { TraditionalView } from '@/components/poa/eventManagement/formView/formulario-planificacion'
+import { TraditionalView } from '@/components/poa/eventManagement/formView/UI.traditionalView'
 import { TablaPlanificacionComponent } from '@/components/poa/eventManagement/tabla-planificacion'
 
 // Context
-import { EventProvider } from '@/components/poa/eventManagement/formView/event.context'
+import { EventProvider } from '@/components/poa/eventManagement/event.context'
 
 const CreatePOAPage = () => {
 	const [formPreference, setFormPreference] = useState<'traditional' | 'table'>('traditional')

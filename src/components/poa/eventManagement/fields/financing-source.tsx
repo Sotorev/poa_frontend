@@ -2,7 +2,7 @@
 "use client"
 
 import { useContext, useMemo, useEffect, useState } from "react"
-import { EventContext } from "../formView/event.context"
+import { EventContext } from "../event.context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PurchaseTypeWithColor } from '@/types/PurchaseType';
-import { EventContext } from "../formView/event.context";
+import { EventContext } from "../event.context";
 
 interface PurchaseTypeProps {
   selectedTipo: number | null;

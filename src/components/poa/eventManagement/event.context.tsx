@@ -22,7 +22,7 @@ import {
     getCampuses,
     getPurchaseTypes
     // Si existe, agregar getFinancingSources
-} from './eventPlanningForm.service'
+} from './formView/eventPlanningForm.service'
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getFinancingSources } from '@/services/apiService';
 

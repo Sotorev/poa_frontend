@@ -22,7 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 // Context
-import { EventContext } from '../formView/event.context';
+import { EventContext } from '../event.context';
 
 // Types
 import { Strategy } from '@/types/Strategy';
