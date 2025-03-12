@@ -30,14 +30,13 @@ import { StrategicArea } from '@/types/StrategicArea'
 
 // Schemas
 import { strategicAreasSchema } from '@/schemas/strategicAreaSchema'
-import { filaPlanificacionSchema, FullEventRequest } from './schema.eventPlanningForm'
+import { filaPlanificacionSchema, FullEventRequest, UpdateEventRequest } from './schema.eventPlanningForm'
 import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema'
 import { get } from 'http'
 import { EventPlanningForm } from './UI.eventPlanningForm'
 
 // Hooks
 import { useToast } from '@/hooks/use-toast'
-import { useTraditionalView } from './useTraditionalView'
 import { EventPlanningFormProvider } from './context.eventPlanningForm'
 
 // Context
@@ -73,28 +72,18 @@ const getColumnName = (field: string): string => {
 }
 
 export function TraditionalView() {
-  const { user } = useContext(EventContext)
-  const [facultyId, setFacultyId] = useState<number | null>(null)
-  const [poaId, setPoaId] = useState<number | null>(null)
+  const { isOpen, setIsOpen, user, eventEditing, setEventEditing, parseFullEventRequest, facultyId, setFacultyId, poaId, setPoaId, selectedStrategicArea, selectedStrategicObjective, setSelectedStrategicObjective, selectedStrategies, setSelectedStrategies } = useContext(EventContext)
+
 
   // unused
   const [strategicAreas, setStrategicAreas] = useState<StrategicArea[]>([])
   const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([])
   const [objetivoToAreaMap, setObjetivoToAreaMap] = useState<{ [key: string]: string }>({})
 
-  const {
-    isOpen,
-    setIsOpen,
-    selectedStrategicArea,
-    selectedStrategicObjective,
-    setSelectedStrategicObjective,
-    selectedStrategies,
-    setSelectedStrategies,
-    eventRequest,
-    onSubmit
-  } = useTraditionalView()
-
   const { toast } = useToast()
+
+  // Estado para almacenar el evento que se está editando
+
 
   /**
    * Effect hook to fetch faculty and POA data for the current user.
@@ -140,7 +129,7 @@ export function TraditionalView() {
         const fetchedPoaId = responsePoa.poaId;
 
         setPoaId(fetchedPoaId);
-      } catch (err) {      
+      } catch (err) {
       }
     }
 
@@ -149,8 +138,23 @@ export function TraditionalView() {
 
   // Función para manejar la edición de un evento (Actualizar)
   const handleEditEvent = async (event: PlanningEvent) => {
-    setIsOpen(true)
-  
+
+
+    // Solo si la función parseFullEventRequest existe
+    if (parseFullEventRequest) {
+      const fullEventData = parseFullEventRequest(event);
+
+      // Crear el objeto UpdateEventRequest
+      const updateEventRequest: UpdateEventRequest = {
+        eventId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0,
+        data: fullEventData
+      };
+
+      // Guardar en el estado
+      setEventEditing(updateEventRequest);
+    }
+
+    setIsOpen(true);
   };
 
 
@@ -176,11 +180,11 @@ export function TraditionalView() {
 
   return (
     <div className="container mx-auto p-4">
-      <EventPlanningFormProvider onSubmit={onSubmit}>
+      <EventPlanningFormProvider  >
         <EventPlanningForm
           isOpen={isOpen}
           onClose={() => { setIsOpen(false) }}
-          event={undefined}
+          event={eventEditing}
           poaId={poaId || undefined}
           addStrategicObjective={addStrategicObjective}
           selectedStrategicArea={selectedStrategicArea}

@@ -143,9 +143,8 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
 
 export const EventPlanningFormProvider: React.FC<{
     children: React.ReactNode
-    onSubmit: (data: FullEventRequest) => void
     event?: FullEventRequest
-}> = ({ children, onSubmit, event }) => {
+}> = ({ children, event }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formErrors, setFormErrors] = useState<ValidationErrors>({ hasErrors: false, errorList: [] })
     const [showValidationErrors, setShowValidationErrors] = useState(false)

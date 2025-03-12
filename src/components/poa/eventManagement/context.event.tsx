@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useMemo } from 'react';
 
 // Types
 import { PurchaseType } from '@/types/PurchaseType'
@@ -26,6 +26,7 @@ import {
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getFinancingSources } from '@/services/apiService';
 import { PlanningEvent, Session } from './formView/type.eventPlanningForm';
+import { FullEventRequest, UpdateEventRequest } from './formView/schema.eventPlanningForm';
 
 interface EventContextProps {
     financingSources: FinancingSource[];
@@ -38,7 +39,21 @@ interface EventContextProps {
     campuses: Campus[];
     purchaseTypes: PurchaseType[];
     loading: boolean;
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
     user: Session["user"] | undefined;
+    selectedStrategicObjective: StrategicObjective | undefined;
+    setSelectedStrategicObjective: (strategicObjective: StrategicObjective) => void;
+    selectedStrategicArea: StrategicArea | undefined;
+    selectedStrategies: Strategy[] | undefined;
+    setSelectedStrategies: (strategies: Strategy[]) => void;
+    facultyId: number | null;
+    setFacultyId: (facultyId: number) => void;
+    poaId: number | null;
+    setPoaId: (poaId: number) => void;
+    eventEditing: UpdateEventRequest | undefined;
+    parseFullEventRequest: (event: PlanningEvent) => FullEventRequest;
+    setEventEditing: (event: UpdateEventRequest) => void;
 }
 
 export const EventContext = createContext<EventContextProps>({
@@ -52,7 +67,45 @@ export const EventContext = createContext<EventContextProps>({
     campuses: [],
     purchaseTypes: [],
     loading: false,
+    isOpen: false,
+    setIsOpen: (_isOpen: boolean) => { },
     user: undefined,
+    selectedStrategicObjective: undefined,
+    setSelectedStrategicObjective: (_strategicObjective: StrategicObjective) => { },
+    selectedStrategicArea: undefined,
+    selectedStrategies: [],
+    setSelectedStrategies: (_strategies: Strategy[]) => { },
+    facultyId: null,
+    setFacultyId: (_facultyId: number) => { },
+    poaId: null,
+    setPoaId: (_poaId: number) => { },
+    eventEditing: undefined,
+    setEventEditing: (_event: UpdateEventRequest) => { },
+    parseFullEventRequest: (_event: PlanningEvent): FullEventRequest => {
+        return {
+            name: '',
+            type: 'Actividad',
+            poaId: 0,
+            statusId: 0,
+            completionPercentage: 0,
+            campusId: 0,
+            objective: '',
+            eventNature: '',
+            isDelayed: false,
+            achievementIndicator: '',
+            purchaseTypeId: 0,
+            totalCost: 0,
+            dates: [],
+            financings: [],
+            responsibles: [],
+            interventions: [],
+            ods: [],
+            resources: [],
+            userId: 0,
+            costDetailDocuments: null,
+            processDocuments: null
+        };
+    },
 });
 
 interface ProviderProps {
@@ -60,6 +113,7 @@ interface ProviderProps {
 }
 
 export const EventProvider = ({ children }: ProviderProps) => {
+    // Data API
     const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
     const [strategicAreas, setStrategicAreas] = useState<StrategicArea[]>([]);
     const [strategicObjectives, setStrategicObjectives] = useState<StrategicObjective[]>([]);
@@ -69,6 +123,23 @@ export const EventProvider = ({ children }: ProviderProps) => {
     const [resources, setResources] = useState<Resource[]>([]);
     const [campuses, setCampuses] = useState<Campus[]>([]);
     const [purchaseTypes, setPurchaseTypes] = useState<PurchaseType[]>([]);
+
+    // Event
+    const [eventEditing, setEventEditing] = useState<UpdateEventRequest | undefined>(undefined);
+    const [facultyId, setFacultyId] = useState<number | null>(null)
+    const [poaId, setPoaId] = useState<number | null>(null)
+
+    // Selected data
+    const [selectedStrategicObjective, setSelectedStrategicObjective] = useState<StrategicObjective>()
+    const selectedStrategicArea = useMemo(() => {
+        return selectedStrategicObjective
+            ? strategicAreas.find(area => area.strategicAreaId === selectedStrategicObjective.strategicAreaId)
+            : undefined;
+    }, [selectedStrategicObjective, strategicAreas])
+    const [selectedStrategies, setSelectedStrategies] = useState<Strategy[]>()
+
+    // Load, error, and close States
+    const [isOpen, setIsOpen] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(false);
 
     // Obtener el usuario desde el contexto de autenticación
@@ -127,11 +198,100 @@ export const EventProvider = ({ children }: ProviderProps) => {
         fetchData();
     }, [user?.token]);
 
-    const parseFullEventRequest = (event: PlanningEvent) => {
+    const parseFullEventRequest = (event: PlanningEvent): FullEventRequest => {
+        // Convertir las fechas de PlanningEvent a formato para FullEventRequest
+        const dates = event.fechas.map(fecha => ({
+            startDate: fecha.inicio || new Date(fecha.inicio).toISOString().split('T')[0],
+            endDate: fecha.fin || new Date(fecha.fin).toISOString().split('T')[0],
+        }));
 
-        
-    
-    }
+        // Convertir los financiamientos (aporteUMES y aporteOtros)
+        const financings = [
+            ...event.aporteUMES.map(aporte => ({
+                financingSourceId: aporte.financingSourceId,
+                percentage: aporte.percentage,
+                amount: aporte.amount
+            })),
+            ...event.aporteOtros.map(aporte => ({
+                financingSourceId: aporte.financingSourceId,
+                percentage: aporte.percentage,
+                amount: aporte.amount
+            }))
+        ];
+
+        // Configurar los responsables
+        const responsibles: { responsibleRole: "Principal" | "Ejecución" | "Seguimiento"; name: string }[] = [];
+        if (event.responsables.principal) {
+            responsibles.push({
+                responsibleRole: "Principal",
+                name: event.responsables.principal
+            });
+        }
+        if (event.responsables.ejecucion) {
+            responsibles.push({
+                responsibleRole: "Ejecución",
+                name: event.responsables.ejecucion
+            });
+        }
+        if (event.responsables.seguimiento) {
+            responsibles.push({
+                responsibleRole: "Seguimiento",
+                name: event.responsables.seguimiento
+            });
+        }
+
+        // Configurar intervenciones
+        let interventions: { intervention: number }[] = [];
+        if (event.aportesPEI && event.aportesPEI.event && event.aportesPEI.event.interventions) {
+            interventions = event.aportesPEI.event.interventions.map(intervencion => ({
+                intervention: intervencion.interventionId
+            }));
+        }
+
+        // Configurar ODS
+        // Asumo que el campo ods contiene IDs separados por comas
+        let odsArray: { ods: number }[] = [];
+        if (event.ods) {
+            const odsIds = event.ods.split(',').map(id => id.trim());
+            odsArray = odsIds.map(id => ({ ods: parseInt(id, 10) }));
+        }
+
+        // Configurar recursos
+        let resources: { resourceId: number }[] = [];
+        if (event.recursos) {
+            // Asumo que recursos es una lista de IDs separados por comas
+            const resourceIds = event.recursos.split(',').map(id => id.trim());
+            resources = resourceIds.map(id => ({ resourceId: parseInt(id, 10) }));
+        }
+
+        // Establecer el tipo de evento (Actividad o Proyecto)
+        const type = event.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto';
+
+        return {
+            name: event.evento,
+            type: type as 'Actividad' | 'Proyecto',
+            poaId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0,
+            statusId: event.estado === 'aprobado' ? 2 : event.estado === 'rechazado' ? 3 : event.estado === 'correccion' ? 4 : 1,
+            completionPercentage: 0,
+            campusId: parseInt(event.campus, 10) || 1,
+            objective: event.objetivo,
+            eventNature: event.naturalezaEvento || "Planificado",
+            isDelayed: false,
+            achievementIndicator: event.indicadorLogro,
+            purchaseTypeId: parseInt(event.tipoCompra, 10) || 1,
+            totalCost: event.costoTotal,
+            dates: dates,
+            financings: financings,
+            approvals: [],
+            responsibles: responsibles,
+            interventions: interventions,
+            ods: odsArray,
+            resources: resources,
+            userId: user?.userId || 0,
+            costDetailDocuments: null,
+            processDocuments: null
+        };
+    };
 
     return (
         <EventContext.Provider
@@ -146,7 +306,21 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 campuses,
                 purchaseTypes,
                 loading,
-                user
+                isOpen,
+                setIsOpen,
+                user,
+                eventEditing,
+                setEventEditing,
+                parseFullEventRequest,
+                facultyId,
+                setFacultyId,
+                poaId,
+                setPoaId,
+                selectedStrategicObjective,
+                setSelectedStrategicObjective,
+                selectedStrategicArea,
+                selectedStrategies,
+                setSelectedStrategies
             }}
         >
             {children}
