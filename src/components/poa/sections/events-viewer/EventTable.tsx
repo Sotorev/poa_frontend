@@ -77,6 +77,7 @@ const EventTable: React.FC<EventTableProps> = ({
             <TableHead className="whitespace-normal break-words">Indicador de Logro</TableHead>
             <TableHead className="whitespace-normal break-words">Naturaleza del Evento</TableHead>
             <TableHead className="whitespace-normal break-words">Campus</TableHead>
+            <TableHead className="whitespace-normal break-words">ODS</TableHead>
             <TableHead className="whitespace-normal break-words">Fechas</TableHead>
             <TableHead className="whitespace-normal break-words">Aportes al PEI</TableHead>
             <TableHead className="whitespace-normal break-words">Costo Total</TableHead>
