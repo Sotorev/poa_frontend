@@ -72,14 +72,15 @@ const getColumnName = (field: string): string => {
 }
 
 export function TraditionalView() {
-  const { 
+  const {
     setIsOpen,
     user,
     facultyId,
     setFacultyId,
     poaId,
     setPoaId,
-    handleEditEvent } = useContext(EventContext)
+    handleEditEvent
+  } = useContext(EventContext)
 
 
   // unused

@@ -231,11 +231,11 @@ export const EventProvider = ({ children }: ProviderProps) => {
         }
 
         // Configurar recursos
-        let resources: { resourceId: number }[] = [];
+        let resourcesParsed: { resourceId: number }[] = [];
         if (event.recursos) {
             // Asumo que recursos es una lista de IDs separados por comas
-            const resourceIds = event.recursos.split(',').map(id => id.trim());
-            resources = resourceIds.map(id => ({ resourceId: parseInt(id, 10) }));
+            const resourcesMatched = event.recursos.split(',').map(r => resources.find(resource => resource.name === r));
+            resourcesParsed = resourcesMatched.map(r => ({ resourceId: r?.resourceId || 0 }));
         }
 
         // Establecer el tipo de evento (Actividad o Proyecto)
@@ -261,7 +261,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 responsibles: responsibles,
                 interventions: interventions,
                 ods: odsArray,
-                resources: resources,
+                resources: resourcesParsed,
                 userId: user?.userId || 0,
                 costDetailDocuments: null,
                 processDocuments: null

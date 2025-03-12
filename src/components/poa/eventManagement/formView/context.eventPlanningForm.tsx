@@ -1,6 +1,5 @@
 "use client"
 import { createContext, useContext, useEffect, useRef, useState } from "react"
-import type React from "react"
 
 // Hooks
 import {
@@ -20,7 +19,6 @@ import {
     type UseFieldArrayReplace,
 } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useCurrentUser } from "@/hooks/use-current-user"
 import { useToast } from "@/hooks/use-toast"
 
 // Types
@@ -28,9 +26,6 @@ import { type FullEventRequest, fullEventSchema } from "./schema.eventPlanningFo
 import { createEvent, updateEvent } from "./service.eventPlanningForm"
 import type { ResponseFullEvent, ValidationErrors } from "./type.eventPlanningForm"
 import { EventContext } from "../context.event"
-
-
-
 
 interface EventPlanningFormContextProps {
     fieldsInterventions: FieldArrayWithId<FullEventRequest, "interventions">[]
@@ -143,15 +138,13 @@ export const EventPlanningFormContext = createContext<EventPlanningFormContextPr
 
 export const EventPlanningFormProvider: React.FC<{
     children: React.ReactNode
-    event?: FullEventRequest
-}> = ({ children, event }) => {
+}> = ({ children }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formErrors, setFormErrors] = useState<ValidationErrors>({ hasErrors: false, errorList: [] })
     const [showValidationErrors, setShowValidationErrors] = useState(false)
-    const user = useCurrentUser()
     const { toast } = useToast()
 
-    const { setIsOpen } = useContext(EventContext)
+    const { setIsOpen, user, eventEditing } = useContext(EventContext)
 
     const {
         register,
@@ -164,7 +157,7 @@ export const EventPlanningFormProvider: React.FC<{
         formState: { errors },
     } = useForm<FullEventRequest>({
         resolver: zodResolver(fullEventSchema),
-        defaultValues: event,
+        values: eventEditing?.data,
     })
 
     const phases = [
@@ -225,13 +218,6 @@ export const EventPlanningFormProvider: React.FC<{
             })
         }
     }, [activeTab])
-
-    // Efecto para cargar valores iniciales del evento si se proporciona
-    useEffect(() => {
-        if (event) {
-            reset(event)
-        }
-    }, [event, reset])
 
     // Field arrays
     const {
