@@ -166,24 +166,24 @@ export async function getPoaByFacultyAndYear(facultyId: number, year: number, to
 }
 
 // Función auxiliar para descargar y convertir archivos a objetos File
-export const downloadFileAux = async (url: string, nombreArchivo: string, token: string): Promise<File | null> => {
-    try {
-      const response = await fetch(`${API_URL}${url}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        return null;
+export const downloadFileAux = async (url: string, nombreArchivo: string, token: string): Promise<File> => {
+  try {
+    const response = await fetch(`${API_URL}${url}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-      const blob = await response.blob();
-      // Inferir el tipo de archivo desde el blob
-      const tipo = blob.type || 'application/octet-stream';
-      return new File([blob], nombreArchivo, { type: tipo });
-    } catch (error) {
-      return null;
+    });
+    if (!response.ok) {
+      throw new Error(`Error al descargar el archivo: ${response.statusText}`);
     }
-  };
+    const blob = await response.blob();
+    // Inferir el tipo de archivo desde el blob
+    const tipo = blob.type || 'application/octet-stream';
+    return new File([blob], nombreArchivo, { type: tipo });
+  } catch (error) {
+    throw new Error(`Error al descargar el archivo: ${error}`);
+  }
+};
 
 /**
  * Función auxiliar para formatear los datos del evento antes de enviarlos al backend
@@ -193,7 +193,7 @@ export const downloadFileAux = async (url: string, nombreArchivo: string, token:
 const formatEventData = (eventData: FullEventRequest, isPlanned: boolean) => {
   // Transformamos los datos al nuevo formato
   const { processDocuments, costDetailDocuments, ...restData } = eventData;
-  
+
   const formattedData = {
     ...restData,
     interventions: eventData.interventions.map(i => i.intervention),

@@ -20,7 +20,8 @@ import {
     getODS,
     getResources,
     getCampuses,
-    getPurchaseTypes
+    getPurchaseTypes,
+    downloadFileAux
     // Si existe, agregar getFinancingSources
 } from './formView/service.eventPlanningForm'
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -172,7 +173,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
         fetchData();
     }, [user?.token]);
 
-    const parseUpdateEventRequest = (event: PlanningEvent): UpdateEventRequest => {
+    const parseUpdateEventRequest = async (event: PlanningEvent): Promise<UpdateEventRequest> => {
         // Convertir las fechas de PlanningEvent a formato para FullEventRequest
         const dates = event.fechas.map(fecha => ({
             startDate: fecha.inicio || new Date(fecha.inicio).toISOString().split('T')[0],
@@ -226,8 +227,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
         // Asumo que el campo ods contiene IDs separados por comas
         let odsArray: { ods: number }[] = [];
         if (event.ods) {
-            const odsIds = event.ods.split(',').map(id => id.trim());
-            odsArray = odsIds.map(id => ({ ods: parseInt(id, 10) }));
+            const odsMatched = event.ods.split(',').map(o => odsList.find(ods => ods.name === o));
+            odsArray = odsMatched.map(o => ({ ods: o?.odsId || 0 }));
         }
 
         // Configurar recursos
@@ -240,6 +241,25 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
         // Establecer el tipo de evento (Actividad o Proyecto)
         const type = event.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto';
+
+        let processDocuments: File[] = [];
+        let costDetailDocuments: File[] = [];
+        try {
+            // Descargar archivos adjuntos
+            processDocuments = await Promise.all(
+                event.detalleProceso.map((doc) =>
+                    downloadFileAux(`/api/fullEvent/downloadEventFileById/${doc.id}`, doc.name, user?.token || '')
+                )
+            );
+
+            costDetailDocuments = await Promise.all(
+                event.detalle.map((doc) =>
+                    downloadFileAux(`/api/fullEvent/downloadEventCostDetailDocumentById/${doc.id}`, doc.name, user?.token || '')
+                )
+            );
+        } catch (error) {
+            console.error('Error al descargar archivos adjuntos:', error);
+        }
 
         return {
             data: {
@@ -263,8 +283,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 ods: odsArray,
                 resources: resourcesParsed,
                 userId: user?.userId || 0,
-                costDetailDocuments: null,
-                processDocuments: null
+                costDetailDocuments: costDetailDocuments || [],
+                processDocuments: processDocuments || []
             },
             eventId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0
         }
@@ -276,7 +296,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
         // Parsear el evento para UpdateEventRequest
         setSelectedStrategicObjective(strategicObjectives.find(objective => objective.description === event.objetivoEstrategico));
         setSelectedStrategies(strategics.filter(strategy => strategy.description === event.estrategias));
-        setEventEditing(parseUpdateEventRequest(event));
+        setEventEditing(await parseUpdateEventRequest(event));
 
         // Abrir el modal
         setIsOpen(true);
