@@ -76,9 +76,7 @@ export function TraditionalView() {
     setIsOpen,
     user,
     facultyId,
-    setFacultyId,
     poaId,
-    setPoaId,
     handleEditEvent
   } = useContext(EventContext)
 
@@ -93,56 +91,7 @@ export function TraditionalView() {
   // Estado para almacenar el evento que se está editando
 
 
-  /**
-   * Effect hook to fetch faculty and POA data for the current user.
-   * 
-   * Fetches faculty and POA data for the current user.
-   * 
-   * @dependencies Requires user ID and token
-   * 
-   * @sideEffects
-   * - Updates facultyId state with fetched faculty ID
-   * - Updates poaId state with fetched POA ID
-   * - Sets loadingPoa state during fetch operation
-   * - Sets errorPoa state when an error occurs
-   * 
-   */
-  useEffect(() => {
-    const fetchFacultyAndPoa = async () => {
-      if (!user?.userId) {
-        return
-      }
-      try {
-        if (!process.env.NEXT_PUBLIC_API_URL) {
-          throw new Error("La URL de la API no está definida.")
-        }
 
-        const headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
-        }
-
-        // Fetch User Data
-        const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.userId}`, { headers });
-        if (!responseUser.ok) throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
-        const dataUser = await responseUser.json();
-        const fetchedFacultyId = dataUser.facultyId;
-        setFacultyId(fetchedFacultyId);
-
-        const currentYear = new Date().getFullYear();
-
-        // Fetch POA
-
-        const responsePoa = await getPoaByFacultyAndYear(fetchedFacultyId, currentYear - 1, user?.token);
-        const fetchedPoaId = responsePoa.poaId;
-
-        setPoaId(fetchedPoaId);
-      } catch (err) {
-      }
-    }
-
-    fetchFacultyAndPoa()
-  }, [user?.userId, user?.token])
 
 
 
@@ -178,11 +127,6 @@ export function TraditionalView() {
       <div className="flex justify-center">
         <Button onClick={() => { setIsOpen(true) }} className="px-8 my-2 mb-6">Agregar Evento</Button>
       </div>
-
-
-
-
-
       {poaId && facultyId && user?.userId ? (
         <EventsCorrectionsComponent
           name="Revisión de eventos"

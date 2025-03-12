@@ -12,6 +12,7 @@ import { PurchaseType } from '@/types/PurchaseType';
 import { Poa } from '@/types/Poa';
 import { ResponseFullEvent } from './type.eventPlanningForm';
 import { FullEventRequest, UpdateEventRequest } from './schema.eventPlanningForm';
+import { FinancingSource } from '@/types/FinancingSource';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -107,6 +108,21 @@ export async function getODS(token: string): Promise<ODS[]> {
   return response.json();
 }
 
+export async function getFinancingSources(token: string): Promise<FinancingSource[]> {
+  const response = await fetch(`${API_URL}/api/financingSource`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error al obtener fuentes de financiamiento: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export async function getResources(token: string): Promise<Resource[]> {
   const response = await fetch(`${API_URL}/api/institutionalResources`, {
     headers: {
@@ -152,8 +168,23 @@ export async function getPurchaseTypes(token: string): Promise<PurchaseType[]> {
   return response.json();
 }
 
-export async function getPoaByFacultyAndYear(facultyId: number, year: number, token: string): Promise<Poa> {
-  const response = await fetch(`${API_URL}/api/poas/${facultyId}/${year}`, {
+export async function getFacultyByUserId(userId: number, token: string): Promise<number> {
+  // Fetch User Data
+  const responseUser = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, { 
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+   });
+  if (!responseUser.ok) throw new Error(`Error al obtener datos del usuario: ${responseUser.statusText}`);
+  const dataUser = await responseUser.json();
+  return dataUser.facultyId;
+}
+
+export async function getPoaByFacultyAndYear(facultyId: number, token: string): Promise<Poa> {
+  const currentYear = new Date().getFullYear();
+
+  const response = await fetch(`${API_URL}/api/poas/${facultyId}/${currentYear-1}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,

@@ -21,11 +21,12 @@ import {
     getResources,
     getCampuses,
     getPurchaseTypes,
-    downloadFileAux
+    downloadFileAux,
+    getFacultyByUserId
     // Si existe, agregar getFinancingSources
 } from './formView/service.eventPlanningForm'
 import { useCurrentUser } from '@/hooks/use-current-user';
-import { getFinancingSources } from '@/services/apiService';
+import { getFinancingSources, getPoaByFacultyAndYear } from './formView/service.eventPlanningForm'
 import { PlanningEvent, Session } from './formView/type.eventPlanningForm';
 import { FullEventRequest, UpdateEventRequest } from './formView/schema.eventPlanningForm';
 
@@ -172,6 +173,22 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
         fetchData();
     }, [user?.token]);
+
+    useEffect(() => {
+        if (!facultyId || !user?.token) return;
+        
+
+        getPoaByFacultyAndYear(facultyId,  user.token).then(poa => {
+            setPoaId(poa.poaId);
+        });
+    }, [facultyId, user?.token]);
+
+    useEffect(() => {
+        if (!user?.userId) return;
+        getFacultyByUserId(user.userId, user.token).then(facultyId => {
+            setFacultyId(facultyId);
+        });
+    }, [user?.userId, user?.token]);
 
     const parseUpdateEventRequest = async (event: PlanningEvent): Promise<UpdateEventRequest> => {
         // Convertir las fechas de PlanningEvent a formato para FullEventRequest
