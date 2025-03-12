@@ -72,7 +72,7 @@ const getColumnName = (field: string): string => {
 }
 
 export function TraditionalView() {
-  const { isOpen, setIsOpen, user, eventEditing, setEventEditing, parseFullEventRequest, facultyId, setFacultyId, poaId, setPoaId, selectedStrategicArea, selectedStrategicObjective, setSelectedStrategicObjective, selectedStrategies, setSelectedStrategies } = useContext(EventContext)
+  const { isOpen, setIsOpen, user, eventEditing, setEventEditing, facultyId, setFacultyId, poaId, setPoaId, selectedStrategicArea, selectedStrategicObjective, setSelectedStrategicObjective, selectedStrategies, setSelectedStrategies, handleEditEvent } = useContext(EventContext)
 
 
   // unused
@@ -136,26 +136,7 @@ export function TraditionalView() {
     fetchFacultyAndPoa()
   }, [user?.userId, user?.token])
 
-  // Función para manejar la edición de un evento (Actualizar)
-  const handleEditEvent = async (event: PlanningEvent) => {
 
-
-    // Solo si la función parseFullEventRequest existe
-    if (parseFullEventRequest) {
-      const fullEventData = parseFullEventRequest(event);
-
-      // Crear el objeto UpdateEventRequest
-      const updateEventRequest: UpdateEventRequest = {
-        eventId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0,
-        data: fullEventData
-      };
-
-      // Guardar en el estado
-      setEventEditing(updateEventRequest);
-    }
-
-    setIsOpen(true);
-  };
 
 
 

@@ -52,7 +52,7 @@ interface EventContextProps {
     poaId: number | null;
     setPoaId: (poaId: number) => void;
     eventEditing: UpdateEventRequest | undefined;
-    parseFullEventRequest: (event: PlanningEvent) => FullEventRequest;
+    handleEditEvent: (event: PlanningEvent) => void;
     setEventEditing: (event: UpdateEventRequest) => void;
 }
 
@@ -80,32 +80,8 @@ export const EventContext = createContext<EventContextProps>({
     poaId: null,
     setPoaId: (_poaId: number) => { },
     eventEditing: undefined,
+    handleEditEvent: (_event: PlanningEvent) => { },
     setEventEditing: (_event: UpdateEventRequest) => { },
-    parseFullEventRequest: (_event: PlanningEvent): FullEventRequest => {
-        return {
-            name: '',
-            type: 'Actividad',
-            poaId: 0,
-            statusId: 0,
-            completionPercentage: 0,
-            campusId: 0,
-            objective: '',
-            eventNature: '',
-            isDelayed: false,
-            achievementIndicator: '',
-            purchaseTypeId: 0,
-            totalCost: 0,
-            dates: [],
-            financings: [],
-            responsibles: [],
-            interventions: [],
-            ods: [],
-            resources: [],
-            userId: 0,
-            costDetailDocuments: null,
-            processDocuments: null
-        };
-    },
 });
 
 interface ProviderProps {
@@ -198,7 +174,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
         fetchData();
     }, [user?.token]);
 
-    const parseFullEventRequest = (event: PlanningEvent): FullEventRequest => {
+    const parseUpdateEventRequest = (event: PlanningEvent): UpdateEventRequest => {
         // Convertir las fechas de PlanningEvent a formato para FullEventRequest
         const dates = event.fechas.map(fecha => ({
             startDate: fecha.inicio || new Date(fecha.inicio).toISOString().split('T')[0],
@@ -268,29 +244,44 @@ export const EventProvider = ({ children }: ProviderProps) => {
         const type = event.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto';
 
         return {
-            name: event.evento,
-            type: type as 'Actividad' | 'Proyecto',
-            poaId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0,
-            statusId: event.estado === 'aprobado' ? 2 : event.estado === 'rechazado' ? 3 : event.estado === 'correccion' ? 4 : 1,
-            completionPercentage: 0,
-            campusId: parseInt(event.campus, 10) || 1,
-            objective: event.objetivo,
-            eventNature: event.naturalezaEvento || "Planificado",
-            isDelayed: false,
-            achievementIndicator: event.indicadorLogro,
-            purchaseTypeId: parseInt(event.tipoCompra, 10) || 1,
-            totalCost: event.costoTotal,
-            dates: dates,
-            financings: financings,
-            approvals: [],
-            responsibles: responsibles,
-            interventions: interventions,
-            ods: odsArray,
-            resources: resources,
-            userId: user?.userId || 0,
-            costDetailDocuments: null,
-            processDocuments: null
-        };
+            data: {
+                name: event.evento,
+                type: type as 'Actividad' | 'Proyecto',
+                poaId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0,
+                statusId: event.estado === 'aprobado' ? 2 : event.estado === 'rechazado' ? 3 : event.estado === 'correccion' ? 4 : 1,
+                completionPercentage: 0,
+                campusId: parseInt(event.campus, 10) || 1,
+                objective: event.objetivo,
+                eventNature: event.naturalezaEvento || "Planificado",
+                isDelayed: false,
+                achievementIndicator: event.indicadorLogro,
+                purchaseTypeId: parseInt(event.tipoCompra, 10) || 1,
+                totalCost: event.costoTotal,
+                dates: dates,
+                financings: financings,
+                approvals: [],
+                responsibles: responsibles,
+                interventions: interventions,
+                ods: odsArray,
+                resources: resources,
+                userId: user?.userId || 0,
+                costDetailDocuments: null,
+                processDocuments: null
+            },
+            eventId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0
+        }
+    };
+
+    // Función para manejar la edición de un evento (Actualizar)
+    const handleEditEvent = async (event: PlanningEvent) => {
+
+        // Parsear el evento para UpdateEventRequest
+        setSelectedStrategicObjective(strategicObjectives.find(objective => objective.description === event.objetivoEstrategico));
+        setSelectedStrategies(strategics.filter(strategy => strategy.description === event.estrategias));
+        setEventEditing(parseUpdateEventRequest(event));
+
+        // Abrir el modal
+        setIsOpen(true);
     };
 
     return (
@@ -311,7 +302,6 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 user,
                 eventEditing,
                 setEventEditing,
-                parseFullEventRequest,
                 facultyId,
                 setFacultyId,
                 poaId,
@@ -320,7 +310,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 setSelectedStrategicObjective,
                 selectedStrategicArea,
                 selectedStrategies,
-                setSelectedStrategies
+                setSelectedStrategies,
+                handleEditEvent
             }}
         >
             {children}
