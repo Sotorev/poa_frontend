@@ -20,7 +20,7 @@ import { StrategicObjective } from "@/types/StrategicObjective";
 interface StrategicObjectiveProps {
   selectedObjetive: StrategicObjective;
   onSelectObjetive: (objetivo: StrategicObjective) => void;
-  addStrategicObjective: (objetivo: StrategicObjective) => void;
+  addStrategicObjective?: (objetivo: StrategicObjective) => void;
 }
 
 // Context

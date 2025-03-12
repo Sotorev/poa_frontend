@@ -43,7 +43,6 @@ import { EventContext } from "../context.event"
 
 interface EventPlanningFormProps {
     onEventSaved?: (event: ResponseFullEvent) => void
-    addStrategicObjective: (objective: any) => void
 }
 
 // Section Title Component for consistent styling
@@ -56,7 +55,6 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 
 export function EventPlanningForm({
     onEventSaved,
-    addStrategicObjective,
 }: EventPlanningFormProps) {
     // Context
     const {
@@ -178,7 +176,6 @@ export function EventPlanningForm({
                                             <StrategicObjectiveSelector
                                                 selectedObjetive={selectedStrategicObjective!}
                                                 onSelectObjetive={(objective) => setSelectedStrategicObjective(objective)}
-                                                addStrategicObjective={addStrategicObjective}
                                             />
                                             <AreaEstrategicaComponent
                                                 areaEstrategica={selectedStrategicArea?.name || ""}
