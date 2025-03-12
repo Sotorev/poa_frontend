@@ -53,7 +53,6 @@ interface EventContextProps {
     setPoaId: (poaId: number) => void;
     eventEditing: UpdateEventRequest | undefined;
     handleEditEvent: (event: PlanningEvent) => void;
-    setEventEditing: (event: UpdateEventRequest) => void;
 }
 
 export const EventContext = createContext<EventContextProps>({
@@ -81,7 +80,6 @@ export const EventContext = createContext<EventContextProps>({
     setPoaId: (_poaId: number) => { },
     eventEditing: undefined,
     handleEditEvent: (_event: PlanningEvent) => { },
-    setEventEditing: (_event: UpdateEventRequest) => { },
 });
 
 interface ProviderProps {
@@ -301,7 +299,6 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 setIsOpen,
                 user,
                 eventEditing,
-                setEventEditing,
                 facultyId,
                 setFacultyId,
                 poaId,

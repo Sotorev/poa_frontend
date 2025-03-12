@@ -72,7 +72,14 @@ const getColumnName = (field: string): string => {
 }
 
 export function TraditionalView() {
-  const { isOpen, setIsOpen, user, eventEditing, setEventEditing, facultyId, setFacultyId, poaId, setPoaId, selectedStrategicArea, selectedStrategicObjective, setSelectedStrategicObjective, selectedStrategies, setSelectedStrategies, handleEditEvent } = useContext(EventContext)
+  const { 
+    setIsOpen,
+    user,
+    facultyId,
+    setFacultyId,
+    poaId,
+    setPoaId,
+    handleEditEvent } = useContext(EventContext)
 
 
   // unused
@@ -163,16 +170,7 @@ export function TraditionalView() {
     <div className="container mx-auto p-4">
       <EventPlanningFormProvider  >
         <EventPlanningForm
-          isOpen={isOpen}
-          onClose={() => { setIsOpen(false) }}
-          event={eventEditing}
-          poaId={poaId || undefined}
           addStrategicObjective={addStrategicObjective}
-          selectedStrategicArea={selectedStrategicArea}
-          selectedStrategicObjective={selectedStrategicObjective}
-          setSelectedStrategicObjective={setSelectedStrategicObjective}
-          selectedStrategies={selectedStrategies}
-          setSelectedStrategies={setSelectedStrategies}
         />
       </EventPlanningFormProvider>
 

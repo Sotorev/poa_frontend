@@ -1,5 +1,5 @@
 "use client"
-import { createContext, useEffect, useRef, useState } from "react"
+import { createContext, useContext, useEffect, useRef, useState } from "react"
 import type React from "react"
 
 // Hooks
@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast"
 import { type FullEventRequest, fullEventSchema } from "./schema.eventPlanningForm"
 import { createEvent, updateEvent } from "./service.eventPlanningForm"
 import type { ResponseFullEvent, ValidationErrors } from "./type.eventPlanningForm"
+import { EventContext } from "../context.event"
 
 
 
@@ -74,7 +75,6 @@ interface EventPlanningFormContextProps {
     handleFormSubmit: (
         poaId?: number,
         onSuccess?: (result: ResponseFullEvent) => void,
-        onClose?: () => void,
     ) => Promise<void>
     activeTab: string
     setActiveTab: (tab: string) => void
@@ -150,6 +150,8 @@ export const EventPlanningFormProvider: React.FC<{
     const [showValidationErrors, setShowValidationErrors] = useState(false)
     const user = useCurrentUser()
     const { toast } = useToast()
+
+    const { setIsOpen } = useContext(EventContext)
 
     const {
         register,
@@ -384,7 +386,6 @@ export const EventPlanningFormProvider: React.FC<{
     const handleFormSubmit = async (
         poaId?: number,
         onSuccess?: (result: ResponseFullEvent) => void,
-        onClose?: () => void,
     ) => {
         // Obtener el token del usuario desde el contexto de autenticación o de donde se guarde
         const token = user?.token
@@ -478,9 +479,8 @@ export const EventPlanningFormProvider: React.FC<{
             }
 
             // Cerrar el modal si se proporciona un callback
-            if (onClose) {
-                onClose()
-            }
+            setIsOpen(false)
+
         } catch (error) {
             // Mostrar error con toast
             toast({

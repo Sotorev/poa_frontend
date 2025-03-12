@@ -39,17 +39,9 @@ import type { ResponseFullEvent } from "./type.eventPlanningForm"
 
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"
+import { EventContext } from "../context.event"
 
 interface EventPlanningFormProps {
-    isOpen: boolean
-    onClose: () => void
-    event?: UpdateEventRequest
-    selectedStrategicArea: StrategicArea | undefined
-    selectedStrategicObjective: StrategicObjective | undefined
-    setSelectedStrategicObjective: (objective: StrategicObjective) => void
-    selectedStrategies: Strategy[] | undefined
-    setSelectedStrategies: (strategies: Strategy[]) => void
-    poaId?: number
     onEventSaved?: (event: ResponseFullEvent) => void
     addStrategicObjective: (objective: any) => void
 }
@@ -63,15 +55,6 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 )
 
 export function EventPlanningForm({
-    isOpen,
-    onClose,
-    event,
-    selectedStrategicArea,
-    selectedStrategicObjective,
-    setSelectedStrategicObjective,
-    selectedStrategies,
-    setSelectedStrategies,
-    poaId,
     onEventSaved,
     addStrategicObjective,
 }: EventPlanningFormProps) {
@@ -113,9 +96,21 @@ export function EventPlanningForm({
         scrollContainerRef,
     } = useContext(EventPlanningFormContext)
 
+    const {
+        isOpen,
+        setIsOpen,
+        poaId,
+        selectedStrategicArea,
+        selectedStrategicObjective,
+        setSelectedStrategicObjective,
+        selectedStrategies,
+        setSelectedStrategies,
+        eventEditing
+    } = useContext(EventContext)
+
     const onSubmit = async () => {
         try {
-            await handleFormSubmit(poaId, onEventSaved, onClose)
+            await handleFormSubmit(poaId || undefined, onEventSaved)
         } catch (error) {
             if (formErrors.hasErrors) {
                 setShowValidationErrors(true)
@@ -131,7 +126,7 @@ export function EventPlanningForm({
                 errors={formErrors}
             />
 
-            <Dialog open={isOpen} onOpenChange={onClose}>
+            <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
                 <DialogContent
                     className="max-w-4xl p-0 flex flex-col overflow-hidden"
                     style={{
@@ -145,7 +140,7 @@ export function EventPlanningForm({
                             e.preventDefault();
                             e.stopPropagation();
                             console.log("Botón X personalizado clickeado");
-                            onClose();
+                            setIsOpen(false);
                         }}
                         className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none z-50"
                     >
@@ -154,9 +149,9 @@ export function EventPlanningForm({
                         </svg>
                         <span className="sr-only">Cerrar</span>
                     </button>
-                    
+
                     <DialogHeader className="px-6 py-4 border-b flex-shrink-0 z-20">
-                        <DialogTitle>{event ? "Editar Evento" : "Crear Nuevo Evento"}</DialogTitle>
+                        <DialogTitle>{eventEditing ? "Editar Evento" : "Crear Nuevo Evento"}</DialogTitle>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
@@ -176,7 +171,7 @@ export function EventPlanningForm({
                             </TabsList>
 
                             <div className="flex-1 overflow-hidden">
-                            <ScrollArea ref={scrollContainerRef} className="h-64 w-full px-12">
+                                <ScrollArea ref={scrollContainerRef} className="h-64 w-full px-12">
                                     <TabsContent value="pei" className="mt-6 space-y-8 data-[state=inactive]:hidden">
                                         <div className="space-y-6">
                                             <SectionTitle>Objetivo Estratégico</SectionTitle>
@@ -445,7 +440,7 @@ export function EventPlanningForm({
                     </form>
 
                     <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 flex-shrink-0 sticky bottom-0 z-20">
-                        <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+                        <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
                             Cancelar
                         </Button>
                         <Button onClick={() => onSubmit()} disabled={isSubmitting}>
