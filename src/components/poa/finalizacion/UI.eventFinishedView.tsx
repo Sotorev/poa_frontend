@@ -8,14 +8,13 @@ import { EventFinishedTable } from "./UI.eventFinishedTable"
 import { EventFinishedForm } from "./UI.eventFinishedForm"
 import { useEventFinishedView } from "@/components/poa/finalizacion/useEventFinished"
 import type { EventFinished, EventFinishedViewProps } from "@/components/poa/finalizacion/type.eventFinished"
-import { downloadTestDocument } from "@/components/poa/finalizacion/service.eventFinished"
-import { useCurrentUser } from "@/hooks/use-current-user"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import DownloadExecutedEventButton from "@/components/poa/ejecucion/DownloadExecutedEventButton"
 
-export function EventFinishedView({ events, availableEvents }: EventFinishedViewProps) {
+export function EventFinishedView({ events }: EventFinishedViewProps) {
   const {
+    availableEvents,
     finishedEvents,
     isLoading,
     isDialogOpen,
@@ -35,7 +34,6 @@ export function EventFinishedView({ events, availableEvents }: EventFinishedView
 
   const [viewingEvent, setViewingEvent] = useState<EventFinished | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const user = useCurrentUser()
 
   // Crear adaptador para el tipo de onSubmit
   const handleFormSubmit = (data: { eventId: string; eventName: string; completionDate: string; testDocuments: File[] }) => {
@@ -51,13 +49,6 @@ export function EventFinishedView({ events, availableEvents }: EventFinishedView
   const handleViewDetails = (event: EventFinished) => {
     setViewingEvent(event)
     setIsDetailsOpen(true)
-  }
-
-  // Manejar la descarga de documentos
-  const handleDownloadDocument = async (documentId: string, fileName: string) => {
-    if (user?.token) {
-      await downloadTestDocument(documentId, fileName, user.token)
-    }
   }
 
   return (

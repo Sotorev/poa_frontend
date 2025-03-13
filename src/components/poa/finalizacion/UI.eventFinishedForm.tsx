@@ -13,11 +13,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import type { EventFinishedFormProps, EventToFinish } from "@/components/poa/finalizacion/type.eventFinished"
+import type { EventFinishedFormProps } from "@/components/poa/finalizacion/type.eventFinished"
 import { eventFinishedSchema } from "@/components/poa/finalizacion/schema.eventFinished"
-
+import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 // Componente para mostrar los detalles del evento seleccionado
-function EventDetails({ event }: { event: EventToFinish }) {
+function EventDetails({ event }: { event: ResponseExecutedEvent }) {
   const formatDate = (dateString: string) => {
     const [year, month, day] = dateString.split("-")
     return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day) + 1)).toLocaleDateString("es-ES")
@@ -38,7 +38,7 @@ function EventDetails({ event }: { event: EventToFinish }) {
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Campus</p>
-                <p className="font-medium">{event.campus?.name || "No especificado"}</p>
+                <p className="font-medium">{event.campus || "No especificado"}</p>
               </div>
             </div>
 
@@ -46,7 +46,7 @@ function EventDetails({ event }: { event: EventToFinish }) {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Responsable de ejecución</p>
                 <p className="font-medium">
-                  {event.responsibles?.find((r) => r.responsibleRole === "Ejecución")?.name || "No especificado"}
+                  {event.eventResponsibles?.find((r) => r.responsibleRole === "Ejecución")?.name || "No especificado"}
                 </p>
               </div>
               <div className="space-y-1">
@@ -55,11 +55,11 @@ function EventDetails({ event }: { event: EventToFinish }) {
               </div>
             </div>
 
-            {event.dates && event.dates.length > 0 && (
+            {event.eventExecutionDates && event.eventExecutionDates.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Fechas</p>
                 <div className="grid gap-2">
-                  {event.dates.map((date, index) => (
+                  {event.eventExecutionDates.map((date, index) => (
                     <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
                       <div className="h-2 w-2 rounded-full bg-primary/70" />
                       <p className="text-sm">
@@ -82,8 +82,8 @@ function SearchResults({
   filteredEvents,
   handleEventSelect,
 }: {
-  filteredEvents: EventToFinish[]
-  handleEventSelect: (event: EventToFinish) => void
+  filteredEvents: ResponseExecutedEvent[]
+  handleEventSelect: (event: ResponseExecutedEvent) => void
 }) {
   return (
     <ul className="mt-1 border rounded-md divide-y max-h-32 overflow-y-auto bg-card">
@@ -199,7 +199,7 @@ export function EventFinishedForm({
 }: EventFinishedFormProps) {
   const [query, setQuery] = useState("")
   const [showResults, setShowResults] = useState(false)
-  const [filteredEvents, setFilteredEvents] = useState<EventToFinish[]>([])
+  const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
   const [testDocuments, setTestDocuments] = useState<File[]>([])
   const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -233,7 +233,7 @@ export function EventFinishedForm({
   }
 
   // Seleccionar un evento
-  const handleEventSelection = (event: EventToFinish) => {
+  const handleEventSelection = (event: ResponseExecutedEvent) => {
     onEventSelect(event)
     form.setValue("eventId", event.eventId.toString())
     form.setValue("eventName", event.name)

@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useToast } from "@/hooks/use-toast"
 import { useCurrentUser } from "@/hooks/use-current-user"
 
-import type { EventFinished, EventToFinish, EventFinishedFormData } from "@/components/poa/finalizacion/type.eventFinished"
+import type { EventFinished, EventFinishedFormData } from "@/components/poa/finalizacion/type.eventFinished"
+import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 
 import { eventFinishedSchema } from "@/components/poa/finalizacion/schema.eventFinished"
 
@@ -18,17 +19,20 @@ import {
   revertFinishedEvent,
 } from "@/components/poa/finalizacion/service.eventFinished"
 
+import { getFacultyByUserId } from "@/services/faculty/currentFaculty"
+import { getPoaByFacultyAndYear } from "@/services/apiService"
+
 export function useEventFinishedView() {
   // Estados
   const [finishedEvents, setFinishedEvents] = useState<EventFinished[]>([])
-  const [availableEvents, setAvailableEvents] = useState<EventToFinish[]>([])
+  const [availableEvents, setAvailableEvents] = useState<ResponseExecutedEvent[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<EventToFinish | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<ResponseExecutedEvent | null>(null)
   const [editingEvent, setEditingEvent] = useState<EventFinished | null>(null)
   const [currentStep, setCurrentStep] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
-  const [filteredEvents, setFilteredEvents] = useState<EventToFinish[]>([])
+  const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
   const [showResults, setShowResults] = useState(false)
   const [testDocuments, setTestDocuments] = useState<File[]>([])
 
@@ -51,26 +55,23 @@ export function useEventFinishedView() {
     formState: { errors, isValid },
   } = form
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    if (user?.token) {
-      loadData()
-    }
-  }, [user])
-
-  // Cargar datos
   const loadData = async () => {
     if (!user?.token) return
 
     setIsLoading(true)
     try {
-      const [finishedEventsData, availableEventsData] = await Promise.all([
-        getFinishedEvents(user.token),
-        getAvailableEventsToFinish(user.token),
+
+      const facultyId = await getFacultyByUserId(user.userId, user.token)
+      const poaId = (await getPoaByFacultyAndYear(facultyId, 2025,user.token)).poaId
+      const [/*finishedEventsData, */availableEventsData] = await Promise.all([
+       // getFinishedEvents(user.token),
+        getAvailableEventsToFinish(user.token, poaId),
       ])
 
-      setFinishedEvents(finishedEventsData)
+     // setFinishedEvents(finishedEventsData)
       setAvailableEvents(availableEventsData)
+
+      console.log("availableEvents", availableEvents)
     } catch (error) {
       toast({
         title: "Error",
@@ -81,6 +82,16 @@ export function useEventFinishedView() {
       setIsLoading(false)
     }
   }
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    if (user?.token) {
+      loadData()
+    }
+  }, [user])
+
+  // Cargar datos
+
 
   // Filtrar eventos disponibles según la búsqueda
   useEffect(() => {
@@ -95,7 +106,7 @@ export function useEventFinishedView() {
   }, [searchQuery, availableEvents])
 
   // Manejar selección de evento
-  const handleEventSelect = (event: EventToFinish) => {
+  const handleEventSelect = (event: ResponseExecutedEvent) => {
     setSelectedEvent(event)
     form.setValue("eventId", event.eventId.toString())
     form.setValue("eventName", event.name)
