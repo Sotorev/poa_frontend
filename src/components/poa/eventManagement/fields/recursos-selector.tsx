@@ -118,22 +118,11 @@ export function RecursosSelectorComponent({ selectedResource, onAppendResource, 
     const indexToRemove = selectedResource.findIndex(
       (item) => item.resourceId === resourceId
     );
-    console.log("Removing resource at index:", indexToRemove);
 
     if (indexToRemove !== -1) {
       onRemoveResource(indexToRemove);
     }
   };
-
-  // Log when select is opened or closed
-  useEffect(() => {
-    console.log("Select dropdown is now:", isOpen ? "open" : "closed");
-  }, [isOpen]);
-
-  // Log available resources when the list changes
-  useEffect(() => {
-    console.log("Available resources:", recursosList);
-  }, [recursosList]);
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -216,7 +205,6 @@ export function RecursosSelectorComponent({ selectedResource, onAppendResource, 
               {filteredRecursos.map((rec) => {
                 // Direct check like in OdsSelector
                 const isSelected = selectedResourceIds.includes(rec.id);
-                console.log(`Resource ${rec.id} (${rec.name}) selected:`, isSelected);
 
                 return (
                   <SelectItem

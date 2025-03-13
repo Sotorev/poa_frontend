@@ -303,7 +303,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 costDetailDocuments: costDetailDocuments || [],
                 processDocuments: processDocuments || []
             },
-            eventId: typeof event.id === 'string' ? parseInt(event.id, 10) : 0
+            eventId: parseInt(event.id, 10)
         }
     };
 

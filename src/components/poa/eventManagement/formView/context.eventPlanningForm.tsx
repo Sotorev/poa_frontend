@@ -68,8 +68,7 @@ interface EventPlanningFormContextProps {
     showValidationErrors: boolean
     setShowValidationErrors: (showValidationErrors: boolean) => void
     handleFormSubmit: (
-        poaId?: number,
-        onSuccess?: (result: ResponseFullEvent) => void,
+        poaId?: number
     ) => Promise<void>
     activeTab: string
     setActiveTab: (tab: string) => void
@@ -371,7 +370,6 @@ export const EventPlanningFormProvider: React.FC<{
     // Modificar la función handleFormSubmit
     const handleFormSubmit = async (
         poaId?: number,
-        onSuccess?: (result: ResponseFullEvent) => void,
     ) => {
         // Obtener el token del usuario desde el contexto de autenticación o de donde se guarde
         const token = user?.token
@@ -435,8 +433,8 @@ export const EventPlanningFormProvider: React.FC<{
 
             // Verificar si estamos editando un evento existente
             // Aquí accedemos a event.eventId si existe, o undefined si no
-            const eventId = event && "eventId" in event ? (event as any).eventId : undefined
-
+            const eventId = eventEditing ? eventEditing.eventId : undefined
+            
             if (eventId) {
                 // Actualizar evento existente
                 result = await updateExistingEvent(eventId, formData, token)
@@ -457,11 +455,6 @@ export const EventPlanningFormProvider: React.FC<{
                     description: "Evento creado exitosamente",
                     variant: "success",
                 })
-            }
-
-            // Callback para notificar al componente padre
-            if (onSuccess && result) {
-                onSuccess(result)
             }
 
             // Cerrar el modal si se proporciona un callback

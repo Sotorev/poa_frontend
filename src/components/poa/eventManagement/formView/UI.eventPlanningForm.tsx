@@ -31,9 +31,6 @@ import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
 
 // Types
-import type { StrategicArea } from "@/types/StrategicArea"
-import type { StrategicObjective } from "@/types/StrategicObjective"
-import type { Strategy } from "@/types/Strategy"
 import type { UpdateEventRequest } from "./schema.eventPlanningForm"
 import type { ResponseFullEvent } from "./type.eventPlanningForm"
 
@@ -42,7 +39,6 @@ import { EventPlanningFormContext } from "./context.eventPlanningForm"
 import { EventContext } from "../context.event"
 
 interface EventPlanningFormProps {
-    onEventSaved?: (event: ResponseFullEvent) => void
 }
 
 // Section Title Component for consistent styling
@@ -54,7 +50,6 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 )
 
 export function EventPlanningForm({
-    onEventSaved,
 }: EventPlanningFormProps) {
     // Context
     const {
@@ -108,7 +103,7 @@ export function EventPlanningForm({
 
     const onSubmit = async () => {
         try {
-            await handleFormSubmit(poaId || undefined, onEventSaved)
+            await handleFormSubmit(poaId || undefined)
         } catch (error) {
             if (formErrors.hasErrors) {
                 setShowValidationErrors(true)
