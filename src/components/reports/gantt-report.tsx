@@ -33,7 +33,7 @@ export default function GanttChart() {
     { planned: number; completed: number; inProgress: number; total: number }
   >>({})
 
-  const [selectedPhase, setSelectedPhase] = useState("todos")
+  const [selectedPhase, setSelectedPhase] = useState<EventPhase | "todos">("todos")
   // Inicialmente no se ha seleccionado una facultad
   const [selectedFaculty, setSelectedFaculty] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
@@ -89,12 +89,8 @@ export default function GanttChart() {
 
             // Para "finalizado": se renderiza solo si endExecutionDate es válida
             const hasFinalizado = apiEvent.endExecutionDate !== null
-            const finalizadoStart = hasFinalizado
-              ? new Date(new Date(apiEvent.endExecutionDate).getTime() + 24 * 60 * 60 * 1000)
-              : null
-            const finalizadoEnd = hasFinalizado && finalizadoStart
-              ? new Date(finalizadoStart.getTime() + 24 * 60 * 60 * 1000)
-              : null
+            const finalizadoStart = hasFinalizado ? new Date(apiEvent.endExecutionDate) : null
+            const finalizadoEnd = hasFinalizado ? new Date(apiEvent.endExecutionDate) : null
 
             loadedEvents.push({
               id: apiEvent.eventId,
@@ -132,13 +128,17 @@ export default function GanttChart() {
   // Lista de facultades únicas
   const faculties = Array.from(new Set(events.map((event) => event.faculty)))
 
-  // Filtrar eventos (solo se muestran si se ha seleccionado facultad)
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesPhase = selectedPhase === "todos" || true
-    const matchesFaculty = selectedFaculty ? event.faculty === selectedFaculty : false
-    return matchesSearch && matchesPhase && matchesFaculty
-  })
+// Filtrar eventos (solo se muestran si se cumple el filtro de búsqueda, fase y facultad)
+const filteredEvents = events.filter((event) => {
+  const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const matchesPhase =
+    selectedPhase === "todos" ||
+    (event.phases[selectedPhase].hasData &&
+      event.phases[selectedPhase].startDate &&
+      event.phases[selectedPhase].endDate)
+  const matchesFaculty = selectedFaculty ? event.faculty === selectedFaculty : true
+  return matchesSearch && matchesPhase && matchesFaculty
+})
 
   // Calcular el rango de fechas dinámicamente usando solo fechas válidas
   const allValidDates = events.flatMap((event) => {
@@ -226,7 +226,7 @@ export default function GanttChart() {
         </div>
         <div className="w-full md:w-1/3">
           <label className="text-sm text-gray-500 mb-1 block">Filtrar por Fase</label>
-          <Select value={selectedPhase} onValueChange={setSelectedPhase}>
+          <Select value={selectedPhase} onValueChange={(value) => setSelectedPhase(value as EventPhase | "todos")}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
