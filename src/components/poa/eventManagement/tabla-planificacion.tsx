@@ -11,6 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
+import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
+import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
@@ -49,12 +52,7 @@ import { PurchaseType } from '@/types/PurchaseType';
 import { Resource } from '@/types/Resource';
 import { Strategy } from '@/types/Strategy';
 
-// Schemas
-import { filaPlanificacionSchema } from '@/schemas/filaPlanificacionSchema';
-import { strategicAreasSchema } from '@/schemas/strategicAreaSchema';
-import { StrategicObjective, StrategicObjectiveSchema } from '@/schemas/strategicObjectiveSchema';
-
-import { downloadFile, descargarArchivo } from '@/utils/downloadFile'; // Importar la función de utilidad
+import { downloadFile } from '@/utils/downloadFile'; // Importar la función de utilidad
 
 type FilaPlanificacionForm = z.infer<typeof filaPlanificacionSchema>;
 
@@ -916,7 +914,7 @@ export function TablaPlanificacionComponent() {
         comentarioDecano: '', // Added this property
       };
 
-      // Actualización del estado con la nueva fila
+      // // Actualización del estado con la nueva fila
       setFilas([nuevaFila]);
       toast.info("Evento cargado para edición.");
 
@@ -945,10 +943,11 @@ export function TablaPlanificacionComponent() {
 
       try {
         const [costDetailFiles, processFiles] = await Promise.all([
-          downloadDocuments(event.detalle, 'cost'),
-          downloadDocuments(event.detalleProceso, 'process'),
+          Promise.all(costDetailDownloads),
+          Promise.all(processDetailDownloads)
         ]);
 
+ 
         // Filter out any null values from failed downloads
         const validCostDetailFiles = costDetailFiles.filter((file): file is File => file !== null);
         const validProcessFiles = processFiles.filter((file): file is File => file !== null);
@@ -958,7 +957,7 @@ export function TablaPlanificacionComponent() {
         updateEditingEventCostDetails(nuevaFila.id, validCostDetailFiles);
         updateEditingEventProcessDocuments(nuevaFila.id, validProcessFiles);
 
-        if (validCostDetailFiles.length || validProcessFiles.length) {
+        if (validCostDetailFiles.length > 0 || validProcessFiles.length > 0) {
           toast.success("Archivos cargados correctamente.");
         } else {
           toast.warn("No se pudieron cargar algunos archivos.");
