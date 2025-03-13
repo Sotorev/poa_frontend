@@ -30,7 +30,7 @@ import { CostReport } from './sections/cost-report'
 import ApprovalStatusSection from './sections/approvalStatus'
 
 // Types
-import type { ApprovalStatus } from '@/types/approvalStatus'
+import type { ApprovalStatus } from '@/types/ApprovalStatus'
 
 
 // Imports for charge data

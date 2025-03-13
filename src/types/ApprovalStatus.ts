@@ -1,4 +1,4 @@
-// src/types/approvalStatus.ts
+// src/types/ApprovalStatus.ts
 
 export interface ApprovalStatus {
     approvalId: number;

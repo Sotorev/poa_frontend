@@ -11,7 +11,7 @@ import { format, isValid } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 //types
-import type { ApprovalStatus } from '@/types/approvalStatus'
+import type { ApprovalStatus } from "@/types/ApprovalStatus"
 
 //Props
 interface ApprovalStatusProps {
