@@ -1,9 +1,12 @@
-import type { EventFinishedRequest, EventFinishedResponse, EventToFinish } from "@/components/poa/finalizacion/type.eventFinished"
+import type { EventFinishedRequest, EventFinishedResponse } from "@/components/poa/finalizacion/type.eventFinished"
+import { ResponseExecutedEvent } from "@/types/eventExecution.type"
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 // Función para obtener eventos disponibles para marcar como finalizados
-export async function getAvailableEventsToFinish(token: string): Promise<EventToFinish[]> {
+// CUANDLO LA API ESTA LISTO HAY QUE MODIFICAR EL TIPO DE RESPUESTA
+export async function getAvailableEventsToFinish(token: string, poaId: number): Promise<ResponseExecutedEvent[]> {
   try {
-    const response = await fetch("/api/events/available", {
+    const response = await fetch(`${API_URL}/api/fullexecution/fullexecution/poa/${poaId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -23,7 +26,7 @@ export async function getAvailableEventsToFinish(token: string): Promise<EventTo
 // Función para obtener eventos finalizados
 export async function getFinishedEvents(token: string): Promise<EventFinishedResponse[]> {
   try {
-    const response = await fetch("/api/events/finished", {
+    const response = await fetch(`${API_URL}/api/events/finished`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -53,7 +56,7 @@ export async function markEventAsFinished(data: EventFinishedRequest, token: str
       formData.append(`testDocuments`, file)
     })
 
-    const response = await fetch("/api/events/finish", {
+    const response = await fetch(`${API_URL}/api/events/finish`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -88,7 +91,7 @@ export async function updateFinishedEvent(
       formData.append(`testDocuments`, file)
     })
 
-    const response = await fetch(`/api/events/${eventId}/finish`, {
+    const response = await fetch(`${API_URL}/api/events/${eventId}/finish`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -110,7 +113,7 @@ export async function updateFinishedEvent(
 // Función para revertir un evento finalizado a "en ejecución"
 export async function revertFinishedEvent(eventId: number, token: string): Promise<void> {
   try {
-    const response = await fetch(`/api/events/${eventId}/revert`, {
+    const response = await fetch(`${API_URL}/api/events/${eventId}/revert`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -130,7 +133,7 @@ export async function revertFinishedEvent(eventId: number, token: string): Promi
 // Función para descargar un documento de prueba
 export async function downloadTestDocument(documentId: string, fileName: string, token: string): Promise<void> {
   try {
-    const response = await fetch(`/api/documents/${documentId}/download`, {
+    const response = await fetch(`${API_URL}/api/documents/${documentId}/download`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -1,5 +1,6 @@
 import type { z } from "zod"
 import type { eventFinishedSchema } from "@/components/poa/finalizacion/schema.eventFinished"
+import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 
 // Tipos básicos
 export interface EventFinished {
@@ -38,32 +39,12 @@ export interface EventFinishedTableProps {
 // Tipos para el formulario
 export interface EventFinishedFormProps {
   onSubmit: (data: EventFinishedFormData) => void
-  selectedEvent: EventToFinish | null
+  selectedEvent: ResponseExecutedEvent | null
   isLoading?: boolean
   currentStep: number
   onStepChange: (step: number) => void
-  onEventSelect: (event: EventToFinish) => void
-  availableEvents: EventToFinish[]
-}
-
-export interface EventToFinish {
-  eventId: number
-  name: string
-  objective?: string
-  campus?: {
-    campusId: number
-    name: string
-  }
-  responsibles?: {
-    responsibleId: number
-    name: string
-    responsibleRole: string
-  }[]
-  totalCost?: number
-  dates?: {
-    startDate: string
-    endDate: string
-  }[]
+  onEventSelect: (event: ResponseExecutedEvent) => void
+  availableEvents: ResponseExecutedEvent[]
 }
 
 // Tipos para el formulario de datos
@@ -72,7 +53,7 @@ export type EventFinishedFormData = z.infer<typeof eventFinishedSchema>
 // Tipos para la vista principal
 export interface EventFinishedViewProps {
   events: EventFinished[]
-  availableEvents: EventToFinish[]
+  availableEvents: ResponseExecutedEvent[]
 }
 
 // Tipos para las respuestas de la API
