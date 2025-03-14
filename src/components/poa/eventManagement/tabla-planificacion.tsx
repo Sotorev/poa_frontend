@@ -1,5 +1,5 @@
 // src/components/poa/components/TablaPlanificacionComponent.tsx
-
+/***
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -558,11 +558,11 @@ export function TablaPlanificacionComponent() {
   };
 
   /**
-   * @description Actualiza un evento existente en el sistema
-   * @param {FilaPlanificacion} fila - Objeto que contiene los datos del evento a actualizar
-   * @throws {Error} Si el evento no tiene entityId
-   * @returns {Promise<any>} Respuesta del servidor con los datos actualizados
-   */
+ //  * @description Actualiza un evento existente en el sistema
+ //  * @param {FilaPlanificacion} fila - Objeto que contiene los datos del evento a actualizar
+ //  * @throws {Error} Si el evento no tiene entityId
+ //  * @returns {Promise<any>} Respuesta del servidor con los datos actualizados
+
   const actualizarEvento = async (fila: FilaPlanificacion) => {
     if (!fila.entityId) {
       throw new Error("No se puede actualizar un evento sin entityId");
@@ -658,10 +658,10 @@ export function TablaPlanificacionComponent() {
   };
 
   /**
-   * @description Crea un nuevo evento en el sistema
-   * @param {FilaPlanificacion} fila - Objeto que contiene los datos del nuevo evento
-   * @returns {Promise<any>} Respuesta del servidor con los datos del evento creado
-   */
+//   * @description Crea un nuevo evento en el sistema
+//   * @param {FilaPlanificacion} fila - Objeto que contiene los datos del nuevo evento
+//   * @returns {Promise<any>} Respuesta del servidor con los datos del evento creado
+
   const crearEvento = async (fila: FilaPlanificacion) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/api/fullEvent`;
 
@@ -745,10 +745,10 @@ export function TablaPlanificacionComponent() {
   };
 
   /**
-   * @description Coordina el envío de datos al backend, determinando si se debe crear o actualizar
-   * @param {FilaPlanificacion} fila - Objeto con los datos a enviar
-   * @throws {Error} Si la URL de la API no está definida
-   */
+   //  * @description Coordina el envío de datos al backend, determinando si se debe crear o actualizar
+   //  * @param {FilaPlanificacion} fila - Objeto con los datos a enviar
+   //  * @throws {Error} Si la URL de la API no está definida
+
   const enviarAlBackend = async (fila: FilaPlanificacion) => {
     try {
       if (!process.env.NEXT_PUBLIC_API_URL) {
@@ -810,8 +810,8 @@ export function TablaPlanificacionComponent() {
   };
 
   /**
- * @description Maneja la edición de un evento existente, cargando sus datos en el formulario
- * @param {PlanningEvent} event - El evento a editar con todos sus datos
+// * @description Maneja la edición de un evento existente, cargando sus datos en el formulario
+// * @param {PlanningEvent} event - El evento a editar con todos sus datos
  * 
  * El proceso incluye:
  * 1. Mapeo de datos relacionales (áreas, objetivos, estrategias, etc)
@@ -821,7 +821,7 @@ export function TablaPlanificacionComponent() {
  * 5. Actualización del estado del formulario
  * 6. Descarga y vinculación de archivos adjuntos
  * 7. Verificación de la carga de archivos descargados
- */
+
   const handleEditEvent = async (event: PlanningEvent) => {
     try {
       // Mapeo de área estratégica
@@ -1020,7 +1020,7 @@ export function TablaPlanificacionComponent() {
       <Table>
         <TableHeader>
           <TableRow>
-            {/* Encabezados de la tabla */}
+            {/* Encabezados de la tabla }
             <TableHead>Área Estratégica</TableHead>
             <TableHead>Objetivo Estratégico</TableHead>
             <TableHead>Estrategias</TableHead>
@@ -1143,7 +1143,7 @@ export function TablaPlanificacionComponent() {
                   )}
                 </TableCell>
                 <TableCell>
-                  {/* Mostrar Costo Total calculado automáticamente */}
+                  {/* Mostrar Costo Total calculado automáticamente }
                   <div>
                     <span>GTQ {fila.costoTotal.toFixed(2)}</span>
                   </div>
@@ -1187,7 +1187,7 @@ export function TablaPlanificacionComponent() {
                     files={fila.costDetailDocuments || []}
                     onFilesChange={(files) => updateEditingEventCostDetails(fila.id, files)}
                   />
-                  {/* Enlace para descargar el detalle de costos si existe entityId */}
+                  {/* Enlace para descargar el detalle de costos si existe entityId }
                   {fila.entityId && (
                     <div className="flex items-center space-x-2 mt-2">
                       <span
@@ -1272,7 +1272,7 @@ export function TablaPlanificacionComponent() {
                     files={fila.processDocuments as File[]}
                     onFilesChange={(files) => updateEditingEventProcessDocuments(fila.id, files)}
                   />
-                  {/* Enlace para descargar el detalle del proceso si existe entityId */}
+                  {/* Enlace para descargar el detalle del proceso si existe entityId }
                   {fila.entityId && (
                     <div className="flex items-center space-x-2 mt-2">
                       <span
@@ -1302,7 +1302,7 @@ export function TablaPlanificacionComponent() {
       </Table>
       <Button onClick={agregarFila} className="mt-4">Agregar Fila</Button>
 
-      {/* Modal de Errores */}
+      {/* Modal de Errores }
       {isErrorModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full">
@@ -1319,7 +1319,7 @@ export function TablaPlanificacionComponent() {
         </div>
       )}
 
-      {/* Modal de Confirmación */}
+      {/* Modal de Confirmación }
       {isConfirmModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">
@@ -1354,3 +1354,4 @@ export function TablaPlanificacionComponent() {
     </div>
   );
 }
+*/

@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // Components
 import { TraditionalView } from '@/components/poa/eventManagement/formView/UI.traditionalView'
-import { TablaPlanificacionComponent } from '@/components/poa/eventManagement/tabla-planificacion'
 
 // Context
 import { EventProvider } from '@/components/poa/eventManagement/context.event'
@@ -48,7 +47,7 @@ const CreatePOAPage = () => {
 				{formPreference === 'traditional' ? (
 					<TraditionalView />
 				) : (
-					<TablaPlanificacionComponent />
+					<TraditionalView />
 				)}
 			</EventProvider>
 
