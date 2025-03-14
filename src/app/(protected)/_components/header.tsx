@@ -93,6 +93,13 @@ const navItems: NavItem[] = [
 		],
 	},
 	{
+		title: "Reportes",
+		href: "/reportes",
+		icon: BarChart2,
+		description: "Reportes",
+		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo"],
+	},
+	{
 		title: "Ejecución",
 		href: "poa/ejecucion",
 		icon: CheckSquare,
