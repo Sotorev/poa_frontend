@@ -4,18 +4,18 @@
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 
-interface ObjetivoComponentProps {
+interface ObjectiveComponentProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-export function ObjetivoComponent({ value, onChange }: ObjetivoComponentProps) {
+export function ObjectiveComponent({ value, onChange }: ObjectiveComponentProps) {
   return (
     <Textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-64 border-green-300 focus:border-green-500 focus:ring-green-500 text-green-700 placeholder-green-400"
-      placeholder="Ingrese el objetivo"
+      className="w-64 border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary text-black placeholder-primary"
+      placeholder="Ingrese el objetivo del evento"
     />
   );
 }

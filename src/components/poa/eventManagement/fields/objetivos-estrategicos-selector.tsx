@@ -1,7 +1,7 @@
 // src/components/poa/components/columns/objetivos-estrategicos-selector.tsx
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useContext } from "react";
 import {
   Select,
   SelectContent,
@@ -12,48 +12,51 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Check } from "lucide-react";
-import { StrategicObjective } from "@/schemas/strategicObjectiveSchema";
+import { Search } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface Objetivo {
-  id: string;
-  name: string;
+// Types
+import { StrategicObjective } from "@/types/StrategicObjective";
+interface StrategicObjectiveProps {
+  selectedObjetive: StrategicObjective;
+  onSelectObjetive: (objetivo: StrategicObjective) => void;
+  addStrategicObjective?: (objetivo: StrategicObjective) => void;
+}
+
+// Context
+import { EventContext } from "../context.event";
+
+interface ExtendedStrategicObjective extends StrategicObjective {
   number: number;
-  isCustom?: boolean;
 }
 
-interface ObjetivosEstrategicosProps {
-  selectedObjetivos: string[];
-  onSelectObjetivo: (objetivo: string) => void;
-  strategicObjectives: StrategicObjective[];
-  addStrategicObjective: (objetivo: StrategicObjective) => void;
-}
-
-export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSelectObjetivo, strategicObjectives, addStrategicObjective }: ObjetivosEstrategicosProps) {
-  const [objetivosList, setObjetivosList] = useState<Objetivo[]>([]);
+export function StrategicObjectiveSelector({ selectedObjetive, onSelectObjetive, addStrategicObjective }: StrategicObjectiveProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [extendedStrategicObjective, setExtendedStrategicObjective] = useState<ExtendedStrategicObjective[]>([]);
+  
+  const {strategicObjectives} = useContext(EventContext);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const mappedObjetivos: Objetivo[] = strategicObjectives.map(obj => ({
-      id: obj.strategicObjectiveId.toString(),
-      name: obj.description,
-      number: obj.strategicObjectiveId,
-      isCustom: false,
-    }))
-    setObjetivosList(mappedObjetivos)
-  }, [strategicObjectives])
+    const extended = strategicObjectives.map((obj, index) => ({
+      ...obj,
+      number: index + 1,
+    }));
+    setExtendedStrategicObjective(extended);
+  }, [strategicObjectives]);
 
   const filteredObjetivos = useMemo(() => {
-    return objetivosList.filter(obj => 
-      obj.name.toLowerCase().includes(searchTerm.toLowerCase())
+    return strategicObjectives.filter(obj =>
+      obj.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [objetivosList, searchTerm]);
+  }, [strategicObjectives, searchTerm]);
 
-  const handleSelectObjetivo = (objetivo: string) => {
-    onSelectObjetivo(objetivo);
+  const handleSelectObjetivo = (value: string) => {
+    const selected = strategicObjectives.find(obj => obj.strategicObjectiveId.toString() === value);
+    if (selected) {
+      onSelectObjetive(selected);
+    }
   };
 
   useEffect(() => {
@@ -62,31 +65,32 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
     }
   }, [isOpen]);
 
-  const selectedObjetivo = objetivosList.find(obj => obj.id === selectedObjetivos[0]);
+  const selectedObjetivo = selectedObjetive;
 
   return (
     <div className="space-y-2 w-full max-w-md">
-      <Select 
-        onValueChange={handleSelectObjetivo} 
-        open={isOpen} 
+      <Select
+        onValueChange={handleSelectObjetivo}
+        open={isOpen}
         onOpenChange={setIsOpen}
-        value={selectedObjetivos[0] || undefined}
+        value={selectedObjetive?.description || undefined}
       >
-        <SelectTrigger className="w-full border-green-500 focus:ring-green-500">
+        <SelectTrigger className="w-full border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
           <SelectValue placeholder="Seleccionar objetivo">
+            {/* selected objective */}
             {selectedObjetivo && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center w-full">
-                      <div className="flex-shrink-0 w-6 h-6 rounded bg-green-500 text-white font-bold flex items-center justify-center mr-2">
-                        {selectedObjetivo.number}
+                      <div className="flex-shrink-0 w-6 h-6 rounded bg-primary text-white font-bold flex items-center justify-center mr-2">
+                        {extendedStrategicObjective.find((o) => o.strategicObjectiveId === selectedObjetivo.strategicObjectiveId)?.number}
                       </div>
-                      <span className="truncate flex-grow">{selectedObjetivo.name}</span>
+                      <span className="truncate flex-grow">{selectedObjetivo.description}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" align="start" className="max-w-xs">
-                    <p>{selectedObjetivo.name}</p>
+                    <p>{selectedObjetivo.description}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -99,27 +103,27 @@ export function ObjetivosEstrategicosSelectorComponent({ selectedObjetivos, onSe
             <Input
               ref={searchInputRef}
               placeholder="Buscar objetivo..."
-              className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-green-500 border-green-300"
+              className="h-8 w-full bg-transparent focus:outline-none focus:ring-0 focus:border-primary border-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {/* options to select */}
           <ScrollArea className="h-[200px]">
             <SelectGroup>
               {filteredObjetivos.map((obj) => (
                 <SelectItem
-                  key={obj.id}
-                  value={obj.id}
-                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-green-50"
+                  key={obj.strategicObjectiveId}
+                  value={obj.strategicObjectiveId.toString()}
+                  className="flex items-start py-2 px-3 cursor-pointer hover:bg-primary/10"
                 >
                   <div className="flex items-start w-[300px]">
-                    <div className={`flex-shrink-0 w-6 h-6 rounded ${
-                      selectedObjetivos.includes(obj.id) ? 'bg-green-700' : 'bg-green-500'
-                    } text-white font-bold flex items-center justify-center mr-2`}>
-                      {obj.number}
+                      <div className={`flex-shrink-0 w-6 h-6 rounded ${selectedObjetive ? 'bg-primary' : 'bg-primary'
+                      } text-white font-bold flex items-center justify-center mr-2`}>
+                      {extendedStrategicObjective.find((o) => o.strategicObjectiveId === obj.strategicObjectiveId)?.number}
                     </div>
                     <div className="flex-grow">
-                      <p className="text-sm leading-tight">{obj.name}</p>
+                      <p className="text-sm leading-tight">{obj.description}</p>
                     </div>
                   </div>
                 </SelectItem>

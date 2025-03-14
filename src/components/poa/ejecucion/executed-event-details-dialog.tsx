@@ -41,7 +41,7 @@ const ExecutedEventDetailsDialog: React.FC<ExecutedEventDetailsDialogProps> = ({
 
         setFinancing({ otherFinancing, umesFinancing })
       } catch (err) {
-        console.error(err)
+
       }
     }
     loadFinancing()

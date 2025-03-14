@@ -1,7 +1,7 @@
 // src/components/RecursosSelectorComponent.tsx
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useContext } from 'react';
 import {
   Select,
   SelectContent,
@@ -18,19 +18,19 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Resource } from '@/types/Resource';
-import { useCurrentUser } from '@/hooks/use-current-user';
-import { getResources } from '@/services/apiService';
+import { EventContext } from '../context.event';
 
 interface ResourceWithFrontend extends Resource {
-  id: string;
+  id: number;
   number: number;
   color: string;
   isCustom?: boolean;
 }
 
 interface RecursosSelectorProps {
-  selectedRecursos: string[];
-  onSelectRecursos: (recursos: string[]) => void;
+  selectedResource: { resourceId: number }[];
+  onAppendResource: (resource: { resourceId: number }) => void;
+  onRemoveResource: (index: number) => void;
 }
 
 const predefinedColors: string[] = [
@@ -51,25 +51,31 @@ const predefinedColors: string[] = [
   "#0F766E"  // Turquesa oscuro
 ];
 
-export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }: RecursosSelectorProps) {
+export function RecursosSelectorComponent({ selectedResource, onAppendResource, onRemoveResource }: RecursosSelectorProps) {
   const [recursosList, setRecursosList] = useState<ResourceWithFrontend[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const user = useCurrentUser();
-    // Asignar colores de forma circular para evitar quedarse sin colores
-    const getColor = (index: number): string => {
-      return predefinedColors[index % predefinedColors.length];
-    };
+
+  const { resources } = useContext(EventContext);
+
+  // Simplified approach to get selected IDs (similar to ods-selector)
+  const selectedResourceIds = useMemo(() => {
+    return selectedResource.map((item) => item.resourceId);
+  }, [selectedResource]);
+
+  // Asignar colores de forma circular para evitar quedarse sin colores
+  const getColor = (index: number): string => {
+    return predefinedColors[index % predefinedColors.length];
+  };
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getResources(user?.token || '');
         // Mapear los recursos obtenidos para añadir number y color
-        const mappedRecursos: ResourceWithFrontend[] = data.map((rec, index) => ({
+        const mappedRecursos: ResourceWithFrontend[] = resources.map((rec, index) => ({
           ...rec,
-          id: rec.resourceId.toString(),
+          id: rec.resourceId,
           number: index + 1,
           color: getColor(index),
         }));
@@ -81,7 +87,7 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
     };
 
     fetchData();
-  }, [user?.token]);
+  }, [resources]);
 
   const filteredRecursos = useMemo(() => {
     return recursosList.filter((rec) =>
@@ -89,17 +95,33 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
     );
   }, [recursosList, searchTerm]);
 
+  // Simplified handler following OdsSelector pattern
   const handleSelectRecurso = (recId: string) => {
-    const newSelection = selectedRecursos.includes(recId)
-      ? selectedRecursos.filter((id) => id !== recId)
-      : [...selectedRecursos, recId];
-    onSelectRecursos(newSelection);
+    const resourceId = Number(recId);
+    if (selectedResourceIds.includes(resourceId)) {
+      const indexToRemove = selectedResource.findIndex(
+        (item) => item.resourceId === resourceId
+      );
+      if (indexToRemove !== -1) {
+        onRemoveResource(indexToRemove);
+      }
+    } else {
+      onAppendResource({ resourceId });
+    }
   };
 
   const handleRemoveRecurso = (recId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const updatedRecursos = selectedRecursos.filter((id) => id !== recId);
-    onSelectRecursos(updatedRecursos);
+    const resourceId = Number(recId);
+
+    // Find the index to remove (simplified)
+    const indexToRemove = selectedResource.findIndex(
+      (item) => item.resourceId === resourceId
+    );
+
+    if (indexToRemove !== -1) {
+      onRemoveResource(indexToRemove);
+    }
   };
 
   useEffect(() => {
@@ -112,7 +134,7 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
     <div className="space-y-2">
       {/* Mostrar recursos seleccionados */}
       <div className="flex flex-wrap gap-1 mb-2">
-        {selectedRecursos.map(id => {
+        {selectedResourceIds.map(id => {
           const recurso = recursosList.find(rec => rec.id === id);
           if (!recurso) return null;
           return (
@@ -132,10 +154,11 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
                       {recurso.name}
                     </span>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       className="ml-1 h-4 w-4 p-0 text-white hover:text-gray-200"
-                      onClick={(e) => handleRemoveRecurso(recurso.id, e)}
+                      onClick={(e) => handleRemoveRecurso(recurso.id.toString(), e)}
                       aria-label={`Eliminar ${recurso.name}`}
                     >
                       <X className="h-3 w-3" />
@@ -161,8 +184,9 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
             setSearchTerm("");
           }
         }}
+        value=""
       >
-        <SelectTrigger className="w-[300px] border-green-500 focus:ring-green-500">
+        <SelectTrigger className="w-[300px] border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
           <SelectValue placeholder="Selecciona recursos" />
         </SelectTrigger>
         <SelectContent>
@@ -171,99 +195,51 @@ export function RecursosSelectorComponent({ selectedRecursos, onSelectRecursos }
             <Input
               ref={searchInputRef}
               placeholder="Buscar recurso..."
-              className="h-8 w-full bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 border-none"
+              className="h-8 w-full border-primary bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <ScrollArea className="h-[200px]">
             <SelectGroup>
-              {filteredRecursos.map((rec) => (
-                <SelectItem
-                  key={rec.id}
-                  value={rec.id}
-                  className="focus:bg-transparent focus:text-inherit hover:bg-gray-100 data-[state=checked]:bg-transparent"
-                  style={{ borderBottom: 'none' }}
-                >
-                  <div className="flex items-center">
-                    <Checkbox
-                      checked={selectedRecursos.includes(rec.id)}
-                      onCheckedChange={() => handleSelectRecurso(rec.id)}
-                      className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
-                      style={{
-                        borderColor: rec.color,
-                        backgroundColor: selectedRecursos.includes(rec.id) ? rec.color : 'transparent',
-                      }}
-                    />
-                    <div
-                      className="w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold"
-                      style={{ backgroundColor: rec.color }}
-                    >
-                      {rec.isCustom ? 'E' : rec.number}
+              {filteredRecursos.map((rec) => {
+                // Direct check like in OdsSelector
+                const isSelected = selectedResourceIds.includes(rec.id);
+
+                return (
+                  <SelectItem
+                    key={rec.id}
+                    value={rec.id.toString()}
+                    className="focus:bg-transparent focus:text-inherit hover:bg-gray-100 data-[state=checked]:bg-transparent"
+                    style={{ borderBottom: 'none' }}
+                  >
+                    <div className="flex items-center">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => {
+                          handleSelectRecurso(rec.id.toString());
+                        }}
+                        className="mr-2 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
+                        style={{
+                          borderColor: rec.color,
+                          backgroundColor: isSelected ? rec.color : 'transparent',
+                        }}
+                      />
+                      <div
+                        className="w-6 h-6 rounded-sm mr-2 flex items-center justify-center text-white text-xs font-bold"
+                        style={{ backgroundColor: rec.color }}
+                      >
+                        {rec.isCustom ? 'E' : rec.number}
+                      </div>
+                      {rec.name}
                     </div>
-                    {rec.name}
-                  </div>
-                </SelectItem>
-              ))}
+                  </SelectItem>
+                );
+              })}
             </SelectGroup>
           </ScrollArea>
         </SelectContent>
       </Select>
-
-      {/* Agregar nuevo recurso
-      <div className="flex items-center space-x-2">
-        {isAddingNew ? (
-          <form onSubmit={handleSubmit(onSubmit)} className="flex items-center space-x-2">
-            <Input
-              placeholder="Nuevo recurso..."
-              ref={(e) => {
-                if (e) {
-                  register("name").ref(e);
-                }
-              }}
-              className={`h-8 w-[240px] border ${
-                errors.name ? "border-red-500" : "border-green-300"
-              } focus:outline-none focus:ring-0 focus:border-green-500 shadow-none appearance-none`}
-            />
-            <Button
-              type="submit"
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-100"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setIsAddingNew(false);
-                reset();
-              }}
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </form>
-        ) : (
-          <Button
-            type="button"
-            onClick={() => setIsAddingNew(true)}
-            size="sm"
-            variant="ghost"
-            className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-100 px-0"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Agregar nuevo recurso
-          </Button>
-        )}
-      </div> */}
-
-      {/* Mostrar errores de validación */}
-      {/* {errors.name && (
-        <span className="text-red-500 text-sm">{errors.name.message}</span>
-      )} */}
     </div>
   );
 }

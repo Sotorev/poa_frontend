@@ -78,6 +78,7 @@ const EventRow: React.FC<EventRowProps> = ({
       <TableCell className="whitespace-normal break-words">{event.indicadorLogro}</TableCell>
       <TableCell className="whitespace-normal break-words">{event.naturalezaEvento}</TableCell>
       <TableCell className="whitespace-normal break-words">{event.campus}</TableCell>
+      <TableCell className="whitespace-normal break-words">{event.ods}</TableCell>
       <TableCell className="whitespace-normal break-words">
         {event.fechas.map((intervalo, index) => (
           <div key={index} className="mb-2">

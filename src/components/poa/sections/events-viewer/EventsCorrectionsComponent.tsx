@@ -1,6 +1,6 @@
 // src/components/poa/sections/events-viewer/EventsCorrectionsComponent.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from "@/components/ui/button";
 import { ChevronUp } from 'lucide-react';
@@ -9,13 +9,13 @@ import EventTable from './EventTable';
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { deleteEvent } from '@/services/apiService';
 
+// Context
+import { EventContext } from '@/components/poa/eventManagement/context.event';
 
 
 
-// Modificar SectionProps para incluir onEditEvent
-interface SectionProps extends OriginalSectionProps {
-    onEditEvent: (event: PlanningEvent) => void;
-
+// Excluir poaId, facultyId y userId de OriginalSectionProps usando Omit
+interface SectionProps extends Omit<OriginalSectionProps, 'poaId' | 'facultyId' | 'userId'> {
 }
 
 // Función para mapear datos de la API a PlanningEvent
@@ -104,7 +104,7 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     };
 }
 
-const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, poaId, onEditEvent }) => {
+const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [eventsByStatus, setEventsByStatus] = useState<{
         revision: PlanningEvent[];
@@ -118,10 +118,13 @@ const EventsCorrectionsComponent: React.FC<SectionProps> = ({ name, isActive, po
         correccion: []
     });
 
-    const user = useCurrentUser();
+    const { poaId, user, handleEditEvent: onEditEvent } = useContext(EventContext)
+
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!poaId || !user?.token) return;  // Aca posteriormente agregar mensaje de carga de eventos
+
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fullevent/poa/${poaId}`, {
                     headers: {

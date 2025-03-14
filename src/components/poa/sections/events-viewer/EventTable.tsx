@@ -1,6 +1,6 @@
 // src/components/poa/sections/events-viewer/EventTable.tsx
 
-import React, { use, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CommentThread } from '../../eventManagement/fields/comment-thread';
 import EventRow from './EventRow';
@@ -12,6 +12,7 @@ import { PlanningEvent } from '@/types/interfaces';
 // Charge Data
 import { getFinancingSources } from '@/services/apiService';
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { EventContext } from '../../eventManagement/context.event';
 
 interface EventTableProps {
   events: PlanningEvent[];
@@ -43,18 +44,15 @@ const EventTable: React.FC<EventTableProps> = ({
   const [showCommentThread, setShowCommentThread] = useState(false);
   const [currentEntityId, setCurrentEntityId] = useState<number | null>(null);
   const [currentEntityName, setCurrentEntityName] = useState<string>("");
-  const [user] = useState(useCurrentUser());
   const [otherFinancing, setOtherFinancing] = useState<FinancingSource[]>(); 
   const [umesFinancing, setUmesFinancing] = useState<FinancingSource[]>();
 
+  const { financingSources } = useContext(EventContext)
+
   useEffect(() => {
-    if (user) {
-      getFinancingSources(user?.token).then(sources => {
-      setUmesFinancing(sources.filter(source => source.category === 'UMES'));
-      setOtherFinancing(sources.filter(source => source.category !== 'Otra'));
-      });
-    }
-  }, [user]);
+    setUmesFinancing(financingSources?.filter(source => source.category === 'UMES'));
+    setOtherFinancing(financingSources?.filter(source => source.category === 'Otra'));
+  }, [financingSources]);
 
   return (
     <div className="overflow-x-auto">
@@ -77,6 +75,7 @@ const EventTable: React.FC<EventTableProps> = ({
             <TableHead className="whitespace-normal break-words">Indicador de Logro</TableHead>
             <TableHead className="whitespace-normal break-words">Naturaleza del Evento</TableHead>
             <TableHead className="whitespace-normal break-words">Campus</TableHead>
+            <TableHead className="whitespace-normal break-words">ODS</TableHead>
             <TableHead className="whitespace-normal break-words">Fechas</TableHead>
             <TableHead className="whitespace-normal break-words">Aportes al PEI</TableHead>
             <TableHead className="whitespace-normal break-words">Costo Total</TableHead>

@@ -2,7 +2,6 @@
 'use client';
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 interface IndicadorLogroComponentProps {
@@ -15,7 +14,7 @@ export function IndicadorLogroComponent({ value, onChange }: IndicadorLogroCompo
     <Textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-64 border-green-300 focus:border-green-500 focus:ring-green-500"
+      className="w-64 border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary text-black placeholder-primary"
       placeholder="Indicador de logro"
     />
   );

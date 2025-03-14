@@ -4,18 +4,18 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 
-interface EventoComponentProps {
+interface EventNameComponentProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-export function EventoComponent({ value, onChange }: EventoComponentProps) {
+export function EventNameComponent({ value, onChange }: EventNameComponentProps) {
   return (
     <Input
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-64 border-green-300 focus:border-green-500 focus:ring-green-500 text-green-700 placeholder-green-400"
-      placeholder="Ingrese el evento"
+      className="w-64 border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary text-black placeholder-primary"
+      placeholder="Ingrese el nombre del evento"
     />
   );
 }

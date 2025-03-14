@@ -1,9 +1,14 @@
 'use client'
 
 // import PlanificacionFormComponent from '@/components/poa/eventManagement/formView/formulario-planificacion'
-import { TablaPlanificacionComponent } from '@/components/poa/eventManagement/tabla-planificacion'
 import React, { useState, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+// Components
+import { TraditionalView } from '@/components/poa/eventManagement/formView/UI.traditionalView'
+
+// Context
+import { EventProvider } from '@/components/poa/eventManagement/context.event'
 
 const CreatePOAPage = () => {
 	const [formPreference, setFormPreference] = useState<'traditional' | 'table'>('traditional')
@@ -38,11 +43,15 @@ const CreatePOAPage = () => {
 				</Select>
 			</div>
 
-			{formPreference === 'traditional' ? (
-				<TablaPlanificacionComponent />
-			) : (
-				<TablaPlanificacionComponent />
-			)}
+			<EventProvider>
+				{formPreference === 'traditional' ? (
+					<TraditionalView />
+				) : (
+					<TraditionalView />
+				)}
+			</EventProvider>
+
+
 		</div>
 	)
 }

@@ -1,58 +1,57 @@
 // src/components/poa/components/columns/campus-selector.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext, useRef, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCurrentUser } from '@/hooks/use-current-user';
-import { getCampuses } from '@/services/apiService';
-import { Campus } from '@/types/Campus';
+import { EventContext } from '../context.event';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CampusSelectorProps {
-  onSelectCampus: (campusId: string) => void;
-  selectedCampusId: string;
+  onSelectCampus: (campusId: number) => void;
+  selectedCampusId: number;
 }
 
 export function CampusSelector({ onSelectCampus, selectedCampusId }: CampusSelectorProps) {
-  const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const user = useCurrentUser();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const data = await getCampuses(user?.token || '');
-        const activeCampuses = data.filter((campus) => !campus.isDeleted);
-        setCampuses(activeCampuses);
-      } catch (err) {
-        setError('No se pudieron cargar los campus.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { campuses } = useContext(EventContext)
 
-    fetchData();
-  }, [user?.token]);
-
-  if (loading) return <div>Cargando campus...</div>;
-  if (error) return <div className="text-red-500">Error: {error}</div>;
+  const filteredCampuses = useMemo(() => {
+    return campuses.filter(campus =>
+      campus.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [campuses, searchTerm]);
 
   return (
-    <Select onValueChange={onSelectCampus} value={selectedCampusId}>
-      <SelectTrigger className=" border-green-300 focus:ring-green-500 focus:border-green-500">
+    <Select onValueChange={(value) => onSelectCampus(Number.parseInt(value))} value={selectedCampusId?.toString()}>
+      <SelectTrigger className=" border-primary focus:outline-none focus:ring-0 focus:ring-primary focus:border-primary">
         <SelectValue placeholder="Selecciona un campus" />
       </SelectTrigger>
       <SelectContent>
-        {campuses.map((campus) => (
-          <SelectItem
-            key={campus.campusId}
+        <div className="flex items-center px-3 pb-2 sticky top-0 bg-white z-10">
+          <Search className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
+          <Input
+            ref={searchInputRef}
+            placeholder="Buscar campus..."
+            className="h-8 w-full border-primary bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <ScrollArea className="h-[200px]">
+          {filteredCampuses.map((campus) => (
+            <SelectItem
+              key={campus.campusId}
             value={campus.campusId.toString()}
-            className="text-green-700 hover:bg-green-50 focus:bg-green-100"
+            className="text-primary hover:bg-primary/10 focus:bg-primary/10"
           >
             {campus.name}
-          </SelectItem>
-        ))}
+            </SelectItem>
+          ))}
+        </ScrollArea>
       </SelectContent>
     </Select>
   );

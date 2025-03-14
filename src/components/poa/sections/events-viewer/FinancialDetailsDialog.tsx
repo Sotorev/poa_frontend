@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { X } from 'lucide-react';
 import DownloadButton from './DownloadButton';
 import { PlanningEvent } from '@/types/interfaces';
-import { useCurrentUser } from '@/hooks/use-current-user';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FinancingSource } from '@/types/FinancingSource';
@@ -19,7 +18,6 @@ interface FinancialDetailsDialogProps {
 }
 
 const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen, onClose, event, otherFinancing, umesFinancing }) => {
-  const user = useCurrentUser();
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(amount);

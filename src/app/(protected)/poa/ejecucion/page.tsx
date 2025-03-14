@@ -144,7 +144,6 @@ export default function PoaTrackingPage() {
   };
 
   const handleSubmit = (data: FormValues) => {
-    console.log("data", data);
     if (editingEvent) {
       const updatePayload: UpdateEventExecutedPayload = {
         eventId: parseInt(data.eventId, 10),
