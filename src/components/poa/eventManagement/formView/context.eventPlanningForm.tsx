@@ -143,7 +143,7 @@ export const EventPlanningFormProvider: React.FC<{
     const [showValidationErrors, setShowValidationErrors] = useState(false)
     const { toast } = useToast()
 
-    const { setIsOpen, user, eventEditing } = useContext(EventContext)
+    const { setIsOpen, user, eventEditing, setSelectedStrategicObjective, setSelectedStrategies } = useContext(EventContext)
 
     const {
         register,
@@ -158,6 +158,28 @@ export const EventPlanningFormProvider: React.FC<{
         resolver: zodResolver(fullEventSchema),
         values: eventEditing?.data,
     })
+
+    // Nuevo: Función reset con registro de consola
+    const resetWithLog = () => {
+        setSelectedStrategicObjective(undefined)
+        setSelectedStrategies(undefined)
+        handlePhaseClick(1)
+        
+        // Valores iniciales vacíos para todos los arrays
+        const emptyArrayValues = {
+            interventions: [],
+            ods: [],
+            dates: [],
+            responsibles: [],
+            financings: [],
+            resources: [],
+            processDocuments: [],
+            costDetailDocuments: []
+        };
+        
+        // Resetear el formulario con valores por defecto vacíos para los arrays
+        reset(emptyArrayValues);
+    }
 
     const phases = [
         {
@@ -479,7 +501,7 @@ export const EventPlanningFormProvider: React.FC<{
             value={{
                 register,
                 handleSubmit,
-                reset,
+                reset: resetWithLog,
                 getValues,
                 watch,
                 control,

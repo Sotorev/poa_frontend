@@ -45,10 +45,10 @@ interface EventContextProps {
     setIsOpen: (isOpen: boolean) => void;
     user: Session["user"] | undefined;
     selectedStrategicObjective: StrategicObjective | undefined;
-    setSelectedStrategicObjective: (strategicObjective: StrategicObjective) => void;
+    setSelectedStrategicObjective: (strategicObjective: StrategicObjective | undefined) => void;
     selectedStrategicArea: StrategicArea | undefined;
     selectedStrategies: Strategy[] | undefined;
-    setSelectedStrategies: (strategies: Strategy[]) => void;
+    setSelectedStrategies: (strategies: Strategy[] | undefined) => void;
     facultyId: number | null;
     setFacultyId: (facultyId: number) => void;
     poaId: number | null;
@@ -72,10 +72,10 @@ export const EventContext = createContext<EventContextProps>({
     setIsOpen: (_isOpen: boolean) => { },
     user: undefined,
     selectedStrategicObjective: undefined,
-    setSelectedStrategicObjective: (_strategicObjective: StrategicObjective) => { },
+    setSelectedStrategicObjective: (_strategicObjective: StrategicObjective | undefined) => { },
     selectedStrategicArea: undefined,
     selectedStrategies: [],
-    setSelectedStrategies: (_strategies: Strategy[]) => { },
+    setSelectedStrategies: (_strategies: Strategy[] | undefined) => { },
     facultyId: null,
     setFacultyId: (_facultyId: number) => { },
     poaId: null,

@@ -75,6 +75,7 @@ export function EventPlanningForm({
         setValue,
         control,
         handleSubmit,
+        reset,
         errors,
         isSubmitting,
         formErrors,
@@ -132,7 +133,7 @@ export function EventPlanningForm({
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log("Botón X personalizado clickeado");
+                            reset()                          
                             setIsOpen(false);
                         }}
                         className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none z-50"
@@ -335,7 +336,7 @@ export function EventPlanningForm({
                                         <div className="space-y-6">
                                             <SectionTitle>Financiamiento UMES</SectionTitle>
                                             <FinancingSource
-                                                contributions={fieldsFinancings}
+                                                contributions={watch("financings") || []}
                                                 onAppendContribution={(contribution) => appendFinancing(contribution)}
                                                 onRemoveContribution={(index) => removeFinancing(index)}
                                                 onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
@@ -347,7 +348,7 @@ export function EventPlanningForm({
                                         <div className="space-y-6">
                                             <SectionTitle>Financiamiento Externo</SectionTitle>
                                             <FinancingSource
-                                                contributions={fieldsFinancings}
+                                                contributions={watch("financings") || []}
                                                 onAppendContribution={(contribution) => appendFinancing(contribution)}
                                                 onRemoveContribution={(index) => removeFinancing(index)}
                                                 onUpdateContribution={(index, contribution) => updateFinancing(index, contribution)}
@@ -432,10 +433,15 @@ export function EventPlanningForm({
                     </form>
 
                     <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 flex-shrink-0 sticky bottom-0 z-20">
-                        <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
+                        <Button variant="outline" onClick={() => { 
+                            reset(); 
+                            setIsOpen(false); 
+                        }} disabled={isSubmitting}>
                             Cancelar
                         </Button>
-                        <Button onClick={() => onSubmit()} disabled={isSubmitting}>
+                        <Button onClick={() => {
+                            onSubmit(); 
+                        }} disabled={isSubmitting}>
                             {isSubmitting ? "Guardando..." : "Guardar"}
                         </Button>
                     </div>
