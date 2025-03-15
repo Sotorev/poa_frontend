@@ -101,7 +101,7 @@ export default function PEIModule() {
 						<CardDescription>Administre y actualice el Plan Estratégico Institucional vigente</CardDescription>
 					</CardHeader>
 					<CardContent className='flex md:flex-col gap-2'>
-						<Button disabled>Gestionar PEI (Próximamente)</Button>
+						{/*<Button disabled>Gestionar PEI (Próximamente)</Button>*/}
 						<PoaRegistrationPeriodForm onSubmit={handlePoaRegistrationPeriodSubmit} />
 					</CardContent>
 				</Card>
