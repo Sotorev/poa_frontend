@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, Trash2Icon, ChevronLeft, ChevronRight } from "lucide-react"
+import { CalendarIcon, Trash2Icon } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
@@ -159,6 +159,7 @@ export function ActivityProjectSelector({
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
+                  locale={es}
                   selected={dateRange.startDate ? new Date(dateRange.startDate) : undefined}
                   defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
                   onSelect={(date) => handleStartDateChange(date, index)}
@@ -194,6 +195,7 @@ export function ActivityProjectSelector({
                 <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
+                  locale={es}
                   selected={dateRange.endDate ? new Date(dateRange.endDate) : undefined}
                   onSelect={(date) => handleEndDateChange(date, index)}
                   defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
