@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown, LogOut, User, Settings } from "lucide-react"
 import { signOut } from "next-auth/react"
-
+import Link from "next/link"
 export default function AccountButton({ username }: { username?: string }) {
 	return (
 		<DropdownMenu>
@@ -45,6 +45,11 @@ export default function AccountButton({ username }: { username?: string }) {
 					<LogOut className="mr-2 h-4 w-4" />
 					<span>Cerrar sesión</span>
 				</DropdownMenuItem>
+				<Link href="/manuales-de-usuario" passHref>
+					<DropdownMenuItem asChild>
+						<a>Manuales de usuario</a>
+					</DropdownMenuItem>
+				</Link>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	)
