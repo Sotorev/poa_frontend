@@ -80,6 +80,9 @@ export function EventFinishedView() {
           </DialogHeader>
 
           <EventFinishedForm
+            form={form}
+            errors={errors}
+            isValid={isValid}
             onSubmit={handleFormSubmit}
             selectedEvent={selectedEvent}
             handleEventSelect={handleEventSelect}
