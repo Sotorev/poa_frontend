@@ -30,6 +30,15 @@ export function EventFinishedView() {
     handleRestore,
     handleOpenDialog,
     handleCloseDialog,
+    filteredEvents,
+    showResults,
+    query,
+    evidences,
+    MAX_FILE_SIZE,
+    handleSearch,
+    handleClearSelection,
+    handleFileUpload,
+    handleRemoveFile,
   } = useEventFinishedView()
 
   const [viewingEvent, setViewingEvent] = useState<EventFinishedResponse | null>(null)
@@ -89,8 +98,16 @@ export function EventFinishedView() {
             isLoading={isLoading}
             currentStep={currentStep}
             onStepChange={handleStepChange}
-            onEventSelect={handleEventSelect}
             availableEvents={availableEvents}
+            filteredEvents={filteredEvents}
+            showResults={showResults}
+            query={query}
+            evidences={evidences}
+            MAX_FILE_SIZE={MAX_FILE_SIZE}
+            handleSearch={handleSearch}
+            handleClearSelection={handleClearSelection}
+            handleFileUpload={handleFileUpload}
+            handleRemoveFile={handleRemoveFile}
           />
         </DialogContent>
       </Dialog>

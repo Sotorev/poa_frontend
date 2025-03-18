@@ -198,8 +198,16 @@ interface EventFinishedFormProps {
   isLoading?: boolean
   currentStep: number
   onStepChange: (step: number) => void
-  onEventSelect: (event: ResponseExecutedEvent) => void
   availableEvents: ResponseExecutedEvent[]
+  filteredEvents: ResponseExecutedEvent[]
+  showResults: boolean
+  query: string
+  evidences: File[]
+  MAX_FILE_SIZE: number
+  handleSearch: (searchTerm: string) => void
+  handleClearSelection: () => void
+  handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleRemoveFile: (index: number) => void
 }
 
 export function EventFinishedForm({
@@ -212,57 +220,17 @@ export function EventFinishedForm({
   isLoading = false,
   currentStep,
   onStepChange,
-  onEventSelect,
   availableEvents,
+  filteredEvents,
+  showResults,
+  query,
+  evidences,
+  MAX_FILE_SIZE,
+  handleSearch,
+  handleClearSelection,
+  handleFileUpload,
+  handleRemoveFile,
 }: EventFinishedFormProps) {
-  const [query, setQuery] = useState("")
-  const [showResults, setShowResults] = useState(false)
-  const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
-  const [evidences, setEvidences] = useState<File[]>([])
-  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10M
-
-  // Filtrar eventos según la búsqueda
-  const handleSearch = (searchTerm: string) => {
-    setQuery(searchTerm)
-    if (searchTerm.length > 0) {
-      const filtered = availableEvents.filter((event) => event.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      setFilteredEvents(filtered)
-      setShowResults(filtered.length > 0)
-    } else {
-      setFilteredEvents([])
-      setShowResults(false)
-    }
-  }
-
-
-  // Limpiar la selección
-  const handleClearSelection = () => {
-    // onEventSelect(null)
-    form.setValue("eventId", 0)
-    form.setValue("endDate", [])
-    setQuery("")
-  }
-
-  // Manejar carga de archivos
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files ? Array.from(e.target.files).filter((file) => file.size <= MAX_FILE_SIZE) : []
-
-    if (files.length !== (e.target.files?.length || 0)) {
-      // Aquí se podría mostrar una notificación de archivos ignorados por tamaño
-    }
-
-    setEvidences((prevFiles) => [...prevFiles, ...files])
-    form.setValue("evidences", [...evidences, ...files])
-  }
-
-  // Eliminar un archivo
-  const handleRemoveFile = (index: number) => {
-    const updatedFiles = [...evidences]
-    updatedFiles.splice(index, 1)
-    setEvidences(updatedFiles)
-    form.setValue("evidences", updatedFiles)
-  }
-
   // Renderizar el contenido según el paso actual
   const renderStepContent = () => {
     if (currentStep === 1) {

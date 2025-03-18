@@ -35,6 +35,10 @@ export function useEventFinishedView() {
   const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
   const [showResults, setShowResults] = useState(false)
   const [testDocuments, setTestDocuments] = useState<File[]>([])
+  // Estados adicionales que estaban en UI.eventFinishedForm
+  const [query, setQuery] = useState("")
+  const [evidences, setEvidences] = useState<File[]>([])
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
   const { toast } = useToast()
   const user = useCurrentUser()
@@ -87,9 +91,6 @@ export function useEventFinishedView() {
     }
   }, [user])
 
-  // Cargar datos
-
-
   // Filtrar eventos disponibles según la búsqueda
   useEffect(() => {
     if (searchQuery.length > 0) {
@@ -101,6 +102,56 @@ export function useEventFinishedView() {
       setShowResults(false)
     }
   }, [searchQuery, availableEvents])
+
+  // Filtrar eventos según la búsqueda (función que estaba en UI.eventFinishedForm)
+  const handleSearch = (searchTerm: string) => {
+    setQuery(searchTerm)
+    if (searchTerm.length > 0) {
+      const filtered = availableEvents.filter((event) => event.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      setFilteredEvents(filtered)
+      setShowResults(filtered.length > 0)
+    } else {
+      setFilteredEvents([])
+      setShowResults(false)
+    }
+  }
+
+  // Limpiar la selección (función que estaba en UI.eventFinishedForm)
+  const handleClearSelection = () => {
+    form.setValue("eventId", 0)
+    form.setValue("endDate", [])
+    setQuery("")
+  }
+
+  // Manejar carga de archivos (función que estaba en UI.eventFinishedForm)
+  const handleFileUpload = (input: React.ChangeEvent<HTMLInputElement> | File[]) => {
+    let files: File[] = [];
+    
+    if (Array.isArray(input)) {
+      // Si recibimos un array de archivos directamente
+      files = input.filter(file => file.size <= MAX_FILE_SIZE);
+    } else {
+      // Si recibimos un evento de cambio de input
+      files = input.target.files 
+        ? Array.from(input.target.files).filter(file => file.size <= MAX_FILE_SIZE) 
+        : [];
+        
+      if (files.length !== (input.target.files?.length || 0)) {
+        // Aquí se podría mostrar una notificación de archivos ignorados por tamaño
+      }
+    }
+
+    setEvidences(prevFiles => [...prevFiles, ...files]);
+    form.setValue("evidences", [...evidences, ...files]);
+  }
+
+  // Eliminar un archivo (función que estaba en UI.eventFinishedForm)
+  const handleRemoveFile = (index: number) => {
+    const updatedFiles = [...evidences]
+    updatedFiles.splice(index, 1)
+    setEvidences(updatedFiles)
+    form.setValue("evidences", updatedFiles)
+  }
 
   // Manejar selección de evento
   const handleEventSelect = (event: ResponseExecutedEvent) => {
@@ -248,20 +299,6 @@ export function useEventFinishedView() {
     setCurrentStep(1)
   }
 
-  // Manejar carga de documentos
-  const handleFileUpload = (files: File[]) => {
-    setTestDocuments((prev) => [...prev, ...files])
-    form.setValue("evidences", [...testDocuments, ...files])
-  }
-
-  // Manejar eliminación de documento
-  const handleRemoveFile = (index: number) => {
-    const updatedFiles = [...testDocuments]
-    updatedFiles.splice(index, 1)
-    setTestDocuments(updatedFiles)
-    form.setValue("evidences", updatedFiles)
-  }
-
   return {
     finishedEvents,
     availableEvents,
@@ -276,6 +313,9 @@ export function useEventFinishedView() {
     form,
     errors,
     isValid,
+    query,
+    evidences,
+    MAX_FILE_SIZE,
     setSearchQuery,
     handleEventSelect,
     handleStepChange,
@@ -286,6 +326,8 @@ export function useEventFinishedView() {
     handleCloseDialog,
     handleFileUpload,
     handleRemoveFile,
+    handleSearch,
+    handleClearSelection,
   }
 }
 
