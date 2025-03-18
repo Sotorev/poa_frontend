@@ -7,12 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { EventFinishedTable } from "./UI.eventFinishedTable"
 import { EventFinishedForm } from "./UI.eventFinishedForm"
 import { useEventFinishedView } from "@/components/poa/finalizacion/useEventFinished"
-import type { EventFinished, EventFinishedViewProps } from "@/components/poa/finalizacion/type.eventFinished"
+import type { EventFinishedRequest, EventFinishedResponse } from "@/components/poa/finalizacion/type.eventFinished"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import DownloadExecutedEventButton from "@/components/poa/ejecucion/DownloadExecutedEventButton"
 
-export function EventFinishedView({ events }: EventFinishedViewProps) {
+export function EventFinishedView() {
   const {
     availableEvents,
     finishedEvents,
@@ -32,21 +32,18 @@ export function EventFinishedView({ events }: EventFinishedViewProps) {
     handleCloseDialog,
   } = useEventFinishedView()
 
-  const [viewingEvent, setViewingEvent] = useState<EventFinished | null>(null)
+  const [viewingEvent, setViewingEvent] = useState<EventFinishedResponse | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
   // Crear adaptador para el tipo de onSubmit
-  const handleFormSubmit = (data: { eventId: string; eventName: string; completionDate: string; testDocuments: File[] }) => {
-    form.setValue("eventId", data.eventId);
-    form.setValue("eventName", data.eventName);
-    form.setValue("completionDate", data.completionDate);
-    form.setValue("testDocuments", data.testDocuments);
-    
-    handleSubmit();
+  const handleFormSubmit = (data: EventFinishedRequest) => {
+    console.log("data", data)
+    console.log("estoy en el handleFormSubmit en el view")
+    handleSubmit(data);
   };
 
   // Manejar la visualización de detalles
-  const handleViewDetails = (event: EventFinished) => {
+  const handleViewDetails = (event: EventFinishedResponse) => {
     setViewingEvent(event)
     setIsDetailsOpen(true)
   }
@@ -85,6 +82,7 @@ export function EventFinishedView({ events }: EventFinishedViewProps) {
           <EventFinishedForm
             onSubmit={handleFormSubmit}
             selectedEvent={selectedEvent}
+            handleEventSelect={handleEventSelect}
             isLoading={isLoading}
             currentStep={currentStep}
             onStepChange={handleStepChange}
@@ -113,23 +111,18 @@ export function EventFinishedView({ events }: EventFinishedViewProps) {
                       <div>
                         <p className="text-sm text-muted-foreground">Fecha de Finalización</p>
                         <p className="font-medium">
-                          {new Date(viewingEvent.completionDate).toLocaleDateString("es-GT", {
+                          {viewingEvent.completionDate.map((date) => new Date(date.endDate).toLocaleDateString("es-GT", {
                             day: "numeric",
                             month: "long",
                             year: "numeric",
-                          })}
+                          })).join(", ")}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Campus</p>
-                        <p className="font-medium">{viewingEvent.campus || "No especificado"}</p>
-                      </div>
                     </div>
-
                     <div>
                       <p className="text-sm text-muted-foreground mb-2">Documentos de Prueba</p>
                       <div className="space-y-2">
-                        {viewingEvent.testDocuments.map((doc) => (
+                        {viewingEvent.evidenceDocuments.map((doc) => (
                           <div
                             key={doc.documentId}
                             className="flex items-center justify-between p-2 bg-muted/50 rounded-md"

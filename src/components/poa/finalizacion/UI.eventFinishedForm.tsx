@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { FieldErrors, UseFormReturn, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Check, File, FileSpreadsheet, FileText, Plus, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -13,8 +13,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import type { EventFinishedFormProps } from "@/components/poa/finalizacion/type.eventFinished"
-import { eventFinishedSchema } from "@/components/poa/finalizacion/schema.eventFinished"
+import type { EventFinishedRequest } from "@/components/poa/finalizacion/type.eventFinished"
+import { eventFinishedRequestSchema } from "@/components/poa/finalizacion/schema.eventFinished"
 import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 // Componente para mostrar los detalles del evento seleccionado
 function EventDetails({ event }: { event: ResponseExecutedEvent }) {
@@ -115,12 +115,12 @@ function StepIndicator({
     {
       number: 1,
       title: "Selección de Evento",
-      fields: ["eventId", "eventName"] as const,
+      fields: ["eventId"] as const,
     },
     {
       number: 2,
       title: "Datos de Finalización",
-      fields: ["completionDate", "testDocuments"] as const,
+      fields: ["endDate"] as const,
     },
   ]
 
@@ -188,9 +188,27 @@ function StepIndicator({
   )
 }
 
+interface EventFinishedFormProps {
+  form: UseFormReturn<EventFinishedRequest>
+  errors: FieldErrors<EventFinishedRequest>
+  isValid: boolean
+  onSubmit: (data: EventFinishedRequest) => void
+  selectedEvent: ResponseExecutedEvent | null
+  handleEventSelect: (event: ResponseExecutedEvent) => void
+  isLoading?: boolean
+  currentStep: number
+  onStepChange: (step: number) => void
+  onEventSelect: (event: ResponseExecutedEvent) => void
+  availableEvents: ResponseExecutedEvent[]
+}
+
 export function EventFinishedForm({
+  form,
+  errors,
+  isValid,
   onSubmit,
   selectedEvent,
+  handleEventSelect,
   isLoading = false,
   currentStep,
   onStepChange,
@@ -200,24 +218,8 @@ export function EventFinishedForm({
   const [query, setQuery] = useState("")
   const [showResults, setShowResults] = useState(false)
   const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
-  const [testDocuments, setTestDocuments] = useState<File[]>([])
-  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-
-  // Configuración del formulario
-  const form = useForm({
-    resolver: zodResolver(eventFinishedSchema),
-    defaultValues: {
-      eventId: "",
-      eventName: "",
-      completionDate: new Date().toISOString().split("T")[0],
-      testDocuments: [],
-    },
-    mode: "onChange",
-  })
-
-  const {
-    formState: { errors, isValid },
-  } = form
+  const [evidences, setEvidences] = useState<File[]>([])
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10M
 
   // Filtrar eventos según la búsqueda
   const handleSearch = (searchTerm: string) => {
@@ -232,19 +234,12 @@ export function EventFinishedForm({
     }
   }
 
-  // Seleccionar un evento
-  const handleEventSelection = (event: ResponseExecutedEvent) => {
-    onEventSelect(event)
-    form.setValue("eventId", event.eventId.toString())
-    form.setValue("eventName", event.name)
-    setShowResults(false)
-  }
 
   // Limpiar la selección
   const handleClearSelection = () => {
     // onEventSelect(null)
-    form.setValue("eventId", "")
-    form.setValue("eventName", "")
+    form.setValue("eventId", 0)
+    form.setValue("endDate", [])
     setQuery("")
   }
 
@@ -256,16 +251,16 @@ export function EventFinishedForm({
       // Aquí se podría mostrar una notificación de archivos ignorados por tamaño
     }
 
-    setTestDocuments((prevFiles) => [...prevFiles, ...files])
-    // form.setValue("testDocuments", [...testDocuments, ...files])
+    setEvidences((prevFiles) => [...prevFiles, ...files])
+    form.setValue("evidences", [...evidences, ...files])
   }
 
   // Eliminar un archivo
   const handleRemoveFile = (index: number) => {
-    const updatedFiles = [...testDocuments]
+    const updatedFiles = [...evidences]
     updatedFiles.splice(index, 1)
-    setTestDocuments(updatedFiles)
-    //  form.setValue("testDocuments", updatedFiles)
+    setEvidences(updatedFiles)
+    form.setValue("evidences", updatedFiles)
   }
 
   // Renderizar el contenido según el paso actual
@@ -277,46 +272,36 @@ export function EventFinishedForm({
             <CardTitle className="text-lg font-semibold">Selección de Evento</CardTitle>
           </CardHeader>
           <CardContent>
-            <FormField
-              control={form.control}
-              name="eventName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Evento</FormLabel>
-                  <div className="relative">
-                    <Input
-                      placeholder="Buscar un evento..."
-                      value={query}
-                      onChange={(e) => {
-                        handleSearch(e.target.value)
-                        field.onChange(e.target.value)
-                      }}
-                      className={cn("pr-8", errors.eventName && "border-destructive")}
-                    />
-                    <div className="absolute right-2.5 top-2.5 flex items-center gap-2">
-                      {selectedEvent ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-4 w-4 p-0"
-                          onClick={handleClearSelection}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                  </div>
-                  {showResults && filteredEvents.length > 0 && query && (
-                    <SearchResults filteredEvents={filteredEvents} handleEventSelect={handleEventSelection} />
-                  )}
-                  <FormDescription>Busque y seleccione el evento que desea marcar como finalizado</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <label>Evento</label>
+            <div className="relative">
+              <Input
+                placeholder="Buscar un evento..."
+                value={query}
+                onChange={(e) => {
+                  handleSearch(e.target.value)
+                }}
+              />
+              <div className="absolute right-2.5 top-2.5 flex items-center gap-2">
+                {selectedEvent ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 p-0"
+                    onClick={handleClearSelection}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            </div>
+            {showResults && filteredEvents.length > 0 && query && (
+              <SearchResults filteredEvents={filteredEvents} handleEventSelect={handleEventSelect} />
+            )}
+            <FormDescription>Busque y seleccione el evento que desea marcar como finalizado</FormDescription>
+            <FormMessage />
             {selectedEvent && <EventDetails event={selectedEvent} />}
           </CardContent>
         </Card>
@@ -329,20 +314,23 @@ export function EventFinishedForm({
               <CardTitle className="text-lg font-semibold">Datos de Finalización</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="completionDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de Finalización</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} className={cn(errors.completionDate && "border-destructive")} />
-                    </FormControl>
-                    <FormDescription>Seleccione la fecha en que se finalizó el evento</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {selectedEvent?.eventExecutionDates.map((date, index) => (
+                <FormField
+                  key={date.eventExecutionDateId}
+                  control={form.control}
+                  name={`endDate.${date.eventExecutionDateId}.endDate`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fecha de Finalización</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} className={cn(errors.endDate && "border-destructive")} />
+                      </FormControl>
+                      <FormDescription>Seleccione la fecha en que se finalizó el evento</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
             </CardContent>
           </Card>
 
@@ -356,7 +344,7 @@ export function EventFinishedForm({
             <CardContent>
               <FormField
                 control={form.control}
-                name="testDocuments"
+                name="evidences"
                 render={({ field }) => (
                   <FormItem className="space-y-4">
                     <div className="grid w-full gap-4">
@@ -372,10 +360,10 @@ export function EventFinishedForm({
                           <span className="text-xs text-muted-foreground">o arrastre y suelte aquí</span>
                         </label>
                       </div>
-                      {testDocuments.length > 0 && (
+                      {evidences.length > 0 && (
                         <div className="border rounded-lg p-2">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {testDocuments.map((file, index) => (
+                            {evidences.map((file, index) => (
                               <div
                                 key={index}
                                 className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md"
@@ -431,7 +419,7 @@ export function EventFinishedForm({
       <StepIndicator currentStep={currentStep} onStepClick={onStepChange} errors={errors} />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form className="space-y-6">
           {renderStepContent()}
 
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
@@ -454,7 +442,7 @@ export function EventFinishedForm({
                 Siguiente
               </Button>
             ) : (
-              <Button type="submit" className="sm:w-auto" disabled={!isValid || isLoading}>
+              <Button type="submit" onSubmit={form.handleSubmit(onSubmit)} className="sm:w-auto" disabled={isValid}>
                 {isLoading ? "Guardando..." : "Finalizar Evento"}
               </Button>
             )}

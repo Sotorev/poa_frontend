@@ -1,4 +1,5 @@
 import type { EventFinishedRequest, EventFinishedResponse } from "@/components/poa/finalizacion/type.eventFinished"
+import { getFullEvents } from "@/services/apiService"
 import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -24,19 +25,32 @@ export async function getAvailableEventsToFinish(token: string, poaId: number): 
 }
 
 // Función para obtener eventos finalizados
-export async function getFinishedEvents(token: string): Promise<EventFinishedResponse[]> {
+export async function getFinishedEvents(token: string, poaId: number): Promise<EventFinishedResponse[]> {
   try {
-    const response = await fetch(`${API_URL}/api/events/finished`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    // const response = await fetch(`${API_URL}/api/events/finished`, {
+    //   headers: {
+    //     Authorization: `Bearer ${token}`,
+    //   },
+    // })
+
+    const events = await getFullEvents(token, poaId)
+
+    if (!events) throw new Error("No se encontraron eventos finalizados")
+
+    const response = events.filter((event) => event.statusId === 3).map((event): EventFinishedResponse => {
+      return {
+        eventId: event.eventId,
+        name: event.name,
+        completionDate: event.dates.map(d => ({eventExecutionDateId: d.eventDateId, endDate: d.endDate})),
+        evidenceDocuments: event.files.map((f) => {return{ documentId: f.fileId, fileName: f.fileName, fileId: f.fileId.toString(), fileUrl: f.filePath, uploadDate: f.uploadedAt}})
+      }
     })
 
-    if (!response.ok) {
+    if (!response) {
       throw new Error("Error al obtener eventos finalizados")
     }
 
-    return await response.json()
+    return response
   } catch (error) {
     console.error("Error al obtener eventos finalizados:", error)
     throw error
@@ -44,19 +58,38 @@ export async function getFinishedEvents(token: string): Promise<EventFinishedRes
 }
 
 // Función para marcar un evento como finalizado
-export async function markEventAsFinished(data: EventFinishedRequest, token: string): Promise<EventFinishedResponse> {
+export async function markEventAsFinished(event: EventFinishedRequest, token: string): Promise<EventFinishedResponse> {
   try {
     // Crear un FormData para enviar archivos
+    // en la data enviar algo asi: 
+/*     eventId: 51,
+    eventExecutionDates: [
+        {
+          eventExecutionDateId: 1,
+          endDate: "2024-01-15"
+        }
+      ]
+    } */
+
+    const eventExecutionDates = event.endDate.map((date) => ({
+      eventExecutionDateId: date.eventExecutionDateId,
+      endDate: date.endDate
+    }))
+    
+    const data = {
+      eventId: event.eventId,
+      eventExecutionDates: eventExecutionDates
+    }
+
     const formData = new FormData()
-    formData.append("eventId", data.eventId.toString())
-    formData.append("completionDate", data.completionDate)
+    formData.append("data", JSON.stringify(data))
 
     // Agregar documentos de prueba
-    data.testDocuments.forEach((file, index) => {
-      formData.append(`testDocuments`, file)
+    event.evidences.forEach((file, index) => {
+      formData.append(`evidence`, file)
     })
 
-    const response = await fetch(`${API_URL}/api/events/finish`, {
+    const response = await fetch(`${API_URL}/api/eventEvidence/evidenceexecution`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -84,11 +117,11 @@ export async function updateFinishedEvent(
   try {
     // Crear un FormData para enviar archivos
     const formData = new FormData()
-    formData.append("completionDate", data.completionDate)
+    formData.append("completionDate", JSON.stringify(data.endDate))
 
     // Agregar documentos de prueba
-    data.testDocuments.forEach((file, index) => {
-      formData.append(`testDocuments`, file)
+    data.evidences.forEach((file, index) => {
+      formData.append(`evidence`, file)
     })
 
     const response = await fetch(`${API_URL}/api/events/${eventId}/finish`, {

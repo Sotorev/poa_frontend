@@ -5,14 +5,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useEffect, useState } from "react"
-import type { EventFinished, EventFinishedTableProps } from "@/components/poa/finalizacion/type.eventFinished"
+import type { EventFinishedResponse } from "@/components/poa/finalizacion/type.eventFinished"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 
+interface EventFinishedTableProps {
+  events: EventFinishedResponse[]
+  onEdit: (event: EventFinishedResponse) => void
+  onRestore: (eventId: number) => void
+  onView: (event: EventFinishedResponse) => void
+}
+
 export function EventFinishedTable({ events, onEdit, onRestore, onView }: EventFinishedTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [filteredEvents, setFilteredEvents] = useState<EventFinished[]>(events)
+  const [filteredEvents, setFilteredEvents] = useState<EventFinishedResponse[]>(events)
 
   // Filtrar eventos cuando cambia el término de búsqueda o la lista de eventos
   const handleSearch = (term: string) => {
@@ -77,12 +84,12 @@ export function EventFinishedTable({ events, onEdit, onRestore, onView }: EventF
                     <TableCell className="font-medium text-foreground">{event.name}</TableCell>
                     <TableCell>
                       <div className="text-sm font-medium text-muted-foreground">
-                        {formatDate(event.completionDate)}
+                        {event.completionDate.map((date) => formatDate(date.endDate)).join(", ")}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm text-muted-foreground">{event.testDocuments.length} documento(s)</span>
+                        <span className="text-sm text-muted-foreground">{event.evidenceDocuments.length} documento(s)</span>
                         <Button
                           variant="outline"
                           size="sm"

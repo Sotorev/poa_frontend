@@ -6,10 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useToast } from "@/hooks/use-toast"
 import { useCurrentUser } from "@/hooks/use-current-user"
 
-import type { EventFinished, EventFinishedFormData } from "@/components/poa/finalizacion/type.eventFinished"
+import type { EventFinishedResponse, EventFinishedRequest } from "@/components/poa/finalizacion/type.eventFinished"
 import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 
-import { eventFinishedSchema } from "@/components/poa/finalizacion/schema.eventFinished"
+import { eventFinishedRequestSchema } from "@/components/poa/finalizacion/schema.eventFinished"
 
 import {
   getAvailableEventsToFinish,
@@ -24,12 +24,12 @@ import { getPoaByFacultyAndYear } from "@/services/apiService"
 
 export function useEventFinishedView() {
   // Estados
-  const [finishedEvents, setFinishedEvents] = useState<EventFinished[]>([])
+  const [finishedEvents, setFinishedEvents] = useState<EventFinishedResponse[]>([])
   const [availableEvents, setAvailableEvents] = useState<ResponseExecutedEvent[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<ResponseExecutedEvent | null>(null)
-  const [editingEvent, setEditingEvent] = useState<EventFinished | null>(null)
+  const [editingEvent, setEditingEvent] = useState<EventFinishedResponse | null>(null)
   const [currentStep, setCurrentStep] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
@@ -40,13 +40,12 @@ export function useEventFinishedView() {
   const user = useCurrentUser()
 
   // Configuración del formulario
-  const form = useForm<EventFinishedFormData>({
-    resolver: zodResolver(eventFinishedSchema),
+  const form = useForm<EventFinishedRequest>({
+    resolver: zodResolver(eventFinishedRequestSchema),
     defaultValues: {
-      eventId: "",
-      eventName: "",
-      completionDate: new Date().toISOString().split("T")[0],
-      testDocuments: [],
+      eventId:  0,
+      endDate: [],
+      evidences: [],
     },
     mode: "onChange",
   })
@@ -63,15 +62,13 @@ export function useEventFinishedView() {
 
       const facultyId = await getFacultyByUserId(user.userId, user.token)
       const poaId = (await getPoaByFacultyAndYear(facultyId, 2025,user.token)).poaId
-      const [/*finishedEventsData, */availableEventsData] = await Promise.all([
-       // getFinishedEvents(user.token),
+      const [finishedEventsData, availableEventsData] = await Promise.all([
+       getFinishedEvents(user.token, poaId),
         getAvailableEventsToFinish(user.token, poaId),
       ])
 
-     // setFinishedEvents(finishedEventsData)
+      setFinishedEvents(finishedEventsData)
       setAvailableEvents(availableEventsData)
-
-      console.log("availableEvents", availableEvents)
     } catch (error) {
       toast({
         title: "Error",
@@ -108,8 +105,11 @@ export function useEventFinishedView() {
   // Manejar selección de evento
   const handleEventSelect = (event: ResponseExecutedEvent) => {
     setSelectedEvent(event)
-    form.setValue("eventId", event.eventId.toString())
-    form.setValue("eventName", event.name)
+    form.setValue("eventId", event.eventId)
+    form.setValue("endDate", event.eventExecutionDates.map((date) => ({
+      eventExecutionDateId: date.eventExecutionDateId,
+      endDate: date.endDate,
+    })))
     setShowResults(false)
   }
 
@@ -122,9 +122,9 @@ export function useEventFinishedView() {
       let isStepValid = false
 
       if (currentStep === 1) {
-        isStepValid = await form.trigger(["eventId", "eventName"])
+        isStepValid = await form.trigger(["eventId", "endDate"])
       } else if (currentStep === 2) {
-        isStepValid = await form.trigger(["completionDate", "testDocuments"])
+        isStepValid = await form.trigger(["evidences"])
       }
 
       if (!isStepValid) {
@@ -141,25 +141,22 @@ export function useEventFinishedView() {
   }
 
   // Manejar envío del formulario
-  const handleSubmit = async (data: EventFinishedFormData) => {
+  const handleSubmit = async (data: EventFinishedRequest) => {
     if (!user?.token) return
 
     setIsLoading(true)
     try {
-      const requestData = {
-        eventId: Number.parseInt(data.eventId),
-        completionDate: data.completionDate,
-        testDocuments: data.testDocuments,
-      }
 
+      console.log("data", data)
+      console.log("estoy en el handleSubmit")
       if (editingEvent) {
-        await updateFinishedEvent(editingEvent.eventId, requestData, user.token)
+        await updateFinishedEvent(editingEvent.eventId, data, user.token)
         toast({
           title: "Éxito",
           description: "Evento actualizado correctamente",
         })
       } else {
-        await markEventAsFinished(requestData, user.token)
+        await markEventAsFinished(data, user.token)
         toast({
           title: "Éxito",
           description: "Evento marcado como finalizado correctamente",
@@ -183,7 +180,7 @@ export function useEventFinishedView() {
   }
 
   // Manejar edición de evento
-  const handleEdit = (event: EventFinished) => {
+  const handleEdit = (event: EventFinishedResponse) => {
     setEditingEvent(event)
 
     // Buscar el evento en la lista de disponibles para obtener detalles completos
@@ -191,9 +188,8 @@ export function useEventFinishedView() {
     setSelectedEvent(fullEvent)
 
     // Establecer valores del formulario
-    form.setValue("eventId", event.eventId.toString())
-    form.setValue("eventName", event.name)
-    form.setValue("completionDate", event.completionDate)
+    form.setValue("eventId", event.eventId)
+    form.setValue("endDate", event.completionDate) // TODO: Cambiar a la fechas de finalización en plural
 
     // Los documentos de prueba no se pueden cargar directamente, se manejarán por separado
     setTestDocuments([])
@@ -233,10 +229,9 @@ export function useEventFinishedView() {
     setEditingEvent(null)
     setSelectedEvent(null)
     form.reset({
-      eventId: "",
-      eventName: "",
-      completionDate: new Date().toISOString().split("T")[0],
-      testDocuments: [],
+      eventId: 0,
+      endDate: [],
+      evidences: [],
     })
     setTestDocuments([])
     setCurrentStep(1)
@@ -256,7 +251,7 @@ export function useEventFinishedView() {
   // Manejar carga de documentos
   const handleFileUpload = (files: File[]) => {
     setTestDocuments((prev) => [...prev, ...files])
-    form.setValue("testDocuments", [...testDocuments, ...files])
+    form.setValue("evidences", [...testDocuments, ...files])
   }
 
   // Manejar eliminación de documento
@@ -264,7 +259,7 @@ export function useEventFinishedView() {
     const updatedFiles = [...testDocuments]
     updatedFiles.splice(index, 1)
     setTestDocuments(updatedFiles)
-    form.setValue("testDocuments", updatedFiles)
+    form.setValue("evidences", updatedFiles)
   }
 
   return {
@@ -284,7 +279,7 @@ export function useEventFinishedView() {
     setSearchQuery,
     handleEventSelect,
     handleStepChange,
-    handleSubmit: form.handleSubmit(handleSubmit),
+    handleSubmit,
     handleEdit,
     handleRestore,
     handleOpenDialog,

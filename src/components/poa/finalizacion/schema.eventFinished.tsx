@@ -1,36 +1,31 @@
-import * as z from "zod"
+import { z } from "zod"
+
+export const eventFinishedDateRequestSchema = z.object({
+  eventExecutionDateId: z.number(),
+  endDate: z.string(),
+})
 
 // Esquema para validar el formulario de evento finalizado
-export const eventFinishedSchema = z.object({
-  eventId: z.string().min(1, {
+export const eventFinishedRequestSchema = z.object({
+  eventId: z.number().min(1, {
     message: "Debe seleccionar un evento",
   }),
-  eventName: z.string().min(1, {
-    message: "El nombre del evento es requerido",
-  }),
-  completionDate: z.string().min(1, {
-    message: "La fecha de finalización es requerida",
-  }),
-  testDocuments: z.array(z.instanceof(File)).min(1, {
+  endDate: z.array(eventFinishedDateRequestSchema),
+  evidences: z.array(z.instanceof(File)).min(1, {
     message: "Debe adjuntar al menos un documento de prueba",
   }),
 })
 
 // Esquema para validar el paso 1 (selección de evento)
 export const eventSelectionSchema = z.object({
-  eventId: z.string().min(1, {
+  eventId: z.number().min(1, {
     message: "Debe seleccionar un evento",
-  }),
-  eventName: z.string().min(1, {
-    message: "El nombre del evento es requerido",
-  }),
+  })
 })
 
 // Esquema para validar el paso 2 (datos de finalización)
 export const completionDataSchema = z.object({
-  completionDate: z.string().min(1, {
-    message: "La fecha de finalización es requerida",
-  }),
+  completionDate: z.array(eventFinishedDateRequestSchema),
   testDocuments: z.array(z.instanceof(File)).min(1, {
     message: "Debe adjuntar al menos un documento de prueba",
   }),
