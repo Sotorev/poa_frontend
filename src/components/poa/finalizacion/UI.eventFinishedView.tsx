@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -42,6 +42,13 @@ export function EventFinishedView() {
 
   const [viewingEvent, setViewingEvent] = useState<EventFinishedResponse | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  
+  // Usar watch para obtener los archivos actualizados en tiempo real
+  const evidences = form.watch("evidences");
+  
+  useEffect(() => {
+    console.log("Evidences actualizados en View:", evidences);
+  }, [evidences]);
 
   // Crear adaptador para el tipo de onSubmit
   const handleFormSubmit = (data: EventFinishedRequest) => {
@@ -101,7 +108,7 @@ export function EventFinishedView() {
             filteredEvents={filteredEvents}
             showResults={showResults}
             query={query}
-            evidences={form.getValues("evidences")}
+            evidences={evidences}
             MAX_FILE_SIZE={MAX_FILE_SIZE}
             handleSearch={handleSearch}
             handleClearSelection={handleClearSelection}

@@ -55,6 +55,21 @@ export function useEventFinishedView() {
   const {
     formState: { errors, isValid },
   } = form
+  
+  // Monitorear el estado del formulario
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      console.log(`Campo '${name}' cambió, tipo: ${type}`, value);
+      console.log("Estado actual del formulario:", {
+        values: form.getValues(),
+        errors: form.formState.errors,
+        isValid: form.formState.isValid,
+        isDirty: form.formState.isDirty
+      });
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const loadData = async () => {
     if (!user?.token) return
@@ -123,29 +138,61 @@ export function useEventFinishedView() {
 
   // Manejar carga de archivos (función que estaba en UI.eventFinishedForm)
   const handleFileUpload = (input: React.ChangeEvent<HTMLInputElement> | File[]) => {
+    console.log("handleFileUpload llamado con input:", input)
     let files: File[] = [];
     
     if (Array.isArray(input)) {
       // Si recibimos un array de archivos directamente
       files = input.filter(file => file.size <= MAX_FILE_SIZE);
+      console.log("Archivos recibidos (array):", files)
     } else {
       // Si recibimos un evento de cambio de input
       files = input.target.files 
         ? Array.from(input.target.files).filter(file => file.size <= MAX_FILE_SIZE) 
         : [];
-        
+      
+      console.log("Archivos recibidos (input event):", files)
+
       if (files.length !== (input.target.files?.length || 0)) {
+        console.log("Algunos archivos fueron ignorados por exceder el tamaño máximo")
         // Aquí se podría mostrar una notificación de archivos ignorados por tamaño
       }
     }
-    form.setValue("evidences", [...files]);
+    
+    // Usar shouldValidate para forzar la validación inmediata
+    form.setValue("evidences", [...files], { 
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true 
+    });
+    
+    console.log("Evidences después de la carga:", [...files]);
+    
+    // Forzar validación explícitamente
+    form.trigger("evidences").then(isValid => {
+      console.log("Validación después de cargar archivos:", isValid);
+    });
   }
 
   // Eliminar un archivo (función que estaba en UI.eventFinishedForm)
   const handleRemoveFile = (index: number) => {
+    console.log(`handleRemoveFile llamado con index: ${index}`)
     const updatedFiles = [...form.getValues("evidences")]
     updatedFiles.splice(index, 1)
-    form.setValue("evidences", updatedFiles)
+    
+    // Usar shouldValidate para forzar la validación inmediata
+    form.setValue("evidences", updatedFiles, { 
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true 
+    });
+    
+    console.log("Evidences después de la eliminación:", updatedFiles)
+    
+    // Forzar validación explícitamente
+    form.trigger("evidences").then(isValid => {
+      console.log("Validación después de eliminar archivo:", isValid);
+    });
   }
 
   // Manejar selección de evento
@@ -188,19 +235,24 @@ export function useEventFinishedView() {
 
   // Manejar envío del formulario
   const handleSubmit = async (data: EventFinishedRequest) => {
-    if (!user?.token) return
+    console.log("handleSubmit llamado con data:", data)
+    if (!user?.token) {
+      console.log("Usuario no tiene token, abortando submit")
+      return
+    }
 
     setIsLoading(true)
     try {
-      console.log("data", data)
-      console.log("estoy en el handleSubmit")
+      console.log("Enviando datos:", data)
       if (editingEvent) {
+        console.log(`Actualizando evento con ID: ${editingEvent.eventId}`)
         await updateFinishedEvent(editingEvent.eventId, data, user.token)
         toast({
           title: "Éxito",
           description: "Evento actualizado correctamente",
         })
       } else {
+        console.log("Marcando evento como finalizado:", data.eventId)
         await markEventAsFinished(data, user.token)
         toast({
           title: "Éxito",
@@ -210,10 +262,13 @@ export function useEventFinishedView() {
 
       // Recargar datos
       await loadData()
+      console.log("Datos recargados correctamente")
 
       // Cerrar diálogo y resetear formulario
       handleCloseDialog()
+      console.log("Diálogo cerrado y formulario reseteado")
     } catch (error) {
+      console.log("Error al enviar el formulario:", error)
       toast({
         title: "Error",
         description: "No se pudo procesar la solicitud",
@@ -221,6 +276,7 @@ export function useEventFinishedView() {
       })
     } finally {
       setIsLoading(false)
+      console.log("Finalizó el manejo de envío, isLoading:", isLoading)
     }
   }
 

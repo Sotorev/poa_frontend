@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FieldErrors, UseFormReturn, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Check, File, FileSpreadsheet, FileText, Plus, Search, X } from "lucide-react"
@@ -232,6 +232,23 @@ export function EventFinishedForm({
   handleFileUpload,
   handleRemoveFile,
 }: EventFinishedFormProps) {
+  // Estado local para forzar re-renderizado
+  const [localRender, setLocalRender] = useState(0);
+  
+  // Agregar log de las props recibidas al inicio del componente
+  console.log("EventFinishedForm props:", { form, errors, isValid, evidences, currentStep })
+  
+  // Monitorear cambios en evidences para forzar re-renderizado
+  useEffect(() => {
+    console.log("Evidences cambiaron en Form:", evidences);
+    setLocalRender(prev => prev + 1);
+  }, [evidences]);
+  
+  // Monitorear cambios en isValid
+  useEffect(() => {
+    console.log("Estado de validación cambiado:", isValid);
+  }, [isValid]);
+
   // Renderizar el contenido según el paso actual
   const renderStepContent = () => {
     if (currentStep === 1) {
@@ -276,6 +293,8 @@ export function EventFinishedForm({
         </Card>
       )
     } else if (currentStep === 2) {
+      // Agregar log al renderizar el paso 2
+      console.log("Renderizando paso 2: Datos de Finalización, isValid:", isValid)
       return (
         <div className="space-y-6">
           <Card>
@@ -398,7 +417,9 @@ export function EventFinishedForm({
               onClick={() => {
                 if (currentStep === 1) {
                   // Cancelar
+                  console.log("Botón Cancelar clickeado")
                 } else {
+                  console.log(`Botón Anterior clickeado, paso actual: ${currentStep}, cambiando a: ${currentStep - 1}`)
                   onStepChange(currentStep - 1)
                 }
               }}
@@ -407,11 +428,34 @@ export function EventFinishedForm({
               {currentStep === 1 ? "Cancelar" : "Anterior"}
             </Button>
             {currentStep < 2 ? (
-              <Button type="button" onClick={() => onStepChange(currentStep + 1)} className="sm:w-auto">
+              <Button
+                type="button"
+                onClick={() => {
+                  console.log(`Botón Siguiente clickeado, cambiando a paso: ${currentStep + 1}`)
+                  onStepChange(currentStep + 1)
+                }}
+                className="sm:w-auto"
+              >
                 Siguiente
               </Button>
             ) : (
-              <Button type="submit" onClick={(e) => {e.preventDefault(); form.handleSubmit(onSubmit)();}} className="sm:w-auto" disabled={!isValid}>
+              <Button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault()
+                  console.log(`Botón Finalizar Evento clickeado, isValid: ${isValid}, evidences: ${evidences?.length}`)
+                  if (isValid || (evidences && evidences.length > 0)) {
+                    console.log("Formulario válido, enviando datos");
+                    form.handleSubmit(onSubmit)();
+                  } else {
+                    console.log("Formulario no válido, no se envían datos");
+                    // Forzar validación para mostrar errores
+                    form.trigger();
+                  }
+                }}
+                className="sm:w-auto"
+                disabled={!(isValid || (evidences && evidences.length > 0))}
+              >
                 {isLoading ? "Guardando..." : "Finalizar Evento"}
               </Button>
             )}
