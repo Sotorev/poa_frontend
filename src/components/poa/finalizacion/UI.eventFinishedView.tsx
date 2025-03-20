@@ -33,7 +33,6 @@ export function EventFinishedView() {
     filteredEvents,
     showResults,
     query,
-    evidences,
     MAX_FILE_SIZE,
     handleSearch,
     handleClearSelection,
@@ -102,7 +101,7 @@ export function EventFinishedView() {
             filteredEvents={filteredEvents}
             showResults={showResults}
             query={query}
-            evidences={evidences}
+            evidences={form.getValues("evidences")}
             MAX_FILE_SIZE={MAX_FILE_SIZE}
             handleSearch={handleSearch}
             handleClearSelection={handleClearSelection}

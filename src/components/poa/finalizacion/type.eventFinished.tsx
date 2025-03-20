@@ -1,6 +1,7 @@
 import { eventFinishedRequestSchema } from "./schema.eventFinished"
 import { z } from "zod"
 
+// Tipos para las respuestas de la API
 export interface EventFinishedDocumentResponse {
   documentId: number
   fileName: string
@@ -8,7 +9,7 @@ export interface EventFinishedDocumentResponse {
   fileUrl: string
   uploadDate: string
 }
-// Tipos para las respuestas de la API
+
 export interface EventFinishedResponse {
   eventId: number
   name: string

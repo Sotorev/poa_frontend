@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { EventFinishedRequest } from "@/components/poa/finalizacion/type.eventFinished"
 import { eventFinishedRequestSchema } from "@/components/poa/finalizacion/schema.eventFinished"
 import { ResponseExecutedEvent } from "@/types/eventExecution.type"
+
 // Componente para mostrar los detalles del evento seleccionado
 function EventDetails({ event }: { event: ResponseExecutedEvent }) {
   const formatDate = (dateString: string) => {
@@ -59,7 +60,7 @@ function EventDetails({ event }: { event: ResponseExecutedEvent }) {
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Fechas</p>
                 <div className="grid gap-2">
-                  {event.eventExecutionDates.map((date, index) => (
+                  {event.eventExecutionDates.map((date, index: number) => (
                     <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
                       <div className="h-2 w-2 rounded-full bg-primary/70" />
                       <p className="text-sm">
@@ -282,7 +283,7 @@ export function EventFinishedForm({
               <CardTitle className="text-lg font-semibold">Datos de Finalización</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {selectedEvent?.eventExecutionDates.map((date, index) => (
+              {selectedEvent?.eventExecutionDates.map((date: any, index: number) => (
                 <FormField
                   key={date.eventExecutionDateId}
                   control={form.control}
@@ -328,10 +329,10 @@ export function EventFinishedForm({
                           <span className="text-xs text-muted-foreground">o arrastre y suelte aquí</span>
                         </label>
                       </div>
-                      {evidences.length > 0 && (
+                      {evidences && evidences.length > 0 && (
                         <div className="border rounded-lg p-2">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {evidences.map((file, index) => (
+                            {evidences.map((file: File, index: number) => (
                               <div
                                 key={index}
                                 className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md"
@@ -410,7 +411,7 @@ export function EventFinishedForm({
                 Siguiente
               </Button>
             ) : (
-              <Button type="submit" onSubmit={form.handleSubmit(onSubmit)} className="sm:w-auto" disabled={isValid}>
+              <Button type="submit" onClick={(e) => {e.preventDefault(); form.handleSubmit(onSubmit)();}} className="sm:w-auto" disabled={!isValid}>
                 {isLoading ? "Guardando..." : "Finalizar Evento"}
               </Button>
             )}

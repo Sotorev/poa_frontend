@@ -34,10 +34,8 @@ export function useEventFinishedView() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
   const [showResults, setShowResults] = useState(false)
-  const [testDocuments, setTestDocuments] = useState<File[]>([])
   // Estados adicionales que estaban en UI.eventFinishedForm
   const [query, setQuery] = useState("")
-  const [evidences, setEvidences] = useState<File[]>([])
   const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
   const { toast } = useToast()
@@ -140,16 +138,13 @@ export function useEventFinishedView() {
         // Aquí se podría mostrar una notificación de archivos ignorados por tamaño
       }
     }
-
-    setEvidences(prevFiles => [...prevFiles, ...files]);
-    form.setValue("evidences", [...evidences, ...files]);
+    form.setValue("evidences", [...files]);
   }
 
   // Eliminar un archivo (función que estaba en UI.eventFinishedForm)
   const handleRemoveFile = (index: number) => {
-    const updatedFiles = [...evidences]
+    const updatedFiles = [...form.getValues("evidences")]
     updatedFiles.splice(index, 1)
-    setEvidences(updatedFiles)
     form.setValue("evidences", updatedFiles)
   }
 
@@ -197,7 +192,6 @@ export function useEventFinishedView() {
 
     setIsLoading(true)
     try {
-
       console.log("data", data)
       console.log("estoy en el handleSubmit")
       if (editingEvent) {
@@ -240,10 +234,7 @@ export function useEventFinishedView() {
 
     // Establecer valores del formulario
     form.setValue("eventId", event.eventId)
-    form.setValue("endDate", event.completionDate) // TODO: Cambiar a la fechas de finalización en plural
-
-    // Los documentos de prueba no se pueden cargar directamente, se manejarán por separado
-    setTestDocuments([])
+    form.setValue("endDate", event.completionDate)
 
     setIsDialogOpen(true)
     setCurrentStep(1)
@@ -284,7 +275,6 @@ export function useEventFinishedView() {
       endDate: [],
       evidences: [],
     })
-    setTestDocuments([])
     setCurrentStep(1)
     setIsDialogOpen(true)
   }
@@ -295,7 +285,6 @@ export function useEventFinishedView() {
     setEditingEvent(null)
     setSelectedEvent(null)
     form.reset()
-    setTestDocuments([])
     setCurrentStep(1)
   }
 
@@ -309,12 +298,10 @@ export function useEventFinishedView() {
     currentStep,
     searchQuery,
     showResults,
-    testDocuments,
     form,
     errors,
     isValid,
     query,
-    evidences,
     MAX_FILE_SIZE,
     setSearchQuery,
     handleEventSelect,
