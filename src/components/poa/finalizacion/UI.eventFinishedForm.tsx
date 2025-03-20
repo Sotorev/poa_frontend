@@ -5,13 +5,17 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { FieldErrors, UseFormReturn, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Check, File, FileSpreadsheet, FileText, Plus, Search, X } from "lucide-react"
+import { AlertCircle, Check, File, FileSpreadsheet, FileText, Plus, Search, X, Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 import type { EventFinishedRequest } from "@/components/poa/finalizacion/type.eventFinished"
 import { eventFinishedRequestSchema } from "@/components/poa/finalizacion/schema.eventFinished"
@@ -308,12 +312,47 @@ export function EventFinishedForm({
                   control={form.control}
                   name={`endDate.${date.eventExecutionDateId}.endDate`}
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Fecha de Finalización</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} className={cn(errors.endDate && "border-destructive")} />
-                      </FormControl>
-                      <FormDescription>Seleccione la fecha en que se finalizó el evento</FormDescription>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(new Date(field.value), "PPP", { locale: es })
+                              ) : (
+                                <span>Seleccione una fecha</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            locale={es}
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                field.onChange(format(date, "yyyy-MM-dd"))
+                              }
+                            }}
+                            initialFocus
+                            captionLayout="dropdown-buttons"
+                            fromYear={new Date().getFullYear() - 1}
+                            toYear={new Date().getFullYear() + 1}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        Seleccione la fecha en que se finalizó el evento
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
