@@ -46,7 +46,6 @@ export interface RequestEventExecution {
   eventExecutionDates: {
     eventId: number;
     startDate: string;
-    endDate: string;
   }[];
   eventExecutionFinancings: eventExecutionFinancings[];
 }
@@ -109,7 +108,6 @@ export type FormFieldPaths =
   | "archivosGastos"
   | "fechas"
   | `fechas.${number}.startDate`
-  | `fechas.${number}.endDate`
   | `aportesUmes.${number}.eventId`
   | `aportesUmes.${number}.amount`
   | `aportesUmes.${number}.percentage`
@@ -124,7 +122,6 @@ export interface UpdateEventExecutedPayload {
   eventExecutionDates: {
     eventExecutionDateId: number;
     startDate: string;
-    endDate: string;
     reasonForChange: string;
     isDeleted: boolean;
   }[];
