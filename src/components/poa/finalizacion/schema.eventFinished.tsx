@@ -1,35 +1,57 @@
 import { z } from "zod"
 
-export const eventFinishedDateRequestSchema = z.object({
-  eventExecutionDateId: z.number(),
-  endDate: z.string(),
-})
-
-// Esquema para validar el formulario de evento finalizado
-export const eventFinishedRequestSchema = z.object({
-  eventId: z.number().min(1, {
-    message: "Debe seleccionar un evento",
+// Schema para CreateEvidenceRequest
+export const createEvidenceRequestSchema = z.object({
+  data: z.object({
+    eventId: z.number({
+      required_error: "Debe seleccionar un evento",
+      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventId CreateEvidenceRequest)"
+    }),
+    eventExecutionDateId: z.number({
+      required_error: "Debe seleccionar una fecha de ejecución del evento",
+      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventExecutionDateId CreateEvidenceRequest)"
+    }),
+    endDate: z.string({
+      required_error: "Por favor ingrese la fecha de finalización del evento",
+      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error endDate CreateEvidenceRequest)"
+    })
   }),
-  endDate: z.array(eventFinishedDateRequestSchema).min(1, {
-    message: "Debe especificar al menos una fecha de finalización",
-  }),
-  evidences: z.array(z.instanceof(File)).min(1, {
-    message: "Debe adjuntar al menos un documento de prueba",
-  }),
-})
-
-// Esquema para validar el paso 1 (selección de evento)
-export const eventSelectionSchema = z.object({
-  eventId: z.number().min(1, {
-    message: "Debe seleccionar un evento",
+  evidence: z.array(z.instanceof(File, {
+    message: "Cada elemento en evidence debe ser un archivo"
+  }), {
+    required_error: "Debe subir al menos un archivo de evidencia",
+    invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error evidence CreateEvidenceRequest)"
   })
-})
+});
 
-// Esquema para validar el paso 2 (datos de finalización)
-export const completionDataSchema = z.object({
-  completionDate: z.array(eventFinishedDateRequestSchema),
-  testDocuments: z.array(z.instanceof(File)).min(1, {
-    message: "Debe adjuntar al menos un documento de prueba",
+// Schema para UpdateEvidenceRequest
+export const updateEvidenceRequestSchema = z.object({
+  data: z.object({
+    eventId: z.number({
+      required_error: "Debe seleccionar un evento",
+      invalid_type_error: "Debe seleccionar un evento"
+    }),
+    eventExecutionDateId: z.number({
+      required_error: "Debe seleccionar una fecha de ejecución del evento",
+      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventExecutionDateId UpdateEvidenceRequest)"
+    }),
+    endDate: z.string({
+      required_error: "Por favor ingrese la fecha de finalización del evento",
+      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error endDate UpdateEvidenceRequest)"
+    })
   }),
-})
+  evidence: z.array(z.instanceof(File, {
+    message: "Cada elemento en evidence debe ser un archivo"
+  }), {
+    required_error: "Debe subir al menos un archivo de evidencia",
+    invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error evidence UpdateEvidenceRequest)"
+  })
+});
 
+// Schema para RestoreEvidenceRequest
+export const restoreEvidenceRequestSchema = z.object({
+  eventId: z.number({
+    required_error: "A ocurrido un error por favor recargue la pagina y si el problema persiste contacte al administrador (required_error eventId RestoreEvidenceRequest)",
+    invalid_type_error: "A ocurrido un error por favor recargue la pagina y si el problema persiste contacte al administrador (invalid_type_error eventId RestoreEvidenceRequest)"
+  })
+});
