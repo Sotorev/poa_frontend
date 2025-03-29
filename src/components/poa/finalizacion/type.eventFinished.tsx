@@ -1,26 +1,44 @@
-import { eventFinishedRequestSchema } from "./schema.eventFinished"
+import { createEvidenceRequestSchema, restoreEvidenceRequestSchema, updateEvidenceRequestSchema } from "./schema.eventFinished"
 import { z } from "zod"
 
-// Tipos para las respuestas de la API
-export interface EventFinishedDocumentResponse {
-  documentId: number
-  fileName: string
-  fileId: string
-  fileUrl: string
-  uploadDate: string
-}
+
+// REQUESTS
+
+export type CreateEvidenceRequest = z.infer<typeof createEvidenceRequestSchema>
+export type UpdateEvidenceRequest = z.infer<typeof updateEvidenceRequestSchema>
+export type RestoreEvidenceRequest = z.infer<typeof restoreEvidenceRequestSchema>
+
+// RESPONSES
+
+// Get Event Finished Response
 
 export interface EventFinishedResponse {
   eventId: number
   name: string
-  completionDate: EventFinishedDateResponse[]
-  evidenceDocuments: EventFinishedDocumentResponse[]
+  dates: EventFinishedDateResponse[]
 }
 
 export interface EventFinishedDateResponse {
   eventExecutionDateId: number
   endDate: string
+  evidenceFiles: EvidenceFile[]
 }
 
-// inferir el tipo del scheema
-export type EventFinishedRequest = z.infer<typeof eventFinishedRequestSchema>
+// Create Evidence Response
+
+export interface CreateUpdateEvidenceResponse {
+  message: string
+  evidenceFiles: EvidenceFile[]
+}
+
+export interface EvidenceFile {
+  evidenceId: number
+  fileName: string
+  createdAt: string
+}
+
+// Restore Evidence Response
+export interface RestoreEvidenceResponse {
+  eventId: number
+  mensaje: string
+}
