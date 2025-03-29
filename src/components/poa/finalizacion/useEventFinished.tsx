@@ -1,376 +1,512 @@
-"use client"
+import { useState, useEffect, useMemo } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { getEventExecutedByPoa } from "@/services/poa/eventExecuted";
+import { 
+  createEvidence, 
+  getEventFinished, 
+  updateEvidence, 
+  restoreEvidence,
+  downloadEvidence
+} from "./service.eventFinished";
+import { 
+  createEvidenceRequestSchema, 
+  updateEvidenceRequestSchema, 
+  restoreEvidenceRequestSchema 
+} from "./schema.eventFinished";
+import { 
+  CreateEvidenceRequest, 
+  UpdateEvidenceRequest, 
+  RestoreEvidenceRequest, 
+  EventFinishedResponse,
+  EvidenceFile
+} from "./type.eventFinished";
+import { ResponseExecutedEvent } from "@/types/eventExecution.type";
+import { getPoaByFacultyAndYear } from "@/services/apiService";
+// Charge data
+import { getFacultyByUserId } from "../eventManagement/formView/service.eventPlanningForm";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useToast } from "@/hooks/use-toast"
-import { useCurrentUser } from "@/hooks/use-current-user"
+export type FormStep = 'searchEvent' | 'selectDates' | 'uploadFiles';
 
-import type { EventFinishedResponse, EventFinishedRequest } from "@/components/poa/finalizacion/type.eventFinished"
-import { ResponseExecutedEvent } from "@/types/eventExecution.type"
-
-import { eventFinishedRequestSchema } from "@/components/poa/finalizacion/schema.eventFinished"
-
-import {
-  getAvailableEventsToFinish,
-  getFinishedEvents,
-  markEventAsFinished,
-  updateFinishedEvent,
-  revertFinishedEvent,
-} from "@/components/poa/finalizacion/service.eventFinished"
-
-import { getFacultyByUserId } from "@/services/faculty/currentFaculty"
-import { getPoaByFacultyAndYear } from "@/services/apiService"
-
-export function useEventFinishedView() {
-  // Estados
-  const [finishedEvents, setFinishedEvents] = useState<EventFinishedResponse[]>([])
-  const [availableEvents, setAvailableEvents] = useState<ResponseExecutedEvent[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<ResponseExecutedEvent | null>(null)
-  const [editingEvent, setEditingEvent] = useState<EventFinishedResponse | null>(null)
-  const [currentStep, setCurrentStep] = useState(1)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filteredEvents, setFilteredEvents] = useState<ResponseExecutedEvent[]>([])
-  const [showResults, setShowResults] = useState(false)
-  // Estados adicionales que estaban en UI.eventFinishedForm
-  const [query, setQuery] = useState("")
-  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-
-  const { toast } = useToast()
-  const user = useCurrentUser()
-
-  // Configuración del formulario
-  const form = useForm<EventFinishedRequest>({
-    resolver: zodResolver(eventFinishedRequestSchema),
-    defaultValues: {
-      eventId:  0,
-      endDate: [],
-      evidences: [],
-    },
-    mode: "onChange",
-  })
-
-  const {
-    formState: { errors, isValid },
-  } = form
+export const useEventFinished = () => {
+  const user = useCurrentUser();
+  const year = new Date().getFullYear();
   
-  // Monitorear el estado del formulario
+  // Estados
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState<{ startDate?: string; endDate?: string }>({});
+  const [executedEvents, setExecutedEvents] = useState<ResponseExecutedEvent[]>([]);
+  const [finishedEvents, setFinishedEvents] = useState<EventFinishedResponse[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<ResponseExecutedEvent | null>(null);
+  const [selectedFinishedEvent, setSelectedFinishedEvent] = useState<EventFinishedResponse | null>(null);
+  const [currentStep, setCurrentStep] = useState<FormStep>('searchEvent');
+  const [selectedDates, setSelectedDates] = useState<{ eventExecutionDateId: number, endDate: string }[]>([]);
+  const [evidenceFiles, setEvidenceFiles] = useState<Map<number, File[]>>(new Map());
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentDateId, setCurrentDateId] = useState<number | null>(null);
+  const [showEvidences, setShowEvidences] = useState<number | null>(null);
+  const [popoverSticky, setPopoverSticky] = useState(false);
+  const [facultyId, setFacultyId] = useState<number | null>(null);
+  const [poaId, setPoaId] = useState<number | null>(null);
+  
+  // Forms
+  const createForm = useForm<CreateEvidenceRequest>({
+    resolver: zodResolver(createEvidenceRequestSchema),
+    defaultValues: {
+      data: {
+        eventId: 0,
+        eventExecutionDateId: 0,
+        endDate: ''
+      },
+      evidence: []
+    }
+  });
+
+  const updateForm = useForm<UpdateEvidenceRequest>({
+    resolver: zodResolver(updateEvidenceRequestSchema),
+    defaultValues: {
+      data: {
+        eventId: 0,
+        eventExecutionDateId: 0,
+        endDate: ''
+      },
+      evidence: []
+    }
+  });
+
+  const restoreForm = useForm<RestoreEvidenceRequest>({
+    resolver: zodResolver(restoreEvidenceRequestSchema),
+    defaultValues: {
+      eventId: 0
+    }
+  });
+
+  // Obtener poaId al inicio
   useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      console.log(`Campo '${name}' cambió, tipo: ${type}`, value);
-      console.log("Estado actual del formulario:", {
-        values: form.getValues(),
-        errors: form.formState.errors,
-        isValid: form.formState.isValid,
-        isDirty: form.formState.isDirty
-      });
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  const loadData = async () => {
-    if (!user?.token) return
-
-    setIsLoading(true)
-    try {
-
-      const facultyId = await getFacultyByUserId(user.userId, user.token)
-      const poaId = (await getPoaByFacultyAndYear(facultyId, 2025,user.token)).poaId
-      const [finishedEventsData, availableEventsData] = await Promise.all([
-       getFinishedEvents(user.token, poaId),
-        getAvailableEventsToFinish(user.token, poaId),
-      ])
-
-      setFinishedEvents(finishedEventsData)
-      setAvailableEvents(availableEventsData)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los datos",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    if (user?.token) {
-      loadData()
-    }
-  }, [user])
-
-  // Filtrar eventos disponibles según la búsqueda
-  useEffect(() => {
-    if (searchQuery.length > 0) {
-      const filtered = availableEvents.filter((event) => event.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      setFilteredEvents(filtered)
-      setShowResults(filtered.length > 0)
-    } else {
-      setFilteredEvents([])
-      setShowResults(false)
-    }
-  }, [searchQuery, availableEvents])
-
-  // Filtrar eventos según la búsqueda (función que estaba en UI.eventFinishedForm)
-  const handleSearch = (searchTerm: string) => {
-    setQuery(searchTerm)
-    if (searchTerm.length > 0) {
-      const filtered = availableEvents.filter((event) => event.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      setFilteredEvents(filtered)
-      setShowResults(filtered.length > 0)
-    } else {
-      setFilteredEvents([])
-      setShowResults(false)
-    }
-  }
-
-  // Limpiar la selección (función que estaba en UI.eventFinishedForm)
-  const handleClearSelection = () => {
-    form.setValue("eventId", 0)
-    form.setValue("endDate", [])
-    setQuery("")
-  }
-
-  // Manejar carga de archivos (función que estaba en UI.eventFinishedForm)
-  const handleFileUpload = (input: React.ChangeEvent<HTMLInputElement> | File[]) => {
-    console.log("handleFileUpload llamado con input:", input)
-    let files: File[] = [];
-    
-    if (Array.isArray(input)) {
-      // Si recibimos un array de archivos directamente
-      files = input.filter(file => file.size <= MAX_FILE_SIZE);
-      console.log("Archivos recibidos (array):", files)
-    } else {
-      // Si recibimos un evento de cambio de input
-      files = input.target.files 
-        ? Array.from(input.target.files).filter(file => file.size <= MAX_FILE_SIZE) 
-        : [];
+    const fetchPoaId = async () => {
+      if (!user?.token || !facultyId) return;
       
-      console.log("Archivos recibidos (input event):", files)
-
-      if (files.length !== (input.target.files?.length || 0)) {
-        console.log("Algunos archivos fueron ignorados por exceder el tamaño máximo")
-        // Aquí se podría mostrar una notificación de archivos ignorados por tamaño
+      try {
+        setIsLoading(true);
+        setError(null);
+        const poa = await getPoaByFacultyAndYear(facultyId, year, user.token);
+        setPoaId(poa.poaId);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error al obtener el POA');
+      } finally {
+        setIsLoading(false);
       }
+    };
+    
+    fetchPoaId();
+  }, [facultyId, year, user?.token]);
+
+  // Cargar eventos ejecutados cuando se tenga el poaId
+  useEffect(() => {
+    if (poaId) {
+      fetchExecutedEvents();
+      fetchFinishedEvents();
     }
-    
-    // Usar shouldValidate para forzar la validación inmediata
-    form.setValue("evidences", [...files], { 
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true 
+  }, [poaId]);
+
+  useEffect(() => {
+    if (!user?.userId) return;
+    getFacultyByUserId(user.userId, user.token).then(facultyId => {
+        setFacultyId(facultyId);
     });
+}, [user?.userId, user?.token]);
+
+  // Filtrado de eventos finalizados
+  const filteredFinishedEvents = useMemo(() => {
+    if (!Array.isArray(finishedEvents)) return [];
     
-    console.log("Evidences después de la carga:", [...files]);
-    
-    // Forzar validación explícitamente
-    form.trigger("evidences").then(isValid => {
-      console.log("Validación después de cargar archivos:", isValid);
+    return finishedEvents.filter(event => {
+      const matchesSearch = searchTerm === '' || 
+        event.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesDateFilter = !dateFilter.startDate && !dateFilter.endDate || 
+        event.dates?.some(date => {
+          if (dateFilter.startDate && dateFilter.endDate) {
+            return date.endDate >= dateFilter.startDate && date.endDate <= dateFilter.endDate;
+          }
+          if (dateFilter.startDate) {
+            return date.endDate >= dateFilter.startDate;
+          }
+          if (dateFilter.endDate) {
+            return date.endDate <= dateFilter.endDate;
+          }
+          return true;
+        });
+      
+      return matchesSearch && matchesDateFilter;
     });
-  }
+  }, [finishedEvents, searchTerm, dateFilter]);
 
-  // Eliminar un archivo (función que estaba en UI.eventFinishedForm)
-  const handleRemoveFile = (index: number) => {
-    console.log(`handleRemoveFile llamado con index: ${index}`)
-    const updatedFiles = [...form.getValues("evidences")]
-    updatedFiles.splice(index, 1)
+  // Filtrado de eventos ejecutados
+  const filteredExecutedEvents = useMemo(() => {
+    if (!searchTerm) return [];
+    if (!Array.isArray(executedEvents)) return [];
     
-    // Usar shouldValidate para forzar la validación inmediata
-    form.setValue("evidences", updatedFiles, { 
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true 
-    });
+    return executedEvents.filter(event => 
+      event.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [executedEvents, searchTerm]);
+
+  // Fetch eventos ejecutados
+  const fetchExecutedEvents = async () => {
+    if (!poaId) return;
     
-    console.log("Evidences después de la eliminación:", updatedFiles)
-    
-    // Forzar validación explícitamente
-    form.trigger("evidences").then(isValid => {
-      console.log("Validación después de eliminar archivo:", isValid);
-    });
-  }
-
-  // Manejar selección de evento
-  const handleEventSelect = (event: ResponseExecutedEvent) => {
-    setSelectedEvent(event)
-    form.setValue("eventId", event.eventId)
-    form.setValue("endDate", event.eventExecutionDates.map((date) => ({
-      eventExecutionDateId: date.eventExecutionDateId,
-      endDate: date.endDate,
-    })))
-    setShowResults(false)
-  }
-
-  // Manejar cambio de paso
-  const handleStepChange = async (step: number) => {
-    if (step === currentStep) return
-
-    if (step > currentStep) {
-      // Validar paso actual antes de avanzar
-      let isStepValid = false
-
-      if (currentStep === 1) {
-        isStepValid = await form.trigger(["eventId", "endDate"])
-      } else if (currentStep === 2) {
-        isStepValid = await form.trigger(["evidences"])
-      }
-
-      if (!isStepValid) {
-        toast({
-          title: "Error de validación",
-          description: "Por favor complete todos los campos requeridos",
-          variant: "destructive",
-        })
-        return
-      }
-    }
-
-    setCurrentStep(step)
-  }
-
-  // Manejar envío del formulario
-  const handleSubmit = async (data: EventFinishedRequest) => {
-    console.log("handleSubmit llamado con data:", data)
-    if (!user?.token) {
-      console.log("Usuario no tiene token, abortando submit")
-      return
-    }
-
-    setIsLoading(true)
     try {
-      console.log("Enviando datos:", data)
-      if (editingEvent) {
-        console.log(`Actualizando evento con ID: ${editingEvent.eventId}`)
-        await updateFinishedEvent(editingEvent.eventId, data, user.token)
-        toast({
-          title: "Éxito",
-          description: "Evento actualizado correctamente",
-        })
+      setIsLoading(true);
+      setError(null);
+      const data = await getEventExecutedByPoa(poaId);
+      setExecutedEvents(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar eventos ejecutados');
+      setExecutedEvents([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch eventos finalizados
+  const fetchFinishedEvents = async () => {
+    if (!user?.token) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getEventFinished(user.token);
+      setFinishedEvents(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar eventos finalizados');
+      setFinishedEvents([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Seleccionar evento para crear evidencia
+  const selectEventForEvidence = (event: ResponseExecutedEvent) => {
+    setSelectedEvent(event);
+    setSelectedFinishedEvent(null);
+    setIsEditing(false);
+    setCurrentStep('selectDates');
+    createForm.reset({
+      data: {
+        eventId: event.eventId,
+        eventExecutionDateId: 0,
+        endDate: ''
+      },
+      evidence: []
+    });
+    setSelectedDates([]);
+    setEvidenceFiles(new Map());
+    setCurrentDateId(null);
+  };
+
+  // Seleccionar evento para editar evidencia
+  const selectEventForEdit = (event: EventFinishedResponse) => {
+    setSelectedFinishedEvent(event);
+    setSelectedEvent(null);
+    setIsEditing(true);
+    setCurrentStep('selectDates');
+    updateForm.reset({
+      data: {
+        eventId: event.eventId,
+        eventExecutionDateId: 0,
+        endDate: ''
+      },
+      evidence: []
+    });
+    setSelectedDates([]);
+    setEvidenceFiles(new Map());
+    setCurrentDateId(null);
+  };
+
+  // Seleccionar fecha para evidencia y pasar al paso de archivos
+  const selectDateForEvidence = (eventExecutionDateId: number, endDate: string = '') => {
+    setCurrentDateId(eventExecutionDateId);
+    
+    // Verificar si la fecha ya fue seleccionada
+    const existingDateIndex = selectedDates.findIndex(
+      date => date.eventExecutionDateId === eventExecutionDateId
+    );
+    
+    // Si no existe, añadirla a las fechas seleccionadas
+    if (existingDateIndex === -1) {
+      setSelectedDates(prev => [...prev, { eventExecutionDateId, endDate }]);
+    }
+    
+    // Configurar el formulario activo
+    if (isEditing) {
+      updateForm.setValue('data.eventExecutionDateId', eventExecutionDateId);
+      updateForm.setValue('data.endDate', endDate);
+    } else {
+      createForm.setValue('data.eventExecutionDateId', eventExecutionDateId);
+      createForm.setValue('data.endDate', endDate);
+    }
+    
+    setCurrentStep('uploadFiles');
+  };
+
+  // Actualizar la fecha fin de una fecha seleccionada
+  const updateDateEndDate = (eventExecutionDateId: number, endDate: string) => {
+    setSelectedDates(prev => 
+      prev.map(date => 
+        date.eventExecutionDateId === eventExecutionDateId 
+          ? { ...date, endDate } 
+          : date
+      )
+    );
+    
+    // Actualizar también el formulario activo si es la fecha actual
+    if (currentDateId === eventExecutionDateId) {
+      if (isEditing) {
+        updateForm.setValue('data.endDate', endDate);
       } else {
-        console.log("Marcando evento como finalizado:", data.eventId)
-        await markEventAsFinished(data, user.token)
-        toast({
-          title: "Éxito",
-          description: "Evento marcado como finalizado correctamente",
-        })
+        createForm.setValue('data.endDate', endDate);
       }
-
-      // Recargar datos
-      await loadData()
-      console.log("Datos recargados correctamente")
-
-      // Cerrar diálogo y resetear formulario
-      handleCloseDialog()
-      console.log("Diálogo cerrado y formulario reseteado")
-    } catch (error) {
-      console.log("Error al enviar el formulario:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo procesar la solicitud",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-      console.log("Finalizó el manejo de envío, isLoading:", isLoading)
     }
-  }
+  };
 
-  // Manejar edición de evento
-  const handleEdit = (event: EventFinishedResponse) => {
-    setEditingEvent(event)
+  // Añadir archivos a una fecha específica
+  const addFilesToDate = (eventExecutionDateId: number, files: File[]) => {
+    setEvidenceFiles(prev => {
+      const newMap = new Map(prev);
+      newMap.set(eventExecutionDateId, files);
+      return newMap;
+    });
+  };
 
-    // Buscar el evento en la lista de disponibles para obtener detalles completos
-    const fullEvent = availableEvents.find((e) => e.eventId === event.eventId) || null
-    setSelectedEvent(fullEvent)
+  // Retroceder en los pasos del formulario
+  const goToPreviousStep = () => {
+    if (currentStep === 'uploadFiles') {
+      setCurrentStep('selectDates');
+    } else if (currentStep === 'selectDates') {
+      setCurrentStep('searchEvent');
+      setSelectedEvent(null);
+      setSelectedFinishedEvent(null);
+    }
+  };
 
-    // Establecer valores del formulario
-    form.setValue("eventId", event.eventId)
-    form.setValue("endDate", event.completionDate)
+  // Avanzar a otra fecha (permanecer en el paso de archivos)
+  const goToNextDate = () => {
+    // La implementación actual vuelve a la lista de fechas
+    setCurrentStep('selectDates');
+  };
 
-    setIsDialogOpen(true)
-    setCurrentStep(1)
-  }
-
-  // Manejar restauración de evento
-  const handleRestore = async (eventId: number) => {
-    if (!user?.token) return
-
-    setIsLoading(true)
+  // Función para descargar un archivo de evidencia
+  const handleDownload = async (evidenceId: number, fileName: string) => {
+    if (!user?.token) return;
+    
     try {
-      await revertFinishedEvent(eventId, user.token)
-
-      toast({
-        title: "Éxito",
-        description: "Evento restaurado correctamente",
-      })
-
-      // Recargar datos
-      await loadData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo restaurar el evento",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
+      setIsLoading(true);
+      await downloadEvidence(evidenceId, fileName, user.token);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al descargar el archivo');
+      setIsLoading(false);
     }
-  }
+  };
 
-  // Manejar apertura del diálogo para nuevo evento
-  const handleOpenDialog = () => {
-    setEditingEvent(null)
-    setSelectedEvent(null)
-    form.reset({
-      eventId: 0,
-      endDate: [],
-      evidences: [],
-    })
-    setCurrentStep(1)
-    setIsDialogOpen(true)
-  }
+  // Crear evidencia
+  const createEventEvidence: SubmitHandler<CreateEvidenceRequest> = async (formData) => {
+    if (!user?.token || !selectedEvent) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Verificar que todas las fechas tengan una fecha fin
+      const invalidDates = selectedDates.filter(date => !date.endDate);
+      if (invalidDates.length > 0) {
+        setError('Todas las fechas deben tener una fecha de finalización');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Verificar que todas las fechas tengan al menos un archivo
+      const datesWithoutFiles = selectedDates.filter(
+        date => !evidenceFiles.has(date.eventExecutionDateId) || 
+                (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) === 0
+      );
+      
+      if (datesWithoutFiles.length > 0) {
+        setError('Todas las fechas deben tener al menos un archivo de evidencia');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Procesar cada fecha seleccionada
+      for (const dateInfo of selectedDates) {
+        const files = evidenceFiles.get(dateInfo.eventExecutionDateId) || [];
+        
+        const evidenceData: CreateEvidenceRequest = {
+          data: {
+            eventId: selectedEvent.eventId,
+            eventExecutionDateId: dateInfo.eventExecutionDateId,
+            endDate: dateInfo.endDate
+          },
+          evidence: files
+        };
+        
+        await createEvidence(evidenceData, user.token);
+      }
+      
+      // Refrescar datos
+      await fetchFinishedEvents();
+      resetForm();
+      setCurrentStep('searchEvent');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear evidencia');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Manejar cierre del diálogo
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false)
-    setEditingEvent(null)
-    setSelectedEvent(null)
-    form.reset()
-    setCurrentStep(1)
-  }
+  // Actualizar evidencia
+  const updateEventEvidence: SubmitHandler<UpdateEvidenceRequest> = async (formData) => {
+    if (!user?.token || !selectedFinishedEvent) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Verificar que todas las fechas tengan una fecha fin
+      const invalidDates = selectedDates.filter(date => !date.endDate);
+      if (invalidDates.length > 0) {
+        setError('Todas las fechas deben tener una fecha de finalización');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Verificar que todas las fechas seleccionadas tengan al menos un archivo
+      const datesWithoutFiles = selectedDates.filter(
+        date => !evidenceFiles.has(date.eventExecutionDateId) || 
+                (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) === 0
+      );
+      
+      if (datesWithoutFiles.length > 0) {
+        setError('Todas las fechas deben tener al menos un archivo de evidencia');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Procesar cada fecha seleccionada
+      for (const dateInfo of selectedDates) {
+        const files = evidenceFiles.get(dateInfo.eventExecutionDateId) || [];
+        
+        const evidenceData: UpdateEvidenceRequest = {
+          data: {
+            eventId: selectedFinishedEvent.eventId,
+            eventExecutionDateId: dateInfo.eventExecutionDateId,
+            endDate: dateInfo.endDate
+          },
+          evidence: files
+        };
+        
+        await updateEvidence(evidenceData, user.token);
+      }
+      
+      // Refrescar datos
+      await fetchFinishedEvents();
+      resetForm();
+      setCurrentStep('searchEvent');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al actualizar evidencia');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Restaurar evidencia
+  const restoreEventEvidence = async (eventId: number) => {
+    if (!user?.token) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      await restoreEvidence({ eventId }, user.token);
+      
+      // Actualizar listas
+      await fetchExecutedEvents();
+      await fetchFinishedEvents();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al restaurar evidencia');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reset formulario
+  const resetForm = () => {
+    createForm.reset();
+    updateForm.reset();
+    restoreForm.reset();
+    setSelectedEvent(null);
+    setSelectedFinishedEvent(null);
+    setSelectedDates([]);
+    setEvidenceFiles(new Map());
+    setIsEditing(false);
+    setCurrentDateId(null);
+  };
+
+  // Enviar formulario según el estado (crear o actualizar)
+  const onSubmit = isEditing 
+    ? updateForm.handleSubmit(updateEventEvidence) 
+    : createForm.handleSubmit(createEventEvidence);
+
+  // Toggle para hacer el popover de evidencias persistente
+  const togglePopoverSticky = () => {
+    setPopoverSticky(!popoverSticky);
+  };
 
   return {
-    finishedEvents,
-    availableEvents,
-    filteredEvents,
+    // Estado
     isLoading,
-    isDialogOpen,
-    selectedEvent,
+    error,
     currentStep,
-    searchQuery,
-    showResults,
-    form,
-    errors,
-    isValid,
-    query,
-    MAX_FILE_SIZE,
-    setSearchQuery,
-    handleEventSelect,
-    handleStepChange,
-    handleSubmit,
-    handleEdit,
-    handleRestore,
-    handleOpenDialog,
-    handleCloseDialog,
-    handleFileUpload,
-    handleRemoveFile,
-    handleSearch,
-    handleClearSelection,
-  }
-}
-
+    searchTerm,
+    dateFilter,
+    selectedEvent,
+    selectedFinishedEvent,
+    selectedDates,
+    evidenceFiles,
+    isEditing,
+    currentDateId,
+    showEvidences,
+    popoverSticky,
+    poaId,
+    
+    // Datos
+    executedEvents: filteredExecutedEvents,
+    finishedEvents: filteredFinishedEvents,
+    
+    // Acciones
+    setSearchTerm,
+    setDateFilter,
+    selectEventForEvidence,
+    selectEventForEdit,
+    selectDateForEvidence,
+    updateDateEndDate,
+    addFilesToDate,
+    goToPreviousStep,
+    goToNextDate,
+    restoreEventEvidence,
+    resetForm,
+    handleDownload,
+    setShowEvidences,
+    togglePopoverSticky,
+    
+    // Formularios
+    createForm,
+    updateForm,
+    restoreForm,
+    onSubmit
+  };
+};
