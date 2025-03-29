@@ -68,14 +68,40 @@ export const restoreEvidence = async (evidence: RestoreEvidenceRequest, token: s
   return response.json()
 }
 
-export const downloadEvidence = async (evidenceId: number, token: string): Promise<Blob> => {
+export const downloadEvidence = async (evidenceId: number, fileName: string, token: string): Promise<void> => {
   const response = await fetch(`${API_URL}/api/eventEvidence/evidences/${evidenceId}/download`, {
+    method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`
     }
-  })
-  return response.blob()
-}
+  });
+  
+  if (!response.ok) {
+    throw new Error('Error al descargar evidencia');
+  }
+  
+  // Convertir la respuesta a blob
+  const blob = await response.blob();
+  
+  // Crear URL para el blob
+  const url = window.URL.createObjectURL(blob);
+  
+  // Crear un elemento de enlace temporal
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = fileName;
+  
+  // Añadir al DOM, disparar click para abrir diálogo de guardado y limpiar
+  document.body.appendChild(a);
+  a.click();
+  
+  // Esperar un poco antes de limpiar para asegurar que el diálogo de descarga se abra
+  setTimeout(() => {
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }, 100);
+}; 
 
 
 
