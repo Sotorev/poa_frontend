@@ -33,7 +33,7 @@ export interface PEI {
 	peiId?: number; // IDs son opcionales
 	tempId?: string;
 	name: string;
-	status: 'Active' | 'Inactive';
+	status: 'Activo' | 'Inactivo';
 	strategicAreas: StrategicArea[];
 	startYear: number;
 	endYear: number;
