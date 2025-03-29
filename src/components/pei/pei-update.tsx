@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -40,8 +40,7 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 const interventionSchema = z.object({
 	interventionId: z.number().int().positive().optional(),
 	name: z.string().min(1, 'El nombre es requerido'),
-	// Add isCanonical if needed based on API/logic, not in update schema but in GET response
-	// isCanonical: z.boolean().optional(),
+	isDeleted: z.boolean().optional(),
 });
 
 const strategySchema = z.object({
@@ -51,18 +50,21 @@ const strategySchema = z.object({
 	assignedBudget: z.number().min(0).optional(),
 	executedBudget: z.number().min(0).optional(),
 	interventions: z.array(interventionSchema).optional(),
+	isDeleted: z.boolean().optional(),
 });
 
 const strategicObjectiveSchema = z.object({
 	strategicObjectiveId: z.number().int().positive().optional(),
 	description: z.string().min(1, 'La descripción es requerida'),
 	strategies: z.array(strategySchema).optional(),
+	isDeleted: z.boolean().optional(),
 });
 
 const strategicAreaSchema = z.object({
 	strategicAreaId: z.number().int().positive().optional(),
 	name: z.string().min(1, 'El nombre es requerido'),
 	strategicObjective: strategicObjectiveSchema, // Note: API GET shows this nested, update schema expects it too
+	isDeleted: z.boolean().optional(),
 });
 
 // Main schema for the update form
@@ -74,6 +76,7 @@ const updatePeiSchema = z.object({
 	startYear: z.number().int().positive().optional(),
 	endYear: z.number().int().positive(), // Required in original update schema
 	strategicAreas: z.array(strategicAreaSchema).optional(),
+	isDeleted: z.boolean().optional(),
 	// Include peiId if needed for the PUT request URL, but not part of the body schema typically
 });
 
@@ -159,23 +162,31 @@ function PEIUpdate() {
 					status: data.status,
 					startYear: data.startYear,
 					endYear: data.endYear,
-					strategicAreas: data.strategicAreas?.map(area => ({
+					strategicAreas: data.strategicAreas?.map((area: StrategicArea) => ({
 						strategicAreaId: area.strategicAreaId,
 						name: area.name,
+						isDeleted: area.isDeleted,
 						strategicObjective: {
 							strategicObjectiveId: area.strategicObjective?.strategicObjectiveId,
 							description: area.strategicObjective?.description ?? '',
-							strategies: area.strategicObjective?.strategies?.map(strategy => ({
-								strategyId: strategy.strategyId,
-								description: strategy.description,
-								completionPercentage: strategy.completionPercentage,
-								assignedBudget: strategy.assignedBudget,
-								executedBudget: strategy.executedBudget,
-								interventions: strategy.interventions?.map(intervention => ({
+							isDeleted: area.strategicObjective?.isDeleted,
+							strategies: area.strategicObjective?.strategies?.map((strategy: Strategy) => {
+								const mappedInterventions = strategy.interventions?.map((intervention: Intervention) => ({
 									interventionId: intervention.interventionId,
 									name: intervention.name,
-								})) ?? [],
-							})) ?? [],
+									isDeleted: intervention.isDeleted
+								})) ?? [];
+								
+								return {
+									strategyId: strategy.strategyId,
+									description: strategy.description,
+									completionPercentage: strategy.completionPercentage,
+									assignedBudget: strategy.assignedBudget,
+									executedBudget: strategy.executedBudget,
+									isDeleted: strategy.isDeleted,
+									interventions: mappedInterventions
+								};
+							}) ?? [],
 						},
 					})) ?? [],
 				};
@@ -195,9 +206,58 @@ function PEIUpdate() {
 		},
 	});
 
-	const { fields: strategicAreaFields, append: appendStrategicArea, remove: removeStrategicArea } = useFieldArray({
+	const { fields: strategicAreaFields, append: appendStrategicArea, remove: removeStrategicArea, update: updateStrategicArea } = useFieldArray({
 		control: form.control,
 		name: "strategicAreas",
+	});
+
+	// Logic to handle deletion with cascade effect
+	const handleDeleteStrategicArea = (areaIndex: number) => {
+		const areas = form.getValues('strategicAreas');
+		if (!areas || !areas[areaIndex]) {
+			removeStrategicArea(areaIndex);
+			return;
+		}
+		
+		const area = areas[areaIndex];
+		
+		// If it doesn't have an ID yet, just remove it from the form
+		if (!area.strategicAreaId) {
+			removeStrategicArea(areaIndex);
+			return;
+		}
+		
+		// Mark the area and all its children as deleted
+		const updatedArea = {
+			...area,
+			isDeleted: true,
+			strategicObjective: {
+				...area.strategicObjective,
+				isDeleted: true,
+				strategies: area.strategicObjective?.strategies ? 
+					area.strategicObjective.strategies.map((strategy: any) => ({
+						...strategy,
+						isDeleted: true,
+						interventions: strategy.interventions ? 
+							strategy.interventions.map((intervention: any) => ({
+								...intervention,
+								isDeleted: true
+							})) : []
+					})) : []
+			}
+		};
+		
+		// First update the data for logical deletion
+		updateStrategicArea(areaIndex, updatedArea);
+		
+		// Then remove from UI for immediate feedback
+		removeStrategicArea(areaIndex);
+	};
+
+	// Filter visible strategic areas
+	const visibleStrategicAreaFields = strategicAreaFields.filter((field, index) => {
+		const values = form.getValues(`strategicAreas.${index}`);
+		return !values?.isDeleted;
 	});
 
 	async function onSubmit(values: PeiUpdateFormData) {
@@ -344,62 +404,66 @@ function PEIUpdate() {
 						{/* Strategic Areas */}
 						<div>
 							<h3 className="text-lg font-semibold mb-4">Áreas Estratégicas</h3>
-							{strategicAreaFields.map((areaField, areaIndex) => (
-								<Card key={areaField.id} className="mb-6 border border-gray-300 dark:border-gray-700">
-									<CardHeader className="flex flex-row items-center justify-between bg-gray-50 dark:bg-gray-800 p-4">
-										<CardTitle className="text-md">Área Estratégica {areaIndex + 1}</CardTitle>
-										<Button
-											type="button"
-											variant="destructive"
-											size="sm"
-											onClick={() => removeStrategicArea(areaIndex)}
-										>
-											<Trash2 className="h-4 w-4 mr-1" /> Eliminar Área
-										</Button>
-									</CardHeader>
-									<CardContent className="p-4 space-y-4">
-										<FormField
-											control={form.control}
-											name={`strategicAreas.${areaIndex}.name`}
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel>Nombre del Área</FormLabel>
-													<FormControl>
-														<Input placeholder="Ingrese el nombre del área estratégica" {...field} />
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
+							{visibleStrategicAreaFields.map((areaField, visibleIndex) => {
+								// Find the actual index in the original array
+								const actualIndex = strategicAreaFields.findIndex(field => field.id === areaField.id);
+								return (
+									<Card key={areaField.id} className="mb-6 border border-gray-300 dark:border-gray-700">
+										<CardHeader className="flex flex-row items-center justify-between bg-gray-50 dark:bg-gray-800 p-4">
+											<CardTitle className="text-md">Área Estratégica {visibleIndex + 1}</CardTitle>
+											<Button
+												type="button"
+												variant="destructive"
+												size="sm"
+												onClick={() => handleDeleteStrategicArea(actualIndex)}
+											>
+												<Trash2 className="h-4 w-4 mr-1" /> Eliminar Área
+											</Button>
+										</CardHeader>
+										<CardContent className="p-4 space-y-4">
+											<FormField
+												control={form.control}
+												name={`strategicAreas.${actualIndex}.name`}
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Nombre del Área</FormLabel>
+														<FormControl>
+															<Input placeholder="Ingrese el nombre del área estratégica" {...field} />
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
 
-										{/* Strategic Objective (nested within Area) */}
-										<Card className="border border-blue-300 dark:border-blue-700">
-											<CardHeader className="bg-blue-50 dark:bg-blue-900 p-3">
-												<CardTitle className="text-sm">Objetivo Estratégico</CardTitle>
-											</CardHeader>
-											<CardContent className="p-4 space-y-4">
-												<FormField
-													control={form.control}
-													name={`strategicAreas.${areaIndex}.strategicObjective.description`}
-													render={({ field }) => (
-														<FormItem>
-															<FormLabel>Descripción del Objetivo</FormLabel>
-															<FormControl>
-																<Input placeholder="Ingrese la descripción del objetivo" {...field} />
-															</FormControl>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
+											{/* Strategic Objective (nested within Area) */}
+											<Card className="border border-blue-300 dark:border-blue-700">
+												<CardHeader className="bg-blue-50 dark:bg-blue-900 p-3">
+													<CardTitle className="text-sm">Objetivo Estratégico</CardTitle>
+												</CardHeader>
+												<CardContent className="p-4 space-y-4">
+													<FormField
+														control={form.control}
+														name={`strategicAreas.${actualIndex}.strategicObjective.description`}
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Descripción del Objetivo</FormLabel>
+																<FormControl>
+																	<Input placeholder="Ingrese la descripción del objetivo" {...field} />
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
 
-												{/* Strategies (nested within Objective) */}
-												<StrategiesArray control={form.control} areaIndex={areaIndex} />
+													{/* Strategies (nested within Objective) */}
+													<StrategiesArray control={form.control} areaIndex={actualIndex} />
 
-											</CardContent>
-										</Card>
-									</CardContent>
-								</Card>
-							))}
+												</CardContent>
+											</Card>
+										</CardContent>
+									</Card>
+								);
+							})}
 							<Button
 								type="button"
 								variant="outline"
@@ -435,107 +499,148 @@ interface StrategiesArrayProps {
 }
 
 const StrategiesArray: React.FC<StrategiesArrayProps> = ({ control, areaIndex }) => {
-	const { fields, append, remove } = useFieldArray({
+	// Use useFormContext to get access to the form methods
+	const { getValues } = useFormContext();
+	const { fields, append, remove, update } = useFieldArray({
 		control,
 		name: `strategicAreas.${areaIndex}.strategicObjective.strategies`,
 	});
 
+	const handleDeleteStrategy = (strategyIndex: number) => {
+		// Access strategy using the traditional approach with index path
+		const strategies = getValues(`strategicAreas.${areaIndex}.strategicObjective.strategies`);
+		if (!strategies || !strategies[strategyIndex]) {
+			// If we can't get the strategy, just remove it
+			remove(strategyIndex);
+			return;
+		}
+		
+		const strategy = strategies[strategyIndex];
+		
+		// If it doesn't have an ID yet, just remove it from the form
+		if (!strategy.strategyId) {
+			remove(strategyIndex);
+			return;
+		}
+		
+		// Otherwise, mark it as deleted
+		// Also mark all of its interventions as deleted
+		const updatedStrategy = {
+			...strategy,
+			isDeleted: true,
+			interventions: strategy.interventions ? strategy.interventions.map((intervention: any) => ({
+				...intervention,
+				isDeleted: true
+			})) : []
+		};
+		
+		// First update the data for logical deletion
+		update(strategyIndex, updatedStrategy);
+		
+		// Then remove from UI for immediate feedback
+		remove(strategyIndex);
+	};
+
 	return (
 		<div className="space-y-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
 			<h4 className="text-md font-semibold mb-2">Estrategias</h4>
-			{fields.map((strategyField, strategyIndex) => (
-				<Card key={strategyField.id} className="mb-4 border border-green-300 dark:border-green-700">
-					<CardHeader className="flex flex-row items-center justify-between bg-green-50 dark:bg-green-900 p-2">
-						<CardTitle className="text-sm">Estrategia {strategyIndex + 1}</CardTitle>
-						<Button
-							type="button"
-							variant="destructive"
-							onClick={() => remove(strategyIndex)}
-						>
-							<Trash2 className="h-3 w-3" /> {/* Smaller icon */}
-						</Button>
-					</CardHeader>
-					<CardContent className="p-3 space-y-3">
-						<FormField
-							control={control}
-							name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.description`}
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-xs">Descripción</FormLabel>
-									<FormControl>
-										<Input className="text-sm" placeholder="Descripción de la estrategia" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<div className="grid grid-cols-3 gap-2">
+			{fields.map((strategyField, visibleIndex) => {
+				// Find the actual index in the original array
+				const actualIndex = fields.findIndex(field => field.id === strategyField.id);
+				return (
+					<Card key={strategyField.id} className="mb-4 border border-green-300 dark:border-green-700">
+						<CardHeader className="flex flex-row items-center justify-between bg-green-50 dark:bg-green-900 p-2">
+							<CardTitle className="text-sm">Estrategia {visibleIndex + 1}</CardTitle>
+							<Button
+								type="button"
+								variant="destructive"
+								onClick={() => handleDeleteStrategy(actualIndex)}
+							>
+								<Trash2 className="h-3 w-3" /> {/* Smaller icon */}
+							</Button>
+						</CardHeader>
+						<CardContent className="p-3 space-y-3">
 							<FormField
 								control={control}
-								name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.completionPercentage`}
+								name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.description`}
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel className="text-xs">% Completado</FormLabel>
+										<FormLabel className="text-xs">Descripción</FormLabel>
 										<FormControl>
-											<Input
-												type="number"
-												className="text-sm"
-												placeholder="%" {...field}
-												value={field.value ?? ''}
-												onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
-											/>
+											<Input className="text-sm" placeholder="Descripción de la estrategia" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}
 							/>
-							<FormField
-								control={control}
-								name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.assignedBudget`}
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel className="text-xs">Presupuesto Asignado</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												className="text-sm"
-												placeholder="Presupuesto" {...field}
-												value={field.value ?? ''}
-												onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
-												step="0.01"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={control}
-								name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.executedBudget`}
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel className="text-xs">Presupuesto Ejecutado</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												className="text-sm"
-												placeholder="Presupuesto" {...field}
-												value={field.value ?? ''}
-												onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
-												step="0.01"
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
+							<div className="grid grid-cols-3 gap-2">
+								<FormField
+									control={control}
+									name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.completionPercentage`}
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-xs">% Completado</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													className="text-sm"
+													placeholder="%" {...field}
+													value={field.value ?? ''}
+													onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={control}
+									name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.assignedBudget`}
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-xs">Presupuesto Asignado</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													className="text-sm"
+													placeholder="Presupuesto" {...field}
+													value={field.value ?? ''}
+													onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+													step="0.01"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={control}
+									name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.executedBudget`}
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-xs">Presupuesto Ejecutado</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													className="text-sm"
+													placeholder="Presupuesto" {...field}
+													value={field.value ?? ''}
+													onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+													step="0.01"
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
 
-						{/* Interventions (nested within Strategy) */}
-						<InterventionsArray control={control} areaIndex={areaIndex} strategyIndex={strategyIndex} />
-					</CardContent>
-				</Card>
-			))}
+							{/* Interventions (nested within Strategy) */}
+							<InterventionsArray control={control} areaIndex={areaIndex} strategyIndex={actualIndex} />
+						</CardContent>
+					</Card>
+				);
+			})}
 			<Button
 				type="button"
 				variant="outline"
@@ -563,10 +668,39 @@ interface InterventionsArrayProps {
 }
 
 const InterventionsArray: React.FC<InterventionsArrayProps> = ({ control, areaIndex, strategyIndex }) => {
-	const { fields, append, remove } = useFieldArray({
+	// Use useFormContext to get access to the form methods
+	const { getValues } = useFormContext();
+	const { fields, append, remove, update } = useFieldArray({
 		control,
 		name: `strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.interventions`,
 	});
+
+	const handleDeleteIntervention = (interventionIndex: number) => {
+		// Simple removal approach that doesn't rely on accessing field values directly
+		const interventions = getValues(`strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.interventions`);
+		if (!interventions || !interventions[interventionIndex]) {
+			// If we can't get the intervention, just remove it
+			remove(interventionIndex);
+			return;
+		}
+		
+		const intervention = interventions[interventionIndex];
+		
+		// If it doesn't have an ID yet, just remove it from the form
+		if (!intervention.interventionId) {
+			remove(interventionIndex);
+			return;
+		}
+		
+		// First update the data for logical deletion
+		update(interventionIndex, {
+			...intervention,
+			isDeleted: true,
+		});
+		
+		// Then remove from UI for immediate feedback
+		remove(interventionIndex);
+	};
 
 	return (
 		<div className="space-y-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
@@ -579,7 +713,7 @@ const InterventionsArray: React.FC<InterventionsArrayProps> = ({ control, areaIn
 							type="button"
 							variant="ghost" // Less prominent delete
 							className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900"
-							onClick={() => remove(interventionIndex)}
+							onClick={() => handleDeleteIntervention(interventionIndex)}
 						>
 							<Trash2 className="h-3 w-3" />
 						</Button>
