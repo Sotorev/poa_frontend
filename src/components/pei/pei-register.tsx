@@ -39,7 +39,7 @@ export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: 
 	const [currentStep, setCurrentStep] = useState(0);
 	const [pei, setPei] = useState<PEI>({
 		name: '',
-		status: 'Active',
+		status: 'Activo',
 		strategicAreas: [],
 		startYear: new Date().getFullYear(),
 		endYear: new Date().getFullYear() + 1
@@ -47,7 +47,9 @@ export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: 
 
 	const handlePeiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
-		setPei(prev => ({ ...prev, [name]: value }));
+		// Convert value to number if the field is startYear or endYear
+		const processedValue = (name === 'startYear' || name === 'endYear') ? Number(value) : value;
+		setPei(prev => ({ ...prev, [name]: processedValue }));
 	};
 
 	const addStrategicPair = () => {
@@ -59,7 +61,6 @@ export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: 
 				{
 					name: '',
 					strategicObjective: {
-						strategicObjectiveId: Math.floor(Math.random() * 1000000), // Temporary ID
 						description: '',
 						strategies: []
 					}
@@ -464,7 +465,7 @@ export default function Component({ onSubmit, isSubmitting }: { onSubmit: (pei: 
 									<strong>Nombre:</strong> {pei.name}
 								</p>
 								<p>
-									<strong>Estado:</strong> {pei.status === 'Active' ? 'Activo' : 'Inactivo'}
+									<strong>Estado:</strong> {pei.status === 'Activo' ? 'Activo' : 'Inactivo'}
 								</p>
 								<p>
 									<strong>Año de inicio:</strong> {pei.startYear}

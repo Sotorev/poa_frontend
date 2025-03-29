@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import type { PEI } from '@/types/pei'
-import PeiManagement from './pei-management'
+import PeiManagement from './pei-register'
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Settings } from 'lucide-react'
 import { PoaRegistrationPeriodForm } from './poa-registration-period'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import Link from 'next/link'
+import { unknown } from 'zod'
 
 type PoaRegistrationPeriod = {
 	year: number
@@ -33,22 +35,21 @@ export default function PEIModule() {
 					'Authorization': `Bearer ${user?.token}`
 				},
 			})
+			const data = await response.json()
 
 			if (!response.ok) {
-				throw new Error('Error al enviar PEI')
+				throw new Error(data.error)
 			}
 
-			const data = await response.json()
 			toast({
 				title: "Éxito",
 				description: "¡PEI enviado con éxito!",
 			})
 		
 		} catch (error) {
-			console.error('Error al enviar PEI:', error)
 			toast({
 				title: "Error",
-				description: "Error al enviar el PEI. Por favor, inténtelo de nuevo.",
+				description: (error instanceof Error ? error.message : "Error al enviar el PEI. Por favor, inténtelo de nuevo."),
 				variant: "destructive",
 			})
 		} finally {
@@ -101,8 +102,10 @@ export default function PEIModule() {
 						<CardDescription>Administre y actualice el Plan Estratégico Institucional vigente</CardDescription>
 					</CardHeader>
 					<CardContent className='flex md:flex-col gap-2'>
-						{/*<Button disabled>Gestionar PEI (Próximamente)</Button>*/}
-						<PoaRegistrationPeriodForm onSubmit={handlePoaRegistrationPeriodSubmit} />
+						<Link href="/pei/editar" className='bg-primary p-2 text-white rounded-lg text-center'>
+							Editar Plan Estratégico Institucional
+						</Link>
+						{/* <PoaRegistrationPeriodForm onSubmit={handlePoaRegistrationPeriodSubmit} /> */}
 					</CardContent>
 				</Card>
 			</div>

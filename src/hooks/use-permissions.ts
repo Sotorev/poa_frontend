@@ -32,7 +32,7 @@ export function usePermissions() {
 	const { data: session } = useSession()
 
 	const checkPermission = (moduleName: string, action: 'Create' | 'Edit' | 'View' | 'Delete'): boolean => {
-		if (!session?.user.permissions) return false
+		if (!session?.user?.permissions) return false
 		const spanishModule = Object.keys(moduleMapping).find(key => moduleMapping[key] === moduleName) || moduleName
 		const spanishAction = actionMapping[action]
 		return session.user.permissions.some(
@@ -41,7 +41,7 @@ export function usePermissions() {
 	}
 
 	const checkRole = (allowedRoles: Role[]): boolean => {
-		if (!session?.user.role) return false
+		if (!session?.user?.role) return false
 		return allowedRoles.includes(session.user.role.roleName as Role)
 	}
 
