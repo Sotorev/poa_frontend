@@ -7,7 +7,10 @@ import type { EventFinishedResponse, EventFinishedDateResponse } from "./type.ev
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Calendar, Download, Edit, RotateCcw, FileText, ChevronDown, Loader2 } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { Search, Download, Edit, RotateCcw, FileText, ChevronDown, Loader2, CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
 export const EventFinishedTable: React.FC = () => {
@@ -30,6 +33,8 @@ export const EventFinishedTable: React.FC = () => {
 
   // Estado para controlar la descarga en progreso
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [startDateOpen, setStartDateOpen] = useState(false)
+  const [endDateOpen, setEndDateOpen] = useState(false)
 
   // Manejar la descarga con indicador de carga
   const handleDownloadWithLoading = async (evidenceId: number, fileName: string) => {
@@ -39,6 +44,12 @@ export const EventFinishedTable: React.FC = () => {
     } finally {
       setDownloadingId(null)
     }
+  }
+
+  // Función para formatear la fecha para mostrar
+  const formatDateDisplay = (dateString: string | undefined) => {
+    if (!dateString) return "Seleccionar fecha"
+    return format(new Date(dateString), "dd/MM/yyyy", { locale: es })
   }
 
   // Componente para mostrar el popover con las evidencias
@@ -121,29 +132,88 @@ export const EventFinishedTable: React.FC = () => {
         </div>
 
         <div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">Desde</span>
           </div>
-          <Input
-            type="date"
-            className="mt-1 border-gray-300"
-            value={dateFilter.startDate || ""}
-            onChange={(e) => setDateFilter({ ...dateFilter, startDate: e.target.value })}
-          />
+          <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !dateFilter.startDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateFilter.startDate ? formatDateDisplay(dateFilter.startDate) : "Seleccionar fecha"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                locale={es}
+                selected={dateFilter.startDate ? new Date(dateFilter.startDate) : undefined}
+                onSelect={(date) => {
+                  setDateFilter({
+                    ...dateFilter,
+                    startDate: date ? date.toISOString() : undefined,
+                  })
+                  setStartDateOpen(false)
+                }}
+                initialFocus
+                captionLayout="dropdown-buttons"
+                fromYear={new Date().getFullYear() - 5}
+                toYear={new Date().getFullYear() + 5}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">Hasta</span>
           </div>
-          <Input
-            type="date"
-            className="mt-1 border-gray-300"
-            value={dateFilter.endDate || ""}
-            onChange={(e) => setDateFilter({ ...dateFilter, endDate: e.target.value })}
-          />
+          <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !dateFilter.endDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateFilter.endDate ? formatDateDisplay(dateFilter.endDate) : "Seleccionar fecha"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                locale={es}
+                selected={dateFilter.endDate ? new Date(dateFilter.endDate) : undefined}
+                onSelect={(date) => {
+                  setDateFilter({
+                    ...dateFilter,
+                    endDate: date ? date.toISOString() : undefined,
+                  })
+                  setEndDateOpen(false)
+                }}
+                initialFocus
+                captionLayout="dropdown-buttons"
+                fromYear={new Date().getFullYear() - 5}
+                toYear={new Date().getFullYear() + 5}
+                disabled={(date) => {
+                  // Deshabilitar fechas anteriores a la fecha de inicio
+                  if (dateFilter.startDate) {
+                    return date < new Date(dateFilter.startDate)
+                  }
+                  return false
+                }}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -204,7 +274,7 @@ export const EventFinishedTable: React.FC = () => {
                                 )
                               }}
                             >
-                              <span>{date.endDate}</span>
+                              <span>{formatDateDisplay(date.endDate)}</span>
                               <ChevronDown className="h-4 w-4 ml-1 inline-block" />
                             </Button>
                           </PopoverTrigger>

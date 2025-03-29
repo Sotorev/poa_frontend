@@ -5,7 +5,11 @@ import { useEventFinished, type FormStep } from "./useEventFinished"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, ArrowLeft, Upload, Check, FileText, X, Plus } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Search, ArrowLeft, Upload, Check, FileText, X, Plus, CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
 interface DateInfo {
@@ -16,6 +20,7 @@ interface DateInfo {
 
 export const EventFinishedForm: React.FC = () => {
   const [open, setOpen] = useState(false)
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
 
   const {
     isLoading,
@@ -53,6 +58,12 @@ export const EventFinishedForm: React.FC = () => {
   const handleSuccessfulSubmit = async () => {
     await onSubmit()
     setOpen(false)
+  }
+
+  // Función para formatear la fecha para mostrar
+  const formatDateDisplay = (dateString: string | undefined) => {
+    if (!dateString) return "Seleccionar fecha"
+    return format(new Date(dateString), "dd/MM/yyyy", { locale: es })
   }
 
   // Renderizado de los pasos del formulario
@@ -246,11 +257,11 @@ export const EventFinishedForm: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="text-xs font-medium text-gray-500">Fecha inicio:</span>
-                      <div className="text-sm">{date.startDate}</div>
+                      <div className="text-sm">{date.startDate ? formatDateDisplay(date.startDate) : "No definida"}</div>
                     </div>
                     <div>
                       <span className="text-xs font-medium text-gray-500">Fecha fin:</span>
-                      <div className="text-sm">{date.endDate || "No definida"}</div>
+                      <div className="text-sm">{date.endDate ? formatDateDisplay(date.endDate) : "No definida"}</div>
                     </div>
                   </div>
                   {isSelected && (
@@ -293,13 +304,39 @@ export const EventFinishedForm: React.FC = () => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">Fecha de finalización</label>
-            <Input
-              type="date"
-              value={selectedDateInfo.endDate || ""}
-              onChange={(e) => updateDateEndDate(currentDateId, e.target.value)}
-              className="border-gray-300"
-              required
-            />
+            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !selectedDateInfo.endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDateInfo.endDate
+                    ? formatDateDisplay(selectedDateInfo.endDate)
+                    : "Seleccionar fecha"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  locale={es}
+                  selected={selectedDateInfo.endDate ? new Date(selectedDateInfo.endDate) : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      updateDateEndDate(currentDateId, date.toISOString())
+                    }
+                    setIsDatePickerOpen(false)
+                  }}
+                  initialFocus
+                  captionLayout="dropdown-buttons"
+                  fromYear={new Date().getFullYear()} 
+                  toYear={new Date().getFullYear() + 10}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>
