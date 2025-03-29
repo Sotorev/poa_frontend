@@ -68,5 +68,14 @@ export const restoreEvidence = async (evidence: RestoreEvidenceRequest, token: s
   return response.json()
 }
 
+export const downloadEvidence = async (evidenceId: number, token: string): Promise<Blob> => {
+  const response = await fetch(`${API_URL}/api/eventEvidence/evidences/${evidenceId}/download`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+  return response.blob()
+}
+
 
 
