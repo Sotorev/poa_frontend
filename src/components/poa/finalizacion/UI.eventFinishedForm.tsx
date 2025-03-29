@@ -1,507 +1,490 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { FieldErrors, UseFormReturn, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Check, File, FileSpreadsheet, FileText, Plus, Search, X, Calendar as CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-
+import React, { useState } from "react"
+import { useEventFinished, type FormStep } from "./useEventFinished"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Search, ArrowLeft, Upload, Check, FileText, X, Plus } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-import type { EventFinishedRequest } from "@/components/poa/finalizacion/type.eventFinished"
-import { eventFinishedRequestSchema } from "@/components/poa/finalizacion/schema.eventFinished"
-import { ResponseExecutedEvent } from "@/types/eventExecution.type"
+interface DateInfo {
+  id: number
+  startDate?: string
+  endDate: string
+}
 
-// Componente para mostrar los detalles del evento seleccionado
-function EventDetails({ event }: { event: ResponseExecutedEvent }) {
-  const formatDate = (dateString: string) => {
-    const [year, month, day] = dateString.split("-")
-    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day) + 1)).toLocaleDateString("es-ES")
+export const EventFinishedForm: React.FC = () => {
+  const [open, setOpen] = useState(false)
+
+  const {
+    isLoading,
+    error,
+    currentStep,
+    searchTerm,
+    selectedEvent,
+    selectedFinishedEvent,
+    selectedDates,
+    evidenceFiles,
+    isEditing,
+    currentDateId,
+    executedEvents,
+    selectEventForEvidence,
+    selectEventForEdit,
+    selectDateForEvidence,
+    updateDateEndDate,
+    addFilesToDate,
+    goToPreviousStep,
+    goToNextDate,
+    setSearchTerm,
+    resetForm,
+    createForm,
+    updateForm,
+    onSubmit,
+  } = useEventFinished()
+
+  // Función para cerrar el diálogo y resetear el formulario
+  const handleClose = () => {
+    resetForm()
+    setOpen(false)
   }
 
-  return (
-    <div className="mt-4 grid gap-4">
-      <Card className="overflow-hidden">
-        <CardHeader className="bg-primary/5 pb-4">
-          <CardTitle className="text-lg font-semibold text-primary">{event.name}</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="grid gap-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Objetivo</p>
-                <p className="font-medium">{event.objective || "No especificado"}</p>
+  // Función para manejar el envío exitoso
+  const handleSuccessfulSubmit = async () => {
+    await onSubmit()
+    setOpen(false)
+  }
+
+  // Renderizado de los pasos del formulario
+  const renderStepIndicator = () => {
+    const steps: { key: FormStep; label: string; number: number }[] = [
+      { key: "searchEvent", label: "Selección de Evento", number: 1 },
+      { key: "selectDates", label: "Selección de Fechas", number: 2 },
+      { key: "uploadFiles", label: "Subir Evidencias", number: 3 },
+    ]
+
+    const currentStepIndex = steps.findIndex((step) => step.key === currentStep)
+
+    return (
+      <div className="w-full mb-8">
+        <div className="flex items-center justify-between">
+          {steps.map((step, index) => (
+            <React.Fragment key={step.key}>
+              <div className="flex flex-col items-center">
+                <div
+                  className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-full border-2",
+                    currentStepIndex >= index
+                      ? "border-[#006837] bg-[#006837] text-white"
+                      : "border-gray-300 bg-white text-gray-400",
+                  )}
+                >
+                  {step.number}
+                </div>
+                <span
+                  className={cn(
+                    "mt-2 text-xs text-center",
+                    currentStepIndex >= index ? "font-medium text-[#006837]" : "text-gray-500",
+                  )}
+                >
+                  {step.label}
+                </span>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Campus</p>
-                <p className="font-medium">{event.campus || "No especificado"}</p>
+              {index < steps.length - 1 && (
+                <div className={cn("flex-1 h-0.5 mx-2", index < currentStepIndex ? "bg-[#006837]" : "bg-gray-300")} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Paso 1: Búsqueda de eventos
+  const renderSearchStep = () => (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          type="text"
+          className="pl-10 w-full border-gray-300"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar evento por nombre..."
+        />
+      </div>
+
+      {executedEvents.length > 0 ? (
+        <div className="mt-4 max-h-[400px] overflow-y-auto pr-1">
+          <h3 className="text-sm font-medium mb-2 text-gray-600">Eventos disponibles:</h3>
+          <div className="space-y-2">
+            {executedEvents.map((event) => (
+              <div
+                key={event.eventId}
+                className="p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => selectEventForEvidence(event)}
+              >
+                <div className="font-medium">{event.name}</div>
+                <div className="text-xs text-gray-500 mt-1">ID: {event.eventId}</div>
               </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        searchTerm && (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <FileText className="h-12 w-12 text-gray-400 mb-2 opacity-50" />
+            <p className="text-gray-500">No se encontraron eventos con ese nombre.</p>
+          </div>
+        )
+      )}
+    </div>
+  )
+
+  // Paso 2: Selección de fechas
+  const renderSelectDatesStep = () => {
+    const event = isEditing ? selectedFinishedEvent : selectedEvent
+    if (!event) return null
+
+    let dates: DateInfo[] = []
+    if (isEditing && selectedFinishedEvent) {
+      dates = selectedFinishedEvent.dates.map((date) => ({
+        id: date.eventExecutionDateId,
+        endDate: date.endDate,
+      }))
+    } else if (selectedEvent) {
+      dates = selectedEvent.eventExecutionDates.map((date) => ({
+        id: date.eventExecutionDateId,
+        startDate: date.startDate,
+        endDate: date.endDate || "",
+      }))
+    }
+
+    // Marcar fechas ya seleccionadas
+    const selectedDateIds = selectedDates.map((d) => d.eventExecutionDateId)
+
+    return (
+      <div className="space-y-4">
+        <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium">{event.name}</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {isEditing ? "Editando evento finalizado" : "Finalizando evento ejecutado"}
+              </p>
+            </div>
+            <span
+              className={cn(
+                "px-2 py-1 text-xs rounded-full",
+                isEditing ? "bg-gray-100" : "bg-[#e6f4ee] text-[#006837]",
+              )}
+            >
+              {isEditing ? "Edición" : "Nuevo"}
+            </span>
+          </div>
+        </div>
+
+        {selectedDates.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2 text-gray-600">Fechas seleccionadas:</h3>
+            <div className="space-y-2">
+              {selectedDates.map((date) => {
+                const hasFiles =
+                  evidenceFiles.has(date.eventExecutionDateId) &&
+                  (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) > 0
+                return (
+                  <div
+                    key={date.eventExecutionDateId}
+                    className="p-3 border border-gray-200 rounded-md border-l-4 border-l-[#006837]"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">Fecha ID: {date.eventExecutionDateId}</p>
+                        <p className="text-xs text-gray-500 mt-1">Fecha fin: {date.endDate || "No definida"}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {hasFiles ? (
+                          <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                            <Check className="h-3 w-3 inline mr-1" /> Archivos añadidos
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                            Pendiente
+                          </span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => selectDateForEvidence(date.eventExecutionDateId, date.endDate)}
+                          className="text-[#006837] hover:text-[#005a2f] hover:bg-[#e6f4ee]"
+                        >
+                          Editar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4">
+          <h3 className="text-sm font-medium mb-2 text-gray-600">Fechas disponibles:</h3>
+          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            {dates.map((date) => {
+              const isSelected = selectedDateIds.includes(date.id)
+              return (
+                <div
+                  key={date.id}
+                  className={cn(
+                    "p-3 border border-gray-200 rounded-md cursor-pointer transition-colors",
+                    isSelected ? "bg-[#e6f4ee] border-[#006837]" : "hover:bg-gray-50",
+                  )}
+                  onClick={() => selectDateForEvidence(date.id, date.endDate || "")}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs font-medium text-gray-500">Fecha inicio:</span>
+                      <div className="text-sm">{date.startDate}</div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-gray-500">Fecha fin:</span>
+                      <div className="text-sm">{date.endDate || "No definida"}</div>
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <div className="mt-1">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#e6f4ee] text-[#006837]">
+                        <Check className="h-3 w-3 mr-1" /> Seleccionada
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Paso 3: Subida de archivos
+  const renderUploadFilesStep = () => {
+    if (!currentDateId) return null
+
+    const selectedDateInfo = selectedDates.find((date) => date.eventExecutionDateId === currentDateId)
+
+    if (!selectedDateInfo) return null
+
+    const currentFiles = evidenceFiles.get(currentDateId) || []
+
+    return (
+      <div className="space-y-4">
+        <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium">Fecha seleccionada ID: {currentDateId}</h3>
+              <p className="text-xs text-gray-500 mt-1">Agregue la fecha de finalización y los archivos de evidencia</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Fecha de finalización</label>
+            <Input
+              type="date"
+              value={selectedDateInfo.endDate || ""}
+              onChange={(e) => updateDateEndDate(currentDateId, e.target.value)}
+              className="border-gray-300"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Archivos de evidencia (al menos uno es requerido)
+            </label>
+            <div className="border border-dashed border-gray-300 rounded-md p-6 text-center hover:bg-gray-50 transition-colors cursor-pointer">
+              <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500 mb-2">Arrastre archivos aquí o haga clic para seleccionar</p>
+              <Input
+                type="file"
+                multiple
+                className="hidden"
+                id="file-upload"
+                onChange={(e) => {
+                  if (currentDateId !== null) {
+                    const files = Array.from(e.target.files || [])
+                    addFilesToDate(currentDateId, files)
+                  }
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById("file-upload")?.click()}
+                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                Seleccionar archivos
+              </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Responsable de ejecución</p>
-                <p className="font-medium">
-                  {event.eventResponsibles?.find((r) => r.responsibleRole === "Ejecución")?.name || "No especificado"}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Costo total</p>
-                <p className="font-medium text-primary">Q{event.totalCost?.toFixed(2) || "0.00"}</p>
-              </div>
-            </div>
-
-            {event.eventExecutionDates && event.eventExecutionDates.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Fechas</p>
-                <div className="grid gap-2">
-                  {event.eventExecutionDates.map((date, index: number) => (
-                    <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
-                      <div className="h-2 w-2 rounded-full bg-primary/70" />
-                      <p className="text-sm">
-                        {formatDate(date.startDate)} - {formatDate(date.endDate)}
-                      </p>
+            {currentFiles.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos seleccionados:</h4>
+                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                  {currentFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-200"
+                    >
+                      <div className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                        <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-// Componente para mostrar los resultados de búsqueda
-function SearchResults({
-  filteredEvents,
-  handleEventSelect,
-}: {
-  filteredEvents: ResponseExecutedEvent[]
-  handleEventSelect: (event: ResponseExecutedEvent) => void
-}) {
-  return (
-    <ul className="mt-1 border rounded-md divide-y max-h-32 overflow-y-auto bg-card">
-      {filteredEvents.map((event) => (
-        <li
-          key={event.eventId}
-          className="p-3 text-sm hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-2"
-          onClick={() => handleEventSelect(event)}
-        >
-          <div className="h-2 w-2 rounded-full bg-primary/70" />
-          <span>{event.name}</span>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-// Componente para indicar los pasos del formulario
-function StepIndicator({
-  currentStep,
-  onStepClick,
-  errors,
-}: {
-  currentStep: number
-  onStepClick: (step: number) => void
-  errors: any
-}) {
-  const steps = [
-    {
-      number: 1,
-      title: "Selección de Evento",
-      fields: ["eventId"] as const,
-    },
-    {
-      number: 2,
-      title: "Datos de Finalización",
-      fields: ["endDate"] as const,
-    },
-  ]
-
-  const hasStepErrors = (stepFields: readonly string[]) => {
-    return stepFields.some((field) => {
-      return !!errors[field]
-    })
+        </div>
+      </div>
+    )
   }
 
-  return (
-    <div className="w-full mb-8">
-      <div className="relative flex justify-between">
-        {steps.map((step, index) => {
-          const isStepWithError = hasStepErrors(step.fields)
-          return (
-            <div
-              key={step.number}
-              className={cn("flex flex-col items-center relative group", "cursor-pointer")}
-              onClick={() => {
-                onStepClick(step.number)
-              }}
-            >
-              <div
-                className={cn(
-                  "w-10 h-10 rounded-full border-2 flex items-center justify-center font-semibold relative z-10 bg-background transition-colors group-hover:border-primary/70",
-                  currentStep > step.number
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : currentStep === step.number
-                      ? "border-primary text-primary"
-                      : "border-muted text-muted-foreground",
-                  isStepWithError && "border-destructive",
-                )}
-              >
-                {isStepWithError ? (
-                  <AlertCircle className="h-5 w-5 text-destructive" />
-                ) : currentStep > step.number ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  step.number
-                )}
-              </div>
-              <span
-                className={cn(
-                  "mt-2 text-sm font-medium transition-colors",
-                  currentStep >= step.number ? "text-primary group-hover:text-primary/70" : "text-muted-foreground",
-                  isStepWithError && "text-destructive",
-                )}
-              >
-                {step.title}
-              </span>
-              {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    "absolute top-5 left-full w-full h-[2px] -translate-y-1/2 transition-colors",
-                    currentStep > step.number ? "bg-primary" : "bg-muted",
-                  )}
-                  style={{ width: "calc(100% - 2.5rem)" }}
-                />
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
+  // Renderizado condicional según el paso actual
+  const renderStep = () => {
+    switch (currentStep) {
+      case "searchEvent":
+        return renderSearchStep()
+      case "selectDates":
+        return renderSelectDatesStep()
+      case "uploadFiles":
+        return renderUploadFilesStep()
+      default:
+        return null
+    }
+  }
 
-interface EventFinishedFormProps {
-  form: UseFormReturn<EventFinishedRequest>
-  errors: FieldErrors<EventFinishedRequest>
-  isValid: boolean
-  onSubmit: (data: EventFinishedRequest) => void
-  selectedEvent: ResponseExecutedEvent | null
-  handleEventSelect: (event: ResponseExecutedEvent) => void
-  isLoading?: boolean
-  currentStep: number
-  onStepChange: (step: number) => void
-  availableEvents: ResponseExecutedEvent[]
-  filteredEvents: ResponseExecutedEvent[]
-  showResults: boolean
-  query: string
-  evidences: File[]
-  MAX_FILE_SIZE: number
-  handleSearch: (searchTerm: string) => void
-  handleClearSelection: () => void
-  handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
-  handleRemoveFile: (index: number) => void
-}
-
-export function EventFinishedForm({
-  form,
-  errors,
-  isValid,
-  onSubmit,
-  selectedEvent,
-  handleEventSelect,
-  isLoading = false,
-  currentStep,
-  onStepChange,
-  availableEvents,
-  filteredEvents,
-  showResults,
-  query,
-  evidences,
-  MAX_FILE_SIZE,
-  handleSearch,
-  handleClearSelection,
-  handleFileUpload,
-  handleRemoveFile,
-}: EventFinishedFormProps) {
-  // Estado local para forzar re-renderizado
-  const [localRender, setLocalRender] = useState(0);
-  
-  // Agregar log de las props recibidas al inicio del componente
-  console.log("EventFinishedForm props:", { form, errors, isValid, evidences, currentStep })
-  
-  // Monitorear cambios en evidences para forzar re-renderizado
-  useEffect(() => {
-    console.log("Evidences cambiaron en Form:", evidences);
-    setLocalRender(prev => prev + 1);
-  }, [evidences]);
-  
-  // Monitorear cambios en isValid
-  useEffect(() => {
-    console.log("Estado de validación cambiado:", isValid);
-  }, [isValid]);
-
-  // Renderizar el contenido según el paso actual
-  const renderStepContent = () => {
-    if (currentStep === 1) {
+  // Renderizado de los botones de navegación
+  const renderNavButtons = () => {
+    if (currentStep === "searchEvent") {
       return (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Selección de Evento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <label>Evento</label>
-            <div className="relative">
-              <Input
-                placeholder="Buscar un evento..."
-                value={query}
-                onChange={(e) => {
-                  handleSearch(e.target.value)
-                }}
-              />
-              <div className="absolute right-2.5 top-2.5 flex items-center gap-2">
-                {selectedEvent ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 p-0"
-                    onClick={handleClearSelection}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-            </div>
-            {showResults && filteredEvents.length > 0 && query && (
-              <SearchResults filteredEvents={filteredEvents} handleEventSelect={handleEventSelect} />
-            )}
-            <FormDescription>Busque y seleccione el evento que desea marcar como finalizado</FormDescription>
-            <FormMessage />
-            {selectedEvent && <EventDetails event={selectedEvent} />}
-          </CardContent>
-        </Card>
+        <div className="flex justify-end">
+          <Button variant="ghost" onClick={handleClose} className="text-gray-600 hover:text-gray-800">
+            Cancelar
+          </Button>
+        </div>
       )
-    } else if (currentStep === 2) {
-      // Agregar log al renderizar el paso 2
-      console.log("Renderizando paso 2: Datos de Finalización, isValid:", isValid)
-      return (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Datos de Finalización</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {selectedEvent?.eventExecutionDates.map((date: any, index: number) => (
-                <FormField
-                  key={date.eventExecutionDateId}
-                  control={form.control}
-                  name={`endDate.${date.eventExecutionDateId}.endDate`}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Fecha de Finalización</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(new Date(field.value), "PPP", { locale: es })
-                              ) : (
-                                <span>Seleccione una fecha</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            locale={es}
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) => {
-                              if (date) {
-                                field.onChange(format(date, "yyyy-MM-dd"))
-                              }
-                            }}
-                            initialFocus
-                            captionLayout="dropdown-buttons"
-                            fromYear={new Date().getFullYear() - 1}
-                            toYear={new Date().getFullYear() + 1}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        Seleccione la fecha en que se finalizó el evento
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </CardContent>
-          </Card>
+    }
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Documentos de Prueba</CardTitle>
-              <FormDescription>
-                Suba los documentos que respaldan la finalización del evento (máximo 10MB por archivo)
-              </FormDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="evidences"
-                render={({ field }) => (
-                  <FormItem className="space-y-4">
-                    <div className="grid w-full gap-4">
-                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg px-6 py-8 text-center hover:border-primary/50 transition-colors">
-                        <FormControl>
-                          <Input type="file" multiple className="hidden" id="file-upload" onChange={handleFileUpload} />
-                        </FormControl>
-                        <label htmlFor="file-upload" className="flex flex-col items-center gap-2 cursor-pointer">
-                          <div className="rounded-full bg-primary/10 p-3">
-                            <Plus className="h-6 w-6 text-primary" />
-                          </div>
-                          <span className="text-sm font-medium">Haga clic para seleccionar archivos</span>
-                          <span className="text-xs text-muted-foreground">o arrastre y suelte aquí</span>
-                        </label>
-                      </div>
-                      {evidences && evidences.length > 0 && (
-                        <div className="border rounded-lg p-2">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {evidences.map((file: File, index: number) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md"
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className="p-1">
-                                    {(() => {
-                                      const extension = file.name.split(".").pop()?.toLowerCase()
-                                      switch (extension) {
-                                        case "xlsx":
-                                        case "xls":
-                                          return <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />
-                                        case "pdf":
-                                          return <FileText className="h-3.5 w-3.5 text-red-600" />
-                                        case "doc":
-                                        case "docx":
-                                          return <FileText className="h-3.5 w-3.5 text-blue-600" />
-                                        default:
-                                          return <File className="h-3.5 w-3.5 text-gray-400" />
-                                      }
-                                    })()}
-                                  </div>
-                                  <span className="text-sm font-medium truncate">{file.name}</span>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => handleRemoveFile(index)}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+    if (currentStep === "selectDates") {
+      return (
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={goToPreviousStep}
+            className="flex items-center gap-1 border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4" /> Volver
+          </Button>
+
+          {selectedDates.length > 0 && (
+            <Button
+              onClick={handleSuccessfulSubmit}
+              disabled={isLoading}
+              className="flex items-center gap-1 bg-[#006837] hover:bg-[#005a2f] text-white"
+            >
+              <Check className="h-4 w-4" />
+              {isLoading ? "Procesando..." : "Finalizar todas las fechas"}
+            </Button>
+          )}
+        </div>
+      )
+    }
+
+    if (currentStep === "uploadFiles") {
+      const selectedDateInfo = selectedDates.find((date) => date.eventExecutionDateId === currentDateId)
+      const currentFiles = currentDateId !== null ? (evidenceFiles.get(currentDateId) || []) : []
+      const canSubmit = selectedDateInfo?.endDate && currentFiles.length > 0 && !isLoading
+
+      return (
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={goToPreviousStep}
+            className="flex items-center gap-1 border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4" /> Volver a fechas
+          </Button>
+
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={goToNextDate}
+              disabled={!selectedDateInfo?.endDate || currentFiles.length === 0}
+              className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700"
+            >
+              Guardar y añadir otra fecha
+            </Button>
+
+            <Button
+              onClick={handleSuccessfulSubmit}
+              disabled={!canSubmit}
+              className="flex items-center gap-1 bg-[#006837] hover:bg-[#005a2f] text-white"
+            >
+              <Check className="h-4 w-4" />
+              {isLoading ? "Procesando..." : "Finalizar todas las fechas"}
+            </Button>
+          </div>
         </div>
       )
     }
   }
 
+  // Renderizado del mensaje de error
+  const renderError = () => {
+    if (!error) return null
+
+    return (
+      <div className="p-3 bg-red-50 text-red-600 rounded-md flex items-center gap-2 mt-4">
+        <X className="h-4 w-4" />
+        <p className="text-sm">{error}</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="w-full">
-      <StepIndicator currentStep={currentStep} onStepClick={onStepChange} errors={errors} />
+    <>
+      <Button
+        id="open-form-button"
+        onClick={() => setOpen(true)}
+        className="bg-[#006837] hover:bg-[#005a2f] text-white flex items-center gap-2"
+      >
+        <Plus className="h-5 w-5" /> Marcar como Completado
+      </Button>
 
-      <Form {...form}>
-        <form className="space-y-6">
-          {renderStepContent()}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800">Seguimiento de Evento POA</DialogTitle>
+          </DialogHeader>
 
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (currentStep === 1) {
-                  // Cancelar
-                  console.log("Botón Cancelar clickeado")
-                } else {
-                  console.log(`Botón Anterior clickeado, paso actual: ${currentStep}, cambiando a: ${currentStep - 1}`)
-                  onStepChange(currentStep - 1)
-                }
-              }}
-              className="sm:w-auto"
-            >
-              {currentStep === 1 ? "Cancelar" : "Anterior"}
-            </Button>
-            {currentStep < 2 ? (
-              <Button
-                type="button"
-                onClick={() => {
-                  console.log(`Botón Siguiente clickeado, cambiando a paso: ${currentStep + 1}`)
-                  onStepChange(currentStep + 1)
-                }}
-                className="sm:w-auto"
-              >
-                Siguiente
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                onClick={(e) => {
-                  e.preventDefault()
-                  console.log(`Botón Finalizar Evento clickeado, isValid: ${isValid}, evidences: ${evidences?.length}`)
-                  if (isValid || (evidences && evidences.length > 0)) {
-                    console.log("Formulario válido, enviando datos");
-                    form.handleSubmit(onSubmit)();
-                  } else {
-                    console.log("Formulario no válido, no se envían datos");
-                    // Forzar validación para mostrar errores
-                    form.trigger();
-                  }
-                }}
-                className="sm:w-auto"
-                disabled={!(isValid || (evidences && evidences.length > 0))}
-              >
-                {isLoading ? "Guardando..." : "Finalizar Evento"}
-              </Button>
-            )}
+          {renderStepIndicator()}
+
+          <div className="py-2">
+            {renderStep()}
+            {renderError()}
           </div>
-        </form>
-      </Form>
-    </div>
+
+          <DialogFooter>{renderNavButtons()}</DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
