@@ -230,9 +230,15 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
             <h3 className="text-sm font-medium mb-2 text-gray-600">Fechas seleccionadas:</h3>
             <div className="space-y-2">
               {selectedDates.map((date) => {
-                const hasFiles =
-                  evidenceFiles.has(date.eventExecutionDateId) &&
-                  (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) > 0
+                // Verificar si hay archivos nuevos o existentes
+                const hasNewFiles = evidenceFiles.has(date.eventExecutionDateId) &&
+                  (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) > 0;
+                const hasExistingFiles = isEditing && downloadedFiles.has(date.eventExecutionDateId) &&
+                  ((downloadedFiles.get(date.eventExecutionDateId)?.length || 0) > 0);
+                
+                // Determinar si tiene archivos (nuevos o existentes)
+                const hasFiles = hasNewFiles || hasExistingFiles;
+                
                 return (
                   <div
                     key={date.eventExecutionDateId}
@@ -401,12 +407,13 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
               </Button>
             </div>
 
-            {/* Mostrar archivos existentes (si estamos editando) */}
-            {isEditing && existingFiles.length > 0 && (
+            {/* Mostrar todos los archivos de evidencia */}
+            {(existingFiles.length > 0 || currentFiles.length > 0) && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos existentes:</h4>
-                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                  {existingFiles.map((file: any, index) => (
+                <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos de evidencia:</h4>
+                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                  {/* Archivos existentes */}
+                  {isEditing && existingFiles.map((file: any, index) => (
                     <div
                       key={`existing-${index}`}
                       className="flex items-center justify-between bg-blue-50 p-2 rounded-md border border-blue-200"
@@ -428,15 +435,8 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            )}
 
-            {/* Mostrar archivos nuevos seleccionados */}
-            {currentFiles.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos nuevos seleccionados:</h4>
-                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                  {/* Archivos nuevos */}
                   {currentFiles.map((file, index) => (
                     <div
                       key={`new-${index}`}

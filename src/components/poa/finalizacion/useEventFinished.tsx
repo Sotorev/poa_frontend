@@ -391,7 +391,9 @@ export const useEventFinished = () => {
   const addFilesToDate = (eventExecutionDateId: number, files: File[]) => {
     setEvidenceFiles(prev => {
       const newMap = new Map(prev);
-      newMap.set(eventExecutionDateId, files);
+      const existingFiles = newMap.get(eventExecutionDateId) || [];
+      // Añadir los nuevos archivos a los existentes en lugar de reemplazarlos
+      newMap.set(eventExecutionDateId, [...existingFiles, ...files]);
       return newMap;
     });
   };
