@@ -2,35 +2,49 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useEventFinished } from "./useEventFinished"
 import type { EventFinishedResponse, EventFinishedDateResponse } from "./type.eventFinished"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Search, Download, Edit, RotateCcw, FileText, ChevronDown, Loader2, CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
-export const EventFinishedTable: React.FC = () => {
-  const {
-    isLoading,
-    error,
-    searchTerm,
-    dateFilter,
-    finishedEvents,
-    setSearchTerm,
-    setDateFilter,
-    selectEventForEdit,
-    restoreEventEvidence,
-    showEvidences,
-    setShowEvidences,
-    handleDownload,
-    popoverSticky,
-    togglePopoverSticky,
-  } = useEventFinished()
+interface EventFinishedTableProps {
+  isLoading: boolean;
+  error: string | null;
+  searchTerm: string;
+  dateFilter: { startDate?: string; endDate?: string };
+  finishedEvents: EventFinishedResponse[];
+  setSearchTerm: (term: string) => void;
+  setDateFilter: (filter: { startDate?: string; endDate?: string }) => void;
+  selectEventForEdit: (event: EventFinishedResponse) => void;
+  restoreEventEvidence: (eventId: number) => void;
+  showEvidences: number | null;
+  setShowEvidences: (eventId: number | null) => void;
+  handleDownload: (evidenceId: number, fileName: string) => void;
+  popoverSticky: boolean;
+  togglePopoverSticky: () => void;
+}
 
+export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
+  isLoading,
+  error,
+  searchTerm,
+  dateFilter,
+  finishedEvents,
+  setSearchTerm,
+  setDateFilter,
+  selectEventForEdit,
+  restoreEventEvidence,
+  showEvidences,
+  setShowEvidences,
+  handleDownload,
+  popoverSticky,
+  togglePopoverSticky,
+}) => {
   // Estado para controlar la descarga en progreso
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [startDateOpen, setStartDateOpen] = useState(false)
@@ -49,7 +63,10 @@ export const EventFinishedTable: React.FC = () => {
   // Función para formatear la fecha para mostrar
   const formatDateDisplay = (dateString: string | undefined) => {
     if (!dateString) return "Seleccionar fecha"
-    return format(new Date(dateString), "dd/MM/yyyy", { locale: es })
+    
+    // Usar parseISO para interpretar correctamente la fecha ISO
+    const date = parseISO(dateString)
+    return format(date, "dd/MM/yyyy", { locale: es })
   }
 
   // Componente para mostrar el popover con las evidencias
@@ -153,7 +170,7 @@ export const EventFinishedTable: React.FC = () => {
               <Calendar
                 mode="single"
                 locale={es}
-                selected={dateFilter.startDate ? new Date(dateFilter.startDate) : undefined}
+                selected={dateFilter.startDate ? parseISO(dateFilter.startDate) : undefined}
                 onSelect={(date) => {
                   setDateFilter({
                     ...dateFilter,
@@ -192,7 +209,7 @@ export const EventFinishedTable: React.FC = () => {
               <Calendar
                 mode="single"
                 locale={es}
-                selected={dateFilter.endDate ? new Date(dateFilter.endDate) : undefined}
+                selected={dateFilter.endDate ? parseISO(dateFilter.endDate) : undefined}
                 onSelect={(date) => {
                   setDateFilter({
                     ...dateFilter,
@@ -207,7 +224,7 @@ export const EventFinishedTable: React.FC = () => {
                 disabled={(date) => {
                   // Deshabilitar fechas anteriores a la fecha de inicio
                   if (dateFilter.startDate) {
-                    return date < new Date(dateFilter.startDate)
+                    return date < parseISO(dateFilter.startDate)
                   }
                   return false
                 }}

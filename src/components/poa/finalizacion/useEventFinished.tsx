@@ -51,6 +51,7 @@ export const useEventFinished = () => {
   const [popoverSticky, setPopoverSticky] = useState(false);
   const [facultyId, setFacultyId] = useState<number | null>(null);
   const [poaId, setPoaId] = useState<number | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   
   // Forms
   const createForm = useForm<CreateEvidenceRequest>({
@@ -206,14 +207,43 @@ export const useEventFinished = () => {
     setSelectedDates([]);
     setEvidenceFiles(new Map());
     setCurrentDateId(null);
+    setIsFormOpen(true);
   };
 
-  // Seleccionar evento para editar evidencia
+  // Función para seleccionar un evento para editar
   const selectEventForEdit = (event: EventFinishedResponse) => {
-    setSelectedFinishedEvent(event);
+    // Limpiar estados previos
     setSelectedEvent(null);
-    setIsEditing(true);
-    setCurrentStep('selectDates');
+    setSelectedDates([]);
+    setEvidenceFiles(new Map());
+    
+    // Establecer el evento seleccionado
+    setSelectedFinishedEvent(event);
+    
+    // Seleccionar todas las fechas del evento para editar
+    if (event.dates && event.dates.length > 0) {
+      const selectedDatesArray = event.dates.map((date) => ({
+        eventExecutionDateId: date.eventExecutionDateId,
+        endDate: date.endDate,
+      }));
+      setSelectedDates(selectedDatesArray);
+      
+      // Inicializar el mapa de archivos de evidencia
+      const filesMap = new Map<number, File[]>();
+      
+      event.dates.forEach((date) => {
+        // Verificar si la fecha tiene evidencias (archivos)
+        if (date.evidenceFiles && date.evidenceFiles.length > 0) {
+          // Marcamos que hay evidencias existentes con un array vacío
+          // (los archivos existentes se mantienen en el servidor)
+          filesMap.set(date.eventExecutionDateId, []);
+        }
+      });
+      
+      setEvidenceFiles(filesMap);
+    }
+    
+    // Configurar el formulario para edición
     updateForm.reset({
       data: {
         eventId: event.eventId,
@@ -222,9 +252,11 @@ export const useEventFinished = () => {
       },
       evidence: []
     });
-    setSelectedDates([]);
-    setEvidenceFiles(new Map());
-    setCurrentDateId(null);
+    
+    // Establecer que estamos en modo edición y cambiar al paso 2
+    setIsEditing(true);
+    setCurrentStep("selectDates");
+    setIsFormOpen(true);
   };
 
   // Seleccionar fecha para evidencia y pasar al paso de archivos
@@ -357,10 +389,10 @@ export const useEventFinished = () => {
         await createEvidence(evidenceData, user.token);
       }
       
-      // Refrescar datos
+      // Refrescar datos y cerrar formulario
       await fetchFinishedEvents();
       resetForm();
-      setCurrentStep('searchEvent');
+      setIsFormOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear evidencia');
     } finally {
@@ -384,20 +416,28 @@ export const useEventFinished = () => {
         return;
       }
       
-      // Verificar que todas las fechas seleccionadas tengan al menos un archivo
+      // Solo verificar que las fechas con nuevos archivos tengan archivos
       const datesWithoutFiles = selectedDates.filter(
-        date => !evidenceFiles.has(date.eventExecutionDateId) || 
-                (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) === 0
+        date => {
+          // Solo consideramos un problema si la fecha tiene archivos nuevos pero están vacíos
+          const hasFiles = evidenceFiles.has(date.eventExecutionDateId);
+          if (!hasFiles) return false; // Si no tiene archivos nuevos, está bien
+          
+          // Si tiene archivos nuevos pero están vacíos, es un problema
+          return (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) === 0;
+        }
       );
       
       if (datesWithoutFiles.length > 0) {
-        setError('Todas las fechas deben tener al menos un archivo de evidencia');
+        setError('Todas las fechas modificadas deben tener al menos un archivo de evidencia');
         setIsLoading(false);
         return;
       }
       
-      // Procesar cada fecha seleccionada
-      for (const dateInfo of selectedDates) {
+      // Procesar solo las fechas que tienen nuevos archivos
+      const modifiedDates = selectedDates.filter(date => evidenceFiles.has(date.eventExecutionDateId));
+      
+      for (const dateInfo of modifiedDates) {
         const files = evidenceFiles.get(dateInfo.eventExecutionDateId) || [];
         
         const evidenceData: UpdateEvidenceRequest = {
@@ -412,10 +452,10 @@ export const useEventFinished = () => {
         await updateEvidence(evidenceData, user.token);
       }
       
-      // Refrescar datos
+      // Refrescar datos y cerrar formulario
       await fetchFinishedEvents();
       resetForm();
-      setCurrentStep('searchEvent');
+      setIsFormOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al actualizar evidencia');
     } finally {
@@ -454,16 +494,25 @@ export const useEventFinished = () => {
     setEvidenceFiles(new Map());
     setIsEditing(false);
     setCurrentDateId(null);
+    setCurrentStep('searchEvent');
   };
 
   // Enviar formulario según el estado (crear o actualizar)
-  const onSubmit = isEditing 
+  const onSubmitHandler = isEditing 
     ? updateForm.handleSubmit(updateEventEvidence) 
     : createForm.handleSubmit(createEventEvidence);
 
   // Toggle para hacer el popover de evidencias persistente
   const togglePopoverSticky = () => {
     setPopoverSticky(!popoverSticky);
+  };
+
+  // Función para abrir el diálogo para crear
+  const openCreateForm = () => {
+    resetForm();
+    setIsEditing(false);
+    setCurrentStep('searchEvent');
+    setIsFormOpen(true);
   };
 
   return {
@@ -482,6 +531,7 @@ export const useEventFinished = () => {
     showEvidences,
     popoverSticky,
     poaId,
+    isFormOpen,
     
     // Datos
     executedEvents: filteredExecutedEvents,
@@ -502,11 +552,13 @@ export const useEventFinished = () => {
     handleDownload,
     setShowEvidences,
     togglePopoverSticky,
+    setIsFormOpen,
+    openCreateForm,
     
     // Formularios
     createForm,
     updateForm,
     restoreForm,
-    onSubmit
+    onSubmit: onSubmitHandler
   };
 };

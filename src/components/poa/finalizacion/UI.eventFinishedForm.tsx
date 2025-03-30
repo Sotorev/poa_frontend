@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Search, ArrowLeft, Upload, Check, FileText, X, Plus, CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { EventFinishedResponse } from "./type.eventFinished"
+import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 
 interface DateInfo {
   id: number
@@ -18,52 +20,82 @@ interface DateInfo {
   endDate: string
 }
 
-export const EventFinishedForm: React.FC = () => {
-  const [open, setOpen] = useState(false)
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+interface EventFinishedFormProps {
+  isLoading: boolean;
+  error: string | null;
+  currentStep: FormStep;
+  searchTerm: string;
+  selectedEvent: ResponseExecutedEvent | null;
+  selectedFinishedEvent: EventFinishedResponse | null;
+  selectedDates: { eventExecutionDateId: number, endDate: string }[];
+  evidenceFiles: Map<number, File[]>;
+  isEditing: boolean;
+  currentDateId: number | null;
+  executedEvents: ResponseExecutedEvent[];
+  selectEventForEvidence: (event: ResponseExecutedEvent) => void;
+  selectDateForEvidence: (eventExecutionDateId: number, endDate: string) => void;
+  updateDateEndDate: (eventExecutionDateId: number, endDate: string) => void;
+  addFilesToDate: (eventExecutionDateId: number, files: File[]) => void;
+  goToPreviousStep: () => void;
+  goToNextDate: () => void;
+  setSearchTerm: (term: string) => void;
+  resetForm: () => void;
+  createForm: any; // O el tipo específico si lo tienes
+  updateForm: any; // O el tipo específico si lo tienes
+  onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
+  isFormOpen: boolean;
+  setIsFormOpen: (open: boolean) => void;
+  openCreateForm: () => void;
+}
 
-  const {
-    isLoading,
-    error,
-    currentStep,
-    searchTerm,
-    selectedEvent,
-    selectedFinishedEvent,
-    selectedDates,
-    evidenceFiles,
-    isEditing,
-    currentDateId,
-    executedEvents,
-    selectEventForEvidence,
-    selectEventForEdit,
-    selectDateForEvidence,
-    updateDateEndDate,
-    addFilesToDate,
-    goToPreviousStep,
-    goToNextDate,
-    setSearchTerm,
-    resetForm,
-    createForm,
-    updateForm,
-    onSubmit,
-  } = useEventFinished()
+export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
+  isLoading,
+  error,
+  currentStep,
+  searchTerm,
+  selectedEvent,
+  selectedFinishedEvent,
+  selectedDates,
+  evidenceFiles,
+  isEditing,
+  currentDateId,
+  executedEvents,
+  selectEventForEvidence,
+  selectDateForEvidence,
+  updateDateEndDate,
+  addFilesToDate,
+  goToPreviousStep,
+  goToNextDate,
+  setSearchTerm,
+  resetForm,
+  createForm,
+  updateForm,
+  onSubmit,
+  isFormOpen,
+  setIsFormOpen,
+  openCreateForm
+}) => {
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
 
   // Función para cerrar el diálogo y resetear el formulario
   const handleClose = () => {
     resetForm()
-    setOpen(false)
+    setIsFormOpen(false)
   }
 
   // Función para manejar el envío exitoso
-  const handleSuccessfulSubmit = async () => {
-    await onSubmit()
-    setOpen(false)
+  const handleSuccessfulSubmit = async (e?: React.BaseSyntheticEvent) => {
+    await onSubmit(e)
+    // No cerramos el diálogo aquí, el hook se encarga de ello en el submit exitoso
   }
 
   // Función para formatear la fecha para mostrar
   const formatDateDisplay = (dateString: string | undefined) => {
     if (!dateString) return "Seleccionar fecha"
-    return format(new Date(dateString), "dd/MM/yyyy", { locale: es })
+    
+    // Usar parseISO para asegurar que se interprete correctamente la fecha ISO
+    const date = parseISO(dateString)
+    return format(date, "dd/MM/yyyy", { locale: es })
   }
 
   // Renderizado de los pasos del formulario
@@ -136,7 +168,6 @@ export const EventFinishedForm: React.FC = () => {
                 onClick={() => selectEventForEvidence(event)}
               >
                 <div className="font-medium">{event.name}</div>
-                <div className="text-xs text-gray-500 mt-1">ID: {event.eventId}</div>
               </div>
             ))}
           </div>
@@ -161,6 +192,7 @@ export const EventFinishedForm: React.FC = () => {
     if (isEditing && selectedFinishedEvent) {
       dates = selectedFinishedEvent.dates.map((date) => ({
         id: date.eventExecutionDateId,
+        startDate: date.startDate,
         endDate: date.endDate,
       }))
     } else if (selectedEvent) {
@@ -184,14 +216,6 @@ export const EventFinishedForm: React.FC = () => {
                 {isEditing ? "Editando evento finalizado" : "Finalizando evento ejecutado"}
               </p>
             </div>
-            <span
-              className={cn(
-                "px-2 py-1 text-xs rounded-full",
-                isEditing ? "bg-gray-100" : "bg-[#e6f4ee] text-[#006837]",
-              )}
-            >
-              {isEditing ? "Edición" : "Nuevo"}
-            </span>
           </div>
         </div>
 
@@ -210,8 +234,7 @@ export const EventFinishedForm: React.FC = () => {
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-medium">Fecha ID: {date.eventExecutionDateId}</p>
-                        <p className="text-xs text-gray-500 mt-1">Fecha fin: {date.endDate || "No definida"}</p>
+                        <p className="text-xs text-gray-500 mt-1">Fecha fin: {date.endDate ? formatDateDisplay(date.endDate) : "No definida"}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {hasFiles ? (
@@ -220,7 +243,7 @@ export const EventFinishedForm: React.FC = () => {
                           </span>
                         ) : (
                           <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                            Pendiente
+                            Sin archivo(s)
                           </span>
                         )}
                         <Button
@@ -295,7 +318,6 @@ export const EventFinishedForm: React.FC = () => {
         <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">Fecha seleccionada ID: {currentDateId}</h3>
               <p className="text-xs text-gray-500 mt-1">Agregue la fecha de finalización y los archivos de evidencia</p>
             </div>
           </div>
@@ -323,9 +345,9 @@ export const EventFinishedForm: React.FC = () => {
                 <Calendar
                   mode="single"
                   locale={es}
-                  selected={selectedDateInfo.endDate ? new Date(selectedDateInfo.endDate) : undefined}
+                  selected={selectedDateInfo.endDate ? parseISO(selectedDateInfo.endDate) : undefined}
                   onSelect={(date) => {
-                    if (date) {
+                    if (date && currentDateId !== null) {
                       updateDateEndDate(currentDateId, date.toISOString())
                     }
                     setIsDatePickerOpen(false)
@@ -341,7 +363,7 @@ export const EventFinishedForm: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
-              Archivos de evidencia (al menos uno es requerido)
+              Archivos de evidencia {isEditing ? "(opcional)" : "(al menos uno es requerido)"}
             </label>
             <div className="border border-dashed border-gray-300 rounded-md p-6 text-center hover:bg-gray-50 transition-colors cursor-pointer">
               <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
@@ -447,7 +469,10 @@ export const EventFinishedForm: React.FC = () => {
     if (currentStep === "uploadFiles") {
       const selectedDateInfo = selectedDates.find((date) => date.eventExecutionDateId === currentDateId)
       const currentFiles = currentDateId !== null ? (evidenceFiles.get(currentDateId) || []) : []
-      const canSubmit = selectedDateInfo?.endDate && currentFiles.length > 0 && !isLoading
+      // Si estamos en modo de edición, permitir continuar si hay fecha fin, incluso sin archivos nuevos
+      const canSubmit = isEditing 
+        ? selectedDateInfo?.endDate && !isLoading
+        : selectedDateInfo?.endDate && currentFiles.length > 0 && !isLoading
 
       return (
         <div className="flex justify-between">
@@ -463,7 +488,7 @@ export const EventFinishedForm: React.FC = () => {
             <Button
               variant="secondary"
               onClick={goToNextDate}
-              disabled={!selectedDateInfo?.endDate || currentFiles.length === 0}
+              disabled={!selectedDateInfo?.endDate}
               className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700"
             >
               Guardar y añadir otra fecha
@@ -499,13 +524,13 @@ export const EventFinishedForm: React.FC = () => {
     <>
       <Button
         id="open-form-button"
-        onClick={() => setOpen(true)}
+        onClick={openCreateForm}
         className="bg-[#006837] hover:bg-[#005a2f] text-white flex items-center gap-2"
       >
         <Plus className="h-5 w-5" /> Marcar como Completado
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-gray-800">Seguimiento de Evento POA</DialogTitle>
