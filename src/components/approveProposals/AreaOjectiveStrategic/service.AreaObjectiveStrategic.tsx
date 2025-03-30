@@ -103,3 +103,25 @@ export async function updateAreaObjectiveStrategic(data: UpdateAreaObjectiveStra
     return response.json();
 }
 
+interface ChangeProposalStatusRequest {
+    id: number;
+    status: 'pending' | 'approved' | 'rejected';
+}
+
+export async function changeProposalStatus(data: ChangeProposalStatusRequest, token: string) {
+    const response = await fetch(`${API_URL}/api/areaObjectiveStrategic/changeStatus`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error(`Error al cambiar el estado de la propuesta: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+

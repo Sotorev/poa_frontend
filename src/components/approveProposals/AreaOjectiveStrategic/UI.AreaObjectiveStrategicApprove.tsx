@@ -27,6 +27,7 @@ export function AreaObjectiveStrategicApprove() {
         toggleSort,
         handleApproval,
         handleUpdateProposal,
+        handleChangeStatus
     } = useAreaObjectiveStrategicApproval()
 
     const [editedProposals, setEditedProposals] = useState<Record<number, { nameArea: string; nameObjective: string }>>({})
@@ -163,6 +164,36 @@ export function AreaObjectiveStrategicApprove() {
                                                 Rechazar
                                             </Button>
                                         </div>
+                                    ) : proposal.status === 'approved' ? (
+                                        <div className="flex justify-end space-x-2">
+                                            {isEdited && (
+                                                <Button
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                    onClick={() => handleSaveChanges(proposal.id)}
+                                                >
+                                                    <SaveIcon className="h-4 w-4 mr-1" />
+                                                    Guardar
+                                                </Button>
+                                            )}
+                                            <Button
+                                                variant="outline" 
+                                                size="sm"
+                                                className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
+                                                onClick={() => handleChangeStatus(proposal.id, 'pending')}
+                                            >
+                                                Mover a Pendiente
+                                            </Button>
+                                            <Button
+                                                variant="outline" 
+                                                size="sm"
+                                                className="text-red-600 border-red-600 hover:bg-red-50"
+                                                onClick={() => handleChangeStatus(proposal.id, 'rejected')}
+                                            >
+                                                Rechazar
+                                            </Button>
+                                        </div>
                                     ) : (
                                         <div className="flex justify-end space-x-2">
                                             {isEdited && (
@@ -176,6 +207,22 @@ export function AreaObjectiveStrategicApprove() {
                                                     Guardar
                                                 </Button>
                                             )}
+                                            <Button
+                                                variant="outline" 
+                                                size="sm"
+                                                className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
+                                                onClick={() => handleChangeStatus(proposal.id, 'pending')}
+                                            >
+                                                Mover a Pendiente
+                                            </Button>
+                                            <Button
+                                                variant="outline" 
+                                                size="sm"
+                                                className="text-green-600 border-green-600 hover:bg-green-50"
+                                                onClick={() => handleChangeStatus(proposal.id, 'approved')}
+                                            >
+                                                Aprobar
+                                            </Button>
                                         </div>
                                     )}
                                 </TableCell>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { AreaObjectiveStrategicProposal, ApproveAreaObjectiveStrategic } from './type.AreaObjectiveStrategic'
-import { getAreaObjectiveStrategicProposals, approveAreaObjectiveStrategic, updateAreaObjectiveStrategic } from './service.AreaObjectiveStrategic'
+import { getAreaObjectiveStrategicProposals, approveAreaObjectiveStrategic, updateAreaObjectiveStrategic, changeProposalStatus } from './service.AreaObjectiveStrategic'
 
 type SortColumn = 'nameArea' | 'nameObjective'
 type SortDirection = 'asc' | 'desc'
@@ -86,6 +86,35 @@ export function useAreaObjectiveStrategicApproval() {
         }
     }
 
+    // Cambiar el estado de una propuesta
+    const handleChangeStatus = async (id: number, newStatus: 'pending' | 'approved' | 'rejected') => {
+        if (!user?.token) return
+
+        try {
+            setLoading(true)
+            setError(null)
+            
+            await changeProposalStatus({
+                id,
+                status: newStatus
+            }, user.token)
+            
+            // Actualizar localmente el estado de la propuesta
+            setProposals(prevProposals => 
+                prevProposals.map(proposal => 
+                    proposal.id === id 
+                        ? { ...proposal, status: newStatus }
+                        : proposal
+                )
+            )
+        } catch (err) {
+            setError(`Error al cambiar el estado de la propuesta a ${newStatus}`)
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     // Actualizar los campos de una propuesta
     const handleUpdateProposal = async (id: number, nameArea: string, nameObjective: string) => {
         if (!user?.token) return
@@ -125,5 +154,6 @@ export function useAreaObjectiveStrategicApproval() {
         toggleSort,
         handleApproval,
         handleUpdateProposal,
+        handleChangeStatus,
     }
 }
