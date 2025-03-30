@@ -326,6 +326,9 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     const currentFiles = evidenceFiles.get(currentDateId) || []
     const existingFiles = isEditing ? (downloadedFiles.get(currentDateId) || []) : []
 
+    // Crear un mapa para rastrear nombres de archivos y evitar duplicados
+    const fileNameMap = new Map<string, boolean>();
+    
     // Función para eliminar un archivo nuevo
     const handleRemoveNewFile = (index: number) => {
       if (currentDateId) {
@@ -407,58 +410,76 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
               </Button>
             </div>
 
-            {/* Mostrar todos los archivos de evidencia */}
+            {/* Mostrar archivos de evidencia (existentes y nuevos) */}
             {(existingFiles.length > 0 || currentFiles.length > 0) && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos de evidencia:</h4>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-                  {/* Archivos existentes */}
-                  {isEditing && existingFiles.map((file: any, index) => (
-                    <div
-                      key={`existing-${index}`}
-                      className="flex items-center justify-between bg-blue-50 p-2 rounded-md border border-blue-200"
-                    >
-                      <div className="flex items-center flex-grow">
-                        <FileText className="h-4 w-4 mr-2 text-blue-500" />
-                        <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                  {/* Mostrar archivos existentes que no se han eliminado */}
+                  {isEditing && existingFiles.map((file: any, index) => {
+                    // Comprobar si este archivo ya está en el mapa para evitar duplicados
+                    const fileKey = `${file.name}-${file.size}`;
+                    if (fileNameMap.has(fileKey)) {
+                      return null;
+                    }
+                    fileNameMap.set(fileKey, true);
+                    
+                    return (
+                      <div
+                        key={`existing-${index}`}
+                        className="flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-200"
+                      >
+                        <div className="flex items-center flex-grow">
+                          <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-xs text-gray-500 mr-2">{(file.size / 1024).toFixed(1)} KB</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+                            onClick={() => removeExistingFile(currentDateId, file.evidenceId)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <span className="text-xs text-blue-500 mr-2">{(file.size / 1024).toFixed(1)} KB</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
-                          onClick={() => removeExistingFile(currentDateId, file.evidenceId)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
-                  {/* Archivos nuevos */}
-                  {currentFiles.map((file, index) => (
-                    <div
-                      key={`new-${index}`}
-                      className="flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-200"
-                    >
-                      <div className="flex items-center flex-grow">
-                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                  {/* Mostrar archivos nuevos que no sean duplicados de los existentes */}
+                  {currentFiles.map((file, index) => {
+                    // Comprobar si este archivo ya está en el mapa para evitar duplicados
+                    const fileKey = `${file.name}-${file.size}`;
+                    if (fileNameMap.has(fileKey)) {
+                      return null;
+                    }
+                    fileNameMap.set(fileKey, true);
+                    
+                    return (
+                      <div
+                        key={`new-${index}`}
+                        className="flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-200"
+                      >
+                        <div className="flex items-center flex-grow">
+                          <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-xs text-gray-500 mr-2">{(file.size / 1024).toFixed(1)} KB</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+                            onClick={() => handleRemoveNewFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <span className="text-xs text-gray-500 mr-2">{(file.size / 1024).toFixed(1)} KB</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
-                          onClick={() => handleRemoveNewFile(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
