@@ -150,7 +150,6 @@ export default function PoaTrackingPage() {
         eventExecutionDates: data.fechas.map(f => ({
           eventExecutionDateId: f.eventExecutionDateId,
           startDate: f.startDate,
-          endDate: f.endDate,
           reasonForChange: "", // default value or collect from form if needed
           isDeleted: false,
         })),
@@ -186,7 +185,6 @@ export default function PoaTrackingPage() {
         eventExecutionDates: data.fechas.map(f => ({
           eventId: parseInt(data.eventId, 10),
           startDate: f.startDate,
-          endDate: f.endDate,
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
