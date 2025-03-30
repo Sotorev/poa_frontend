@@ -3,8 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, ChevronDown, LogOut, User, Settings, FileText, Menu, Home, BookOpen, ClipboardList, CheckSquare, BarChart2 } from "lucide-react"
-import { useSession, signOut } from "next-auth/react"
+import { User, Settings, FileText, Menu, Home, BookOpen, ClipboardList, CheckSquare, BarChart2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -106,7 +105,8 @@ const navItems: NavItem[] = [
 		description: "Ejecución del POA",
 		requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'],
 		subItems: [
-			{ title: "Eventos", href: "/poa/ejecucion", description: "Eventos ejecutados", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+			{ title: "Ejecutar", href: "/poa/ejecucion", description: "Eventos ejecutados", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+			{ title: "Finalizar", href: "/poa/finalizar", description: "Finalizar el POA", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
 		],
 	}
 ]
