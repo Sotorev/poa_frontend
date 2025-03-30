@@ -316,11 +316,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     return (
       <div className="space-y-4">
         <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500 mt-1">Agregue la fecha de finalización y los archivos de evidencia</p>
-            </div>
-          </div>
+          <h3 className="text-sm font-medium text-gray-700">Agregue la fecha de finalización y los archivos de evidencia</h3>
         </div>
 
         <div className="space-y-4">
@@ -393,7 +389,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
             {currentFiles.length > 0 && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos seleccionados:</h4>
-                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
                   {currentFiles.map((file, index) => (
                     <div
                       key={index}
@@ -475,29 +471,29 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
         : selectedDateInfo?.endDate && currentFiles.length > 0 && !isLoading
 
       return (
-        <div className="flex justify-between">
+        <div className="grid grid-cols-2 gap-2 w-full">
           <Button
             variant="outline"
             onClick={goToPreviousStep}
-            className="flex items-center gap-1 border-gray-300 text-gray-700 hover:bg-gray-100"
+            className="flex items-center justify-center gap-1 border-gray-300 text-gray-700 hover:bg-gray-100"
           >
             <ArrowLeft className="h-4 w-4" /> Volver a fechas
           </Button>
 
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              onClick={goToNextDate}
-              disabled={!selectedDateInfo?.endDate}
-              className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700"
-            >
-              Guardar y añadir otra fecha
-            </Button>
+          <Button
+            variant="secondary"
+            onClick={goToNextDate}
+            disabled={!selectedDateInfo?.endDate}
+            className="flex items-center justify-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700"
+          >
+            Guardar y añadir otra fecha
+          </Button>
 
+          <div className="col-span-2 mt-2">
             <Button
               onClick={handleSuccessfulSubmit}
               disabled={!canSubmit}
-              className="flex items-center gap-1 bg-[#006837] hover:bg-[#005a2f] text-white"
+              className="w-full flex items-center justify-center gap-1 bg-[#006837] hover:bg-[#005a2f] text-white"
             >
               <Check className="h-4 w-4" />
               {isLoading ? "Procesando..." : "Finalizar todas las fechas"}
@@ -521,7 +517,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
   }
 
   return (
-    <>
+    <div className="pr-6">
       <Button
         id="open-form-button"
         onClick={openCreateForm}
@@ -546,7 +542,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
           <DialogFooter>{renderNavButtons()}</DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }
 

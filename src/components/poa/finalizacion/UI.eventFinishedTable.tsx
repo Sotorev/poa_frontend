@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { Search, Download, Edit, RotateCcw, FileText, Eye, Loader2, CalendarIcon, Calendar as CalendarIcon2, Info, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Download, Edit, RotateCcw, FileText, Eye, Loader2, CalendarIcon, Calendar as CalendarIcon2, Info, ChevronLeft, ChevronRight, ServerCog } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -53,7 +53,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
   const [startDateOpen, setStartDateOpen] = useState(false)
   const [endDateOpen, setEndDateOpen] = useState(false)
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null)
-  
+
   // Estado para la paginación
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -88,20 +88,20 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
 
   // Cálculos para la paginación
   const totalPages = Math.ceil(finishedEvents.length / itemsPerPage)
-  
+
   // Obtener eventos paginados
   const paginatedEvents = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     return finishedEvents.slice(startIndex, endIndex)
   }, [finishedEvents, currentPage, itemsPerPage])
-  
+
   // Función para ir a la página anterior
   const goToPreviousPage = () => {
     setCurrentPage(prev => Math.max(prev - 1, 1))
     setExpandedEvent(null) // Cerrar cualquier evento expandido al cambiar de página
   }
-  
+
   // Función para ir a la página siguiente
   const goToNextPage = () => {
     setCurrentPage(prev => Math.min(prev + 1, totalPages))
@@ -268,34 +268,35 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
 
   return (
     <div className="bg-gray-50 rounded-lg">
-      <div className="flex justify-between items-center p-6">
-        <h1 className="text-2xl font-bold">Eventos Finalizados</h1>
-      </div>
-
       {/* Filtros */}
-      <div className="px-6 pb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            type="text"
-            className="pl-10 border-gray-300"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre..."
-          />
+      <div className="px-6 pb-4 flex flex-row gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1 text-primary text-bold">
+            <span className="text-sm">Buscar por nombre</span>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="text"
+              className="pl-10 justify-start text-left font-normal border-gray-300"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar evento por nombre..."
+            />
+          </div>
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Desde</span>
+          <div className="flex items-center gap-2 mb-1 text-primary text-bold">
+            <span className="text-sm">Buscar desde</span>
           </div>
           <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "justify-start text-left font-normal",
                   !dateFilter.startDate && "text-muted-foreground"
                 )}
               >
@@ -324,17 +325,16 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
           </Popover>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Hasta</span>
+        <div className="justify-end">
+          <div className="flex items-center gap-2 mb-1 text-primary text-bold">
+            <span className="text-sm">Buscar hasta</span>
           </div>
           <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "justify-start text-left font-normal",
                   !dateFilter.endDate && "text-muted-foreground"
                 )}
               >
