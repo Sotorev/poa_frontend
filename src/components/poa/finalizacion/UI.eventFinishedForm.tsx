@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { useEventFinished, type FormStep } from "./useEventFinished"
+import { type FormStep } from "./useEventFinished"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,7 +24,7 @@ interface EventFinishedFormProps {
   isLoading: boolean;
   error: string | null;
   currentStep: FormStep;
-  searchTerm: string;
+  formSearchTerm: string;
   selectedEvent: ResponseExecutedEvent | null;
   selectedFinishedEvent: EventFinishedResponse | null;
   selectedDates: { eventExecutionDateId: number, endDate: string }[];
@@ -38,7 +38,7 @@ interface EventFinishedFormProps {
   addFilesToDate: (eventExecutionDateId: number, files: File[]) => void;
   goToPreviousStep: () => void;
   goToNextDate: () => void;
-  setSearchTerm: (term: string) => void;
+  setFormSearchTerm: (term: string) => void;
   resetForm: () => void;
   createForm: any; // O el tipo específico si lo tienes
   updateForm: any; // O el tipo específico si lo tienes
@@ -52,7 +52,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
   isLoading,
   error,
   currentStep,
-  searchTerm,
+  formSearchTerm,
   selectedEvent,
   selectedFinishedEvent,
   selectedDates,
@@ -66,7 +66,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
   addFilesToDate,
   goToPreviousStep,
   goToNextDate,
-  setSearchTerm,
+  setFormSearchTerm,
   resetForm,
   createForm,
   updateForm,
@@ -151,8 +151,8 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
         <Input
           type="text"
           className="pl-10 w-full border-gray-300"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={formSearchTerm}
+          onChange={(e) => setFormSearchTerm(e.target.value)}
           placeholder="Buscar evento por nombre..."
         />
       </div>
@@ -173,7 +173,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
           </div>
         </div>
       ) : (
-        searchTerm && (
+        formSearchTerm && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <FileText className="h-12 w-12 text-gray-400 mb-2 opacity-50" />
             <p className="text-gray-500">No se encontraron eventos con ese nombre.</p>
@@ -264,7 +264,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
         )}
 
         <div className="mt-4">
-          <h3 className="text-sm font-medium mb-2 text-gray-600">Fechas disponibles:</h3>
+          <h3 className="text-sm font-medium mb-2 text-gray-600">Fechas Por Finalizar:</h3>
           <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
             {dates.map((date) => {
               const isSelected = selectedDateIds.includes(date.id)

@@ -37,6 +37,7 @@ export const useEventFinished = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [formSearchTerm, setFormSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<{ startDate?: string; endDate?: string }>({});
   const [executedEvents, setExecutedEvents] = useState<ResponseExecutedEvent[]>([]);
   const [finishedEvents, setFinishedEvents] = useState<EventFinishedResponse[]>([]);
@@ -148,13 +149,13 @@ export const useEventFinished = () => {
 
   // Filtrado de eventos ejecutados
   const filteredExecutedEvents = useMemo(() => {
-    if (!searchTerm) return [];
+    if (!formSearchTerm) return [];
     if (!Array.isArray(executedEvents)) return [];
     
     return executedEvents.filter(event => 
-      event.name.toLowerCase().includes(searchTerm.toLowerCase())
+      event.name.toLowerCase().includes(formSearchTerm.toLowerCase())
     );
-  }, [executedEvents, searchTerm]);
+  }, [executedEvents, formSearchTerm]);
 
   // Fetch eventos ejecutados
   const fetchExecutedEvents = async () => {
@@ -529,6 +530,7 @@ export const useEventFinished = () => {
     error,
     currentStep,
     searchTerm,
+    formSearchTerm,
     dateFilter,
     selectedEvent,
     selectedFinishedEvent,
@@ -547,6 +549,7 @@ export const useEventFinished = () => {
     
     // Acciones
     setSearchTerm,
+    setFormSearchTerm,
     setDateFilter,
     selectEventForEvidence,
     selectEventForEdit,
