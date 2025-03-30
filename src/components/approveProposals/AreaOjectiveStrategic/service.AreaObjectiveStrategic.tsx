@@ -63,7 +63,6 @@ export async function getAreaObjectiveStrategicProposals(token: string): Promise
     ];
 }
 
-
 export async function approveAreaObjectiveStrategic(data: ApproveAreaObjectiveStrategic, token: string) {
     const response = await fetch(`${API_URL}/api/areaObjectiveStrategic/approve`, {
         method: 'POST',
@@ -76,6 +75,29 @@ export async function approveAreaObjectiveStrategic(data: ApproveAreaObjectiveSt
 
     if (!response.ok) {
         throw new Error(`Error al aprobar/rechazar propuesta: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+interface UpdateAreaObjectiveStrategicRequest {
+    id: number;
+    nameArea: string;
+    nameObjective: string;
+}
+
+export async function updateAreaObjectiveStrategic(data: UpdateAreaObjectiveStrategicRequest, token: string) {
+    const response = await fetch(`${API_URL}/api/areaObjectiveStrategic/update`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error(`Error al actualizar propuesta: ${response.statusText}`);
     }
 
     return response.json();

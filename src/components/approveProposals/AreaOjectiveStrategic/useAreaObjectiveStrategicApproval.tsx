@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { AreaObjectiveStrategicProposal, ApproveAreaObjectiveStrategic } from './type.AreaObjectiveStrategic'
-import { getAreaObjectiveStrategicProposals, approveAreaObjectiveStrategic } from './service.AreaObjectiveStrategic'
+import { getAreaObjectiveStrategicProposals, approveAreaObjectiveStrategic, updateAreaObjectiveStrategic } from './service.AreaObjectiveStrategic'
 
 type SortColumn = 'nameArea' | 'nameObjective'
 type SortDirection = 'asc' | 'desc'
@@ -86,6 +86,36 @@ export function useAreaObjectiveStrategicApproval() {
         }
     }
 
+    // Actualizar los campos de una propuesta
+    const handleUpdateProposal = async (id: number, nameArea: string, nameObjective: string) => {
+        if (!user?.token) return
+
+        try {
+            setLoading(true)
+            setError(null)
+            
+            await updateAreaObjectiveStrategic({
+                id,
+                nameArea,
+                nameObjective
+            }, user.token)
+            
+            // Actualizar localmente la propuesta modificada
+            setProposals(prevProposals => 
+                prevProposals.map(proposal => 
+                    proposal.id === id 
+                        ? { ...proposal, nameArea, nameObjective }
+                        : proposal
+                )
+            )
+        } catch (err) {
+            setError('Error al actualizar la propuesta')
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return {
         proposals: sortedProposals,
         loading,
@@ -94,5 +124,6 @@ export function useAreaObjectiveStrategicApproval() {
         sortDirection,
         toggleSort,
         handleApproval,
+        handleUpdateProposal,
     }
 }
