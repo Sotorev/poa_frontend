@@ -17,6 +17,7 @@ export default function FinalizarPage() {
     selectedFinishedEvent: eventFinishedState.selectedFinishedEvent,
     selectedDates: eventFinishedState.selectedDates,
     evidenceFiles: eventFinishedState.evidenceFiles,
+    downloadedFiles: eventFinishedState.downloadedFiles,
     isEditing: eventFinishedState.isEditing,
     currentDateId: eventFinishedState.currentDateId,
     executedEvents: eventFinishedState.executedEvents,

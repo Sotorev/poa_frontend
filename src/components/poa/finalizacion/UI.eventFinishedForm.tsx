@@ -29,6 +29,7 @@ interface EventFinishedFormProps {
   selectedFinishedEvent: EventFinishedResponse | null;
   selectedDates: { eventExecutionDateId: number, endDate: string }[];
   evidenceFiles: Map<number, File[]>;
+  downloadedFiles: Map<number, File[]>;
   isEditing: boolean;
   currentDateId: number | null;
   executedEvents: ResponseExecutedEvent[];
@@ -57,6 +58,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
   selectedFinishedEvent,
   selectedDates,
   evidenceFiles,
+  downloadedFiles,
   isEditing,
   currentDateId,
   executedEvents,
@@ -312,6 +314,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     if (!selectedDateInfo) return null
 
     const currentFiles = evidenceFiles.get(currentDateId) || []
+    const existingFiles = isEditing ? (downloadedFiles.get(currentDateId) || []) : []
 
     return (
       <div className="space-y-4">
@@ -386,13 +389,35 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
               </Button>
             </div>
 
+            {/* Mostrar archivos existentes (si estamos editando) */}
+            {isEditing && existingFiles.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos existentes:</h4>
+                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                  {existingFiles.map((file, index) => (
+                    <div
+                      key={`existing-${index}`}
+                      className="flex items-center justify-between bg-blue-50 p-2 rounded-md border border-blue-200"
+                    >
+                      <div className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-blue-500" />
+                        <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                      </div>
+                      <span className="text-xs text-blue-500">{(file.size / 1024).toFixed(1)} KB</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Mostrar archivos nuevos seleccionados */}
             {currentFiles.length > 0 && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos seleccionados:</h4>
+                <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos nuevos seleccionados:</h4>
                 <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
                   {currentFiles.map((file, index) => (
                     <div
-                      key={index}
+                      key={`new-${index}`}
                       className="flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-200"
                     >
                       <div className="flex items-center">

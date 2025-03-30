@@ -29,6 +29,11 @@ import { getFacultyByUserId } from "../eventManagement/formView/service.eventPla
 
 export type FormStep = 'searchEvent' | 'selectDates' | 'uploadFiles';
 
+// Nueva interfaz para almacenar archivos descargados
+interface DownloadedFile extends File {
+  evidenceId: number;
+}
+
 export const useEventFinished = () => {
   const user = useCurrentUser();
   const year = new Date().getFullYear();
@@ -46,6 +51,7 @@ export const useEventFinished = () => {
   const [currentStep, setCurrentStep] = useState<FormStep>('searchEvent');
   const [selectedDates, setSelectedDates] = useState<{ eventExecutionDateId: number, endDate: string }[]>([]);
   const [evidenceFiles, setEvidenceFiles] = useState<Map<number, File[]>>(new Map());
+  const [downloadedFiles, setDownloadedFiles] = useState<Map<number, DownloadedFile[]>>(new Map());
   const [isEditing, setIsEditing] = useState(false);
   const [currentDateId, setCurrentDateId] = useState<number | null>(null);
   const [showEvidences, setShowEvidences] = useState<number | null>(null);
@@ -211,12 +217,79 @@ export const useEventFinished = () => {
     setIsFormOpen(true);
   };
 
+  // Obtener archivo de evidencia sin descargarlo
+  const getEvidenceFile = async (evidenceId: number, fileName: string): Promise<File | null> => {
+    if (!user?.token) return null;
+    
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/eventEvidence/evidences/${evidenceId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al obtener el archivo de evidencia');
+      }
+      
+      // Convertir la respuesta a blob
+      const blob = await response.blob();
+      
+      // Crear un objeto File a partir del blob
+      const fileObject = new File([blob], fileName, { type: blob.type }) as DownloadedFile;
+      fileObject.evidenceId = evidenceId;
+      
+      return fileObject;
+    } catch (err) {
+      console.error('Error al obtener el archivo:', err);
+      return null;
+    }
+  };
+
+  // Cargar archivos de evidencia para el evento seleccionado para editar
+  const loadEvidenceFiles = async (dates: EventFinishedResponse['dates']): Promise<void> => {
+    if (!dates || !user?.token) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const filesMap = new Map<number, DownloadedFile[]>();
+      
+      // Iterar por cada fecha
+      for (const date of dates) {
+        if (date.evidenceFiles && date.evidenceFiles.length > 0) {
+          const downloadedFilesArray: DownloadedFile[] = [];
+          
+          // Iterar por cada archivo de evidencia
+          for (const evidence of date.evidenceFiles) {
+            const file = await getEvidenceFile(evidence.evidenceId, evidence.fileName);
+            if (file) {
+              downloadedFilesArray.push(file as DownloadedFile);
+            }
+          }
+          
+          if (downloadedFilesArray.length > 0) {
+            filesMap.set(date.eventExecutionDateId, downloadedFilesArray);
+          }
+        }
+      }
+      
+      setDownloadedFiles(filesMap);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar archivos de evidencia');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Función para seleccionar un evento para editar
-  const selectEventForEdit = (event: EventFinishedResponse) => {
+  const selectEventForEdit = async (event: EventFinishedResponse) => {
     // Limpiar estados previos
     setSelectedEvent(null);
     setSelectedDates([]);
     setEvidenceFiles(new Map());
+    setDownloadedFiles(new Map());
     
     // Establecer el evento seleccionado
     setSelectedFinishedEvent(event);
@@ -229,19 +302,8 @@ export const useEventFinished = () => {
       }));
       setSelectedDates(selectedDatesArray);
       
-      // Inicializar el mapa de archivos de evidencia
-      const filesMap = new Map<number, File[]>();
-      
-      event.dates.forEach((date) => {
-        // Verificar si la fecha tiene evidencias (archivos)
-        if (date.evidenceFiles && date.evidenceFiles.length > 0) {
-          // Marcamos que hay evidencias existentes con un array vacío
-          // (los archivos existentes se mantienen en el servidor)
-          filesMap.set(date.eventExecutionDateId, []);
-        }
-      });
-      
-      setEvidenceFiles(filesMap);
+      // Cargar los archivos de evidencia
+      await loadEvidenceFiles(event.dates);
     }
     
     // Configurar el formulario para edición
@@ -272,6 +334,19 @@ export const useEventFinished = () => {
     // Si no existe, añadirla a las fechas seleccionadas
     if (existingDateIndex === -1) {
       setSelectedDates(prev => [...prev, { eventExecutionDateId, endDate }]);
+    }
+    
+    // Si estamos en modo edición, cargar los archivos ya existentes
+    if (isEditing && downloadedFiles.has(eventExecutionDateId)) {
+      // Tomar los archivos descargados y ponerlos en el estado de archivos de evidencia
+      const files = downloadedFiles.get(eventExecutionDateId) || [];
+      setEvidenceFiles(prev => {
+        const newMap = new Map(prev);
+        // Convertir los DownloadedFile a File
+        const regularFiles = files.map(file => new File([file], file.name, { type: file.type }));
+        newMap.set(eventExecutionDateId, regularFiles);
+        return newMap;
+      });
     }
     
     // Configurar el formulario activo
@@ -536,6 +611,7 @@ export const useEventFinished = () => {
     selectedFinishedEvent,
     selectedDates,
     evidenceFiles,
+    downloadedFiles,
     isEditing,
     currentDateId,
     showEvidences,
@@ -561,6 +637,7 @@ export const useEventFinished = () => {
     restoreEventEvidence,
     resetForm,
     handleDownload,
+    getEvidenceFile,
     setShowEvidences,
     togglePopoverSticky,
     setIsFormOpen,
