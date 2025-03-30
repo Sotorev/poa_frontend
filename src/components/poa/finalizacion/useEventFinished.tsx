@@ -515,6 +515,14 @@ export const useEventFinished = () => {
     setIsFormOpen(true);
   };
 
+  // Calcular fechas pendientes para un evento
+  const getPendingDatesCount = (event: EventFinishedResponse): number => {
+    if (!event.dates || event.dates.length === 0) return 0;
+    
+    // Contar fechas sin archivos de evidencia
+    return event.dates.filter(date => !date.evidenceFiles || date.evidenceFiles.length === 0).length;
+  };
+
   return {
     // Estado
     isLoading,
@@ -554,6 +562,7 @@ export const useEventFinished = () => {
     togglePopoverSticky,
     setIsFormOpen,
     openCreateForm,
+    getPendingDatesCount,
     
     // Formularios
     createForm,

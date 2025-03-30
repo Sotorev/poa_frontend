@@ -14,7 +14,23 @@ export default function FinalizarPage() {
         <EventFinishedForm {...eventFinishedState} />
       </div>
       
-      <EventFinishedTable {...eventFinishedState} />
+      <EventFinishedTable 
+        isLoading={eventFinishedState.isLoading}
+        error={eventFinishedState.error}
+        searchTerm={eventFinishedState.searchTerm}
+        dateFilter={eventFinishedState.dateFilter}
+        finishedEvents={eventFinishedState.finishedEvents}
+        setSearchTerm={eventFinishedState.setSearchTerm}
+        setDateFilter={eventFinishedState.setDateFilter}
+        selectEventForEdit={eventFinishedState.selectEventForEdit}
+        restoreEventEvidence={eventFinishedState.restoreEventEvidence}
+        showEvidences={eventFinishedState.showEvidences}
+        setShowEvidences={eventFinishedState.setShowEvidences}
+        handleDownload={eventFinishedState.handleDownload}
+        popoverSticky={eventFinishedState.popoverSticky}
+        togglePopoverSticky={eventFinishedState.togglePopoverSticky}
+        getPendingDatesCount={eventFinishedState.getPendingDatesCount}
+      />
     </div>
   )
 }

@@ -1,16 +1,17 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import type { EventFinishedResponse, EventFinishedDateResponse } from "./type.eventFinished"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { Search, Download, Edit, RotateCcw, FileText, ChevronDown, Loader2, CalendarIcon } from "lucide-react"
+import { Search, Download, Edit, RotateCcw, FileText, Eye, Loader2, CalendarIcon, Calendar as CalendarIcon2, Info } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface EventFinishedTableProps {
   isLoading: boolean;
@@ -27,6 +28,7 @@ interface EventFinishedTableProps {
   handleDownload: (evidenceId: number, fileName: string) => void;
   popoverSticky: boolean;
   togglePopoverSticky: () => void;
+  getPendingDatesCount: (event: EventFinishedResponse) => number;
 }
 
 export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
@@ -44,11 +46,13 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
   handleDownload,
   popoverSticky,
   togglePopoverSticky,
+  getPendingDatesCount,
 }) => {
   // Estado para controlar la descarga en progreso
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [startDateOpen, setStartDateOpen] = useState(false)
   const [endDateOpen, setEndDateOpen] = useState(false)
+  const [expandedEvent, setExpandedEvent] = useState<number | null>(null)
 
   // Manejar la descarga con indicador de carga
   const handleDownloadWithLoading = async (evidenceId: number, fileName: string) => {
@@ -63,10 +67,19 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
   // Función para formatear la fecha para mostrar
   const formatDateDisplay = (dateString: string | undefined) => {
     if (!dateString) return "Seleccionar fecha"
-    
+
     // Usar parseISO para interpretar correctamente la fecha ISO
     const date = parseISO(dateString)
     return format(date, "dd/MM/yyyy", { locale: es })
+  }
+
+  // Función para alternar la expansión de un evento
+  const toggleEventExpand = (eventId: number) => {
+    setExpandedEvent(expandedEvent === eventId ? null : eventId)
+    // Si cerramos el evento, también cerramos cualquier popover abierto
+    if (expandedEvent === eventId) {
+      setShowEvidences(null)
+    }
   }
 
   // Componente para mostrar el popover con las evidencias
@@ -128,6 +141,104 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
       </PopoverContent>
     )
   }
+
+  // Renderizar la fila de fechas expandida para un evento
+  const renderExpandedDates = (event: EventFinishedResponse) => {
+    return (
+      <tr
+        key={`expanded-${event.eventId}`}
+        className="bg-gray-50/70"
+      >
+        <td colSpan={3} className="py-4 px-6">
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Fechas de finalización:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {event.dates.map((date) => (
+                <div
+                  key={date.eventExecutionDateId}
+                  className="p-3 bg-white rounded-md border border-gray-200 shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon2 className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium">{formatDateDisplay(date.endDate)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Inicio: {formatDateDisplay(date.startDate)}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-gray-100"
+                    >
+                      {date.evidenceFiles.length} {date.evidenceFiles.length === 1 ? 'archivo' : 'archivos'}
+                    </Badge>
+                  </div>
+
+                  {date.evidenceFiles.length > 0 && (
+                    <div className="mt-3 space-y-2 max-h-[150px] overflow-y-auto">
+                      {date.evidenceFiles.map((file) => (
+                        <div
+                          key={file.evidenceId}
+                          className="flex justify-between items-center p-2 rounded-md text-sm border border-gray-100 hover:bg-gray-50"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{file.fileName}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 flex-shrink-0"
+                            onClick={() => handleDownloadWithLoading(file.evidenceId, file.fileName)}
+                            disabled={downloadingId === file.evidenceId}
+                          >
+                            {downloadingId === file.evidenceId ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Download className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </td>
+      </tr>
+    )
+  }
+
+  // Componente para mostrar el indicador de estado de las fechas
+  const StatusIndicator = ({ event }: { event: EventFinishedResponse }) => {
+    const pendingCount = getPendingDatesCount(event);
+    const isComplete = pendingCount === 0;
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className={cn(
+                "w-3 h-3 rounded-full inline-block mr-2",
+                isComplete ? "bg-green-500" : "bg-yellow-500"
+              )}
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            {isComplete
+              ? "Ya sean agregado las evidencias necesarias"
+              : `Es necesario agregar ${pendingCount} evidencia(s)`
+            }
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   return (
     <div className="bg-gray-50 rounded-lg">
@@ -241,7 +352,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-3 px-6 text-left font-medium text-gray-600 border-b">Nombre del Evento</th>
-                <th className="py-3 px-6 text-left font-medium text-gray-600 border-b">Fechas de Ejecución</th>
+                <th className="py-3 px-6 text-left font-medium text-gray-600 border-b">Fechas de finalización</th>
                 <th className="py-3 px-6 text-right font-medium text-gray-600 border-b">Acciones</th>
               </tr>
             </thead>
@@ -265,68 +376,71 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                finishedEvents.map((event: EventFinishedResponse) =>
-                  event.dates?.map((date: EventFinishedDateResponse, index) => (
-                    <tr
-                      key={`${event.eventId}-${date.eventExecutionDateId}`}
-                      className={cn("border-b", index % 2 === 0 ? "bg-white" : "bg-gray-50")}
-                    >
-                      <td className="py-4 px-6 font-medium">{event.name}</td>
-                      <td className="py-4 px-6">
-                        <Popover
-                          open={showEvidences === date.eventExecutionDateId || undefined}
-                          onOpenChange={(open) => {
-                            if (!popoverSticky || !open) {
-                              setShowEvidences(open ? date.eventExecutionDateId : null)
-                            }
-                          }}
-                        >
-                          <PopoverTrigger asChild>
+                // Modificamos el mapeo para mostrar solo una fila por evento
+                finishedEvents.map((event: EventFinishedResponse) => {
+                  const isExpanded = expandedEvent === event.eventId;
+                  return (
+                    <React.Fragment key={event.eventId}>
+                      <tr
+                        className={cn(
+                          "border-b cursor-pointer hover:bg-gray-50/80",
+                          isExpanded && "bg-gray-50/50 border-gray-300"
+                        )}
+                        onClick={() => toggleEventExpand(event.eventId)}
+                      >
+                        <td className="py-4 px-6 font-medium">
+                          <div className="flex items-center">
+                            <StatusIndicator event={event} />
+                            {event.name}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center">
+                            {event.dates.map(date => (
+                              <span key={date.eventExecutionDateId} className="mr-1 text-sm">{date.endDate}</span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center justify-end gap-2">
                             <Button
                               variant="ghost"
-                              className="p-0 h-auto font-normal text-left hover:bg-transparent hover:underline"
-                              onClick={() => {
-                                setShowEvidences(
-                                  showEvidences === date.eventExecutionDateId ? null : date.eventExecutionDateId,
-                                )
+                              size="sm"
+                              className="h-9 w-9 p-0 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-600/10"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 p-0 rounded-md border border-[#006837] text-[#006837] hover:bg-[#e6f4ee]"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Evitar que se expanda la fila
+                                selectEventForEdit(event);
                               }}
                             >
-                              <span>{formatDateDisplay(date.endDate)}</span>
-                              <ChevronDown className="h-4 w-4 ml-1 inline-block" />
+                              <Edit className="h-4 w-4" />
                             </Button>
-                          </PopoverTrigger>
-                          {showEvidences === date.eventExecutionDateId && (
-                            <EvidencePopover event={event} dateId={date.eventExecutionDateId} />
-                          )}
-                        </Popover>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 w-9 p-0 rounded-md border border-[#006837] text-[#006837] hover:bg-[#e6f4ee]"
-                            onClick={() => selectEventForEdit(event)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 w-9 p-0 rounded-md border border-gray-300 hover:border-gray-400"
-                            onClick={() => {
-                              if (window.confirm("¿Está seguro de restaurar este evento?")) {
-                                restoreEventEvidence(event.eventId)
-                              }
-                            }}
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  )),
-                )
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 p-0 rounded-md border border-gray-300 hover:border-gray-400"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Evitar que se expanda la fila
+                                if (window.confirm("¿Está seguro de restaurar este evento?")) {
+                                  restoreEventEvidence(event.eventId);
+                                }
+                              }}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && renderExpandedDates(event)}
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>
