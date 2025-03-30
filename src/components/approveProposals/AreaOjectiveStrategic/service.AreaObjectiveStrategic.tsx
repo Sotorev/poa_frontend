@@ -1,4 +1,4 @@
-import { ProposeAreaObjectiveStrategic } from './type.event'
+import { ProposeAreaObjectiveStrategic } from './type.AreaObjectiveStrategic'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 

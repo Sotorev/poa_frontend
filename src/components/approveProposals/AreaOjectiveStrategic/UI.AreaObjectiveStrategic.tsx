@@ -7,12 +7,11 @@ import { useForm } from "react-hook-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 // Types
-import { proposeAreaObjectiveStrategicSchema } from "../schema.event"
-import { ProposeAreaObjectiveStrategic } from "../type.event"
+import { proposeAreaObjectiveStrategicSchema } from "./schema.AreaObjectiveStrategic"
+import { ProposeAreaObjectiveStrategic } from "./type.AreaObjectiveStrategic"
 
 interface ProposeAreaObjectiveStrategicProps {
     isOpen: boolean

@@ -10,7 +10,7 @@ import { Campus } from '@/types/Campus'
 import { FinancingSource } from '@/types/FinancingSource'
 import { StrategicArea } from '@/types/StrategicArea'
 import { StrategicObjective } from '@/types/StrategicObjective';
-import { ProposeAreaObjectiveStrategic } from './type.event';
+import { ProposeAreaObjectiveStrategic } from '@/components/approveProposals/AreaOjectiveStrategic/type.AreaObjectiveStrategic';
 
 // Charge data
 import {
@@ -29,8 +29,8 @@ import {
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getFinancingSources, getPoaByFacultyAndYear } from './formView/service.eventPlanningForm'
 import { PlanningEvent, Session } from './formView/type.eventPlanningForm';
-import { FullEventRequest, UpdateEventRequest } from './formView/schema.eventPlanningForm';
-import { proposeAreaObjectiveStrategic } from './service.event';
+import { UpdateEventRequest } from './formView/schema.eventPlanningForm';
+import { proposeAreaObjectiveStrategic } from '@/components/approveProposals/AreaOjectiveStrategic/service.AreaObjectiveStrategic';
 
 interface EventContextProps {
     financingSources: FinancingSource[];

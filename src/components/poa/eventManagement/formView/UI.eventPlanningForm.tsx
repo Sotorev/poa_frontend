@@ -29,7 +29,7 @@ import { DetalleProcesoComponent } from "../fields/detalle-proceso"
 import { ValidationErrorsModal } from "./UI.validationErrorsModal"
 import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
-import { ProposeAreaObjectiveStrategicDialog } from "../propose/UI.AreaObjectiveStrategic"
+import { ProposeAreaObjectiveStrategicDialog } from "@/components/approveProposals/AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
 
 // Types
 import type { UpdateEventRequest } from "./schema.eventPlanningForm"
