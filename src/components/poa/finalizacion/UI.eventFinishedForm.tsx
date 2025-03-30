@@ -30,6 +30,7 @@ interface EventFinishedFormProps {
   selectedDates: { eventExecutionDateId: number, endDate: string }[];
   evidenceFiles: Map<number, File[]>;
   downloadedFiles: Map<number, File[]>;
+  removedEvidenceIds: Set<number>;
   isEditing: boolean;
   currentDateId: number | null;
   executedEvents: ResponseExecutedEvent[];
@@ -37,6 +38,7 @@ interface EventFinishedFormProps {
   selectDateForEvidence: (eventExecutionDateId: number, endDate: string) => void;
   updateDateEndDate: (eventExecutionDateId: number, endDate: string) => void;
   addFilesToDate: (eventExecutionDateId: number, files: File[]) => void;
+  removeExistingFile: (dateId: number, evidenceId: number) => void;
   goToPreviousStep: () => void;
   goToNextDate: () => void;
   setFormSearchTerm: (term: string) => void;
@@ -59,6 +61,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
   selectedDates,
   evidenceFiles,
   downloadedFiles,
+  removedEvidenceIds,
   isEditing,
   currentDateId,
   executedEvents,
@@ -66,6 +69,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
   selectDateForEvidence,
   updateDateEndDate,
   addFilesToDate,
+  removeExistingFile,
   goToPreviousStep,
   goToNextDate,
   setFormSearchTerm,
@@ -316,6 +320,14 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     const currentFiles = evidenceFiles.get(currentDateId) || []
     const existingFiles = isEditing ? (downloadedFiles.get(currentDateId) || []) : []
 
+    // Función para eliminar un archivo nuevo
+    const handleRemoveNewFile = (index: number) => {
+      if (currentDateId) {
+        const files = currentFiles.filter((_, i) => i !== index);
+        addFilesToDate(currentDateId, files);
+      }
+    }
+
     return (
       <div className="space-y-4">
         <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
@@ -394,16 +406,26 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos existentes:</h4>
                 <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                  {existingFiles.map((file, index) => (
+                  {existingFiles.map((file: any, index) => (
                     <div
                       key={`existing-${index}`}
                       className="flex items-center justify-between bg-blue-50 p-2 rounded-md border border-blue-200"
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-grow">
                         <FileText className="h-4 w-4 mr-2 text-blue-500" />
                         <span className="text-sm truncate max-w-[200px]">{file.name}</span>
                       </div>
-                      <span className="text-xs text-blue-500">{(file.size / 1024).toFixed(1)} KB</span>
+                      <div className="flex items-center">
+                        <span className="text-xs text-blue-500 mr-2">{(file.size / 1024).toFixed(1)} KB</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => removeExistingFile(currentDateId, file.evidenceId)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -420,14 +442,32 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
                       key={`new-${index}`}
                       className="flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-200"
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-grow">
                         <FileText className="h-4 w-4 mr-2 text-gray-500" />
                         <span className="text-sm truncate max-w-[200px]">{file.name}</span>
                       </div>
-                      <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</span>
+                      <div className="flex items-center">
+                        <span className="text-xs text-gray-500 mr-2">{(file.size / 1024).toFixed(1)} KB</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => handleRemoveNewFile(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Mostrar mensaje si no hay archivos */}
+            {isEditing && existingFiles.length === 0 && currentFiles.length === 0 && (
+              <div className="mt-4 p-3 bg-yellow-50 text-yellow-700 rounded-md">
+                <p className="text-sm font-medium">No hay archivos seleccionados</p>
+                <p className="text-xs mt-1">Debe seleccionar al menos un archivo de evidencia.</p>
               </div>
             )}
           </div>

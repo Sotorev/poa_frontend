@@ -52,6 +52,7 @@ export const useEventFinished = () => {
   const [selectedDates, setSelectedDates] = useState<{ eventExecutionDateId: number, endDate: string }[]>([]);
   const [evidenceFiles, setEvidenceFiles] = useState<Map<number, File[]>>(new Map());
   const [downloadedFiles, setDownloadedFiles] = useState<Map<number, DownloadedFile[]>>(new Map());
+  const [removedEvidenceIds, setRemovedEvidenceIds] = useState<Set<number>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const [currentDateId, setCurrentDateId] = useState<number | null>(null);
   const [showEvidences, setShowEvidences] = useState<number | null>(null);
@@ -340,13 +341,18 @@ export const useEventFinished = () => {
     if (isEditing && downloadedFiles.has(eventExecutionDateId)) {
       // Tomar los archivos descargados y ponerlos en el estado de archivos de evidencia
       const files = downloadedFiles.get(eventExecutionDateId) || [];
-      setEvidenceFiles(prev => {
-        const newMap = new Map(prev);
-        // Convertir los DownloadedFile a File
-        const regularFiles = files.map(file => new File([file], file.name, { type: file.type }));
-        newMap.set(eventExecutionDateId, regularFiles);
-        return newMap;
-      });
+      // Filtrar archivos eliminados que están en removedEvidenceIds
+      const filteredFiles = files.filter(file => !removedEvidenceIds.has((file as DownloadedFile).evidenceId));
+      
+      if (filteredFiles.length > 0) {
+        setEvidenceFiles(prev => {
+          const newMap = new Map(prev);
+          // Convertir los DownloadedFile a File
+          const regularFiles = filteredFiles.map(file => new File([file], file.name, { type: file.type }));
+          newMap.set(eventExecutionDateId, regularFiles);
+          return newMap;
+        });
+      }
     }
     
     // Configurar el formulario activo
@@ -571,6 +577,8 @@ export const useEventFinished = () => {
     setIsEditing(false);
     setCurrentDateId(null);
     setCurrentStep('searchEvent');
+    setDownloadedFiles(new Map());
+    setRemovedEvidenceIds(new Set());
   };
 
   // Enviar formulario según el estado (crear o actualizar)
@@ -599,6 +607,27 @@ export const useEventFinished = () => {
     return event.dates.filter(date => !date.evidenceFiles || date.evidenceFiles.length === 0).length;
   };
 
+  // Función para eliminar un archivo existente
+  const removeExistingFile = (dateId: number, evidenceId: number) => {
+    // Actualizar el mapa de archivos descargados para eliminar el archivo
+    setDownloadedFiles(prev => {
+      const newMap = new Map(prev);
+      const files = newMap.get(dateId) || [];
+      const updatedFiles = files.filter(file => (file as DownloadedFile).evidenceId !== evidenceId);
+      
+      if (updatedFiles.length > 0) {
+        newMap.set(dateId, updatedFiles);
+      } else {
+        newMap.delete(dateId);
+      }
+      
+      return newMap;
+    });
+    
+    // Añadir el ID a la lista de evidencias removidas
+    setRemovedEvidenceIds(prev => new Set(prev.add(evidenceId)));
+  };
+
   return {
     // Estado
     isLoading,
@@ -612,6 +641,7 @@ export const useEventFinished = () => {
     selectedDates,
     evidenceFiles,
     downloadedFiles,
+    removedEvidenceIds,
     isEditing,
     currentDateId,
     showEvidences,
@@ -643,6 +673,7 @@ export const useEventFinished = () => {
     setIsFormOpen,
     openCreateForm,
     getPendingDatesCount,
+    removeExistingFile,
     
     // Formularios
     createForm,
