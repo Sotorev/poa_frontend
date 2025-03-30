@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import type { EventFinishedResponse, EventFinishedDateResponse } from "./type.eventFinished"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { Search, Download, Edit, RotateCcw, FileText, Eye, Loader2, CalendarIcon, Calendar as CalendarIcon2, Info } from "lucide-react"
+import { Search, Download, Edit, RotateCcw, FileText, Eye, Loader2, CalendarIcon, Calendar as CalendarIcon2, Info, ChevronLeft, ChevronRight } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -53,6 +53,10 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
   const [startDateOpen, setStartDateOpen] = useState(false)
   const [endDateOpen, setEndDateOpen] = useState(false)
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null)
+  
+  // Estado para la paginación
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   // Manejar la descarga con indicador de carga
   const handleDownloadWithLoading = async (evidenceId: number, fileName: string) => {
@@ -80,6 +84,28 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
     if (expandedEvent === eventId) {
       setShowEvidences(null)
     }
+  }
+
+  // Cálculos para la paginación
+  const totalPages = Math.ceil(finishedEvents.length / itemsPerPage)
+  
+  // Obtener eventos paginados
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return finishedEvents.slice(startIndex, endIndex)
+  }, [finishedEvents, currentPage, itemsPerPage])
+  
+  // Función para ir a la página anterior
+  const goToPreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1))
+    setExpandedEvent(null) // Cerrar cualquier evento expandido al cambiar de página
+  }
+  
+  // Función para ir a la página siguiente
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+    setExpandedEvent(null) // Cerrar cualquier evento expandido al cambiar de página
   }
 
   // Componente para mostrar el popover con las evidencias
@@ -376,8 +402,8 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                // Modificamos el mapeo para mostrar solo una fila por evento
-                finishedEvents.map((event: EventFinishedResponse) => {
+                // Modificamos el mapeo para mostrar solo los eventos de la página actual
+                paginatedEvents.map((event: EventFinishedResponse) => {
                   const isExpanded = expandedEvent === event.eventId;
                   return (
                     <React.Fragment key={event.eventId}>
@@ -397,7 +423,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                         <td className="py-4 px-6">
                           <div className="flex items-center">
                             {event.dates.map(date => (
-                              <span key={date.eventExecutionDateId} className="mr-1 text-sm">{date.endDate}</span>
+                              <span key={date.eventExecutionDateId} className="mr-1 text-sm">{formatDateDisplay(date.endDate)}</span>
                             ))}
                           </div>
                         </td>
@@ -445,6 +471,40 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {finishedEvents.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="text-sm text-gray-500">
+              Mostrando {Math.min(finishedEvents.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(currentPage * itemsPerPage, finishedEvents.length)} de {finishedEvents.length} eventos
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="h-8 px-3"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="ml-1">Anterior</span>
+              </Button>
+              <div className="text-sm font-medium">
+                Página {currentPage} de {totalPages || 1}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={currentPage >= totalPages}
+                className="h-8 px-3"
+              >
+                <span className="mr-1">Siguiente</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-md flex items-center gap-2">
