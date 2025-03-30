@@ -10,6 +10,7 @@ import { Campus } from '@/types/Campus'
 import { FinancingSource } from '@/types/FinancingSource'
 import { StrategicArea } from '@/types/StrategicArea'
 import { StrategicObjective } from '@/types/StrategicObjective';
+import { ProposeAreaObjectiveStrategic } from './type.event';
 
 // Charge data
 import {
@@ -29,6 +30,7 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 import { getFinancingSources, getPoaByFacultyAndYear } from './formView/service.eventPlanningForm'
 import { PlanningEvent, Session } from './formView/type.eventPlanningForm';
 import { FullEventRequest, UpdateEventRequest } from './formView/schema.eventPlanningForm';
+import { proposeAreaObjectiveStrategic } from './service.event';
 
 interface EventContextProps {
     financingSources: FinancingSource[];
@@ -55,6 +57,9 @@ interface EventContextProps {
     setPoaId: (poaId: number) => void;
     eventEditing: UpdateEventRequest | undefined;
     handleEditEvent: (event: PlanningEvent) => void;
+    isProposeDialogOpen: boolean;
+    setIsProposeDialogOpen: (isOpen: boolean) => void;
+    handleProposeAreaObjectiveStrategic: (data: ProposeAreaObjectiveStrategic) => Promise<void>;
 }
 
 export const EventContext = createContext<EventContextProps>({
@@ -82,6 +87,9 @@ export const EventContext = createContext<EventContextProps>({
     setPoaId: (_poaId: number) => { },
     eventEditing: undefined,
     handleEditEvent: (_event: PlanningEvent) => { },
+    isProposeDialogOpen: false,
+    setIsProposeDialogOpen: (_isOpen: boolean) => { },
+    handleProposeAreaObjectiveStrategic: async (_data: ProposeAreaObjectiveStrategic) => {},
 });
 
 interface ProviderProps {
@@ -120,6 +128,9 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
     // Obtener el usuario desde el contexto de autenticación
     const user = useCurrentUser();
+
+    // Estado para controlar el diálogo de propuesta
+    const [isProposeDialogOpen, setIsProposeDialogOpen] = useState<boolean>(false);
 
     /**
     * Effect hook to fetch initial data required for the planning form
@@ -319,6 +330,36 @@ export const EventProvider = ({ children }: ProviderProps) => {
         setIsOpen(true);
     };
 
+    /**
+     * Maneja la propuesta de un nuevo área estratégica y objetivo estratégico
+     * @param data Los datos de la propuesta
+     */
+    const handleProposeAreaObjectiveStrategic = async (data: ProposeAreaObjectiveStrategic) => {
+        try {
+            if (!user?.token) {
+                throw new Error('No hay token de usuario');
+            }
+            
+            // Llamar al servicio para proponer
+            await proposeAreaObjectiveStrategic(data);
+            
+            // Actualizar las áreas estratégicas y objetivos estratégicos
+            const responseStrategicAreas = await getStrategicAreas(user.token);
+            setStrategicAreas(responseStrategicAreas);
+
+            const responseStrategicObjectives = await getStrategicObjectives(user.token);
+            setStrategicObjectives(responseStrategicObjectives);
+            
+            // Opcional: mostrar mensaje de éxito
+            alert('Propuesta enviada con éxito');
+        } catch (error) {
+            console.error('Error al proponer área y objetivo estratégico:', error);
+            // Opcional: mostrar mensaje de error
+            alert('Error al enviar la propuesta');
+            throw error;
+        }
+    };
+
     return (
         <EventContext.Provider
             value={{
@@ -345,7 +386,10 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 selectedStrategicArea,
                 selectedStrategies,
                 setSelectedStrategies,
-                handleEditEvent
+                handleEditEvent,
+                isProposeDialogOpen,
+                setIsProposeDialogOpen,
+                handleProposeAreaObjectiveStrategic
             }}
         >
             {children}
