@@ -201,51 +201,59 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
               <div className="container mx-auto space-y-8">
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Pendientes</h2>
-                  <EventTable
-                    events={eventsInReview}
-                    isPending={true}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={eventsInReview}
+                      isPending={true}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                    />
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Aprobados</h2>
-                  <EventTable
-                    events={approvedEvents}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={approvedEvents}
+                      isPending={false}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                    />
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Rechazados</h2>
-                  <EventTable
-                    events={rejectedEvents}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                    showCorrectionsActions={false}
-                    showComments={true}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={rejectedEvents}
+                      isPending={false}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                      showCorrectionsActions={false}
+                      showComments={true}
+                    />
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos con Solicitud de Correcciones</h2>
-                  <EventTable
-                    events={eventsWithCorrections}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                    showCorrectionsActions={false}
-                    showComments={true}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={eventsWithCorrections}
+                      isPending={false}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                      showCorrectionsActions={false}
+                      showComments={true}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -88,7 +88,7 @@ interface Intervention {
 	name: string;
 	isDeleted: boolean;
 	strategyId: number;
-	isCanonical: boolean;
+	status: "Aprobado" | "Pendiente" | "Rechazado";
 }
 
 interface Strategy {
