@@ -1,8 +1,8 @@
-import { ProposeAreaObjectiveStrategic, AreaObjectiveStrategicProposal, ApproveAreaObjectiveStrategic } from './type.AreaObjectiveStrategic'
+import { AreaObjectiveStrategicRequest, AreaObjectiveStrategicProposalResponse, ApproveAreaObjectiveStrategic, AreaObjectiveStrategicUpdateRequest } from './type.AreaObjectiveStrategic'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-export async function proposeAreaObjectiveStrategic(data: ProposeAreaObjectiveStrategic) {
+export async function proposeAreaObjectiveStrategic(data: AreaObjectiveStrategicRequest) {
     const response = await fetch(`${API_URL}/api/proposeAreaObjectiveStrategic`, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -18,76 +18,8 @@ export async function proposeAreaObjectiveStrategic(data: ProposeAreaObjectiveSt
     return response.json();
 }
 
-// export async function getAreaObjectiveStrategicProposals(token: string): Promise<AreaObjectiveStrategicProposal[]> {
-//     const response = await fetch(`${API_URL}/api/areaObjectiveStrategic/proposals`, {
-//         method: 'GET',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'Authorization': `Bearer ${token}`
-//         },
-//     })
-
-//     if (!response.ok) {
-//         throw new Error(`Error al obtener propuestas: ${response.statusText}`);
-//     }
-
-//     return response.json();
-// }
-
-export async function getAreaObjectiveStrategicProposals(token: string): Promise<AreaObjectiveStrategicProposal[]> {
-    return [
-        {
-            id: 1,
-            nameArea: "Investigación y Desarrollo",
-            nameObjective: "Mejorar la infraestructura tecnológica",
-            status: "pending",
-            proposedBy: "Juan Pérez",
-            proposedAt: "2025-03-30T10:00:00Z"
-        },
-        {
-            id: 2,
-            nameArea: "Recursos Humanos",
-            nameObjective: "Capacitación continua para empleados",
-            status: "approved",
-            proposedBy: "María López",
-            proposedAt: "2025-03-29T15:30:00Z"
-        },
-        {
-            id: 3,
-            nameArea: "Marketing",
-            nameObjective: "Aumentar la presencia en redes sociales",
-            status: "rejected",
-            proposedBy: "Carlos Rodríguez",
-            proposedAt: "2025-03-28T12:45:00Z"
-        }
-    ];
-}
-
-export async function approveAreaObjectiveStrategic(data: ApproveAreaObjectiveStrategic, token: string) {
-    const response = await fetch(`${API_URL}/api/areaObjectiveStrategic/approve`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-    })
-
-    if (!response.ok) {
-        throw new Error(`Error al aprobar/rechazar propuesta: ${response.statusText}`);
-    }
-
-    return response.json();
-}
-
-interface UpdateAreaObjectiveStrategicRequest {
-    id: number;
-    nameArea: string;
-    nameObjective: string;
-}
-
-export async function updateAreaObjectiveStrategic(data: UpdateAreaObjectiveStrategicRequest, token: string) {
-    const response = await fetch(`${API_URL}/api/areaObjectiveStrategic/update`, {
+export async function updateAreaObjectiveStrategic(data: AreaObjectiveStrategicUpdateRequest, strategicAreaId: number, token: string) {
+    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         headers: {
@@ -103,15 +35,9 @@ export async function updateAreaObjectiveStrategic(data: UpdateAreaObjectiveStra
     return response.json();
 }
 
-interface ChangeProposalStatusRequest {
-    id: number;
-    status: 'pending' | 'approved' | 'rejected';
-}
-
-export async function changeProposalStatus(data: ChangeProposalStatusRequest, token: string) {
-    const response = await fetch(`${API_URL}/api/areaObjectiveStrategic/changeStatus`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
+export async function getAreaObjectiveStrategicPendings(token: string): Promise<AreaObjectiveStrategicProposalResponse[]> {
+    const response = await fetch(`${API_URL}/api/strategicareas/status/Pendiente`, {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -119,9 +45,96 @@ export async function changeProposalStatus(data: ChangeProposalStatusRequest, to
     })
 
     if (!response.ok) {
-        throw new Error(`Error al cambiar el estado de la propuesta: ${response.statusText}`);
+        throw new Error(`Error al obtener propuestas: ${response.statusText}`);
     }
 
     return response.json();
 }
+
+export async function getAreaObjectiveStrategicApproved(token: string): Promise<AreaObjectiveStrategicProposalResponse[]> {
+    const response = await fetch(`${API_URL}/api/strategicareas/status/Aprobado`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error(`Error al obtener propuestas: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+export async function getAreaObjectiveStrategicRejected(token: string): Promise<AreaObjectiveStrategicProposalResponse[]> {
+    const response = await fetch(`${API_URL}/api/strategicareas/status/Rechazado`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error(`Error al obtener propuestas: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+export async function approveAreaObjectiveStrategic(strategicAreaId: number, token: string) {
+    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'Aprobado' }),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error(`Error al aprobar/rechazar propuesta: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+export async function rejectAreaObjectiveStrategic(strategicAreaId: number, token: string) {
+    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'Rechazado' }),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error(`Error al rechazar propuesta: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+export async function pendingAreaObjectiveStrategic(strategicAreaId: number, token: string) {
+    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'Pendiente' }),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error(`Error al poner en pendiente propuesta: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+
+
+
 
