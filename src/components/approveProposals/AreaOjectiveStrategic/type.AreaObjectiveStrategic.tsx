@@ -1,18 +1,29 @@
 import { z } from 'zod'
-import { proposeAreaObjectiveStrategicSchema, approveAreaObjectiveStrategicSchema } from './schema.AreaObjectiveStrategic'
+import { AreaObjectiveStrategicSchema, AreaObjectiveStrategicUpdateSchema, approveAreaObjectiveStrategicSchema } from './schema.AreaObjectiveStrategic'
 
-export type ProposeAreaObjectiveStrategic = z.infer<typeof proposeAreaObjectiveStrategicSchema>
+export type AreaObjectiveStrategicRequest = z.infer<typeof AreaObjectiveStrategicSchema>
+export type AreaObjectiveStrategicUpdateRequest = z.infer<typeof AreaObjectiveStrategicUpdateSchema>
+export type ApproveAreaObjectiveStrategic = z.infer<typeof approveAreaObjectiveStrategicSchema>
 
-export interface AreaObjectiveStrategicProposal {
-    id: number;
-    nameArea: string;
-    nameObjective: string;
-    status: 'pending' | 'approved' | 'rejected';
-    proposedBy: string;
-    proposedAt: string;
+export interface AreaObjectiveStrategicProposalResponse {
+    strategicAreaId: number
+    name: string
+    peiId: number
+    strategicObjective: string
+    isDeleted: boolean
+    createdAt: string
+    updatedAt: string
+    status: string
+    reasonForChange?: string
+    user?: UserResponse
 }
 
-export type ApproveAreaObjectiveStrategic = z.infer<typeof approveAreaObjectiveStrategicSchema>
+export interface UserResponse {
+    userId: number
+    firstName: string
+    lastName: string
+    email: string
+}
 
 
 
