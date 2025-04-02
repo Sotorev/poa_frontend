@@ -292,6 +292,9 @@ export const useEventFinished = () => {
     setEvidenceFiles(new Map());
     setDownloadedFiles(new Map());
     
+    // Importante: resetear el conjunto de IDs eliminados
+    setRemovedEvidenceIds(new Set());
+    
     // Establecer el evento seleccionado
     setSelectedFinishedEvent(event);
     
@@ -583,11 +586,16 @@ export const useEventFinished = () => {
     setSelectedFinishedEvent(null);
     setSelectedDates([]);
     setEvidenceFiles(new Map());
+
+    setDownloadedFiles(new Map());
+
+    setRemovedEvidenceIds(new Set());
+    
     setIsEditing(false);
     setCurrentDateId(null);
     setCurrentStep('searchEvent');
-    setDownloadedFiles(new Map());
-    setRemovedEvidenceIds(new Set());
+    
+     
   };
 
   // Enviar formulario según el estado (crear o actualizar)
@@ -618,23 +626,44 @@ export const useEventFinished = () => {
 
   // Función para eliminar un archivo existente
   const removeExistingFile = (dateId: number, evidenceId: number) => {
-    // Actualizar el mapa de archivos descargados para eliminar el archivo
-    setDownloadedFiles(prev => {
-      const newMap = new Map(prev);
-      const files = newMap.get(dateId) || [];
-      const updatedFiles = files.filter(file => (file as DownloadedFile).evidenceId !== evidenceId);
-      
-      if (updatedFiles.length > 0) {
-        newMap.set(dateId, updatedFiles);
-      } else {
-        newMap.delete(dateId);
-      }
-      
-      return newMap;
-    });
+       
+    if (!dateId || !evidenceId) return;
     
-    // Añadir el ID a la lista de evidencias removidas
-    setRemovedEvidenceIds(prev => new Set(prev.add(evidenceId)));
+    // Actualizar el mapa de archivos descargados para eliminar el archivo
+    const newDownloadedFiles = new Map(downloadedFiles);
+    const files = newDownloadedFiles.get(dateId) || [];
+     
+    
+    const updatedFiles = files.filter(file => (file as DownloadedFile).evidenceId !== evidenceId);
+     
+    
+    if (updatedFiles.length > 0) {
+      newDownloadedFiles.set(dateId, updatedFiles);
+    } else {
+      newDownloadedFiles.delete(dateId);
+    }
+    
+    // Actualizar directamente con la nueva referencia para forzar un re-render
+    setDownloadedFiles(newDownloadedFiles);
+    
+    // Crear nuevo conjunto para evidencias removidas
+    const newRemovedSet = new Set(removedEvidenceIds);
+    newRemovedSet.add(evidenceId);
+     
+    
+    // Actualizar directamente con la nueva referencia
+    setRemovedEvidenceIds(newRemovedSet);
+    
+    // También actualizamos la referencia de evidenceFiles para forzar re-render
+    if (evidenceFiles.has(dateId)) {
+      const newEvidenceFiles = new Map(evidenceFiles);
+      const currentFiles = [...(newEvidenceFiles.get(dateId) || [])];
+      newEvidenceFiles.set(dateId, currentFiles);
+      setEvidenceFiles(newEvidenceFiles);
+       
+    }
+    
+     
   };
 
   return {
@@ -683,6 +712,7 @@ export const useEventFinished = () => {
     openCreateForm,
     getPendingDatesCount,
     removeExistingFile,
+    setRemovedEvidenceIds,
     
     // Formularios
     createForm,
