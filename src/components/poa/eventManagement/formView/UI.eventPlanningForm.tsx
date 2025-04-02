@@ -29,15 +29,13 @@ import { DetalleProcesoComponent } from "../fields/detalle-proceso"
 import { ValidationErrorsModal } from "./UI.validationErrorsModal"
 import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
-
-// Types
-import type { UpdateEventRequest } from "./schema.eventPlanningForm"
-import type { ResponseFullEvent } from "./type.eventPlanningForm"
+import { ProposeAreaObjectiveStrategicDialog } from "@/components/approveProposals/AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
 
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"
 import { EventContext } from "../context.event"
-
+import { PlusIcon } from "lucide-react"
+import { useAreaObjectiveStrategicApproval } from "@/components/approveProposals/AreaOjectiveStrategic/useAreaObjectiveStrategicApproval"
 interface EventPlanningFormProps {
 }
 
@@ -68,7 +66,6 @@ export function EventPlanningForm({
         appendFinancing,
         removeFinancing,
         updateFinancing,
-        fieldsFinancings,
         appendResource,
         removeResource,
         watch,
@@ -99,8 +96,12 @@ export function EventPlanningForm({
         setSelectedStrategicObjective,
         selectedStrategies,
         setSelectedStrategies,
-        eventEditing
+        eventEditing,
+        isProposeDialogOpen,
+        setIsProposeDialogOpen,
     } = useContext(EventContext)
+
+    const { handleAddProposal } = useAreaObjectiveStrategicApproval()
 
     const onSubmit = async () => {
         try {
@@ -118,6 +119,12 @@ export function EventPlanningForm({
                 isOpen={showValidationErrors}
                 onClose={() => setShowValidationErrors(false)}
                 errors={formErrors}
+            />
+
+            <ProposeAreaObjectiveStrategicDialog 
+                isOpen={isProposeDialogOpen}
+                onClose={() => setIsProposeDialogOpen(false)}
+                onPropose={handleAddProposal}
             />
 
             <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
@@ -169,10 +176,16 @@ export function EventPlanningForm({
                                     <TabsContent value="pei" className="mt-6 space-y-8 data-[state=inactive]:hidden">
                                         <div className="space-y-6">
                                             <SectionTitle>Objetivo Estratégico</SectionTitle>
-                                            <StrategicObjectiveSelector
-                                                selectedObjetive={selectedStrategicObjective!}
-                                                onSelectObjetive={(objective) => setSelectedStrategicObjective(objective)}
-                                            />
+                                            <div className="flex flex-row gap-4 justify-between">
+                                                <StrategicObjectiveSelector
+                                                    selectedObjetive={selectedStrategicObjective!}
+                                                    onSelectObjetive={(objective) => setSelectedStrategicObjective(objective)}
+                                                />
+                                                <Button variant="outline" className="justify-end" onClick={() => setIsProposeDialogOpen(true)}>
+                                                    <PlusIcon className="w-4 h-4" />
+                                                    <span>Proponer Objetivo Estratégico</span>
+                                                </Button>
+                                            </div>
                                             <AreaEstrategicaComponent
                                                 areaEstrategica={selectedStrategicArea?.name || ""}
                                                 error={errors?.areaEstrategica?.message}

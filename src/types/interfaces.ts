@@ -59,19 +59,20 @@ export interface ApiCampus {
 
 export interface ApiStrategicArea {
   strategicAreaId: number;
+  strategicObjective: string;
   name: string;
   peiId: number;
   isDeleted: boolean;
 }
 
 /** Interface para objetivos estratégicos */
-export interface ApiStrategicObjective {
-  strategicObjectiveId: number;
-  description: string;
-  strategicAreaId: number;
-  isDeleted: boolean;
-  strategicArea: ApiStrategicArea;
-}
+// export interface ApiStrategicObjective {
+//   strategicObjectiveId: number;
+//   description: string;
+//   strategicAreaId: number;
+//   isDeleted: boolean;
+//   strategicArea: ApiStrategicArea;
+// }
 
 /** Interface para estrategias */
 export interface ApiStrategy {
@@ -82,7 +83,7 @@ export interface ApiStrategy {
   assignedBudget: number;
   executedBudget: number | null;
   isDeleted: boolean;
-  strategicObjective: ApiStrategicObjective;
+  strategicArea: ApiStrategicArea;
 }
 
 export interface ApiInterventionEventIntervention {

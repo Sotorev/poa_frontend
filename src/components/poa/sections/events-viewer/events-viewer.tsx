@@ -23,8 +23,8 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
 
   return {
     id: String(apiEvent.eventId),
-    areaEstrategica: apiEvent.interventions[0]?.strategy?.strategicObjective?.strategicArea?.name || '',
-    objetivoEstrategico: apiEvent.interventions[0]?.strategy?.strategicObjective?.description || '',
+    areaEstrategica: apiEvent.interventions[0]?.strategy?.strategicArea?.name || '',
+    objetivoEstrategico: apiEvent.interventions[0]?.strategy?.strategicArea?.strategicObjective || '',
     estrategias: apiEvent.interventions[0]?.strategy?.description || '',
     intervencion: apiEvent.interventions[0]?.name || '',
     ods: apiEvent.ods.map(ods => ods.name).join(', '),
@@ -76,11 +76,11 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
             strategyId: intervention.strategy.strategyId,
             description: intervention.strategy.description,
             strategicObjective: {
-              strategicObjectiveId: intervention.strategy.strategicObjective.strategicObjectiveId,
-              description: intervention.strategy.strategicObjective.description,
+              strategicObjectiveId: intervention.strategy.strategicArea.strategicAreaId,
+              description: intervention.strategy.strategicArea.strategicObjective,
               strategicArea: {
-                strategicAreaId: intervention.strategy.strategicObjective.strategicArea.strategicAreaId,
-                name: intervention.strategy.strategicObjective.strategicArea.name
+                strategicAreaId: intervention.strategy.strategicArea.strategicAreaId,
+                name: intervention.strategy.strategicArea.name
               }
             }
           }]
@@ -201,51 +201,59 @@ const EventsViewerComponent: React.FC<SectionProps> = ({ name, isActive, poaId, 
               <div className="container mx-auto space-y-8">
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Pendientes</h2>
-                  <EventTable
-                    events={eventsInReview}
-                    isPending={true}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={eventsInReview}
+                      isPending={true}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                    />
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Aprobados</h2>
-                  <EventTable
-                    events={approvedEvents}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={approvedEvents}
+                      isPending={false}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                    />
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos Rechazados</h2>
-                  <EventTable
-                    events={rejectedEvents}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                    showCorrectionsActions={false}
-                    showComments={true}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={rejectedEvents}
+                      isPending={false}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                      showCorrectionsActions={false}
+                      showComments={true}
+                    />
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-[#014A2D]">Eventos con Solicitud de Correcciones</h2>
-                  <EventTable
-                    events={eventsWithCorrections}
-                    isPending={false}
-                    onApprove={approveEvent}
-                    onReject={rejectEvent}
-                    onRequestCorrection={requestCorrection}
-                    onRevert={revertToPending}
-                    showCorrectionsActions={false}
-                    showComments={true}
-                  />
+                  <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
+                    <EventTable
+                      events={eventsWithCorrections}
+                      isPending={false}
+                      onApprove={approveEvent}
+                      onReject={rejectEvent}
+                      onRequestCorrection={requestCorrection}
+                      onRevert={revertToPending}
+                      showCorrectionsActions={false}
+                      showComments={true}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

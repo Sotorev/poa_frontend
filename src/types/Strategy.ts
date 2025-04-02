@@ -3,7 +3,7 @@
 export interface Strategy {
     strategyId: number;
     description: string;
-    strategicObjectiveId: number;
+    strategicAreaId: number;
     completionPercentage: number;
     assignedBudget: number;
     executedBudget: number;
@@ -22,7 +22,7 @@ export interface Strategy {
   export interface UpdateStrategyInput {
     strategyId: number;
     description?: string;
-    strategicObjectiveId?: number;
+    strategicAreaId?: number;
     completionPercentage?: number;
     assignedBudget?: number;
     executedBudget?: number;
