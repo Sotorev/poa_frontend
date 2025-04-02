@@ -3,7 +3,7 @@ import { AreaObjectiveStrategicRequest, AreaObjectiveStrategicProposalResponse, 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export async function proposeAreaObjectiveStrategic(data: AreaObjectiveStrategicRequest, token: string) {
-    const response = await fetch(`${API_URL}/api/proposeAreaObjectiveStrategic`, {
+    const response = await fetch(`${API_URL}/api/strategicareas`, {
         method: 'POST',
         body: JSON.stringify(data),
         headers: {
