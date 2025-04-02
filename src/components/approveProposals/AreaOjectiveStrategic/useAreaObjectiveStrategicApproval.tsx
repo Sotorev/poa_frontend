@@ -2,21 +2,36 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useCurrentUser } from '@/hooks/use-current-user'
-import { AreaObjectiveStrategicProposal, ApproveAreaObjectiveStrategic } from './type.AreaObjectiveStrategic'
-import { getAreaObjectiveStrategicProposals, approveAreaObjectiveStrategic, updateAreaObjectiveStrategic, changeProposalStatus } from './service.AreaObjectiveStrategic'
+import { AreaObjectiveStrategicProposalResponse, AreaObjectiveStrategicProposal, AreaObjectiveStrategicRequest } from './type.AreaObjectiveStrategic'
+import { getAreaObjectiveStrategicPendings, getAreaObjectiveStrategicApproved, getAreaObjectiveStrategicRejected, approveAreaObjectiveStrategic, rejectAreaObjectiveStrategic, pendingAreaObjectiveStrategic, updateAreaObjectiveStrategic, proposeAreaObjectiveStrategic } from './service.AreaObjectiveStrategic'
+import { PEI } from '@/types/pei'
+import { getCurrentPei } from '@/components/pei/service.pei'
 
-type SortColumn = 'nameArea' | 'nameObjective'
+type SortColumn = 'name' | 'strategicObjective'
 type SortDirection = 'asc' | 'desc'
 
 export function useAreaObjectiveStrategicApproval() {
-    const [proposals, setProposals] = useState<AreaObjectiveStrategicProposal[]>([])
+    const [proposals, setProposals] = useState<AreaObjectiveStrategicProposalResponse[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [sortColumn, setSortColumn] = useState<SortColumn>('nameArea')
+    const [sortColumn, setSortColumn] = useState<SortColumn>('name')
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
     const [refreshTrigger, setRefreshTrigger] = useState(0)
+    const [currentPei, setCurrentPei] = useState<PEI>()
 
     const user = useCurrentUser()
+
+    // Cargar PEI actual
+    useEffect(() => {
+        if (!user?.token) return
+
+        const fetchPei = async () => {
+            const pei = await getCurrentPei(user.token)
+            setCurrentPei(pei)
+        }
+
+        fetchPei()
+    }, [user?.token])
 
     // Cargar propuestas
     useEffect(() => {
@@ -26,8 +41,17 @@ export function useAreaObjectiveStrategicApproval() {
             try {
                 setLoading(true)
                 setError(null)
-                const data = await getAreaObjectiveStrategicProposals(user.token)
-                setProposals(data)
+                
+                // Obtener propuestas de los tres estados
+                const [pendingData, approvedData, rejectedData] = await Promise.all([
+                    getAreaObjectiveStrategicPendings(user.token),
+                    getAreaObjectiveStrategicApproved(user.token),
+                    getAreaObjectiveStrategicRejected(user.token)
+                ])
+                
+                // Combinar todas las propuestas
+                const allProposals = [...pendingData, ...approvedData, ...rejectedData]
+                setProposals(allProposals)
             } catch (err) {
                 setError('Error al cargar las propuestas')
                 console.error(err)
@@ -69,12 +93,12 @@ export function useAreaObjectiveStrategicApproval() {
 
         try {
             setLoading(true)
-            const approvalData: ApproveAreaObjectiveStrategic = {
-                id,
-                approved,
+            
+            if (approved) {
+                await approveAreaObjectiveStrategic(id, user.token)
+            } else {
+                await rejectAreaObjectiveStrategic(id, user.token)
             }
-
-            await approveAreaObjectiveStrategic(approvalData, user.token)
             
             // Refrescar la lista de propuestas
             setRefreshTrigger(prev => prev + 1)
@@ -87,26 +111,27 @@ export function useAreaObjectiveStrategicApproval() {
     }
 
     // Cambiar el estado de una propuesta
-    const handleChangeStatus = async (id: number, newStatus: 'pending' | 'approved' | 'rejected') => {
+    const handleChangeStatus = async (id: number, newStatus: 'Pendiente' | 'Aprobado' | 'Rechazado') => {
         if (!user?.token) return
 
         try {
             setLoading(true)
             setError(null)
             
-            await changeProposalStatus({
-                id,
-                status: newStatus
-            }, user.token)
+            switch(newStatus) {
+                case 'Pendiente':
+                    await pendingAreaObjectiveStrategic(id, user.token)
+                    break
+                case 'Aprobado':
+                    await approveAreaObjectiveStrategic(id, user.token)
+                    break
+                case 'Rechazado':
+                    await rejectAreaObjectiveStrategic(id, user.token)
+                    break
+            }
             
-            // Actualizar localmente el estado de la propuesta
-            setProposals(prevProposals => 
-                prevProposals.map(proposal => 
-                    proposal.id === id 
-                        ? { ...proposal, status: newStatus }
-                        : proposal
-                )
-            )
+            // Refrescar la lista después de cambiar el estado
+            setRefreshTrigger(prev => prev + 1)
         } catch (err) {
             setError(`Error al cambiar el estado de la propuesta a ${newStatus}`)
             console.error(err)
@@ -115,8 +140,30 @@ export function useAreaObjectiveStrategicApproval() {
         }
     }
 
+    // Agregar propuesta
+    const handleAddProposal = async (proposal: AreaObjectiveStrategicProposal) => {
+        if (!user?.token || !currentPei?.peiId) return
+
+        try {
+            setLoading(true)
+            const completeProposal: AreaObjectiveStrategicRequest = {
+                ...proposal,
+                peiId: currentPei.peiId,
+                userId: user.userId,
+                status: 'Pendiente',
+            }
+
+            await proposeAreaObjectiveStrategic(completeProposal, user.token)
+        } catch (err) {
+            setError('Error al agregar la propuesta')
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     // Actualizar los campos de una propuesta
-    const handleUpdateProposal = async (id: number, nameArea: string, nameObjective: string) => {
+    const handleUpdateProposal = async (id: number, name: string, strategicObjective: string) => {
         if (!user?.token) return
 
         try {
@@ -124,19 +171,12 @@ export function useAreaObjectiveStrategicApproval() {
             setError(null)
             
             await updateAreaObjectiveStrategic({
-                id,
-                nameArea,
-                nameObjective
-            }, user.token)
+                name,
+                strategicObjective
+            }, id, user.token)
             
-            // Actualizar localmente la propuesta modificada
-            setProposals(prevProposals => 
-                prevProposals.map(proposal => 
-                    proposal.id === id 
-                        ? { ...proposal, nameArea, nameObjective }
-                        : proposal
-                )
-            )
+            // Refrescar la lista después de actualizar
+            setRefreshTrigger(prev => prev + 1)
         } catch (err) {
             setError('Error al actualizar la propuesta')
             console.error(err)
@@ -155,5 +195,6 @@ export function useAreaObjectiveStrategicApproval() {
         handleApproval,
         handleUpdateProposal,
         handleChangeStatus,
+        handleAddProposal,
     }
 }

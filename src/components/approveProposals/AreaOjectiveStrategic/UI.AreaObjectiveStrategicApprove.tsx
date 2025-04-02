@@ -30,20 +30,20 @@ export function AreaObjectiveStrategicApprove() {
         handleChangeStatus
     } = useAreaObjectiveStrategicApproval()
 
-    const [editedProposals, setEditedProposals] = useState<Record<number, { nameArea: string; nameObjective: string }>>({})
+    const [editedProposals, setEditedProposals] = useState<Record<number, { name: string; strategicObjective: string }>>({})
 
     // Filtrar propuestas por estado
-    const pendingProposals = proposals.filter(proposal => proposal.status === 'pending')
-    const approvedProposals = proposals.filter(proposal => proposal.status === 'approved')
-    const rejectedProposals = proposals.filter(proposal => proposal.status === 'rejected')
+    const pendingProposals = proposals.filter(proposal => proposal.status === 'Pendiente')
+    const approvedProposals = proposals.filter(proposal => proposal.status === 'Aprobado')
+    const rejectedProposals = proposals.filter(proposal => proposal.status === 'Rechazado')
 
-    const handleInputChange = (id: number, field: 'nameArea' | 'nameObjective', value: string) => {
+    const handleInputChange = (id: number, field: 'name' | 'strategicObjective', value: string) => {
         setEditedProposals(prev => ({
             ...prev,
             [id]: {
                 ...prev[id] || { 
-                    nameArea: proposals.find(p => p.id === id)?.nameArea || '',
-                    nameObjective: proposals.find(p => p.id === id)?.nameObjective || ''
+                    name: proposals.find(p => p.strategicAreaId === id)?.name || '',
+                    strategicObjective: proposals.find(p => p.strategicAreaId === id)?.strategicObjective || ''
                 },
                 [field]: value
             }
@@ -52,7 +52,7 @@ export function AreaObjectiveStrategicApprove() {
 
     const handleSaveChanges = (id: number) => {
         if (editedProposals[id]) {
-            handleUpdateProposal(id, editedProposals[id].nameArea, editedProposals[id].nameObjective)
+            handleUpdateProposal(id, editedProposals[id].name, editedProposals[id].strategicObjective)
             
             // Limpiar el estado de edición para esta propuesta
             setEditedProposals(prev => {
@@ -86,20 +86,20 @@ export function AreaObjectiveStrategicApprove() {
                     <TableRow>
                         <TableHead 
                             className="cursor-pointer"
-                            onClick={() => toggleSort('nameArea')}
+                            onClick={() => toggleSort('name')}
                         >
                             <div className="flex items-center">
                                 Área Estratégica
-                                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'nameArea' ? 'opacity-100' : 'opacity-40'}`} />
+                                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'name' ? 'opacity-100' : 'opacity-40'}`} />
                             </div>
                         </TableHead>
                         <TableHead 
                             className="cursor-pointer"
-                            onClick={() => toggleSort('nameObjective')}
+                            onClick={() => toggleSort('strategicObjective')}
                         >
                             <div className="flex items-center">
                                 Objetivo Estratégico
-                                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'nameObjective' ? 'opacity-100' : 'opacity-40'}`} />
+                                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'strategicObjective' ? 'opacity-100' : 'opacity-40'}`} />
                             </div>
                         </TableHead>
                         <TableHead>Propuesto por</TableHead>
@@ -109,37 +109,38 @@ export function AreaObjectiveStrategicApprove() {
                 </TableHeader>
                 <TableBody>
                     {proposalsList.map((proposal) => {
-                        const isEdited = editedProposals[proposal.id] !== undefined
-                        const areaValue = isEdited ? editedProposals[proposal.id].nameArea : proposal.nameArea
-                        const objectiveValue = isEdited ? editedProposals[proposal.id].nameObjective : proposal.nameObjective
+                        const isEdited = editedProposals[proposal.strategicAreaId] !== undefined
+                        const areaValue = isEdited ? editedProposals[proposal.strategicAreaId].name : proposal.name
+                        const objectiveValue = isEdited ? editedProposals[proposal.strategicAreaId].strategicObjective : proposal.strategicObjective
+                        const proposedByName = proposal.user ? `${proposal.user.firstName} ${proposal.user.lastName}` : 'Usuario desconocido'
                         
                         return (
-                            <TableRow key={proposal.id}>
+                            <TableRow key={proposal.strategicAreaId}>
                                 <TableCell className="font-medium">
                                     <Input 
                                         value={areaValue} 
-                                        onChange={(e) => handleInputChange(proposal.id, 'nameArea', e.target.value)}
+                                        onChange={(e) => handleInputChange(proposal.strategicAreaId, 'name', e.target.value)}
                                         className={isEdited ? "border-primary" : "border-transparent"}
                                     />
                                 </TableCell>
                                 <TableCell>
                                     <Input 
                                         value={objectiveValue} 
-                                        onChange={(e) => handleInputChange(proposal.id, 'nameObjective', e.target.value)}
+                                        onChange={(e) => handleInputChange(proposal.strategicAreaId, 'strategicObjective', e.target.value)}
                                         className={isEdited ? "border-primary" : "border-transparent"}
                                     />
                                 </TableCell>
-                                <TableCell>{proposal.proposedBy}</TableCell>
-                                <TableCell>{new Date(proposal.proposedAt).toLocaleDateString()}</TableCell>
+                                <TableCell>{proposedByName}</TableCell>
+                                <TableCell>{new Date(proposal.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell className="text-right">
-                                    {proposal.status === 'pending' ? (
+                                    {proposal.status === 'Pendiente' ? (
                                         <div className="flex justify-end space-x-2">
                                             {isEdited && (
                                                 <Button
                                                     variant="outline" 
                                                     size="sm"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleSaveChanges(proposal.id)}
+                                                    onClick={() => handleSaveChanges(proposal.strategicAreaId)}
                                                 >
                                                     <SaveIcon className="h-4 w-4 mr-1" />
                                                     Guardar
@@ -149,7 +150,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 variant="outline" 
                                                 size="sm"
                                                 className="text-green-600 border-green-600 hover:bg-green-50"
-                                                onClick={() => handleApproval(proposal.id, true)}
+                                                onClick={() => handleApproval(proposal.strategicAreaId, true)}
                                             >
                                                 <CheckIcon className="h-4 w-4 mr-1" />
                                                 Aprobar
@@ -158,20 +159,20 @@ export function AreaObjectiveStrategicApprove() {
                                                 variant="outline" 
                                                 size="sm"
                                                 className="text-red-600 border-red-600 hover:bg-red-50"
-                                                onClick={() => handleApproval(proposal.id, false)}
+                                                onClick={() => handleApproval(proposal.strategicAreaId, false)}
                                             >
                                                 <XIcon className="h-4 w-4 mr-1" />
                                                 Rechazar
                                             </Button>
                                         </div>
-                                    ) : proposal.status === 'approved' ? (
+                                    ) : proposal.status === 'Aprobado' ? (
                                         <div className="flex justify-end space-x-2">
                                             {isEdited && (
                                                 <Button
                                                     variant="outline" 
                                                     size="sm"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleSaveChanges(proposal.id)}
+                                                    onClick={() => handleSaveChanges(proposal.strategicAreaId)}
                                                 >
                                                     <SaveIcon className="h-4 w-4 mr-1" />
                                                     Guardar
@@ -181,7 +182,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 variant="outline" 
                                                 size="sm"
                                                 className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
-                                                onClick={() => handleChangeStatus(proposal.id, 'pending')}
+                                                onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Pendiente')}
                                             >
                                                 Mover a Pendiente
                                             </Button>
@@ -189,7 +190,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 variant="outline" 
                                                 size="sm"
                                                 className="text-red-600 border-red-600 hover:bg-red-50"
-                                                onClick={() => handleChangeStatus(proposal.id, 'rejected')}
+                                                onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Rechazado')}
                                             >
                                                 Rechazar
                                             </Button>
@@ -201,7 +202,7 @@ export function AreaObjectiveStrategicApprove() {
                                                     variant="outline" 
                                                     size="sm"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleSaveChanges(proposal.id)}
+                                                    onClick={() => handleSaveChanges(proposal.strategicAreaId)}
                                                 >
                                                     <SaveIcon className="h-4 w-4 mr-1" />
                                                     Guardar
@@ -211,7 +212,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 variant="outline" 
                                                 size="sm"
                                                 className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
-                                                onClick={() => handleChangeStatus(proposal.id, 'pending')}
+                                                onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Pendiente')}
                                             >
                                                 Mover a Pendiente
                                             </Button>
@@ -219,7 +220,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 variant="outline" 
                                                 size="sm"
                                                 className="text-green-600 border-green-600 hover:bg-green-50"
-                                                onClick={() => handleChangeStatus(proposal.id, 'approved')}
+                                                onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Aprobado')}
                                             >
                                                 Aprobar
                                             </Button>
@@ -246,28 +247,28 @@ export function AreaObjectiveStrategicApprove() {
                     </Alert>
                 )}
 
-                <Tabs defaultValue="pending" className="w-full">
+                <Tabs defaultValue="Pendiente" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 mb-4">
-                        <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800">
+                        <TabsTrigger value="Pendiente" className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800">
                             Pendientes ({pendingProposals.length})
                         </TabsTrigger>
-                        <TabsTrigger value="approved" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
+                        <TabsTrigger value="Aprobado" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
                             Aprobadas ({approvedProposals.length})
                         </TabsTrigger>
-                        <TabsTrigger value="rejected" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800">
+                        <TabsTrigger value="Rechazado" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800">
                             Rechazadas ({rejectedProposals.length})
                         </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="pending">
+                    <TabsContent value="Pendiente">
                         {renderProposalsTable(pendingProposals)}
                     </TabsContent>
                     
-                    <TabsContent value="approved">
+                    <TabsContent value="Aprobado">
                         {renderProposalsTable(approvedProposals)}
                     </TabsContent>
                     
-                    <TabsContent value="rejected">
+                    <TabsContent value="Rechazado">
                         {renderProposalsTable(rejectedProposals)}
                     </TabsContent>
                 </Tabs>

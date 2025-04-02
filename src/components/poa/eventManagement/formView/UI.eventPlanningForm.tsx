@@ -31,16 +31,11 @@ import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
 import { ProposeAreaObjectiveStrategicDialog } from "@/components/approveProposals/AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
 
-// Types
-import type { UpdateEventRequest } from "./schema.eventPlanningForm"
-import type { ResponseFullEvent } from "./type.eventPlanningForm"
-
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"
 import { EventContext } from "../context.event"
 import { PlusIcon } from "lucide-react"
-import { Input } from "@/components/ui/input"
-
+import { useAreaObjectiveStrategicApproval } from "@/components/approveProposals/AreaOjectiveStrategic/useAreaObjectiveStrategicApproval"
 interface EventPlanningFormProps {
 }
 
@@ -71,7 +66,6 @@ export function EventPlanningForm({
         appendFinancing,
         removeFinancing,
         updateFinancing,
-        fieldsFinancings,
         appendResource,
         removeResource,
         watch,
@@ -105,8 +99,9 @@ export function EventPlanningForm({
         eventEditing,
         isProposeDialogOpen,
         setIsProposeDialogOpen,
-        handleProposeAreaObjectiveStrategic
     } = useContext(EventContext)
+
+    const { handleAddProposal } = useAreaObjectiveStrategicApproval()
 
     const onSubmit = async () => {
         try {
@@ -129,7 +124,7 @@ export function EventPlanningForm({
             <ProposeAreaObjectiveStrategicDialog 
                 isOpen={isProposeDialogOpen}
                 onClose={() => setIsProposeDialogOpen(false)}
-                onPropose={handleProposeAreaObjectiveStrategic}
+                onPropose={handleAddProposal}
             />
 
             <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>

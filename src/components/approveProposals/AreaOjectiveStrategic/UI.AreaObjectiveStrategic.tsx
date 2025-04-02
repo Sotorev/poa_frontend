@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 // Types
-import { proposeAreaObjectiveStrategicSchema } from "./schema.AreaObjectiveStrategic"
-import { ProposeAreaObjectiveStrategic } from "./type.AreaObjectiveStrategic"
+import { AreaObjectiveStrategicProposalSchema } from "./schema.AreaObjectiveStrategic"
+import { AreaObjectiveStrategicProposal } from "./type.AreaObjectiveStrategic"
 
 interface ProposeAreaObjectiveStrategicProps {
     isOpen: boolean
     onClose: () => void
-    onPropose: (data: ProposeAreaObjectiveStrategic) => Promise<void>
+    onPropose: (data: AreaObjectiveStrategicProposal) => Promise<void>
 }
 
 export function ProposeAreaObjectiveStrategicDialog({
@@ -26,15 +26,16 @@ export function ProposeAreaObjectiveStrategicDialog({
 }: ProposeAreaObjectiveStrategicProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const form = useForm<ProposeAreaObjectiveStrategic>({
-        resolver: zodResolver(proposeAreaObjectiveStrategicSchema),
+    const form = useForm<AreaObjectiveStrategicProposal>({
+        resolver: zodResolver(AreaObjectiveStrategicProposalSchema),
         defaultValues: {
-            nameArea: "",
-            nameObjective: ""
+            name: "",
+            strategicObjective: "",
+            reasonForChange: ""
         }
     })
 
-    const handleSubmit = async (data: ProposeAreaObjectiveStrategic) => {
+    const handleSubmit = async (data: AreaObjectiveStrategicProposal) => {
         try {
             setIsSubmitting(true)
             await onPropose(data)
@@ -58,7 +59,7 @@ export function ProposeAreaObjectiveStrategicDialog({
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
-                            name="nameArea"
+                            name="name"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Área Estratégica</FormLabel>
@@ -72,12 +73,26 @@ export function ProposeAreaObjectiveStrategicDialog({
 
                         <FormField
                             control={form.control}
-                            name="nameObjective"
+                            name="strategicObjective"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Objetivo Estratégico</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Ingrese el objetivo estratégico" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="reasonForChange"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Razón del cambio</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Ingrese la razón del cambio" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
