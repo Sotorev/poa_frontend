@@ -30,12 +30,17 @@ import { ValidationErrorsModal } from "./UI.validationErrorsModal"
 import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
 import { ProposeAreaObjectiveStrategicDialog } from "@/components/approveProposals/AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
+import { ProposeStrategyDialog } from "@/components/approveProposals/strategies/UI.strategyPropose"
+
 
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"
 import { EventContext } from "../context.event"
 import { PlusIcon } from "lucide-react"
 import { useAreaObjectiveStrategicApproval } from "@/components/approveProposals/AreaOjectiveStrategic/useAreaObjectiveStrategicApproval"
+
+import { useStrategyProposals } from "@/components/approveProposals/strategies/useStrategyProposals"
+
 interface EventPlanningFormProps {
 }
 
@@ -91,6 +96,7 @@ export function EventPlanningForm({
         isOpen,
         setIsOpen,
         poaId,
+        strategicAreas,
         selectedStrategicArea,
         selectedStrategicObjective,
         setSelectedStrategicObjective,
@@ -102,6 +108,12 @@ export function EventPlanningForm({
     } = useContext(EventContext)
 
     const { handleAddProposal } = useAreaObjectiveStrategicApproval()
+
+    const {
+        isProposeStrategyDialogOpen,
+        setIsProposeStrategyDialogOpen,
+        handleAddStrategy,
+    } = useStrategyProposals()
 
     const onSubmit = async () => {
         try {
@@ -121,11 +133,20 @@ export function EventPlanningForm({
                 errors={formErrors}
             />
 
-            <ProposeAreaObjectiveStrategicDialog 
+            <ProposeAreaObjectiveStrategicDialog
                 isOpen={isProposeDialogOpen}
                 onClose={() => setIsProposeDialogOpen(false)}
                 onPropose={handleAddProposal}
             />
+
+
+            <ProposeStrategyDialog
+                isOpen={isProposeStrategyDialogOpen}
+                onClose={() => setIsProposeStrategyDialogOpen(false)}
+                onPropose={handleAddStrategy}
+                strategicAreas={strategicAreas}
+            />
+
 
             <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
                 <DialogContent
@@ -140,7 +161,7 @@ export function EventPlanningForm({
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            reset()                          
+                            reset()
                             setIsOpen(false);
                         }}
                         className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none z-50"
@@ -200,6 +221,10 @@ export function EventPlanningForm({
                                                 strategicObjectiveIds={selectedStrategicObjective?.strategicObjectiveId}
                                                 disabled={!selectedStrategicObjective}
                                             />
+                                            <Button variant="outline" className="justify-end" onClick={() => setIsProposeStrategyDialogOpen(true)}>
+                                                <PlusIcon className="w-4 h-4" />
+                                                <span>Proponer Estrategia</span>
+                                            </Button>
                                         </div>
 
                                         <div className="space-y-6">
@@ -449,14 +474,14 @@ export function EventPlanningForm({
                     </form>
 
                     <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 flex-shrink-0 sticky bottom-0 z-20">
-                        <Button variant="outline" onClick={() => { 
-                            reset(); 
-                            setIsOpen(false); 
+                        <Button variant="outline" onClick={() => {
+                            reset();
+                            setIsOpen(false);
                         }} disabled={isSubmitting}>
                             Cancelar
                         </Button>
                         <Button onClick={() => {
-                            onSubmit(); 
+                            onSubmit();
                         }} disabled={isSubmitting}>
                             {isSubmitting ? "Guardando..." : "Guardar"}
                         </Button>
