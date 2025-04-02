@@ -95,6 +95,22 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     // No cerramos el diálogo aquí, el hook se encarga de ello en el submit exitoso
   }
 
+  // Función para eliminar un archivo nuevo
+  const handleRemoveNewFile = (index: number) => {
+    if (currentDateId !== null) {
+      const currentFiles = evidenceFiles.get(currentDateId) || [];
+      const updatedFiles = currentFiles.filter((_, i) => i !== index);
+      
+      // Primero limpiamos los archivos
+      addFilesToDate(currentDateId, []);
+      
+      // Luego agregamos los archivos filtrados (si hay alguno)
+      if (updatedFiles.length > 0) {
+        addFilesToDate(currentDateId, updatedFiles);
+      }
+    }
+  }
+
   // Función para formatear la fecha para mostrar
   const formatDateDisplay = (dateString: string | undefined) => {
     if (!dateString) return "Seleccionar fecha"
@@ -329,14 +345,6 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     // Crear un mapa para rastrear nombres de archivos y evitar duplicados
     const fileNameMap = new Map<string, boolean>();
     
-    // Función para eliminar un archivo nuevo
-    const handleRemoveNewFile = (index: number) => {
-      if (currentDateId) {
-        const files = currentFiles.filter((_, i) => i !== index);
-        addFilesToDate(currentDateId, files);
-      }
-    }
-
     return (
       <div className="space-y-4">
         <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
@@ -394,9 +402,11 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
                 className="hidden"
                 id="file-upload"
                 onChange={(e) => {
-                  if (currentDateId !== null) {
+                  if (currentDateId !== null && e.target.files && e.target.files.length > 0) {
                     const files = Array.from(e.target.files || [])
                     addFilesToDate(currentDateId, files)
+                    // Resetear el valor del input para permitir subir el mismo archivo después de eliminarlo
+                    e.target.value = '';
                   }
                 }}
               />

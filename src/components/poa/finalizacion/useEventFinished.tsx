@@ -391,8 +391,15 @@ export const useEventFinished = () => {
   const addFilesToDate = (eventExecutionDateId: number, files: File[]) => {
     setEvidenceFiles(prev => {
       const newMap = new Map(prev);
+      // Si se proporciona un arreglo vacío y se llama a esta función,
+      // significa que queremos limpiar los archivos existentes
+      if (files.length === 0) {
+        newMap.set(eventExecutionDateId, []);
+        return newMap;
+      }
+      
+      // Si hay archivos, los añadimos a los existentes
       const existingFiles = newMap.get(eventExecutionDateId) || [];
-      // Añadir los nuevos archivos a los existentes en lugar de reemplazarlos
       newMap.set(eventExecutionDateId, [...existingFiles, ...files]);
       return newMap;
     });
