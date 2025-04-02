@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { AreaObjectiveStrategicSchema, AreaObjectiveStrategicUpdateSchema, approveAreaObjectiveStrategicSchema } from './schema.AreaObjectiveStrategic'
+import { AreaObjectiveStrategicSchema, AreaObjectiveStrategicUpdateSchema, approveAreaObjectiveStrategicSchema, AreaObjectiveStrategicProposalSchema } from './schema.AreaObjectiveStrategic'
 
 export type AreaObjectiveStrategicRequest = z.infer<typeof AreaObjectiveStrategicSchema>
 export type AreaObjectiveStrategicUpdateRequest = z.infer<typeof AreaObjectiveStrategicUpdateSchema>
+export type AreaObjectiveStrategicProposal = z.infer<typeof AreaObjectiveStrategicProposalSchema>
 export type ApproveAreaObjectiveStrategic = z.infer<typeof approveAreaObjectiveStrategicSchema>
 
 export interface AreaObjectiveStrategicProposalResponse {
@@ -24,6 +25,3 @@ export interface UserResponse {
     lastName: string
     email: string
 }
-
-
-

@@ -9,6 +9,12 @@ export const AreaObjectiveStrategicSchema = z.object({
     reasonForChange: z.string().min(1, { message: 'La razón para cambiar es requerida' }),
 });
 
+export const AreaObjectiveStrategicProposalSchema = AreaObjectiveStrategicSchema.omit({
+    userId: true,
+    status: true,
+    peiId: true,
+});
+
 export const AreaObjectiveStrategicUpdateSchema = AreaObjectiveStrategicSchema.partial();
 
 export const approveAreaObjectiveStrategicSchema = z.object({
