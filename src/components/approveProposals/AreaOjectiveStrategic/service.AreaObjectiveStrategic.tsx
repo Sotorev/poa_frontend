@@ -2,12 +2,13 @@ import { AreaObjectiveStrategicRequest, AreaObjectiveStrategicProposalResponse, 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-export async function proposeAreaObjectiveStrategic(data: AreaObjectiveStrategicRequest) {
+export async function proposeAreaObjectiveStrategic(data: AreaObjectiveStrategicRequest, token: string) {
     const response = await fetch(`${API_URL}/api/proposeAreaObjectiveStrategic`, {
         method: 'POST',
         body: JSON.stringify(data),
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         },
     })
 
