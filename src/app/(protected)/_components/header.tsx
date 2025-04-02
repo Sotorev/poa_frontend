@@ -115,6 +115,10 @@ const navItems: NavItem[] = [
 		icon: FileText,
 		description: "Propuestas",
 		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico"],
+		subItems: [
+			{ title: "Area y Objetivo Estratégico", href: "/propuestas/area-objetivo-estrategico", description: "Propuestas de área y objetivo estratégico", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+			{ title: "Estrategias", href: "/propuestas/estrategias", description: "Propuestas de estrategias", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+		],
 	},
 ]
 
