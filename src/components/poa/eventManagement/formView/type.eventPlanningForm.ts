@@ -163,7 +163,7 @@ export interface ResponseFullEvent {
     name: string;
     isDeleted: boolean;
     strategyId: number;
-    isCanonical: boolean;
+    status: "Aprobado" | "Pendiente" | "Rechazado";
     eventIntervention: {
       eventId: number;
       interventionId: number;

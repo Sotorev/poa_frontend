@@ -28,7 +28,7 @@ import {
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getFinancingSources, getPoaByFacultyAndYear } from './formView/service.eventPlanningForm'
 import { PlanningEvent, Session } from './formView/type.eventPlanningForm';
-import { FullEventRequest, UpdateEventRequest } from './formView/schema.eventPlanningForm';
+import { UpdateEventRequest } from './formView/schema.eventPlanningForm';
 
 interface EventContextProps {
     financingSources: FinancingSource[];
@@ -55,6 +55,8 @@ interface EventContextProps {
     setPoaId: (poaId: number) => void;
     eventEditing: UpdateEventRequest | undefined;
     handleEditEvent: (event: PlanningEvent) => void;
+    isProposeDialogOpen: boolean;
+    setIsProposeDialogOpen: (isOpen: boolean) => void;
 }
 
 export const EventContext = createContext<EventContextProps>({
@@ -82,6 +84,8 @@ export const EventContext = createContext<EventContextProps>({
     setPoaId: (_poaId: number) => { },
     eventEditing: undefined,
     handleEditEvent: (_event: PlanningEvent) => { },
+    isProposeDialogOpen: false,
+    setIsProposeDialogOpen: (_isOpen: boolean) => { },
 });
 
 interface ProviderProps {
@@ -120,6 +124,9 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
     // Obtener el usuario desde el contexto de autenticación
     const user = useCurrentUser();
+
+    // Estado para controlar el diálogo de propuesta
+    const [isProposeDialogOpen, setIsProposeDialogOpen] = useState<boolean>(false);
 
     /**
     * Effect hook to fetch initial data required for the planning form
@@ -345,7 +352,9 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 selectedStrategicArea,
                 selectedStrategies,
                 setSelectedStrategies,
-                handleEditEvent
+                handleEditEvent,
+                isProposeDialogOpen,
+                setIsProposeDialogOpen,
             }}
         >
             {children}

@@ -33,89 +33,52 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast'; // Using toast for notifications
 import { Trash2 } from 'lucide-react'; // Import trash icon
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { updatePeiSchema } from '../../schemas/pei.schema';
 
-
-// --- Zod Schemas (Copied from user prompt for context, assuming they are imported from src/schemas/pei.schema.ts) ---
-
-const interventionSchema = z.object({
-	interventionId: z.number().int().positive().optional(),
-	name: z.string().min(1, 'El nombre es requerido'),
-	isDeleted: z.boolean().optional(),
-});
-
-const strategySchema = z.object({
-	strategyId: z.number().int().positive().optional(),
-	description: z.string().min(1, 'La descripción es requerida'),
-	completionPercentage: z.number().min(0).max(100).optional(),
-	assignedBudget: z.number().min(0).optional(),
-	executedBudget: z.number().min(0).optional(),
-	interventions: z.array(interventionSchema).optional(),
-	isDeleted: z.boolean().optional(),
-});
-
-const strategicObjectiveSchema = z.object({
-	strategicObjectiveId: z.number().int().positive().optional(),
-	description: z.string().min(1, 'La descripción es requerida'),
-	strategies: z.array(strategySchema).optional(),
-	isDeleted: z.boolean().optional(),
-});
-
-const strategicAreaSchema = z.object({
-	strategicAreaId: z.number().int().positive().optional(),
-	name: z.string().min(1, 'El nombre es requerido'),
-	strategicObjective: strategicObjectiveSchema, // Note: API GET shows this nested, update schema expects it too
-	isDeleted: z.boolean().optional(),
-});
-
-// Main schema for the update form
-// Assuming this is imported from '../schemas/pei.schema'
-// import { updatePeiSchema } from '../schemas/pei.schema';
-const updatePeiSchema = z.object({
-	name: z.string().min(1, 'El nombre es requerido').optional(), // Updated message
-	status: z.enum(['Activo', 'Inactivo']),
-	startYear: z.number().int().positive().optional(),
-	endYear: z.number().int().positive(), // Required in original update schema
-	strategicAreas: z.array(strategicAreaSchema).optional(),
-	isDeleted: z.boolean().optional(),
-	// Include peiId if needed for the PUT request URL, but not part of the body schema typically
-});
-
+// Type alias for the update form data
 type PeiUpdateFormData = z.infer<typeof updatePeiSchema>;
 
 // Define the type for the fetched PEI data based on the example response
 interface Intervention {
-	interventionId: number;
+	interventionId?: number;
 	name: string;
-	isDeleted: boolean;
+	isDeleted?: boolean;
 	strategyId: number;
-	isCanonical: boolean;
+	status?: "Aprobado" | "Pendiente" | "Rechazado" | "";
+	createdAt?: string;
+	updatedAt?: string;
+	userId?: number | null;
+	reasonForChange?: string | null;
 }
 
 interface Strategy {
-	strategyId: number;
-	description: string;
-	strategicObjectiveId: number;
-	completionPercentage: number;
-	assignedBudget: number;
-	executedBudget: number;
-	isDeleted: boolean;
-	interventions: Intervention[];
-}
-
-interface StrategicObjective {
-	strategicObjectiveId: number;
+	strategyId?: number;
 	description: string;
 	strategicAreaId: number;
-	isDeleted: boolean;
-	strategies: Strategy[];
+	completionPercentage?: number;
+	assignedBudget?: number;
+	executedBudget?: number | null;
+	isDeleted?: boolean;
+	interventions: Intervention[];
+	status?: "Aprobado" | "Pendiente" | "Rechazado" | "";
+	createdAt?: string;
+	updatedAt?: string;
+	userId?: number | null;
+	reasonForChange?: string | null;
 }
 
 interface StrategicArea {
-	strategicAreaId: number;
+	strategicAreaId?: number;
 	name: string;
 	peiId: number;
-	isDeleted: boolean;
-	strategicObjective: StrategicObjective;
+	strategicObjective: string;
+	isDeleted?: boolean;
+	strategies: Strategy[];
+	status?: "Aprobado" | "Pendiente" | "Rechazado" | "";
+	createdAt?: string;
+	updatedAt?: string;
+	userId?: number | null;
+	reasonForChange?: string | null;
 }
 
 interface PeiData {
@@ -127,7 +90,6 @@ interface PeiData {
 	isDeleted: boolean;
 	strategicAreas: StrategicArea[];
 }
-
 
 function PEIUpdate() {
 	const [peiData, setPeiData] = useState<PeiData | null>(null);
@@ -155,8 +117,8 @@ function PEIUpdate() {
 				const data: PeiData = await response.json();
 				setPeiData(data); // Store full data including peiId
 				setIsLoading(false);
+				
 				// Map fetched data to form schema, handling potential nulls/undefined if necessary
-				// Ensure keys match the updatePeiSchema fields
 				return {
 					name: data.name,
 					status: data.status,
@@ -165,29 +127,29 @@ function PEIUpdate() {
 					strategicAreas: data.strategicAreas?.map((area: StrategicArea) => ({
 						strategicAreaId: area.strategicAreaId,
 						name: area.name,
+						strategicObjective: area.strategicObjective,
 						isDeleted: area.isDeleted,
-						strategicObjective: {
-							strategicObjectiveId: area.strategicObjective?.strategicObjectiveId,
-							description: area.strategicObjective?.description ?? '',
-							isDeleted: area.strategicObjective?.isDeleted,
-							strategies: area.strategicObjective?.strategies?.map((strategy: Strategy) => {
-								const mappedInterventions = strategy.interventions?.map((intervention: Intervention) => ({
-									interventionId: intervention.interventionId,
-									name: intervention.name,
-									isDeleted: intervention.isDeleted
-								})) ?? [];
-								
-								return {
-									strategyId: strategy.strategyId,
-									description: strategy.description,
-									completionPercentage: strategy.completionPercentage,
-									assignedBudget: strategy.assignedBudget,
-									executedBudget: strategy.executedBudget,
-									isDeleted: strategy.isDeleted,
-									interventions: mappedInterventions
-								};
-							}) ?? [],
-						},
+						strategies: area.strategies?.map((strategy: Strategy) => {
+							const mappedInterventions = strategy.interventions?.map((intervention: Intervention) => ({
+								interventionId: intervention.interventionId,
+								name: intervention.name,
+								isDeleted: intervention.isDeleted,
+								status: intervention.status || undefined,
+								strategyId: intervention.strategyId
+							})) ?? [];
+							
+							return {
+								strategyId: strategy.strategyId,
+								strategicAreaId: strategy.strategicAreaId,
+								description: strategy.description,
+								completionPercentage: strategy.completionPercentage,
+								assignedBudget: strategy.assignedBudget,
+								executedBudget: strategy.executedBudget ?? undefined,
+								isDeleted: strategy.isDeleted,
+								interventions: mappedInterventions,
+								status: strategy.status || undefined
+							};
+						}) ?? [],
 					})) ?? [],
 				};
 			} catch (err) {
@@ -227,24 +189,20 @@ function PEIUpdate() {
 			return;
 		}
 		
-		// Mark the area and all its children as deleted
+		// Mark the area and all its strategies and interventions as deleted
 		const updatedArea = {
 			...area,
 			isDeleted: true,
-			strategicObjective: {
-				...area.strategicObjective,
-				isDeleted: true,
-				strategies: area.strategicObjective?.strategies ? 
-					area.strategicObjective.strategies.map((strategy: any) => ({
-						...strategy,
-						isDeleted: true,
-						interventions: strategy.interventions ? 
-							strategy.interventions.map((intervention: any) => ({
-								...intervention,
-								isDeleted: true
-							})) : []
-					})) : []
-			}
+			strategies: area.strategies ? 
+				area.strategies.map((strategy: any) => ({
+					...strategy,
+					isDeleted: true,
+					interventions: strategy.interventions ? 
+						strategy.interventions.map((intervention: any) => ({
+							...intervention,
+							isDeleted: true
+						})) : []
+				})) : []
 		};
 		
 		// First update the data for logical deletion
@@ -293,8 +251,6 @@ function PEIUpdate() {
 				description: "¡PEI actualizado correctamente!",
 			});
 			console.log("Actualización exitosa:", result);
-			// Optionally reset form or redirect user
-			// form.reset(); // Consider if resetting is desired after successful update
 		} catch (err) {
 			console.error("Error al actualizar el PEI:", err);
 			toast({
@@ -435,31 +391,23 @@ function PEIUpdate() {
 												)}
 											/>
 
-											{/* Strategic Objective (nested within Area) */}
-											<Card className="border border-blue-300 dark:border-blue-700">
-												<CardHeader className="bg-blue-50 dark:bg-blue-900 p-3">
-													<CardTitle className="text-sm">Objetivo Estratégico</CardTitle>
-												</CardHeader>
-												<CardContent className="p-4 space-y-4">
-													<FormField
-														control={form.control}
-														name={`strategicAreas.${actualIndex}.strategicObjective.description`}
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel>Descripción del Objetivo</FormLabel>
-																<FormControl>
-																	<Input placeholder="Ingrese la descripción del objetivo" {...field} />
-																</FormControl>
-																<FormMessage />
-															</FormItem>
-														)}
-													/>
+											{/* Strategic Objective (now a text field) */}
+											<FormField
+												control={form.control}
+												name={`strategicAreas.${actualIndex}.strategicObjective`}
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Objetivo Estratégico</FormLabel>
+														<FormControl>
+															<Input placeholder="Ingrese el objetivo estratégico" {...field} />
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
 
-													{/* Strategies (nested within Objective) */}
-													<StrategiesArray control={form.control} areaIndex={actualIndex} />
-
-												</CardContent>
-											</Card>
+											{/* Strategies (directly under Strategic Area) */}
+											<StrategiesArray control={form.control} areaIndex={actualIndex} />
 										</CardContent>
 									</Card>
 								);
@@ -469,10 +417,8 @@ function PEIUpdate() {
 								variant="outline"
 								onClick={() => appendStrategicArea({
 									name: '',
-									strategicObjective: {
-										description: '',
-										strategies: [],
-									},
+									strategicObjective: '',
+									strategies: [],
 								})}
 							>
 								Añadir Área Estratégica
@@ -503,12 +449,12 @@ const StrategiesArray: React.FC<StrategiesArrayProps> = ({ control, areaIndex })
 	const { getValues } = useFormContext();
 	const { fields, append, remove, update } = useFieldArray({
 		control,
-		name: `strategicAreas.${areaIndex}.strategicObjective.strategies`,
+		name: `strategicAreas.${areaIndex}.strategies`,
 	});
 
 	const handleDeleteStrategy = (strategyIndex: number) => {
 		// Access strategy using the traditional approach with index path
-		const strategies = getValues(`strategicAreas.${areaIndex}.strategicObjective.strategies`);
+		const strategies = getValues(`strategicAreas.${areaIndex}.strategies`);
 		if (!strategies || !strategies[strategyIndex]) {
 			// If we can't get the strategy, just remove it
 			remove(strategyIndex);
@@ -562,7 +508,7 @@ const StrategiesArray: React.FC<StrategiesArrayProps> = ({ control, areaIndex })
 						<CardContent className="p-3 space-y-3">
 							<FormField
 								control={control}
-								name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.description`}
+								name={`strategicAreas.${areaIndex}.strategies.${actualIndex}.description`}
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className="text-xs">Descripción</FormLabel>
@@ -576,7 +522,7 @@ const StrategiesArray: React.FC<StrategiesArrayProps> = ({ control, areaIndex })
 							<div className="grid grid-cols-3 gap-2">
 								<FormField
 									control={control}
-									name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.completionPercentage`}
+									name={`strategicAreas.${areaIndex}.strategies.${actualIndex}.completionPercentage`}
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel className="text-xs">% Completado</FormLabel>
@@ -595,7 +541,7 @@ const StrategiesArray: React.FC<StrategiesArrayProps> = ({ control, areaIndex })
 								/>
 								<FormField
 									control={control}
-									name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.assignedBudget`}
+									name={`strategicAreas.${areaIndex}.strategies.${actualIndex}.assignedBudget`}
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel className="text-xs">Presupuesto Asignado</FormLabel>
@@ -615,7 +561,7 @@ const StrategiesArray: React.FC<StrategiesArrayProps> = ({ control, areaIndex })
 								/>
 								<FormField
 									control={control}
-									name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${actualIndex}.executedBudget`}
+									name={`strategicAreas.${areaIndex}.strategies.${actualIndex}.executedBudget`}
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel className="text-xs">Presupuesto Ejecutado</FormLabel>
@@ -647,6 +593,7 @@ const StrategiesArray: React.FC<StrategiesArrayProps> = ({ control, areaIndex })
 				size="sm"
 				onClick={() => append({
 					description: '',
+					strategicAreaId: getValues(`strategicAreas.${areaIndex}.strategicAreaId`),
 					completionPercentage: 0, // Provide defaults
 					assignedBudget: 0,
 					executedBudget: 0,
@@ -672,12 +619,12 @@ const InterventionsArray: React.FC<InterventionsArrayProps> = ({ control, areaIn
 	const { getValues } = useFormContext();
 	const { fields, append, remove, update } = useFieldArray({
 		control,
-		name: `strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.interventions`,
+		name: `strategicAreas.${areaIndex}.strategies.${strategyIndex}.interventions`,
 	});
 
 	const handleDeleteIntervention = (interventionIndex: number) => {
 		// Simple removal approach that doesn't rely on accessing field values directly
-		const interventions = getValues(`strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.interventions`);
+		const interventions = getValues(`strategicAreas.${areaIndex}.strategies.${strategyIndex}.interventions`);
 		if (!interventions || !interventions[interventionIndex]) {
 			// If we can't get the intervention, just remove it
 			remove(interventionIndex);
@@ -721,7 +668,7 @@ const InterventionsArray: React.FC<InterventionsArrayProps> = ({ control, areaIn
 					<CardContent className="p-2">
 						<FormField
 							control={control}
-							name={`strategicAreas.${areaIndex}.strategicObjective.strategies.${strategyIndex}.interventions.${interventionIndex}.name`}
+							name={`strategicAreas.${areaIndex}.strategies.${strategyIndex}.interventions.${interventionIndex}.name`}
 							render={({ field }) => (
 								<FormItem>
 									{/* No label needed if context is clear */}

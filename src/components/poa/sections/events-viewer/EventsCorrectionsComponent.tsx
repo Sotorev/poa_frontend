@@ -35,8 +35,8 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
 
     return {
         id: String(apiEvent.eventId),
-        areaEstrategica: apiEvent.interventions[0]?.strategy?.strategicObjective?.strategicArea?.name || '',
-        objetivoEstrategico: apiEvent.interventions[0]?.strategy?.strategicObjective?.description || '',
+        areaEstrategica: apiEvent.interventions[0]?.strategy?.strategicArea?.name || '',
+        objetivoEstrategico: apiEvent.interventions[0]?.strategy?.strategicArea?.strategicObjective || '',
         estrategias: apiEvent.interventions[0]?.strategy?.description || '',
         intervencion: apiEvent.interventions[0]?.name || '',
         ods: apiEvent.ods.map(ods => ods.name).join(', '),
@@ -88,11 +88,11 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
                         strategyId: intervention.strategy.strategyId,
                         description: intervention.strategy.description,
                         strategicObjective: {
-                            strategicObjectiveId: intervention.strategy.strategicObjective.strategicObjectiveId,
-                            description: intervention.strategy.strategicObjective.description,
+                            strategicObjectiveId: intervention.strategy.strategicArea.strategicAreaId,
+                            description: intervention.strategy.strategicArea.strategicObjective,
                             strategicArea: {
-                                strategicAreaId: intervention.strategy.strategicObjective.strategicArea.strategicAreaId,
-                                name: intervention.strategy.strategicObjective.strategicArea.name
+                                strategicAreaId: intervention.strategy.strategicArea.strategicAreaId,
+                                name: intervention.strategy.strategicArea.name
                             }
                         }
                     }]

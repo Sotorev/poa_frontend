@@ -29,7 +29,7 @@ import { Strategy } from '@/types/Strategy';
 interface Estrategia {
   strategyId: number;
   description: string;
-  strategicObjectiveId: number;
+  strategicAreaId: number;
   completionPercentage: number;
   assignedBudget: number;
   executedBudget: number;
@@ -60,7 +60,7 @@ export function EstrategiasSelectorComponent({
   const fetchData = useCallback(async () => {
     try {
       if (!strategicObjectiveIds) return; // Si no hay objetivos estratégicos, no hacer nada
-      const filteredData = strategics.filter(est => est.strategicObjectiveId === strategicObjectiveIds);
+      const filteredData = strategics.filter(est => est.strategicAreaId === strategicObjectiveIds);
       setEstrategiasList(filteredData);
 
     } catch (error) {

@@ -55,7 +55,7 @@ const EventTable: React.FC<EventTableProps> = ({
   }, [financingSources]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="max-h-[500px] overflow-y-auto overflow-x-auto">
       {showCommentThread && currentEntityId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <CommentThread
@@ -66,55 +66,57 @@ const EventTable: React.FC<EventTableProps> = ({
           />
         </div>
       )}
-      <Table className="w-full table-auto min-w-[1000px]">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="whitespace-normal break-words">Tipo de Evento</TableHead>
-            <TableHead className="whitespace-normal break-words">Evento</TableHead>
-            <TableHead className="whitespace-normal break-words">Objetivo</TableHead>
-            <TableHead className="whitespace-normal break-words">Indicador de Logro</TableHead>
-            <TableHead className="whitespace-normal break-words">Naturaleza del Evento</TableHead>
-            <TableHead className="whitespace-normal break-words">Campus</TableHead>
-            <TableHead className="whitespace-normal break-words">ODS</TableHead>
-            <TableHead className="whitespace-normal break-words">Fechas</TableHead>
-            <TableHead className="whitespace-normal break-words">Aportes al PEI</TableHead>
-            <TableHead className="whitespace-normal break-words">Costo Total</TableHead>
-            <TableHead className="whitespace-normal break-words">Detalles Financieros</TableHead>
-            <TableHead className="whitespace-normal break-words">Responsables</TableHead>
-            <TableHead className="whitespace-normal break-words">Recursos</TableHead>
-            <TableHead className="whitespace-normal break-words">Detalle de Planificación</TableHead>
-            <TableHead className="whitespace-normal break-words">Detalles del Formulador</TableHead>
-            {showComments && <TableHead className="whitespace-normal break-words">Comentarios</TableHead>}
-            {showActions && <TableHead className="whitespace-normal break-words">Acciones</TableHead>}
-            {showCorrectionsActions && <TableHead className="whitespace-normal break-words">Acciones de Corrección</TableHead>} {/* Nueva celda de encabezado */}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <>
-            {events.map(event => (
-              <EventRow
-                otherFinancing={otherFinancing || []} 
-                umesFinancing={umesFinancing || []}
-                key={event.id}
-                event={event}
-                isPending={isPending}
-                onApprove={onApprove}
-                onReject={onReject}
-                onRequestCorrection={onRequestCorrection}
-                onRevert={onRevert}
-                showComments={showComments}
-                showActions={showActions}
-                showCorrectionsActions={showCorrectionsActions} // Pasar nueva prop
-                onEdit={onEdit}                                       // Pasar nueva prop
-                onDelete={onDelete}                                   // Pasar nueva prop
-                setShowCommentThread={setShowCommentThread}
-                setCurrentEntityId={setCurrentEntityId}
-                setCurrentEntityName={setCurrentEntityName}
-              />
-            ))}
-          </>
-        </TableBody>
-      </Table>
+      <div className="relative">
+        <Table className="relative w-full table-auto min-w-[1000px]">
+          <TableHeader className="sticky top-0 z-10 bg-white shadow-sm">
+            <TableRow>
+              <TableHead className="whitespace-normal break-words bg-green-50">Tipo de Evento</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Evento</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Objetivo</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Indicador de Logro</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Naturaleza del Evento</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Campus</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">ODS</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Fechas</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Aportes al PEI</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Costo Total</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Detalles Financieros</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Responsables</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Recursos</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Detalle de Planificación</TableHead>
+              <TableHead className="whitespace-normal break-words bg-green-50">Detalles del Formulador</TableHead>
+              {showComments && <TableHead className="whitespace-normal break-words bg-green-50">Comentarios</TableHead>}
+              {showActions && <TableHead className="whitespace-normal break-words bg-green-50">Acciones</TableHead>}
+              {showCorrectionsActions && <TableHead className="whitespace-normal break-words bg-green-50">Acciones de Corrección</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <>
+              {events.map(event => (
+                <EventRow
+                  otherFinancing={otherFinancing || []} 
+                  umesFinancing={umesFinancing || []}
+                  key={event.id}
+                  event={event}
+                  isPending={isPending}
+                  onApprove={onApprove}
+                  onReject={onReject}
+                  onRequestCorrection={onRequestCorrection}
+                  onRevert={onRevert}
+                  showComments={showComments}
+                  showActions={showActions}
+                  showCorrectionsActions={showCorrectionsActions}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  setShowCommentThread={setShowCommentThread}
+                  setCurrentEntityId={setCurrentEntityId}
+                  setCurrentEntityName={setCurrentEntityName}
+                />
+              ))}
+            </>
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
