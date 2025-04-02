@@ -135,7 +135,7 @@ export default function Header() {
 				<div className="mr-4 hidden md:flex">
 					<Link href="/inicio" className="mr-6 flex items-center space-x-2">
 						<Image src={Logo} alt="UMES Logo" className="h-16 w-auto" />
-						<span className="hidden font-bold sm:inline-block">UMES Gestión POA</span>
+						{/* <span className="hidden font-bold sm:inline-block">UMES Gestión POA</span> */}
 					</Link>
 					<NavigationMenu>
 						<NavigationMenuList>
