@@ -95,6 +95,48 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     // No cerramos el diálogo aquí, el hook se encarga de ello en el submit exitoso
   }
 
+  // Función para eliminar un archivo nuevo
+  const handleRemoveNewFile = (index: number) => {
+    if (currentDateId !== null) {
+      const currentFiles = evidenceFiles.get(currentDateId) || [];
+      const updatedFiles = currentFiles.filter((_, i) => i !== index);
+      
+      // Primero limpiamos los archivos
+      addFilesToDate(currentDateId, []);
+      
+      // Luego agregamos los archivos filtrados (si hay alguno)
+      if (updatedFiles.length > 0) {
+        addFilesToDate(currentDateId, updatedFiles);
+      }
+    }
+  }
+  
+  // Función para manejar la eliminación de archivos existentes de manera eficiente
+  const handleRemoveExistingFile = (dateId: number, fileId: number) => {
+     
+    
+    // Buscar el archivo que estamos eliminando para obtener su nombre
+    const fileToRemove = downloadedFiles.get(dateId)?.find(f => (f as any).evidenceId === fileId);
+    const fileName = fileToRemove ? fileToRemove.name : '';
+     
+    
+    // Llamar a la función original que actualiza los estados globales
+    removeExistingFile(dateId, fileId);
+    
+    // IMPORTANTE: También eliminar cualquier archivo nuevo con el mismo nombre
+    if (fileName && currentDateId !== null) {
+       
+      const currentFiles = evidenceFiles.get(currentDateId) || [];
+      const matchingFileIndex = currentFiles.findIndex(f => f.name === fileName);
+      
+      if (matchingFileIndex >= 0) {
+         
+        // Usar la función existente handleRemoveNewFile para eliminarlo
+        handleRemoveNewFile(matchingFileIndex);
+      }
+    }
+  }
+
   // Función para formatear la fecha para mostrar
   const formatDateDisplay = (dateString: string | undefined) => {
     if (!dateString) return "Seleccionar fecha"
@@ -329,14 +371,6 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     // Crear un mapa para rastrear nombres de archivos y evitar duplicados
     const fileNameMap = new Map<string, boolean>();
     
-    // Función para eliminar un archivo nuevo
-    const handleRemoveNewFile = (index: number) => {
-      if (currentDateId) {
-        const files = currentFiles.filter((_, i) => i !== index);
-        addFilesToDate(currentDateId, files);
-      }
-    }
-
     return (
       <div className="space-y-4">
         <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
@@ -394,9 +428,11 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
                 className="hidden"
                 id="file-upload"
                 onChange={(e) => {
-                  if (currentDateId !== null) {
+                  if (currentDateId !== null && e.target.files && e.target.files.length > 0) {
                     const files = Array.from(e.target.files || [])
                     addFilesToDate(currentDateId, files)
+                    // Resetear el valor del input para permitir subir el mismo archivo después de eliminarlo
+                    e.target.value = '';
                   }
                 }}
               />
@@ -415,8 +451,12 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2 text-gray-700">Archivos de evidencia:</h4>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-                  {/* Mostrar archivos existentes que no se han eliminado */}
-                  {isEditing && existingFiles.map((file: any, index) => {
+                  {/* Mostrar archivos existentes que no se han eliminados */}
+                  {isEditing && existingFiles
+                    .filter(file => !removedEvidenceIds.has((file as any).evidenceId))
+                    .map((file: any, index) => {
+                     
+                    
                     // Comprobar si este archivo ya está en el mapa para evitar duplicados
                     const fileKey = `${file.name}-${file.size}`;
                     if (fileNameMap.has(fileKey)) {
@@ -426,7 +466,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
                     
                     return (
                       <div
-                        key={`existing-${index}`}
+                        key={`existing-${file.evidenceId || index}`}
                         className="flex items-center justify-between bg-gray-50 p-2 rounded-md border border-gray-200"
                       >
                         <div className="flex items-center flex-grow">
@@ -439,7 +479,16 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
-                            onClick={() => removeExistingFile(currentDateId, file.evidenceId)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                               
+                              
+                              if (currentDateId !== null && file.evidenceId) {
+                                // Llamar directamente a removeExistingFile sin modificar primero removedEvidenceIds
+                                handleRemoveExistingFile(currentDateId, file.evidenceId);                                 
+                              }
+                            }}
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -516,7 +565,14 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     if (currentStep === "searchEvent") {
       return (
         <div className="flex justify-end">
-          <Button variant="ghost" onClick={handleClose} className="text-gray-600 hover:text-gray-800">
+          <Button 
+            variant="ghost" 
+            onClick={() => {
+               
+              handleClose();
+            }} 
+            className="text-gray-600 hover:text-gray-800"
+          >
             Cancelar
           </Button>
         </div>
