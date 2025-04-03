@@ -605,35 +605,56 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
           </CardHeader>
           <CardContent className="space-y-4">
             {fechasFields.map((field, index) => (
-              <FormField
-                key={field.id}
-                control={form.control}
-                name={`fechas.${index}.startDate`}
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel className={cn(index !== 0 && "sr-only")}>
-                      Fecha de Ejecución
-                    </FormLabel>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="date"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        className="w-full sm:w-[280px]"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => removeFecha(index)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 space-y-2 border p-4 rounded-md">
+                <FormField
+                  control={form.control}
+                  name={`fechas.${index}.startDate`}
+                  render={({ field: startDateField }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>
+                        Fecha planificada
+                      </FormLabel>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          value={startDateField.value}
+                          disabled={true}
+                          className="w-full sm:w-[280px] bg-muted/50"
+                        />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`fechas.${index}.executionStartDate`}
+                  render={({ field: executionField }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>
+                        Fecha de ejecución
+                      </FormLabel>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          value={executionField.value || form.getValues(`fechas.${index}.startDate`)}
+                          onChange={(e) => executionField.onChange(e.target.value)}
+                          className="w-full sm:w-[280px]"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeFecha(index)}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             ))}
             {errors.fechas && (
               <p className="mt-2 text-sm text-destructive">
