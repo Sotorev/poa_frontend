@@ -1,9 +1,9 @@
 import { currentUser } from "@/lib/auth";
-import { ResponseExecutedEvent, UpdateEventExecutedPayload } from "@/types/eventExecution.type";
+import { RequestEventExecution, ResponseExecutedEvent, UpdateEventExecutedPayload } from "@/types/eventExecution.type";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export const postEventExecuted = async (eventExecuted: any, files: File[]) => {
+export const postEventExecuted = async (eventExecuted: RequestEventExecution, files: File[]) => {
   const user = await currentUser();
   const formData = new FormData();
   formData.append("data", JSON.stringify(eventExecuted));
@@ -11,7 +11,7 @@ export const postEventExecuted = async (eventExecuted: any, files: File[]) => {
     formData.append("files", file);
   });
 
-  const response = await fetch(`${API_URL}/api/fullexecution/fullexecution/`, {
+  const response = await fetch(`${API_URL}/api/eventExecution/`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${user?.token}`,
@@ -43,7 +43,7 @@ export const getEventExecutedByPoa = async (
 ): Promise<ResponseExecutedEvent[]> => {
   const user = await currentUser();
   const response = await fetch(
-    `${API_URL}/api/fullexecution/fullexecution/poa/${poaId}`,
+    `${API_URL}/api/eventExecution/poa/${poaId}`,
     {
       headers: {
         Authorization: `Bearer ${user?.token}`,
@@ -77,12 +77,19 @@ export const revertEventExecuted = async (eventId: number) => {
 export const updateEventExecuted = async (eventId: number, eventExecuted: UpdateEventExecutedPayload, files: File[]) => {
   const user = await currentUser();
   const formData = new FormData();
-  formData.append("data", JSON.stringify(eventExecuted));
+  
+  // Asegurar que la estructura del JSON sea correcta
+  formData.append("data", JSON.stringify({
+    eventId: eventExecuted.eventId,
+    eventDatesWithExecution: eventExecuted.eventDatesWithExecution,
+    eventExecutionFinancings: eventExecuted.eventExecutionFinancings
+  }));
+  
   files.forEach((file) => {
     formData.append("files", file);
   });
 
-  const response = await fetch(`${API_URL}/api/fullexecution/${eventId}`, {
+  const response = await fetch(`${API_URL}/api/eventExecution/${eventId}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${user?.token}`,

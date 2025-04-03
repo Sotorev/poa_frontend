@@ -121,13 +121,14 @@ export default function PoaTrackingPage() {
             financingSourceId: f.financingSourceId,
           })),
           costDetails: event.costDetails,
-          statusId: event.statusId,
+          statusId: event.dates.map(date => date.statusId),
           eventApprovals: event.eventApprovals,
           files: []
+          
         } as EventExecution));
 
         setEvents(mappedEvents.filter(event =>
-          (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+          (event.statusId.includes(1) && event.eventApprovals[0].approvalStatusId === 1)
         ));
       });
 
@@ -145,30 +146,27 @@ export default function PoaTrackingPage() {
 
   const handleSubmit = (data: FormValues) => {
     if (editingEvent) {
-      const updatePayload: UpdateEventExecutedPayload = {
+      const updatePayload = {
         eventId: parseInt(data.eventId, 10),
-        eventExecutionDates: data.fechas.map(f => ({
-          eventExecutionDateId: f.eventExecutionDateId,
-          startDate: f.startDate,
-          reasonForChange: "", // default value or collect from form if needed
-          isDeleted: false,
+        eventDatesWithExecution: data.fechas.map(f => ({
+          eventId: parseInt(data.eventId, 10),
+          eventDateId: f.eventDateId,
+          executionStartDate: f.startDate
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
             eventExecutionFinancingId: um.eventExecutionFinancingId,
-            financingSourceId: um.financingSourceId,
+            eventId: parseInt(data.eventId, 10),
             amount: um.amount,
             percentage: um.percentage,
-            reasonForChange: "",
-            isDeleted: false,
+            financingSourceId: um.financingSourceId
           })),
           ...data.aportesOtros.map(ot => ({
             eventExecutionFinancingId: ot.eventExecutionFinancingId,
-            financingSourceId: ot.financingSourceId,
+            eventId: parseInt(data.eventId, 10),
             amount: ot.amount,
             percentage: ot.percentage,
-            reasonForChange: "",
-            isDeleted: false,
+            financingSourceId: ot.financingSourceId
           })),
         ],
       };
@@ -182,9 +180,10 @@ export default function PoaTrackingPage() {
     } else {
       const requestPayload: RequestEventExecution = {
         eventId: parseInt(data.eventId, 10),
-        eventExecutionDates: data.fechas.map(f => ({
+        eventDatesWithExecution: data.fechas.map(f => ({
           eventId: parseInt(data.eventId, 10),
-          startDate: f.startDate,
+          eventDateId: f.eventDateId,
+          executionStartDate: f.startDate,
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
@@ -229,13 +228,13 @@ export default function PoaTrackingPage() {
                   financingSourceId: f.financingSourceId,
                 })),
                 costDetails: event.costDetails,
-                statusId: event.statusId,
+                statusId: event.dates.map(date => date.statusId),
                 eventApprovals: event.eventApprovals,
                 files: []
               } as EventExecution));
 
               setEvents(mappedEvents.filter(event =>
-                (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+                (event.statusId.includes(1) && event.eventApprovals[0].approvalStatusId === 1)
               ));
             });
 
@@ -277,13 +276,13 @@ export default function PoaTrackingPage() {
                 financingSourceId: f.financingSourceId,
               })),
               costDetails: event.costDetails,
-              statusId: event.statusId,
+              statusId: event.dates.map(date => date.statusId),
               eventApprovals: event.eventApprovals,
               files: []
             } as EventExecution));
 
             setEvents(mappedEvents.filter(event =>
-              (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+              (event.statusId.includes(1) && event.eventApprovals[0].approvalStatusId === 1)
             ));
           });
       })
@@ -321,7 +320,7 @@ export default function PoaTrackingPage() {
             eventId: editingEvent.eventId
           })) || [],
           archivosGastos: editingEvent.eventExecutionFiles?.map(f => new File([], f.fileName)) || [],
-          fechas: editingEvent.eventExecutionDates || []
+          fechas: editingEvent.eventDates || []
         } : undefined}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}

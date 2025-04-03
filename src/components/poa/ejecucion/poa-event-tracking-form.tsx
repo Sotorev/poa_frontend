@@ -644,7 +644,15 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => appendFecha({ eventExecutionDateId: 0, startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0], reasonForChange: null, isDeleted: false })}
+              onClick={() => appendFecha({
+                eventDateId: 0,
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: new Date().toISOString().split('T')[0],
+                executionStartDate: new Date().toISOString().split('T')[0],
+                executionEndDate: null,
+                reasonForChange: null,
+                statusId: 1
+              })}
             >
               <Plus className="h-4 w-4 mr-2" />
               Agregar Fecha

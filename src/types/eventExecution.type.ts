@@ -22,7 +22,7 @@ export interface EventExecution {
   totalCost: number;
   dates: { startDate: string; endDate: string }[];
   financings: eventExecutionFinancings[];
-  statusId: number;
+  statusId: number[];
   eventApprovals: { approvalStatusId: number }[];
   costDetails?: ApiCostDetail[];
 }
@@ -34,20 +34,23 @@ export interface FinancingSource {
 }
 
 export interface eventExecutionFinancings {
-  eventExecutionFinancingId: number;
-  eventId: number;
-  amount: number;
-  percentage: number;
-  financingSourceId: number;
+  eventExecutionFinancingId: number
+  eventId: number
+  amount: number
+  percentage: number
+  financingSourceId: number
 };
 
+export interface EventDatesWithExecution {
+  eventId: number
+  eventDateId: number
+  executionStartDate: string
+}
+
 export interface RequestEventExecution {
-  eventId: number;
-  eventExecutionDates: {
-    eventId: number;
-    startDate: string;
-  }[];
-  eventExecutionFinancings: eventExecutionFinancings[];
+  eventId: number
+  eventDatesWithExecution: EventDatesWithExecution[]
+  eventExecutionFinancings: eventExecutionFinancings[]
 }
 
 interface EventExecutionFile {
@@ -57,39 +60,41 @@ interface EventExecutionFile {
   uploadedAt: string;
 }
 
-interface ResponseEventExecutionDate {
-  eventExecutionDateId: number;
-  startDate: string;
-  endDate: string;
-  reasonForChange: string | null;
-  isDeleted: boolean;
+export interface ResponseEventExecutionDate {
+  eventDateId: number
+  startDate: string
+  endDate: string
+  executionStartDate: string
+  executionEndDate: any
+  reasonForChange: any
+  statusId: number
 }
 
-interface ResponseEventExecutionFinancing {
-  eventExecutionFinancingId: number;
-  financingSourceId: number;
-  amount: number;
-  percentage: number;
-  reasonForChange: string | null;
-  isDeleted: boolean;
+export interface ResponseEventExecutionFinancing {
+  eventExecutionFinancingId: number
+  financingSourceId: number
+  amount: number
+  percentage: number
+  reasonForChange: any
+  isDeleted: boolean
 }
 
-interface EventResponsible {
-  eventResponsibleId: number;
-  responsibleRole: string;
-  name: string;
+export interface EventResponsible {
+  eventResponsibleId: number
+  responsibleRole: string
+  name: string
 }
 
 export interface ResponseExecutedEvent {
-  eventId: number;
-  name: string;
-  objective: string;
-  campus: string;
-  totalCost: number;
-  eventExecutionDates: ResponseEventExecutionDate[];
-  eventExecutionFinancings: ResponseEventExecutionFinancing[];
-  eventExecutionFiles: EventExecutionFile[];
-  eventResponsibles: EventResponsible[];
+  eventId: number
+  name: string
+  objective: string
+  campus: string
+  totalCost: number
+  eventDates: ResponseEventExecutionDate[]
+  eventExecutionFinancings: ResponseEventExecutionFinancing[]
+  eventExecutionFiles: EventExecutionFile[]
+  eventResponsibles: EventResponsible[]
 }
 
 export type Aporte = {
@@ -119,18 +124,16 @@ export type FormFieldPaths =
 
 export interface UpdateEventExecutedPayload {
   eventId: number;
-  eventExecutionDates: {
-    eventExecutionDateId: number;
-    startDate: string;
-    reasonForChange: string;
-    isDeleted: boolean;
+  eventDatesWithExecution: {
+    eventId: number;
+    eventDateId: number;
+    executionStartDate: string;
   }[];
   eventExecutionFinancings: {
     eventExecutionFinancingId: number;
-    financingSourceId: number;
+    eventId: number;
     amount: number;
     percentage: number;
-    reasonForChange: string;
-    isDeleted: boolean;
+    financingSourceId: number;
   }[];
 }

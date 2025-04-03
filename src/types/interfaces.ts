@@ -1,60 +1,223 @@
 // components/EventsViewer/interfaces.ts
 
-// Interfaces para los datos de la API
-/** Interface para fechas de eventos */
 export interface ApiEventDate {
-  eventDateId: number;
-  eventId: number;
-  startDate: string;
-  endDate: string;
-  isDeleted: boolean;
+  eventDateId: number
+  eventId: number
+  startDate: string
+  endDate: string
+  isDeleted: boolean
+  executionStartDate?: string
+  executionEndDate: any
+  statusId: number
+  reasonForChange: any
 }
 
-/** Interface para financiamiento de eventos */
 export interface ApiEventFinancing {
-  eventFinancingId: number;
-  eventId: number;
-  financingSourceId: number;
-  amount: number;
-  percentage: number;
-  isDeleted: boolean;
+  eventFinancingId: number
+  eventId: number
+  financingSourceId: number
+  amount: number
+  percentage: number
+  isDeleted: boolean
 }
 
-export interface ApiPurchaseType {
-  purchaseTypeId: number;
-  name: string;
-  isDeleted: boolean;
-}
-
-export interface ApiInstitutionalResource {
-  resourceId: number;
-  name: string;
-  event_resource: ApiEventResource;
-}
-
-export interface ApiEventResource {
-  eventResourceId: number;
-  eventId: number;
-  resourceId: number;
-  isDeleted: boolean;
-}
-
-/** Interface para responsables de eventos */
 export interface ApiEventResponsible {
-  eventResponsibleId: number;
-  eventId: number;
-  responsibleRole: "Principal" | "Ejecución" | "Seguimiento";
-  isDeleted: boolean;
-  name: string;
+  eventResponsibleId: number
+  eventId: number
+  responsibleRole: string
+  isDeleted: boolean
+  name: string
+}
+
+export interface ApiCostDetail {
+  costDetailId: number
+  eventId: number
+  filePath: string
+  fileName: string
+  isDeleted: boolean
+}
+
+export interface ApiFile {
+  fileId: number
+  eventId: number
+  filePath: string
+  fileName: string
+  uploadedAt: string
+  isDeleted: boolean
 }
 
 export interface ApiCampus {
-  campusId: number;
-  name: string;
-  city: string;
-  department: string;
-  isDeleted: boolean;
-  currentStudentCount: number | null;
+  campusId: number
+  name: string
+  city: string
+  department: string
+  isDeleted: boolean
+  currentStudentCount?: number
+}
+
+export interface ApiIntervention {
+  interventionId: number
+  name: string
+  isDeleted: boolean
+  strategyId: number
+  status: string
+  createdAt: string
+  updatedAt: string
+  userId: any
+  reasonForChange: any
+  eventIntervention: ApiInterventionEventIntervention
+  strategy: ApiStrategy
+}
+
+export interface ApiInterventionEventIntervention {
+  eventId: number
+  interventionId: number
+  isDeleted: boolean
+}
+
+export interface ApiStrategy {
+  strategyId: number
+  description: string
+  completionPercentage: number
+  assignedBudget: number
+  executedBudget?: number
+  isDeleted: boolean
+  createdAt: string
+  updatedAt: string
+  userId: any
+  status: string
+  reasonForChange: any
+  strategicAreaId: number
+  strategicArea: StrategicArea
+}
+
+export interface StrategicArea {
+  strategicAreaId: number
+  name: string
+  peiId: number
+  strategicObjective: string
+  isDeleted: boolean
+  createdAt: string
+  updatedAt: string
+  userId: any
+  status: string
+  reasonForChange: any
+}
+
+export interface ApiOds {
+  odsId: number
+  name: string
+  description: any
+  isDeleted: boolean
+  sortNo: number
+  colorHex: string
+  event_ods: ApiOdsEventOds
+}
+
+export interface ApiOdsEventOds {
+  eventId: number
+  odsId: number
+  isDeleted: boolean
+}
+
+export interface ApiEventApproval {
+  approvalId: number
+  eventId: number
+  approverUserId?: number
+  approverRoleId?: number
+  approvalStageId?: number
+  approvalStatusId: number
+  approvalDate: string
+  isDeleted: boolean
+  approvalStage?: ApprovalStage
+  approvalStatus: ApiApprovalStatus
+}
+
+export interface ApprovalStage {
+  stageId: number
+  name: string
+  description: string
+  isDeleted: boolean
+}
+
+export interface ApiApprovalStatus {
+  statusId: number
+  name: string
+  description: string
+  isDeleted: boolean
+}
+
+export interface ApiUser {
+  userId: number
+  firstName: string
+  lastName: string
+  email: string
+  roleId: number
+  facultyId: number
+  username: string
+  isDeleted: boolean
+}
+
+export interface ApiPurchaseType {
+  purchaseTypeId: number
+  name: string
+  isDeleted: boolean
+  userId: any
+  createdAt: string
+  updatedAt: string
+  reasonForChange: any
+  status: string
+}
+
+export interface ApiInstitutionalResource {
+  resourceId: number
+  name: string
+  status: string
+  userId?: number
+  createdAt: string
+  updatedAt: string
+  reasonForChange: any
+  isDeleted: boolean
+  event_resource: ApiEventResource
+}
+
+export interface ApiEventResource {
+  eventResourceId: number
+  eventId: number
+  resourceId: number
+  isDeleted: boolean
+}
+
+/** Interface que define la estructura principal de un evento en la API */
+export interface ApiEvent {
+  eventId: number
+  name: string
+  type: string /* actividad o proyecto */
+  poaId: number
+  completionPercentage: number
+  campusId: number
+  eventNature: string /* planificado o no planificado */
+  isDeleted: boolean
+  objective: string
+  isDelayed: boolean
+  achievementIndicator: string
+  purchaseTypeId: number
+  totalCost: number
+  createdAt: string
+  updatedAt?: string
+  userId: number
+  dates: ApiEventDate[] 
+  financings: ApiEventFinancing[]
+  responsibles: ApiEventResponsible[]
+  costDetails: ApiCostDetail[] /* Archivos de costos */
+  files: ApiFile[] /* Archivos de planificacion */
+  campus: ApiCampus
+  interventions: ApiIntervention[]
+  ods: ApiOds[]
+  eventApprovals: ApiEventApproval[]
+  user: ApiUser
+  purchaseType: ApiPurchaseType
+  institutionalResources: ApiInstitutionalResource[] /* Recursos institucionales como Publicidad, Coro, etc. */
 }
 
 export interface ApiStrategicArea {
@@ -65,145 +228,6 @@ export interface ApiStrategicArea {
   isDeleted: boolean;
 }
 
-/** Interface para objetivos estratégicos */
-// export interface ApiStrategicObjective {
-//   strategicObjectiveId: number;
-//   description: string;
-//   strategicAreaId: number;
-//   isDeleted: boolean;
-//   strategicArea: ApiStrategicArea;
-// }
-
-/** Interface para estrategias */
-export interface ApiStrategy {
-  strategyId: number;
-  description: string;
-  strategicObjectiveId: number;
-  completionPercentage: number;
-  assignedBudget: number;
-  executedBudget: number | null;
-  isDeleted: boolean;
-  strategicArea: ApiStrategicArea;
-}
-
-export interface ApiInterventionEventIntervention {
-  eventId: number;
-  interventionId: number;
-  isDeleted: boolean;
-}
-
-export interface ApiIntervention {
-  interventionId: number;
-  name: string;
-  isDeleted: boolean;
-  strategyId: number;
-  eventIntervention: ApiInterventionEventIntervention;
-  strategy: ApiStrategy;
-}
-
-export interface ApiOdsEventOds {
-  eventId: number;
-  odsId: number;
-  isDeleted: boolean;
-}
-
-export interface ApiOds {
-  odsId: number;
-  name: string;
-  description: string | null;
-  isDeleted: boolean;
-  sortNo: number;
-  colorHex: string;
-  event_ods: ApiOdsEventOds;
-}
-
-export interface ApiApprovalStatus {
-  statusId: number;
-  name: string;
-  description: string;
-  isDeleted: boolean;
-}
-
-export interface ApiEventApproval {
-  approvalId: number;
-  eventId: number;
-  approverUserId: number | null;
-  approverRoleId: number;
-  approvalStageId: number | null;
-  approvalStatusId: number;
-  comments: string;
-  approvalDate: string;
-  isDeleted: boolean;
-  approvalStage: any | null;
-  approvalStatus: ApiApprovalStatus;
-}
-
-export interface ApiUser {
-  userId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  username: string;
-  password: string;
-  roleId: number;
-  facultyId: number;
-  isDeleted: boolean;
-}
-
-/** Interface para detalles de costos */
-export interface ApiCostDetail {
-  costDetailId: number;
-  eventId: number;
-  filePath: string;
-  fileName: string;
-  isDeleted: boolean;
-}
-
-/** Interface para archivos */
-export interface ApiFile {
-  fileId: number;
-  eventId: number;
-  filePath: string;
-  fileName: string;
-  uploadedAt: string;
-  isDeleted: boolean;
-}
-
-/**
- * Interfaz que define la estructura de la response de la API para un evento
- */
-/** Interface que define la estructura principal de un evento en la API */
-export interface ApiEvent {
-  eventId: number /** ID único del evento */;
-  name: string /** Nombre del evento */;
-  type: string /** Tipo de evento */;
-  poaId: number /** ID del POA asociado */;
-  completionPercentage: number /** Porcentaje de completitud del evento */;
-  campusId: number /** ID del campus donde se realiza */;
-  eventNature: string /** Naturaleza o categoría del evento */;
-  isDeleted: boolean /** Indica si el evento está eliminado */;
-  objective: string /** Objetivo principal del evento */;
-  isDelayed: boolean /** Indica si el evento está retrasado */;
-  achievementIndicator: string /** Indicador de logro o cumplimiento */;
-  purchaseTypeId: number /** ID del tipo de compra asociado */;
-  totalCost: number /** Costo total del evento */;
-  createdAt: string /** Fecha de creación */;
-  updatedAt: string | null /** Fecha de última actualización */;
-  userId: number /** ID del usuario creador */;
-  statusId: number /** ID del estado actual del evento (ejecutado, planificado, finalizado) */;
-  dates: ApiEventDate[] /** Fechas asociadas al evento */;
-  financings: ApiEventFinancing[] /** Fuentes de financiamiento */;
-  responsibles: ApiEventResponsible[] /** Responsables del evento */;
-  costDetails: ApiCostDetail[] /** Detalles de costos */;
-  files: ApiFile[] /** Archivos adjuntos */;
-  campus: ApiCampus /** Información del campus (sede) */;
-  interventions: ApiIntervention[] /** Intervenciones asociadas */;
-  ods: ApiOds[] /** Objetivos de Desarrollo Sostenible */;
-  eventApprovals: ApiEventApproval[] /** Aprobaciones del evento */;
-  user: ApiUser /** Información del usuario creador */;
-  purchaseType: ApiPurchaseType /** Tipo de compra */;
-  institutionalResources: ApiInstitutionalResource[] /** Recursos institucionales requeridos */;
-}
 
 // Interfaces existentes
 export interface DateInterval {
