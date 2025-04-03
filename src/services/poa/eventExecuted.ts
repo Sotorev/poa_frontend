@@ -57,7 +57,7 @@ export const revertEventExecuted = async (eventId: number) => {
   try {
     const user = await currentUser();
     const response = await fetch(
-      `${API_URL}/api/fullexecution/resetStatus/${eventId}`,
+      `${API_URL}/api/eventExecution/resetStatus/${eventId}`,
       {
         method: "PATCH",
         headers: {
