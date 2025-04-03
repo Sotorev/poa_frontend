@@ -110,7 +110,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
 
   // Componente para mostrar el popover con las evidencias
   const EvidencePopover = ({ event, dateId }: { event: EventFinishedResponse; dateId: number }) => {
-    const dateInfo = event.dates.find((d) => d.eventExecutionDateId === dateId)
+    const dateInfo = event.dates.find((d) => d.eventDateId === dateId)
 
     if (!dateInfo) return null
 
@@ -181,7 +181,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {event.dates.map((date) => (
                 <div
-                  key={date.eventExecutionDateId}
+                  key={date.eventDateId}
                   className="p-3 bg-white rounded-md border border-gray-200 shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -423,7 +423,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                         <td className="py-4 px-6">
                           <div className="flex items-center">
                             {event.dates.map(date => (
-                              <span key={date.eventExecutionDateId} className="mr-1 text-sm">{formatDateDisplay(date.endDate)}</span>
+                              <span key={date.eventDateId} className="mr-1 text-sm">{formatDateDisplay(date.endDate)}</span>
                             ))}
                           </div>
                         </td>

@@ -49,7 +49,7 @@ export const useEventFinished = () => {
   const [selectedEvent, setSelectedEvent] = useState<ResponseExecutedEvent | null>(null);
   const [selectedFinishedEvent, setSelectedFinishedEvent] = useState<EventFinishedResponse | null>(null);
   const [currentStep, setCurrentStep] = useState<FormStep>('searchEvent');
-  const [selectedDates, setSelectedDates] = useState<{ eventExecutionDateId: number, endDate: string }[]>([]);
+  const [selectedDates, setSelectedDates] = useState<{ eventDateId: number, endDate: string }[]>([]);
   const [evidenceFiles, setEvidenceFiles] = useState<Map<number, File[]>>(new Map());
   const [downloadedFiles, setDownloadedFiles] = useState<Map<number, DownloadedFile[]>>(new Map());
   const [removedEvidenceIds, setRemovedEvidenceIds] = useState<Set<number>>(new Set());
@@ -67,7 +67,7 @@ export const useEventFinished = () => {
     defaultValues: {
       data: {
         eventId: 0,
-        eventExecutionDateId: 0,
+        eventDateId: 0,
         endDate: ''
       },
       evidence: []
@@ -79,7 +79,7 @@ export const useEventFinished = () => {
     defaultValues: {
       data: {
         eventId: 0,
-        eventExecutionDateId: 0,
+        eventDateId: 0,
         endDate: ''
       },
       evidence: []
@@ -183,12 +183,12 @@ export const useEventFinished = () => {
 
   // Fetch eventos finalizados
   const fetchFinishedEvents = async () => {
-    if (!user?.token) return;
+    if (!user?.token || !poaId) return;
     
     try {
       setIsLoading(true);
       setError(null);
-      const data = await getEventFinished(user.token);
+      const data = await getEventFinished(poaId, user.token);
       setFinishedEvents(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar eventos finalizados');
@@ -207,7 +207,7 @@ export const useEventFinished = () => {
     createForm.reset({
       data: {
         eventId: event.eventId,
-        eventExecutionDateId: 0,
+        eventDateId: 0,
         endDate: ''
       },
       evidence: []
@@ -271,7 +271,7 @@ export const useEventFinished = () => {
           }
           
           if (downloadedFilesArray.length > 0) {
-            filesMap.set(date.eventExecutionDateId, downloadedFilesArray);
+            filesMap.set(date.eventDateId, downloadedFilesArray);
           }
         }
       }
@@ -301,7 +301,7 @@ export const useEventFinished = () => {
     // Seleccionar todas las fechas del evento para editar
     if (event.dates && event.dates.length > 0) {
       const selectedDatesArray = event.dates.map((date) => ({
-        eventExecutionDateId: date.eventExecutionDateId,
+        eventDateId: date.eventDateId,
         endDate: date.endDate,
       }));
       setSelectedDates(selectedDatesArray);
@@ -314,7 +314,7 @@ export const useEventFinished = () => {
     updateForm.reset({
       data: {
         eventId: event.eventId,
-        eventExecutionDateId: 0,
+        eventDateId: 0,
         endDate: ''
       },
       evidence: []
@@ -327,23 +327,23 @@ export const useEventFinished = () => {
   };
 
   // Seleccionar fecha para evidencia y pasar al paso de archivos
-  const selectDateForEvidence = (eventExecutionDateId: number, endDate: string = '') => {
-    setCurrentDateId(eventExecutionDateId);
+  const selectDateForEvidence = (eventDateId: number, endDate: string = '') => {
+    setCurrentDateId(eventDateId);
     
     // Verificar si la fecha ya fue seleccionada
     const existingDateIndex = selectedDates.findIndex(
-      date => date.eventExecutionDateId === eventExecutionDateId
+      date => date.eventDateId === eventDateId
     );
     
     // Si no existe, añadirla a las fechas seleccionadas
     if (existingDateIndex === -1) {
-      setSelectedDates(prev => [...prev, { eventExecutionDateId, endDate }]);
+      setSelectedDates(prev => [...prev, { eventDateId, endDate }]);
     }
     
     // Si estamos en modo edición, cargar los archivos ya existentes
-    if (isEditing && downloadedFiles.has(eventExecutionDateId)) {
+    if (isEditing && downloadedFiles.has(eventDateId)) {
       // Tomar los archivos descargados y ponerlos en el estado de archivos de evidencia
-      const files = downloadedFiles.get(eventExecutionDateId) || [];
+      const files = downloadedFiles.get(eventDateId) || [];
       // Filtrar archivos eliminados que están en removedEvidenceIds
       const filteredFiles = files.filter(file => !removedEvidenceIds.has((file as DownloadedFile).evidenceId));
       
@@ -352,7 +352,7 @@ export const useEventFinished = () => {
           const newMap = new Map(prev);
           // Convertir los DownloadedFile a File
           const regularFiles = filteredFiles.map(file => new File([file], file.name, { type: file.type }));
-          newMap.set(eventExecutionDateId, regularFiles);
+          newMap.set(eventDateId, regularFiles);
           return newMap;
         });
       }
@@ -360,10 +360,10 @@ export const useEventFinished = () => {
     
     // Configurar el formulario activo
     if (isEditing) {
-      updateForm.setValue('data.eventExecutionDateId', eventExecutionDateId);
+      updateForm.setValue('data.eventDateId', eventDateId);
       updateForm.setValue('data.endDate', endDate);
     } else {
-      createForm.setValue('data.eventExecutionDateId', eventExecutionDateId);
+      createForm.setValue('data.eventDateId', eventDateId);
       createForm.setValue('data.endDate', endDate);
     }
     
@@ -371,17 +371,17 @@ export const useEventFinished = () => {
   };
 
   // Actualizar la fecha fin de una fecha seleccionada
-  const updateDateEndDate = (eventExecutionDateId: number, endDate: string) => {
+  const updateDateEndDate = (eventDateId: number, endDate: string) => {
     setSelectedDates(prev => 
       prev.map(date => 
-        date.eventExecutionDateId === eventExecutionDateId 
+        date.eventDateId === eventDateId 
           ? { ...date, endDate } 
           : date
       )
     );
     
     // Actualizar también el formulario activo si es la fecha actual
-    if (currentDateId === eventExecutionDateId) {
+    if (currentDateId === eventDateId) {
       if (isEditing) {
         updateForm.setValue('data.endDate', endDate);
       } else {
@@ -391,19 +391,19 @@ export const useEventFinished = () => {
   };
 
   // Añadir archivos a una fecha específica
-  const addFilesToDate = (eventExecutionDateId: number, files: File[]) => {
+  const addFilesToDate = (eventDateId: number, files: File[]) => {
     setEvidenceFiles(prev => {
       const newMap = new Map(prev);
       // Si se proporciona un arreglo vacío y se llama a esta función,
       // significa que queremos limpiar los archivos existentes
       if (files.length === 0) {
-        newMap.set(eventExecutionDateId, []);
+        newMap.set(eventDateId, []);
         return newMap;
       }
       
       // Si hay archivos, los añadimos a los existentes
-      const existingFiles = newMap.get(eventExecutionDateId) || [];
-      newMap.set(eventExecutionDateId, [...existingFiles, ...files]);
+      const existingFiles = newMap.get(eventDateId) || [];
+      newMap.set(eventDateId, [...existingFiles, ...files]);
       return newMap;
     });
   };
@@ -457,8 +457,8 @@ export const useEventFinished = () => {
       
       // Verificar que todas las fechas tengan al menos un archivo
       const datesWithoutFiles = selectedDates.filter(
-        date => !evidenceFiles.has(date.eventExecutionDateId) || 
-                (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) === 0
+        date => !evidenceFiles.has(date.eventDateId) || 
+                (evidenceFiles.get(date.eventDateId)?.length || 0) === 0
       );
       
       if (datesWithoutFiles.length > 0) {
@@ -469,12 +469,12 @@ export const useEventFinished = () => {
       
       // Procesar cada fecha seleccionada
       for (const dateInfo of selectedDates) {
-        const files = evidenceFiles.get(dateInfo.eventExecutionDateId) || [];
+        const files = evidenceFiles.get(dateInfo.eventDateId) || [];
         
         const evidenceData: CreateEvidenceRequest = {
           data: {
             eventId: selectedEvent.eventId,
-            eventExecutionDateId: dateInfo.eventExecutionDateId,
+            eventDateId: dateInfo.eventDateId,
             endDate: dateInfo.endDate
           },
           evidence: files
@@ -514,11 +514,11 @@ export const useEventFinished = () => {
       const datesWithoutFiles = selectedDates.filter(
         date => {
           // Solo consideramos un problema si la fecha tiene archivos nuevos pero están vacíos
-          const hasFiles = evidenceFiles.has(date.eventExecutionDateId);
+          const hasFiles = evidenceFiles.has(date.eventDateId);
           if (!hasFiles) return false; // Si no tiene archivos nuevos, está bien
           
           // Si tiene archivos nuevos pero están vacíos, es un problema
-          return (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) === 0;
+          return (evidenceFiles.get(date.eventDateId)?.length || 0) === 0;
         }
       );
       
@@ -529,15 +529,15 @@ export const useEventFinished = () => {
       }
       
       // Procesar solo las fechas que tienen nuevos archivos
-      const modifiedDates = selectedDates.filter(date => evidenceFiles.has(date.eventExecutionDateId));
+      const modifiedDates = selectedDates.filter(date => evidenceFiles.has(date.eventDateId));
       
       for (const dateInfo of modifiedDates) {
-        const files = evidenceFiles.get(dateInfo.eventExecutionDateId) || [];
+        const files = evidenceFiles.get(dateInfo.eventDateId) || [];
         
         const evidenceData: UpdateEvidenceRequest = {
           data: {
             eventId: selectedFinishedEvent.eventId,
-            eventExecutionDateId: dateInfo.eventExecutionDateId,
+            eventDateId: dateInfo.eventDateId,
             endDate: dateInfo.endDate
           },
           evidence: files

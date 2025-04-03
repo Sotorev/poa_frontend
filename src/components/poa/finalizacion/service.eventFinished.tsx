@@ -2,8 +2,8 @@ import { CreateEvidenceRequest, CreateUpdateEvidenceResponse, EventFinishedRespo
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-export async function getEventFinished(token: string): Promise<EventFinishedResponse> {
-  const url = `${API_URL}/api/eventEvidence/events-with-evidences`
+export async function getEventFinished(poaId: number, token: string): Promise<EventFinishedResponse> {
+  const url = `${API_URL}/api/eventEvidence/poa/${poaId}/events-with-evidences`
   const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
