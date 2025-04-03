@@ -1,6 +1,6 @@
 "use client";
 import Header from '@/app/(protected)/_components/header'
-import exp from 'constants'
+import { PoaProvider } from '@/contexts/PoaContext';
 import { useSession } from 'next-auth/react'
 import React from 'react'
 
@@ -15,10 +15,12 @@ const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
 		return <div>Cargando...</div>
 	}
 	return (
-		<div className='h-full w-full flex flex-col flex-grow gap-y-10 bg-gray-100'>
-			<Header />
-			{children}
-		</div>
+		<PoaProvider>
+			<div className='h-full w-full flex flex-col flex-grow gap-y-10 bg-gray-100'>
+				<Header />
+				{children}
+			</div>
+		</PoaProvider>
 	)
 }
 

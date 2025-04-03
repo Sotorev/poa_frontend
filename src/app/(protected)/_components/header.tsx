@@ -26,6 +26,14 @@ import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 import { Role } from "@/types/Permission"
 import { NotificationButton } from "@/components/notifications/NotificationButton"
+import { usePoa } from "@/contexts/PoaContext"
+import { 
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue 
+} from "@/components/ui/select"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
 
@@ -126,6 +134,11 @@ export default function Header() {
 	const user = useCurrentUser()
 	const pathname = usePathname()
 	const permissions = usePermissions()
+	const { selectedYear, setSelectedYear } = usePoa()
+	
+	// Generar años para el selector (año actual - 5 años)
+	const currentYear = new Date().getFullYear()
+	const years = Array.from({length: 6}, (_, i) => currentYear - i)
 
 	const checkAccess = (item: NavItem): boolean => {
 		if (item.requiredPermission) {
@@ -189,6 +202,23 @@ export default function Header() {
 					</SheetContent>
 				</Sheet>
 				<div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+					<Select 
+						value={selectedYear.toString()} 
+						onValueChange={(value) => setSelectedYear(parseInt(value))}
+					>
+						<SelectTrigger className="w-[180px] bg-primary/10">
+							<SelectValue placeholder={`POA ${selectedYear}`}>
+								POA {selectedYear}
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							{years.map(year => (
+								<SelectItem key={year} value={year.toString()}>
+									POA {year}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 					<nav className="flex items-center space-x-2">
 						<NotificationButton/>
 					</nav>
