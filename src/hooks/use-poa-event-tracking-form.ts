@@ -274,17 +274,17 @@ export function usePoaEventTrackingFormLogic(
         break;
       case 2:
         const aportesUmesFieldsPaths: Array<FormFieldPaths> = aportesUmes
-          .map((_, i) => `aportesUmes.${i}.tipo` as FormFieldPaths)
+          .map((_, i) => `aportesUmes.${i}.financingSourceId` as FormFieldPaths)
           .concat(
             aportesUmes.map(
-              (_, i) => `aportesUmes.${i}.monto` as FormFieldPaths
+              (_, i) => `aportesUmes.${i}.amount` as FormFieldPaths
             )
           );
         const aportesOtrosFieldsPaths: Array<FormFieldPaths> = aportesOtros
-          .map((_, i) => `aportesOtros.${i}.tipo` as FormFieldPaths)
+          .map((_, i) => `aportesOtros.${i}.financingSourceId` as FormFieldPaths)
           .concat(
             aportesOtros.map(
-              (_, i) => `aportesOtros.${i}.monto` as FormFieldPaths
+              (_, i) => `aportesOtros.${i}.amount` as FormFieldPaths
             )
           );
         fieldsToValidate = [
@@ -374,7 +374,6 @@ export function usePoaEventTrackingFormLogic(
     }
 
     onSubmit(values);
-
 
     form.reset({
       eventId: "",

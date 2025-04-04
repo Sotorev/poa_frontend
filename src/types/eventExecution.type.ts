@@ -114,6 +114,7 @@ export type FormFieldPaths =
   | "archivosGastos"
   | "fechas"
   | `fechas.${number}.startDate`
+  | `fechas.${number}.executionStartDate`
   | `aportesUmes.${number}.eventId`
   | `aportesUmes.${number}.amount`
   | `aportesUmes.${number}.percentage`
