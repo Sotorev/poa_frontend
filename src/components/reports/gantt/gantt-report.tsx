@@ -127,7 +127,7 @@ export default function GanttChart() {
             </SelectContent>
           </Select>
         </div>
-        <div className="w-full md:w-1/3">
+        {/* <div className="w-full md:w-1/3">
           <label className="text-sm text-gray-500 mb-1 block">Buscar evento</label>
           <div className="relative">
             <Input
@@ -139,7 +139,7 @@ export default function GanttChart() {
             />
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Mostrar mensaje si no se ha seleccionado una facultad */}
@@ -155,15 +155,15 @@ export default function GanttChart() {
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500 mb-1">Eventos Completados</h3>
-              <p className="text-2xl font-bold">{selectedFaculty.statusData.find(s => s.name === "Finalizado")?.count}</p>
+              <p className="text-2xl font-bold">{selectedFaculty.statusData.find(s => s.name === "Finalizado")?.count || 0}</p>
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500 mb-1">Eventos en Progreso</h3>
-              <p className="text-2xl font-bold">{selectedFaculty.statusData.find(s => s.name === "En ejecución")?.count}</p>
+              <p className="text-2xl font-bold">{selectedFaculty.statusData.find(s => s.name === "En ejecución")?.count || 0}</p>
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500 mb-1">Eventos Planificacións</h3>
-              <p className="text-2xl font-bold">{selectedFaculty.statusData.find(s => s.name === "Planificación")?.count}</p>
+              <p className="text-2xl font-bold">{selectedFaculty.statusData.find(s => s.name === "Planificación")?.count || 0}</p>
             </Card>
           </div>
 
