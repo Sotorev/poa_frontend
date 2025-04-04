@@ -7,7 +7,7 @@ import FacultyExpenseReport from "@/components/reports/faculty-expense-report";
 import GraficoAlcanceEventosPorFacultad from "@/components/reports/grafico-alcance-eventos-por-facultad";
 import GraficoMatriculaUniversitarial from "@/components/reports/grafico-matricula-universitaria";
 import FacultyStudentComparisonChart from "@/components/reports/faculty-student-comparison-chart";
-import GanttChart from "@/components/reports/gantt-report";
+import GanttChart from "@/components/reports/gantt/gantt-report";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import React from "react";
