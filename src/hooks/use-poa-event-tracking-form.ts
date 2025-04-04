@@ -147,16 +147,18 @@ export function usePoaEventTrackingFormLogic(
           executionEndDate: null,
           reasonForChange: null,
           statusId: 1,
+          isEnabled: true
         };
         
         let eventDates;
         
         if (initialData && initialData.fechas && initialData.fechas.length > 0) {
-          // Si estamos editando, mantener los IDs de fechas originales
-          eventDates = initialData.fechas;
+          eventDates = initialData.fechas.map((fecha, index) => ({
+            ...fecha,
+            isEnabled: index === 0 ? true : fecha.isEnabled !== false
+          }));
         } else {
-          // Si es un nuevo evento, mapear las fechas del evento seleccionado
-          eventDates = selectedEvent.dates.map(date => {
+          eventDates = selectedEvent.dates.map((date, index) => {
             return {
               eventDateId: (date as any).eventDateId || 0,
               startDate: date.startDate.split('T')[0],
@@ -165,6 +167,7 @@ export function usePoaEventTrackingFormLogic(
               executionEndDate: null,
               reasonForChange: null,
               statusId: 1,
+              isEnabled: index === 0
             };
           });
         }
@@ -223,7 +226,8 @@ export function usePoaEventTrackingFormLogic(
         executionStartDate: new Date().toISOString().split('T')[0],
         executionEndDate: null,
         reasonForChange: null,
-        statusId: 1
+        statusId: 1,
+        isEnabled: true
       }],
     });
     setSelectedEvent(null);
@@ -387,7 +391,8 @@ export function usePoaEventTrackingFormLogic(
         executionStartDate: new Date().toISOString().split('T')[0],
         executionEndDate: null,
         reasonForChange: null,
-        statusId: 1
+        statusId: 1,
+        isEnabled: true
       }],
     });
     setSelectedEvent(null);
@@ -457,7 +462,8 @@ export function usePoaEventTrackingFormLogic(
           executionStartDate: new Date().toISOString().split('T')[0],
           executionEndDate: null,
           reasonForChange: null,
-          statusId: 1
+          statusId: 1,
+          isEnabled: true
         }],
       });
       setSelectedEvent(null);

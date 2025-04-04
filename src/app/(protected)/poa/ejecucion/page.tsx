@@ -145,13 +145,16 @@ export default function PoaTrackingPage() {
   };
 
   const handleSubmit = (data: FormValues) => {
+    // Filtrar solo las fechas habilitadas
+    const enabledDates = data.fechas.filter(fecha => fecha.isEnabled !== false);
+    
     if (editingEvent) {
       const updatePayload = {
         eventId: parseInt(data.eventId, 10),
-        eventDatesWithExecution: data.fechas.map(f => ({
+        eventDatesWithExecution: enabledDates.map(f => ({
           eventId: parseInt(data.eventId, 10),
           eventDateId: f.eventDateId,
-          executionStartDate: f.startDate
+          executionStartDate: f.executionStartDate || f.startDate
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
@@ -180,10 +183,10 @@ export default function PoaTrackingPage() {
     } else {
       const requestPayload: RequestEventExecution = {
         eventId: parseInt(data.eventId, 10),
-        eventDatesWithExecution: data.fechas.map(f => ({
+        eventDatesWithExecution: enabledDates.map(f => ({
           eventId: parseInt(data.eventId, 10),
           eventDateId: f.eventDateId,
-          executionStartDate: f.startDate,
+          executionStartDate: f.executionStartDate || f.startDate,
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({

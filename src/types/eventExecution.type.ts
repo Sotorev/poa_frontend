@@ -68,6 +68,7 @@ export interface ResponseEventExecutionDate {
   executionEndDate: any
   reasonForChange: any
   statusId: number
+  isEnabled?: boolean
 }
 
 export interface ResponseEventExecutionFinancing {

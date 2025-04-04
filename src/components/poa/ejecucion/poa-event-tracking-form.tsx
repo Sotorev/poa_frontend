@@ -604,58 +604,87 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             <CardTitle className="text-lg font-semibold">Fechas de Ejecución</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {fechasFields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 space-y-2 border p-4 rounded-md">
-                <FormField
-                  control={form.control}
-                  name={`fechas.${index}.startDate`}
-                  render={({ field: startDateField }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>
-                        Fecha planificada
-                      </FormLabel>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="date"
-                          value={startDateField.value}
-                          disabled={true}
-                          className="w-full sm:w-[280px] bg-muted/50"
-                        />
-                      </div>
-                    </FormItem>
-                  )}
-                />
+            {fechasFields.map((field, index) => {
+              // Usar un estado local para controlar si la fecha está habilitada
+              const isEnabled = index === 0 || (field as any).isEnabled;
+              
+              return (
+                <div key={field.id} className={`grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-md ${isEnabled ? 'border-primary' : 'border-muted bg-muted/20'}`}>
+                  <FormField
+                    control={form.control}
+                    name={`fechas.${index}.startDate`}
+                    render={({ field: startDateField }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className={isEnabled ? '' : 'text-muted-foreground'}>
+                          Fecha planificada
+                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="date"
+                            value={startDateField.value}
+                            disabled={true}
+                            className="w-full sm:w-[280px] bg-muted/50"
+                          />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name={`fechas.${index}.executionStartDate`}
-                  render={({ field: executionField }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>
-                        Fecha de ejecución
-                      </FormLabel>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="date"
-                          value={executionField.value || form.getValues(`fechas.${index}.startDate`)}
-                          onChange={(e) => executionField.onChange(e.target.value)}
-                          className="w-full sm:w-[280px]"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeFecha(index)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            ))}
+                  <FormField
+                    control={form.control}
+                    name={`fechas.${index}.executionStartDate`}
+                    render={({ field: executionField }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className={isEnabled ? '' : 'text-muted-foreground'}>
+                          Fecha de ejecución
+                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="date"
+                            value={executionField.value || form.getValues(`fechas.${index}.startDate`)}
+                            onChange={(e) => executionField.onChange(e.target.value)}
+                            className="w-full sm:w-[280px]"
+                            disabled={!isEnabled}
+                          />
+                          <Button
+                            name={isEnabled ? "removeFecha" : "enableFecha"}
+                            type="button"
+                            variant={isEnabled ? "outline" : "default"}
+                            size="icon"
+                            onClick={() => {
+                              if (isEnabled && index !== 0) {
+                                // Si está habilitada y no es la primera, deshabilitarla
+                                const updatedFechas = [...form.getValues("fechas")];
+                                updatedFechas[index] = {
+                                  ...updatedFechas[index],
+                                  isEnabled: false
+                                };
+                                form.setValue("fechas", updatedFechas);
+                              } else if (!isEnabled) {
+                                // Si está deshabilitada, habilitarla
+                                const updatedFechas = [...form.getValues("fechas")];
+                                updatedFechas[index] = {
+                                  ...updatedFechas[index],
+                                  isEnabled: true
+                                };
+                                form.setValue("fechas", updatedFechas);
+                              }
+                            }}
+                          >
+                            {isEnabled ? (
+                              <Trash className="h-4 w-4" />
+                            ) : (
+                              <Plus className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              );
+            })}
             {errors.fechas && (
               <p className="mt-2 text-sm text-destructive">
                 {errors.fechas.message}
@@ -672,7 +701,8 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 executionStartDate: new Date().toISOString().split('T')[0],
                 executionEndDate: null,
                 reasonForChange: null,
-                statusId: 1
+                statusId: 1,
+                isEnabled: false // Nueva fecha agregada como deshabilitada
               })}
             >
               <Plus className="h-4 w-4 mr-2" />
