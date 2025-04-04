@@ -22,6 +22,9 @@ export interface EventFinishedDateResponse {
   eventDateId: number
   startDate: string
   endDate: string
+  executionStartDate: string
+  executionEndDate: string
+  statusId: number
   evidenceFiles: EvidenceFile[]
 }
 

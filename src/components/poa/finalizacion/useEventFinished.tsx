@@ -558,14 +558,14 @@ export const useEventFinished = () => {
   };
 
   // Restaurar evidencia
-  const restoreEventEvidence = async (eventId: number) => {
+  const restoreEventEvidence = async (eventId: number, eventDateId: number[]) => {
     if (!user?.token) return;
     
     try {
       setIsLoading(true);
       setError(null);
       
-      await restoreEvidence({ eventId }, user.token);
+      await restoreEvidence({ eventId, eventDateIds: eventDateId }, user.token);
       
       // Actualizar listas
       await fetchExecutedEvents();

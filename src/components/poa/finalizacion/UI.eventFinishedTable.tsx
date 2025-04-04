@@ -22,7 +22,7 @@ interface EventFinishedTableProps {
   setSearchTerm: (term: string) => void;
   setDateFilter: (filter: { startDate?: string; endDate?: string }) => void;
   selectEventForEdit: (event: EventFinishedResponse) => void;
-  restoreEventEvidence: (eventId: number) => void;
+  restoreEventEvidence: (eventId: number, eventDateId: number[]) => void;
   showEvidences: number | null;
   setShowEvidences: (eventId: number | null) => void;
   handleDownload: (evidenceId: number, fileName: string) => void;
@@ -51,7 +51,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
   // Estado para controlar la descarga en progreso
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [startDateOpen, setStartDateOpen] = useState(false)
-  const [endDateOpen, setEndDateOpen] = useState(false)
+  const [executionEndDateOpen, setexecutionEndDateOpen] = useState(false)
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null)
 
   // Estado para la paginación
@@ -187,11 +187,26 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        <CalendarIcon2 className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium">{formatDateDisplay(date.endDate)}</span>
+                        <CalendarIcon2 className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">Planificada</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Inicio: {formatDateDisplay(date.startDate)}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Inicio: {formatDateDisplay(date.startDate)}
+                        Fin: {formatDateDisplay(date.endDate)}
+                      </p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon2 className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">Ejecutada</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Inicio: {formatDateDisplay(date.executionStartDate)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Fin: {formatDateDisplay(date.executionEndDate)}
                       </p>
                     </div>
                     <Badge
@@ -329,7 +344,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
           <div className="flex items-center gap-2 mb-1 text-primary text-bold">
             <span className="text-sm">Buscar hasta</span>
           </div>
-          <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+          <Popover open={executionEndDateOpen} onOpenChange={setexecutionEndDateOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -352,7 +367,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                     ...dateFilter,
                     endDate: date ? date.toISOString() : undefined,
                   })
-                  setEndDateOpen(false)
+                  setexecutionEndDateOpen(false)
                 }}
                 initialFocus
                 captionLayout="dropdown-buttons"
@@ -423,7 +438,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                         <td className="py-4 px-6">
                           <div className="flex items-center">
                             {event.dates.map(date => (
-                              <span key={date.eventDateId} className="mr-1 text-sm">{formatDateDisplay(date.endDate)}</span>
+                              <span key={date.eventDateId} className="mr-1 text-sm">{formatDateDisplay(date.executionEndDate)}</span>
                             ))}
                           </div>
                         </td>
@@ -454,7 +469,8 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation(); // Evitar que se expanda la fila
                                 if (window.confirm("¿Está seguro de restaurar este evento?")) {
-                                  restoreEventEvidence(event.eventId);
+                                  restoreEventEvidence(event.eventId, event.dates.map(date => date.eventDateId));
+                                  console.log(event.dates.map(date => date.eventDateId));
                                 }
                               }}
                             >
