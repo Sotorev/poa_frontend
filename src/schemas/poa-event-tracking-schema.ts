@@ -18,6 +18,7 @@ const fechaSchema = z.object({
   executionEndDate: z.any().optional(),
   reasonForChange: z.string().nullable().optional(),
   statusId: z.number().optional(),
+  isEnabled: z.boolean().optional(),
 });
 
 export const formSchema = z.object({

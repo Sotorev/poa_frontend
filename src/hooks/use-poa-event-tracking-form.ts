@@ -41,9 +41,7 @@ export function usePoaEventTrackingFormLogic(
   const [archivosGastos, setArchivosGastos] = useState<File[]>([]);
   const [costoTotal, setCostoTotal] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<EventExecution | null>(null);
-  const [financingSources, setFinancingSources] = useState<FinancingSource[]>(
-    []
-  );
+  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
 
   const user = useCurrentUser();
@@ -67,8 +65,9 @@ export function usePoaEventTrackingFormLogic(
   const {
     fields: fechasFields,
     append: appendFecha,
+    update: updateFecha,
     remove: removeFecha,
-  } = useFieldArray({
+  } = useFieldArray<FormValues, "fechas", "id">({
     control: form.control,
     name: "fechas",
   });
@@ -77,7 +76,7 @@ export function usePoaEventTrackingFormLogic(
     fields: aportesUmesFields,
     append: appendAporteUmes,
     remove: removeAporteUmes,
-  } = useFieldArray({
+  } = useFieldArray<FormValues, "aportesUmes", "id">({
     control: form.control,
     name: "aportesUmes",
   });
@@ -86,7 +85,7 @@ export function usePoaEventTrackingFormLogic(
     fields: aportesOtrosFields,
     append: appendAporteOtros,
     remove: removeAporteOtros,
-  } = useFieldArray({
+  } = useFieldArray<FormValues, "aportesOtros", "id">({
     control: form.control,
     name: "aportesOtros",
   });
@@ -361,6 +360,10 @@ export function usePoaEventTrackingFormLogic(
   };
 
   async function handleFormSubmit(values: FormValues) {
+    // Eliminar fechas que no están habilitadas y eliminar el campo isEnabled
+    const fechasHabilitadas = values.fechas.filter((fecha) => fecha.isEnabled);
+    values.fechas = fechasHabilitadas;
+
     const result = formSchema.safeParse(values);
     if (!result.success) {
       result.error.issues.forEach((issue) => {
@@ -509,6 +512,7 @@ export function usePoaEventTrackingFormLogic(
     handleFormSubmit,
     fechasFields,
     appendFecha,
+    updateFecha,
     removeFecha,
     aportesUmesFields,
     appendAporteUmes,

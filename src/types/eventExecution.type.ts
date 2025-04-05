@@ -68,7 +68,7 @@ export interface ResponseEventExecutionDate {
   executionEndDate: any
   reasonForChange: any
   statusId: number
-  isEnabled?: boolean
+  isEnabled?: boolean /** @info: no es respuesta de la API, es un campo que se agrega en el formulario, para indicar si la fecha se envia o no al backend */
 }
 
 export interface ResponseEventExecutionFinancing {

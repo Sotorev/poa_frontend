@@ -124,7 +124,7 @@ export default function PoaTrackingPage() {
           statusId: event.dates.map(date => date.statusId),
           eventApprovals: event.eventApprovals,
           files: []
-          
+
         } as EventExecution));
 
         setEvents(mappedEvents.filter(event =>
@@ -147,7 +147,7 @@ export default function PoaTrackingPage() {
   const handleSubmit = (data: FormValues) => {
     // Filtrar solo las fechas habilitadas
     const enabledDates = data.fechas.filter(fecha => fecha.isEnabled !== false);
-    
+
     if (editingEvent) {
       const updatePayload = {
         eventId: parseInt(data.eventId, 10),
@@ -297,7 +297,7 @@ export default function PoaTrackingPage() {
         <h1 className="text-2xl sm:text-3xl font-bold">Eventos Ejecutados</h1>
         <Button onClick={handleAddNew}>
           <Plus className="h-4 w-4 mr-2" />
-          Nuevo Evento
+          Marcar fecha de inicio de ejecución
         </Button>
       </div>
 

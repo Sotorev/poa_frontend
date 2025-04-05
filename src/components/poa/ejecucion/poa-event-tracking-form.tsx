@@ -272,6 +272,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     handleFormSubmit,
     fechasFields,
     appendFecha,
+    updateFecha,
     removeFecha,
     aportesUmesFields,
     appendAporteUmes,
@@ -606,8 +607,8 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
           <CardContent className="space-y-4">
             {fechasFields.map((field, index) => {
               // Usar un estado local para controlar si la fecha está habilitada
-              const isEnabled = index === 0 || (field as any).isEnabled;
-              
+              const isEnabled = field.isEnabled;
+
               return (
                 <div key={field.id} className={`grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-md ${isEnabled ? 'border-primary' : 'border-muted bg-muted/20'}`}>
                   <FormField
@@ -616,7 +617,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                     render={({ field: startDateField }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel className={isEnabled ? '' : 'text-muted-foreground'}>
-                          Fecha planificada
+                          Fecha de inicio planificada
                         </FormLabel>
                         <div className="flex items-center gap-2">
                           <Input
@@ -636,7 +637,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                     render={({ field: executionField }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel className={isEnabled ? '' : 'text-muted-foreground'}>
-                          Fecha de ejecución
+                          Fecha de inicio de ejecución
                         </FormLabel>
                         <div className="flex items-center gap-2">
                           <Input
@@ -652,22 +653,21 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                             variant={isEnabled ? "outline" : "default"}
                             size="icon"
                             onClick={() => {
-                              if (isEnabled && index !== 0) {
-                                // Si está habilitada y no es la primera, deshabilitarla
-                                const updatedFechas = [...form.getValues("fechas")];
-                                updatedFechas[index] = {
-                                  ...updatedFechas[index],
-                                  isEnabled: false
-                                };
-                                form.setValue("fechas", updatedFechas);
+                              const updatedFechas = [...form.getValues("fechas")].find(f => f.eventDateId === field.eventDateId);
+                              if (isEnabled) {
+                                if (updatedFechas) {
+                                  updateFecha(index, {
+                                    ...updatedFechas,
+                                    isEnabled: false
+                                  })
+                                }
                               } else if (!isEnabled) {
-                                // Si está deshabilitada, habilitarla
-                                const updatedFechas = [...form.getValues("fechas")];
-                                updatedFechas[index] = {
-                                  ...updatedFechas[index],
-                                  isEnabled: true
-                                };
-                                form.setValue("fechas", updatedFechas);
+                                if (updatedFechas) {
+                                  updateFecha(index, {
+                                    ...updatedFechas,
+                                    isEnabled: true
+                                  })
+                                }
                               }
                             }}
                           >
