@@ -776,7 +776,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 <Button
                   type="submit"
                   className="sm:w-auto"
-                  disabled={!isValid}
                 >
                   {initialData ? 'Actualizar Seguimiento' : 'Guardar Seguimiento'}
                 </Button>

@@ -140,31 +140,14 @@ export default function PoaTrackingPage() {
   }, [user, poa]);
 
   const handleEdit = (event: ResponseExecutedEvent) => {
-    const temporalEvent = events.find(e => e.eventId === event.eventId);
+    event.eventDates = event.eventDates.filter(d => d.statusId !== 3);
 
-    // agregar a fechas las fechas de event.eventDates que tengan statusId 2 y colocar isEnabled en true
-    const fechas = event.eventDates.filter(f => f.statusId === 2).map(ef => ({
-      ...ef,
-      isEnabled: true
+    event.eventDates = event.eventDates.map(d => ({
+      ...d,
+      isEnabled : d.statusId === 2 ? true : false,
+      executionStartDate: d.statusId === 2 ? d.executionStartDate : d.startDate
     }));
 
-    if (temporalEvent) {
-      // agregar a event todas las fechas de temporalEvent que tengan statusId 1
-      const fechasEvent = temporalEvent.dates.filter(f => f.statusId === 1).map(tf => ({
-        eventDateId: tf.eventDateId,
-        startDate: tf.startDate,
-        endDate: tf.endDate,
-        executionStartDate: tf.startDate,
-        executionEndDate: null,
-        reasonForChange: null,
-        statusId: 1,
-        isEnabled: false
-      }));
-      // agregar fechasEvent a fechas
-      fechas.push(...fechasEvent);
-    } 
-
-    event.eventDates = fechas;
     setEditingEvent(event);
 
     setIsDialogOpen(true);

@@ -45,34 +45,37 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
         <TableBody>
           {Array.isArray(executedEvents) ? executedEvents.map((executedEvent) => (
             <TableRow key={executedEvent.eventId}>
-
+              {/** TODO: Nombre del evento y tooltip con el numero de fechas por iniciar */}
               <TableCell className="font-medium text-gray-900 flex items-center gap-2">
-                {executedEvent.eventDates.some(date => date.statusId === 1) ? (
-                  <TooltipProvider>
+                <TooltipProvider>
+                  {executedEvent.eventDates.some(date => date.statusId === 1) ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div className="flex items-center gap-2"> 
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <p>{executedEvent.name}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {executedEvent.eventDates.filter(date => date.statusId === 1).length} <p>Fecha(s) por iniciar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <p>{executedEvent.name}</p>
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Ya se han iniciado todas las fechas relacionadas con el evento</p>
                       </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
-                ) : (
-                  /** agregar un tooltip que diga Ya se han iniciado todas las fechas relacionadas con el evento */
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Ya se han iniciado todas las fechas relacionadas con el evento</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {executedEvent.name}
+                  )}
+                </TooltipProvider>
               </TableCell>
+              {/** TODO: Fechas de ejecución */}
               <TableCell>
                 <div className="space-y-2">
                   {executedEvent.eventDates.map((date) => (
@@ -82,6 +85,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                   ))}
                 </div>
               </TableCell>
+              {/** TODO: Botón de ver detalles */}
               <TableCell>
                 <div className="flex items-center space-x-4">
                   <Button
@@ -95,6 +99,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                   </Button>
                 </div>
               </TableCell>
+              {/** TODO: Botón de editar evento y restaurar a no ejecutado */}
               <TableCell className="text-right">
                 <TooltipProvider>
                   <div className="flex space-x-2 justify-end">
