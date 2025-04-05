@@ -20,7 +20,7 @@ export interface EventExecution {
   campus: { name: string };
   responsibles: { responsibleRole: string; name: string }[];
   totalCost: number;
-  dates: { startDate: string; endDate: string }[];
+  dates: { startDate: string; endDate: string; statusId: number; eventDateId: number }[];
   financings: eventExecutionFinancings[];
   statusId: number[];
   eventApprovals: { approvalStatusId: number }[];

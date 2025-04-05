@@ -43,15 +43,42 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
           </TableRow>
         </TableHeader>
         <TableBody>
-            {Array.isArray(executedEvents) ? executedEvents.map((executedEvent) => (
-              <TableRow key={executedEvent.eventId}>
-                <TableCell className="font-medium text-gray-900">{executedEvent.name}</TableCell>
-                <TableCell>
-                  <div className="space-y-2">
+          {Array.isArray(executedEvents) ? executedEvents.map((executedEvent) => (
+            <TableRow key={executedEvent.eventId}>
+
+              <TableCell className="font-medium text-gray-900 flex items-center gap-2">
+                {executedEvent.eventDates.some(date => date.statusId === 1) ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ya se han iniciado todas las fechas relacionadas con el evento</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  /** agregar un tooltip que diga Ya se han iniciado todas las fechas relacionadas con el evento */
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Ya se han iniciado todas las fechas relacionadas con el evento</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {executedEvent.name}
+              </TableCell>
+              <TableCell>
+                <div className="space-y-2">
                   {executedEvent.eventDates.map((date) => (
-                    <div key={date.eventDateId} className="text-sm text-gray-600 font-medium">
+                    date.statusId === 2 ? <div key={date.eventDateId} className="text-sm text-gray-600 font-medium">
                       {formatDate(date.executionStartDate)}
-                    </div>
+                    </div> : null
                   ))}
                 </div>
               </TableCell>
@@ -108,7 +135,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                 </TooltipProvider>
               </TableCell>
             </TableRow>
-            )) : null}
+          )) : null}
         </TableBody>
       </Table>
 
