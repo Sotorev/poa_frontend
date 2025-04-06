@@ -3,7 +3,7 @@ import { CreateEvidenceRequest, CreateUpdateEvidenceResponse, EventFinishedRespo
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export async function getEventFinished(poaId: number, token: string): Promise<EventFinishedResponse> {
-  const url = `${API_URL}/api/eventEvidence/poa/${poaId}/events-with-evidences`
+  const url = `${API_URL}/api/eventFinishing/poa/${poaId}`
   const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -27,7 +27,7 @@ export const createEvidence = async (evidence: CreateEvidenceRequest, token: str
   })
 
   // Enviar a la API
-  const response = await fetch(`${API_URL}/api/eventEvidence/evidenceexecution`, {
+  const response = await fetch(`${API_URL}/api/eventFinishing`, {
     method: "POST",
     body: formData,
     headers: {
@@ -46,7 +46,7 @@ export const updateEvidence = async (evidence: UpdateEvidenceRequest, token: str
   })
 
   // Enviar a la API
-  const response = await fetch(`${API_URL}/api/eventEvidence/evidenceexecution`, {
+  const response = await fetch(`${API_URL}/api/eventFinishing`, {
     method: "PUT",
     body: formData,
     headers: {
@@ -57,7 +57,7 @@ export const updateEvidence = async (evidence: UpdateEvidenceRequest, token: str
 }
 
 export const restoreEvidence = async (evidence: RestoreEvidenceRequest, token: string): Promise<RestoreEvidenceResponse> => {
-  const response = await fetch(`${API_URL}/api/eventEvidence/reset-event`, {
+  const response = await fetch(`${API_URL}/api/eventFinishing/cancel`, {
     method: "POST",
     body: JSON.stringify(evidence),
     headers: {

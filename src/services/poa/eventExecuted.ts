@@ -53,16 +53,20 @@ export const getEventExecutedByPoa = async (
   return response.json();
 };
 
-export const revertEventExecuted = async (eventId: number) => {
+export const revertEventExecuted = async (eventId: number, eventDateIds: number[]) => {
   try {
     const user = await currentUser();
     const response = await fetch(
-      `${API_URL}/api/eventExecution/resetStatus/${eventId}`,
+      `${API_URL}/api/eventExecution/cancel/${eventId}`,
       {
-        method: "PATCH",
+        method: "POST",
         headers: {
           Authorization: `Bearer ${user?.token}`,
         },
+        body: JSON.stringify({
+          eventId: eventId,
+          eventDateIds: eventDateIds
+        })
       }
     );
     if (!response.ok) {

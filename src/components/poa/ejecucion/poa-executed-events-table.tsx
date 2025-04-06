@@ -11,7 +11,7 @@ import ExecutedEventDetailsDialog from "./executed-event-details-dialog"
 type PoaExecutedEventsTableProps = {
   executedEvents: ResponseExecutedEvent[]
   onEdit: (event: ResponseExecutedEvent) => void
-  onRestore: (eventId: number) => void
+  onRestore: (eventId: number, eventDateIds: number[]) => void
 }
 
 export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: PoaExecutedEventsTableProps) {
@@ -119,13 +119,31 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                         <p>Editar evento</p>
                       </TooltipContent>
                     </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
+                    {/** Si alguna fecha tiene statusId 3 entonces deshabilitar el botón */}
+                    {executedEvent.eventDates.some(date => date.statusId === 3) ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              disabled
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>No se puede restaurar a no ejecutado porque alguna fecha ya tiene evidencia</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => onRestore(executedEvent.eventId)}
+                          onClick={() => onRestore(executedEvent.eventId, executedEvent.eventDates.map(date => date.statusId === 2 ? date.eventDateId : null).filter(id => id !== null))}
                           className="border-green-700 text-green-800 hover:bg-green-100 hover:text-green-900 transition-colors"
                         >
                           <RotateCcw className="h-4 w-4" />
@@ -134,8 +152,9 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Restaurar a no ejecutado</p>
-                      </TooltipContent>
-                    </Tooltip>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </TooltipProvider>
               </TableCell>

@@ -261,8 +261,8 @@ export default function PoaTrackingPage() {
     setIsDialogOpen(true);
   };
 
-  const handleRestore = (eventId: number) => {
-    revertEventExecuted(eventId)
+  const handleRestore = (eventId: number, eventDateIds: number[]) => {
+    revertEventExecuted(eventId, eventDateIds )
       .then(() => {
         if (!poa) return
         getEventExecutedByPoa(poa.poaId).then((updatedExecutedEvents) => {
