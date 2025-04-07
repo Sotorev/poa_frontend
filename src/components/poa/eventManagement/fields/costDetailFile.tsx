@@ -6,22 +6,22 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Upload, X } from "lucide-react"
 
-interface ProcessDetailFileProps {
-  files: {fileId?: number, file?: File, name?: string, isDeleted?: boolean}[]
-  onFilesChange: (files: {fileId?: number, file?: File, name?: string, isDeleted?: boolean}[]) => void
+interface CostDetailFileProps {
+  files: {costDetailId?: number, file?: File, name?: string, isDeleted?: boolean}[]
+  onFilesChange: (files: {costDetailId?: number, file?: File, name?: string, isDeleted?: boolean}[]) => void
 }
 
 type FileWithId = {
   id: number;
   fileData: {
-    fileId?: number, 
+    costDetailId?: number, 
     file?: File, 
     name?: string, 
     isDeleted?: boolean
   }
 }
 
-export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFileProps) {
+export function CostDetailFile({ files, onFilesChange }: CostDetailFileProps) {
   const [localFiles, setLocalFiles] = useState<FileWithId[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -78,7 +78,7 @@ export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFilePro
       
       // Mantener los archivos originales de la API
       files.forEach(apiFile => {
-        if ('fileId' in apiFile && apiFile.fileId !== undefined) {
+        if ('costDetailId' in apiFile && apiFile.costDetailId !== undefined) {
           resultFiles.push(apiFile);
         }
       });
@@ -124,7 +124,7 @@ export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFilePro
       
       // Mantener los archivos originales de la API
       files.forEach(apiFile => {
-        if ('fileId' in apiFile && apiFile.fileId !== undefined) {
+        if ('costDetailId' in apiFile && apiFile.costDetailId !== undefined) {
           resultFiles.push(apiFile);
         }
       });
@@ -147,7 +147,7 @@ export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFilePro
     const fileToRemove = localFiles[fileIndex];
     let updatedLocalFiles: FileWithId[] = [];
 
-    if (fileToRemove.fileData.fileId) {
+    if (fileToRemove.fileData.costDetailId) {
       // Si es un archivo cargado desde la API, marcarlo como eliminado en localFiles
       updatedLocalFiles = localFiles.map(f => 
         f.id === fileId 
@@ -161,8 +161,8 @@ export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFilePro
       
       // Actualizar los archivos de la API
       files.forEach(apiFile => {
-        if ('fileId' in apiFile && apiFile.fileId !== undefined) {
-          if (apiFile.fileId === fileToRemove.fileData.fileId) {
+        if ('costDetailId' in apiFile && apiFile.costDetailId !== undefined) {
+          if (apiFile.costDetailId === fileToRemove.fileData.costDetailId) {
             // Marcar como eliminado el archivo específico
             resultFiles.push({ ...apiFile, isDeleted: true });
           } else {
@@ -174,7 +174,7 @@ export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFilePro
       
       // Añadir archivos subidos por el usuario que no estén eliminados
       const userFiles = updatedLocalFiles
-        .filter(f => !f.fileData.fileId && !f.fileData.isDeleted)
+        .filter(f => !f.fileData.costDetailId && !f.fileData.isDeleted)
         .map(f => f.fileData);
       
       resultFiles.push(...userFiles);
@@ -191,14 +191,14 @@ export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFilePro
       
       // Mantener los archivos de la API sin cambios
       files.forEach(apiFile => {
-        if ('fileId' in apiFile && apiFile.fileId !== undefined) {
+        if ('costDetailId' in apiFile && apiFile.costDetailId !== undefined) {
           resultFiles.push(apiFile);
         }
       });
       
       // Añadir archivos subidos por el usuario que no han sido eliminados
       const userFiles = updatedLocalFiles
-        .filter(f => !f.fileData.fileId && !f.fileData.isDeleted)
+        .filter(f => !f.fileData.costDetailId && !f.fileData.isDeleted)
         .map(f => f.fileData);
       
       resultFiles.push(...userFiles);
@@ -209,7 +209,7 @@ export function ProcessDetailFile({ files, onFilesChange }: ProcessDetailFilePro
   };
 
   // Obtiene el nombre para mostrar del archivo
-  const getDisplayName = (fileData: {fileId?: number, file?: File, name?: string}) => {
+  const getDisplayName = (fileData: {costDetailId?: number, file?: File, name?: string}) => {
     return fileData.name || (fileData.file?.name || "Archivo sin nombre");
   };
 

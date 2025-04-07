@@ -20,7 +20,7 @@ import { EventNameComponent } from "../fields/evento"
 import { ObjectiveComponent } from "../fields/objetivo"
 import { FinancingSource } from "../fields/financing-source"
 import { PurchaseType } from "../fields/purchase-type"
-import { EventCostDetail } from "../fields/detalle"
+import { CostDetailFile } from "../fields/costDetailFile"
 import { CampusSelector } from "../fields/campus-selector"
 import { ResponsibleComponent } from "../fields/responsables"
 import { RecursosSelectorComponent } from "../fields/recursos-selector"
@@ -399,7 +399,7 @@ export function EventPlanningForm({
                                                 control={control}
                                                 defaultValue={[]}
                                                 render={({ field }) => (
-                                                    <EventCostDetail 
+                                                    <CostDetailFile 
                                                         files={(field.value || [])} 
                                                         onFilesChange={(files) => field.onChange(files)} 
                                                     />
