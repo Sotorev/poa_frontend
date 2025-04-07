@@ -235,7 +235,7 @@ const formatEventData = (eventData: FullEventRequest, isPlanned: boolean) => {
     isDelayed: eventData.isDelayed || false,
     statusId: eventData.statusId || 1,
     files: eventData.processDocuments?.map(p => ({ fileId: p.fileId, isDeleted: p.isDeleted })),
-    costDetails: eventData.costDetailDocuments?.map(c => ({ fileId: c.costDetailId, isDeleted: c.isDeleted })),
+    costDetails: eventData.costDetailDocuments?.map(c => ({ costDetailId: c.costDetailId, isDeleted: c.isDeleted })),
   };
 
   return formattedData;
