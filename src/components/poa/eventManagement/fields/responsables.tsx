@@ -1,7 +1,7 @@
 // src/components/poa/components/columns/responsables.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 
 // Types
@@ -19,11 +19,21 @@ export function ResponsibleComponent({
   onAppendResponsible
 }: ResponsibleComponentProps) {
 
+  useEffect(() => {
+    console.log("Responsables actualizados:", responsible);
+  }, [responsible]);
+
   const handleResponsibleChange = (role: "Principal" | "Ejecución" | "Seguimiento", value: string) => {
     const existingIndex = responsible.findIndex(r => r.responsibleRole === role);
 
     if (existingIndex >= 0) {
-      onUpdateResponsible(existingIndex, { name: value, responsibleRole: role });
+      const existingResponsible = responsible[existingIndex];
+      console.log("Responsable existente:", existingResponsible);
+      onUpdateResponsible(existingIndex, { 
+        name: value, 
+        responsibleRole: role,
+        eventResponsibleId: existingResponsible.eventResponsibleId 
+      });
     } else {
       onAppendResponsible({ name: value, responsibleRole: role });
     }

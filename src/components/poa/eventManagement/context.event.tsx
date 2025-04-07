@@ -219,23 +219,26 @@ export const EventProvider = ({ children }: ProviderProps) => {
         ];
 
         // Configurar los responsables
-        const responsibles: { responsibleRole: "Principal" | "Ejecución" | "Seguimiento"; name: string }[] = [];
+        const responsibles: { responsibleRole: "Principal" | "Ejecución" | "Seguimiento"; name: string; eventResponsibleId: number }[] = [];
         if (event.responsables.find(r => r.responsibleRole === "Principal")) {
             responsibles.push({
                 responsibleRole: "Principal",
-                name: event.responsables.find(r => r.responsibleRole === "Principal")?.name || ''
+                name: event.responsables.find(r => r.responsibleRole === "Principal")?.name || '',
+                eventResponsibleId: event.responsables.find(r => r.responsibleRole === "Principal")?.eventResponsibleId || 0
             });
         }
         if (event.responsables.find(r => r.responsibleRole === "Ejecución")) {
             responsibles.push({
                 responsibleRole: "Ejecución",
-                name: event.responsables.find(r => r.responsibleRole === "Ejecución")?.name || ''
+                name: event.responsables.find(r => r.responsibleRole === "Ejecución")?.name || '',
+                eventResponsibleId: event.responsables.find(r => r.responsibleRole === "Ejecución")?.eventResponsibleId || 0
             });
         }
         if (event.responsables.find(r => r.responsibleRole === "Seguimiento")) {
             responsibles.push({
                 responsibleRole: "Seguimiento",
-                name: event.responsables.find(r => r.responsibleRole === "Seguimiento")?.name || ''
+                name: event.responsables.find(r => r.responsibleRole === "Seguimiento")?.name || '',
+                eventResponsibleId: event.responsables.find(r => r.responsibleRole === "Seguimiento")?.eventResponsibleId || 0
             });
         }
 
