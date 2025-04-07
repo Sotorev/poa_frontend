@@ -218,25 +218,54 @@ export const downloadFileAux = async (url: string, nombreArchivo: string, token:
 
 /**
  * Función auxiliar para formatear los datos del evento antes de enviarlos al backend
- * @param eventData Datos del evento a formatear
+ * @param eventData Datos del evento a formatear (puede ser parcial en caso de actualización)
+ * @param isPlanned Indica si el evento es planificado
  * @returns Datos formateados para el backend
  */
-const formatEventData = (eventData: FullEventRequest, isPlanned: boolean) => {
+const formatEventData = (eventData: Partial<FullEventRequest>, isPlanned: boolean) => {
   // Transformamos los datos al nuevo formato
   const { processDocuments, costDetailDocuments, ...restData } = eventData;
 
-  const formattedData = {
-    ...restData,
-    interventions: eventData.interventions.map(i => i.intervention),
-    ods: eventData.ods.map(o => o.ods),
-    resources: eventData.resources ? eventData.resources.map(r => ({ resourceId: r.resourceId })) : [],
-    // Agregar naturaleza del evento si esta planificado o es extraordinario
-    eventNature: isPlanned ? 'Planificado' : 'Extraordinario',
-    isDelayed: eventData.isDelayed || false,
-    statusId: eventData.statusId || 1,
-    files: eventData.processDocuments?.map(p => ({ fileId: p.fileId, isDeleted: p.isDeleted })),
-    costDetails: eventData.costDetailDocuments?.map(c => ({ costDetailId: c.costDetailId, isDeleted: c.isDeleted })),
+  // Objeto base con los datos parciales
+  const formattedData: any = {
+    ...restData
   };
+
+  // Solo incluir propiedades si existen en el objeto original
+  if (eventData.interventions) {
+    formattedData.interventions = eventData.interventions.map(i => i.intervention);
+  }
+  
+  if (eventData.ods) {
+    formattedData.ods = eventData.ods.map(o => o.ods);
+  }
+  
+  if (eventData.resources) {
+    formattedData.resources = eventData.resources.map(r => ({ resourceId: r.resourceId }));
+  }
+  
+  // Agregar naturaleza del evento solo si no está ya definida
+  if (eventData.eventNature === undefined) {
+    formattedData.eventNature = isPlanned ? 'Planificado' : 'Extraordinario';
+  }
+  
+  // Asignar valores por defecto solo si no existen en los datos originales
+  if (eventData.isDelayed === undefined) {
+    formattedData.isDelayed = false;
+  }
+  
+  if (eventData.statusId === undefined) {
+    formattedData.statusId = 1;
+  }
+  
+  // Formatear archivos solo si están definidos
+  if (processDocuments) {
+    formattedData.files = processDocuments.map(p => ({ fileId: p.fileId, isDeleted: p.isDeleted }));
+  }
+  
+  if (costDetailDocuments) {
+    formattedData.costDetails = costDetailDocuments.map(c => ({ costDetailId: c.costDetailId, isDeleted: c.isDeleted }));
+  }
 
   return formattedData;
 };
@@ -295,11 +324,11 @@ export async function createEvent(eventData: FullEventRequest, token: string): P
 /**
  * Actualiza un evento existente en el sistema
  * @param eventId ID del evento a actualizar
- * @param eventData Datos actualizados del evento
+ * @param eventData Datos actualizados del evento (puede ser parcial, solo con los campos modificados)
  * @param token Token de autenticación
  * @returns Respuesta del servidor con los datos actualizados
  */
-export async function updateEvent(eventId: number, eventData: FullEventRequest, token: string): Promise<ResponseFullEvent> {
+export async function updateEvent(eventId: number, eventData: Partial<FullEventRequest>, token: string): Promise<ResponseFullEvent> {
   if (!API_URL) {
     throw new Error("La URL de la API no está definida.");
   }
@@ -310,6 +339,7 @@ export async function updateEvent(eventId: number, eventData: FullEventRequest, 
 
   // Agregar los datos del evento como JSON string
   formData.append('data', JSON.stringify(formattedData));
+  
   // Agregar documentos de detalle de costos si existen y no están vacíos
   if (eventData.costDetailDocuments && eventData.costDetailDocuments.length > 0) {
     eventData.costDetailDocuments.forEach((file: {file?: File, isDeleted?: boolean, costDetailId?: number}, index: number) => {
@@ -320,6 +350,7 @@ export async function updateEvent(eventId: number, eventData: FullEventRequest, 
       }
     });
   }
+  
   // Agregar documentos de proceso si existen y no están vacíos
   if (eventData.processDocuments && eventData.processDocuments.length > 0) {
     eventData.processDocuments.forEach((file: {file?: File, isDeleted?: boolean, fileId?: number}, index: number) => {

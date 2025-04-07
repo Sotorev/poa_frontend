@@ -58,7 +58,7 @@ interface EventPlanningFormContextProps {
     handleSubmit: UseFormHandleSubmit<FullEventRequest>
     reset: UseFormReset<FullEventRequest>
     submitEvent: (data: FullEventRequest, token: string) => Promise<any>
-    updateExistingEvent: (eventId: number, data: FullEventRequest, token: string) => Promise<any>
+    updateExistingEvent: (eventId: number, data: Partial<FullEventRequest>, token: string) => Promise<any>
     errors: any
     isSubmitting: boolean
     setIsSubmitting: (isSubmitting: boolean) => void
@@ -377,7 +377,7 @@ export const EventPlanningFormProvider: React.FC<{
     }
 
     // Función para actualizar un evento existente
-    const updateExistingEvent = async (eventId: number, formData: FullEventRequest, token: string) => {
+    const updateExistingEvent = async (eventId: number, data: Partial<FullEventRequest>, token: string) => {
         try {
             setIsSubmitting(true)
 
@@ -387,37 +387,17 @@ export const EventPlanningFormProvider: React.FC<{
                 const originalData = eventEditing.data
                 
                 // Objeto para almacenar solo los datos que han cambiado
-                const changedData: FullEventRequest = {
-                    // Propiedades base requeridas para el tipo FullEventRequest
-                    name: formData.name,
-                    type: formData.type,
-                    poaId: formData.poaId,
-                    statusId: formData.statusId,
-                    completionPercentage: formData.completionPercentage,
-                    campusId: formData.campusId,
-                    objective: formData.objective,
-                    eventNature: formData.eventNature,
-                    isDelayed: formData.isDelayed,
-                    achievementIndicator: formData.achievementIndicator,
-                    purchaseTypeId: formData.purchaseTypeId,
-                    totalCost: formData.totalCost,
-                    dates: formData.dates,
-                    financings: formData.financings,
-                    responsibles: formData.responsibles,
-                    interventions: formData.interventions,
-                    ods: formData.ods,
-                    resources: formData.resources,
-                    userId: formData.userId,
-                    costDetailDocuments: formData.costDetailDocuments,
-                    processDocuments: formData.processDocuments,
-                    approvals: formData.approvals
+                const changedData: Partial<FullEventRequest> = {
+                    // Propiedades mínimas necesarias para identificación
+                    poaId: data.poaId || originalData.poaId,
+                    userId: data.userId || originalData.userId
                 }
                 
                 // Contador para detectar cambios reales
                 let cambiosReales = 0
                 
                 // Comparar y detectar campos que realmente han cambiado
-                Object.entries(formData).forEach(([key, value]) => {
+                Object.entries(data).forEach(([key, value]) => {
                     const originalKey = key as keyof typeof originalData
                     
                     // Para arrays necesitamos una comparación especial
@@ -425,6 +405,7 @@ export const EventPlanningFormProvider: React.FC<{
                         // Si las longitudes son diferentes, ha cambiado
                         if (value.length !== (originalData[originalKey] as any[]).length) {
                             cambiosReales++
+                            changedData[originalKey] = value as any
                         } 
                         // Si son objetos dentro de los arrays, comparamos más profundamente
                         else if (
@@ -440,22 +421,25 @@ export const EventPlanningFormProvider: React.FC<{
                             const stringActual = JSON.stringify(value)
                             if (stringOriginal !== stringActual) {
                                 cambiosReales++
+                                changedData[originalKey] = value as any
                             }
                         }
                     } 
                     // Para archivos, verificamos si hay nuevos
                     else if ((key === 'processDocuments' || key === 'costDetailDocuments') && value) {
-                        if (value && (value as File[]).length > 0) {
+                        if (value && (value as any[]).length > 0) {
                             cambiosReales++
+                            changedData[originalKey] = value as any
                         }
                     }
                     // Para campos simples, comparamos directamente
                     else if (JSON.stringify(value) !== JSON.stringify(originalData[originalKey])) {
                         cambiosReales++
+                        changedData[originalKey] = value as any
                     }
                 })
                 
-                console.log("Datos completos:", changedData)
+                console.log("Datos modificados para enviar:", changedData)
                 console.log("Cambios reales detectados:", cambiosReales)
                 
                 // Si no hay cambios sustanciales, retornamos éxito sin llamar a la API
@@ -463,12 +447,12 @@ export const EventPlanningFormProvider: React.FC<{
                     return { success: true, message: "No se detectaron cambios" }
                 }
                 
-                // Usar los datos completos para la actualización
+                // Enviar solo los datos que han cambiado
                 return await updateEvent(eventId, changedData, token)
             }
             
             // Si no hay datos originales para comparar, enviamos todo
-            return await updateEvent(eventId, formData, token)
+            return await updateEvent(eventId, data, token)
         } catch (error) {
             throw error
         } finally {
