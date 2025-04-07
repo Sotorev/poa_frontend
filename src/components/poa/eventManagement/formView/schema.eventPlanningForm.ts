@@ -199,14 +199,16 @@ export const fullEventSchema = z
     costDetailDocuments: z.array(
       z.object({
         costDetailId: z.number().optional(), 
-        file: z.instanceof(File),
+        file: z.instanceof(File).optional(),
+        name: z.string().optional(),
         isDeleted: z.boolean().optional(),
       })
     ).nullable(),
     processDocuments: z.array(
       z.object({
         fileId: z.number().optional(),
-        file: z.instanceof(File),
+        file: z.instanceof(File).optional(),
+        name: z.string().optional(),
         isDeleted: z.boolean().optional(),
       })
     ).nullable(),

@@ -266,26 +266,26 @@ export const EventProvider = ({ children }: ProviderProps) => {
         // Establecer el tipo de evento (Actividad o Proyecto)
         const type = event.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto';
 
-        let processDocuments: {fileId: number, file: File}[] = [];
-        let costDetailDocuments: {costDetailId: number, file: File}[] = [];
-        try {
-            // Descargar archivos adjuntos
-            processDocuments = await Promise.all(
-                event.detalleProceso.map((doc) =>
-                    downloadFileAux(`/api/fullEvent/downloadEventFileById/${doc.fileId}`, doc.fileName, user?.token || '')
-                    .then(file => ({fileId: doc.fileId, file: file}))
-                )
-            );
+        // let processDocuments: {fileId: number, file: File}[] = [];
+        // let costDetailDocuments: {costDetailId: number, file: File}[] = [];
+        // try {
+        //     // Descargar archivos adjuntos
+        //     processDocuments = await Promise.all(
+        //         event.detalleProceso.map((doc) =>
+        //             downloadFileAux(`/api/fullEvent/downloadEventFileById/${doc.fileId}`, doc.fileName, user?.token || '')
+        //             .then(file => ({fileId: doc.fileId, file: file}))
+        //         )
+        //     );
 
-            costDetailDocuments = await Promise.all(
-                event.detalle.map((doc) =>
-                    downloadFileAux(`/api/fullEvent/downloadEventCostDetailDocumentById/${doc.costDetailId}`, doc.fileName, user?.token || '')
-                    .then(file => ({costDetailId: doc.costDetailId, file: file}))
-                )
-            );
-        } catch (error) {
-            console.error('Error al descargar archivos adjuntos:', error);
-        }
+        //     costDetailDocuments = await Promise.all(
+        //         event.detalle.map((doc) =>
+        //             downloadFileAux(`/api/fullEvent/downloadEventCostDetailDocumentById/${doc.costDetailId}`, doc.fileName, user?.token || '')
+        //             .then(file => ({costDetailId: doc.costDetailId, file: file}))
+        //         )
+        //     );
+        // } catch (error) {
+        //     console.error('Error al descargar archivos adjuntos:', error);
+        // }
 
         return {
             data: {
@@ -309,8 +309,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 ods: odsArray,
                 resources: resourcesParsed,
                 userId: user?.userId || 0,
-                costDetailDocuments: event.detalle.map(file => ({costDetailId: file.costDetailId, file: costDetailDocuments.find(doc => doc.costDetailId === file.costDetailId)?.file || new File([], file.fileName), isDeleted: false })),
-                processDocuments: event.detalleProceso.map(file => ({fileId: file.fileId, file: processDocuments.find(doc => doc.fileId === file.fileId)?.file || new File([], file.fileName), isDeleted: false }))
+                costDetailDocuments: event.detalle.map(file => ({costDetailId: file.costDetailId, name: file.fileName, isDeleted: false })),
+                processDocuments: event.detalleProceso.map(file => ({fileId: file.fileId, name: file.fileName, isDeleted: false }))
             },
             eventId: parseInt(event.id, 10)
         }
