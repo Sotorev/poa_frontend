@@ -259,14 +259,14 @@ export async function createEvent(eventData: FullEventRequest, token: string): P
   formData.append('data', JSON.stringify(formattedData));
   // Agregar documentos de detalle de costos
   if (eventData?.costDetailDocuments) {
-    eventData.costDetailDocuments.forEach((file: File) => {
-      formData.append('costDetailDocuments', file);
+    eventData.costDetailDocuments.forEach((file: {file: File, isDeleted?: boolean, costDetailId?: number}) => {
+      formData.append('costDetailDocuments', file.file);
     });
   }
   // Agregar documentos de proceso
   if (eventData.processDocuments) {
-    eventData.processDocuments.forEach((file: File) => {
-      formData.append('processDocuments', file);
+    eventData.processDocuments.forEach((file: {file: File, isDeleted?: boolean, fileId?: number}) => {
+      formData.append('processDocuments', file.file);
     });
   }
 
@@ -306,17 +306,17 @@ export async function updateEvent(eventId: number, eventData: FullEventRequest, 
   formData.append('data', JSON.stringify(formattedData));
   // Agregar documentos de detalle de costos si existen y no están vacíos
   if (eventData.costDetailDocuments && eventData.costDetailDocuments.length > 0) {
-    eventData.costDetailDocuments.forEach((file: File, index: number) => {
-      if (index < 10) { // Máximo 10 archivos
-        formData.append('costDetailDocuments', file);
+    eventData.costDetailDocuments.forEach((file: {file: File, isDeleted?: boolean, costDetailId?: number}, index: number) => {
+      if (index < 10) {
+        formData.append('costDetailDocuments', file.file);
       }
     });
   }
   // Agregar documentos de proceso si existen y no están vacíos
   if (eventData.processDocuments && eventData.processDocuments.length > 0) {
-    eventData.processDocuments.forEach((file: File, index: number) => {
-      if (index < 10) { // Máximo 10 archivos
-        formData.append('processDocuments', file);
+    eventData.processDocuments.forEach((file: {file: File, isDeleted?: boolean, fileId?: number}, index: number) => {
+      if (index < 10) {
+        formData.append('processDocuments', file.file);
       }
     });
   }

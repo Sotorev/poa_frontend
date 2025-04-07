@@ -63,7 +63,13 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
                 amount: f.amount
             })),
         tipoCompra: apiEvent.purchaseType?.name || '',
-        detalle: apiEvent.costDetails?.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [],
+        detalle: apiEvent.costDetails?.map(detail => ({
+            costDetailId: detail.costDetailId,
+            eventId: detail.eventId,
+            filePath: detail.filePath,
+            fileName: detail.fileName,
+            isDeleted: detail.isDeleted
+        })) || [],
         responsables: {
             principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
             ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
@@ -71,8 +77,15 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         },
         recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
         indicadorLogro: apiEvent.achievementIndicator,
-        detalleProceso: apiEvent.files?.map(file => ({ id: file.fileId, name: file.fileName })) || [],
-        comentarioDecano: apiEvent.eventApprovals[0]?.comments || '', // Ajustado aquí
+        detalleProceso: apiEvent.files?.map(file => ({
+            fileId: file.fileId,
+            eventId: apiEvent.eventId,
+            filePath: file.filePath,
+            fileName: file.fileName,
+            uploadedAt: file.uploadedAt,
+            isDeleted: file.isDeleted
+        })) || [],
+        comentarioDecano: "", // Peniente de implementar
         propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
         fechaCreacion: apiEvent.createdAt,
         fechaEdicion: apiEvent.updatedAt || '',

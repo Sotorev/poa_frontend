@@ -6,17 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Upload, X } from "lucide-react"
-import { randomUUID } from "crypto"
 
 interface DetalleProps {
-  files: File[]
-  onFilesChange: (files: File[]) => void
+  files: {costDetailId?: number, file: File, isDeleted?: boolean}[]
+  onFilesChange: (files: {costDetailId?: number, file: File, isDeleted?: boolean}[]) => void
 }
 
 // Define an interface for files with an id
 interface FileWithId {
   id: number
-  file: File
+  fileObj: {costDetailId?: number, file: File, isDeleted?: boolean}
 }
 
 export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
@@ -31,9 +30,9 @@ export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
   useEffect(() => {
     if (!files) return;
     
-    const filesWithId = files.map((file, index) => ({
+    const filesWithId = files.filter(f => !f.isDeleted).map((fileObj) => ({
       id: generateUniqueId(),
-      file,
+      fileObj,
     }));
     setLocalFiles(filesWithId);
   }, [files]);
@@ -42,11 +41,14 @@ export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files).map(file => ({
         id: generateUniqueId(),
-        file,
+        fileObj: { file }
       }));
       const updatedFiles = [...localFiles, ...newFiles];
       setLocalFiles(updatedFiles);
-      onFilesChange(updatedFiles.map(f => f.file));
+      
+      // Mapear archivos para la respuesta
+      const resultFiles = updatedFiles.map(f => f.fileObj);
+      onFilesChange(resultFiles);
     }
   };
 
@@ -59,20 +61,40 @@ export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
     if (event.dataTransfer.files) {
       const newFiles = Array.from(event.dataTransfer.files).map(file => ({
         id: generateUniqueId(),
-        file,
+        fileObj: { file }
       }))
       const updatedFiles = [...(localFiles || []), ...newFiles] // Ensure localFiles is not null or undefined
       setLocalFiles(updatedFiles)
-      onFilesChange(updatedFiles.map(f => f.file))
+      
+      // Mapear archivos para la respuesta
+      const resultFiles = updatedFiles.map(f => f.fileObj);
+      onFilesChange(resultFiles);
     }
   }
 
   const handleRemoveFile = async (id: number) => {
     try {
-      const updatedFiles = localFiles.filter(f => f.id !== id);
-      setLocalFiles(updatedFiles);
-      onFilesChange(updatedFiles.map(f => f.file));
-      // Después de eliminar exitosamente: toast.success('Archivo eliminado correctamente');
+      const fileToRemove = localFiles.find(f => f.id === id)
+      let updatedFiles: FileWithId[] = []
+      
+      // Si el archivo tiene un costDetailId del backend, marcarlo como eliminado
+      if (fileToRemove?.fileObj.costDetailId) {
+        updatedFiles = localFiles.map(f => 
+          f.id === id 
+            ? { ...f, fileObj: { ...f.fileObj, isDeleted: true } } 
+            : f
+        )
+        // Filtrar para mostrar solo los no eliminados
+        setLocalFiles(updatedFiles.filter(f => !f.fileObj.isDeleted))
+      } else {
+        // Si no tiene costDetailId, simplemente quitarlo del arreglo
+        updatedFiles = localFiles.filter(f => f.id !== id)
+        setLocalFiles(updatedFiles)
+      }
+      
+      // Preparar resultado: incluir todos los archivos (incluso los marcados como eliminados)
+      const allFiles = updatedFiles.map(f => f.fileObj)
+      onFilesChange(allFiles)
     } catch (error) {
       // En caso de error: toast.error('Error al eliminar el archivo');
     }
@@ -111,9 +133,9 @@ export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
       </div>
       {localFiles?.length > 0 && (
         <div className="space-y-2">
-          {localFiles.map(({ id, file }) => (
+          {localFiles.map(({ id, fileObj }) => (
             <div key={id} className="flex items-center justify-between bg-primary/10 p-2 rounded-md">
-              <span className="text-sm text-primary">{file.name}</span>
+              <span className="text-sm text-primary">{fileObj.file.name}</span>
               <Button
                 variant="ghost"
                 size="sm"

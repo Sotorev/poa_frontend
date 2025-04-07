@@ -262,8 +262,11 @@ export interface PlanningEvent {
   }[];
   tipoCompra: string;
   detalle: {
-    id: number;
-    name: string;
+    costDetailId: number;
+    eventId: number;
+    filePath: string;
+    fileName: string;
+    isDeleted: boolean;
   }[];
   responsables: {
     principal: string;
@@ -273,8 +276,12 @@ export interface PlanningEvent {
   recursos: string;
   indicadorLogro: string;
   detalleProceso: {
-    id: number;
-    name: string;
+    fileId: number;
+    eventId: number;
+    filePath: string;
+    fileName: string;
+    uploadedAt: string;
+    isDeleted: boolean;
   }[];
   comentarioDecano: string;
   propuestoPor: string;

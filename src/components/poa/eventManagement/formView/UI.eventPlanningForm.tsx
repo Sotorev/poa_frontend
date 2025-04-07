@@ -327,8 +327,8 @@ export function EventPlanningForm({
                                                 defaultValue={[]}
                                                 render={({ field }) => (
                                                     <DetalleProcesoComponent
-                                                        files={field.value || []}
-                                                        onFilesChange={(files: File[]) => field.onChange(files)}
+                                                        files={(field.value || [])}
+                                                        onFilesChange={(files) => field.onChange(files)}
                                                     />
                                                 )}
                                             />
@@ -399,7 +399,10 @@ export function EventPlanningForm({
                                                 control={control}
                                                 defaultValue={[]}
                                                 render={({ field }) => (
-                                                    <EventCostDetail files={field.value || []} onFilesChange={(files) => field.onChange(files)} />
+                                                    <EventCostDetail 
+                                                        files={(field.value || [])} 
+                                                        onFilesChange={(files) => field.onChange(files)} 
+                                                    />
                                                 )}
                                             />
                                         </div>

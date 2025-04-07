@@ -56,12 +56,19 @@ export interface PlanningEvent {
   recursos: string /** Recursos necesarios para el evento como el departamento de publicidad, coro, etc*/;
   indicadorLogro: string;
   detalleProceso: {
-    id: number;
-    name: string;
+    fileId: number;
+    eventId: number;
+    filePath: string;
+    fileName: string;
+    uploadedAt: string;
+    isDeleted: boolean;
   }[];
   detalle: {
-    id: number;
-    name: string;
+    costDetailId: number;
+    eventId: number;
+    filePath: string;
+    fileName: string;
+    isDeleted: boolean;
   }[];
   comentarioDecano: string;
   propuestoPor: string;

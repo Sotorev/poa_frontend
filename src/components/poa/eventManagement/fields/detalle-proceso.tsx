@@ -7,13 +7,13 @@ import { Upload, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 interface DetalleProcesoProps {
-  files: File[]
-  onFilesChange: (files: File[]) => void
+  files: {fileId?: number, file: File, isDeleted?: boolean}[]
+  onFilesChange: (files: {fileId?: number, file: File, isDeleted?: boolean}[]) => void
 }
 
 interface FileWithId {
   id: number
-  file: File
+  fileObj: {fileId?: number, file: File, isDeleted?: boolean}
 }
 
 export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProcesoProps) {
@@ -28,9 +28,9 @@ export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProceso
   useEffect(() => {
     if (!files) return
     
-    const filesWithId = files.map((file) => ({
+    const filesWithId = files.filter(f => !f.isDeleted).map((fileObj) => ({
       id: generateUniqueId(),
-      file,
+      fileObj,
     }))
     setLocalFiles(filesWithId)
   }, [files])
@@ -39,11 +39,14 @@ export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProceso
     if (event.target.files) {
       const newFiles = Array.from(event.target.files).map(file => ({
         id: generateUniqueId(),
-        file,
+        fileObj: { file }
       }))
       const updatedFiles = [...localFiles, ...newFiles]
       setLocalFiles(updatedFiles)
-      onFilesChange(updatedFiles.map(f => f.file))
+      
+      // Mapear archivos para la respuesta
+      const resultFiles = updatedFiles.map(f => f.fileObj)
+      onFilesChange(resultFiles)
     }
   }
 
@@ -56,19 +59,40 @@ export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProceso
     if (event.dataTransfer.files) {
       const newFiles = Array.from(event.dataTransfer.files).map(file => ({
         id: generateUniqueId(),
-        file,
+        fileObj: { file }
       }))
       const updatedFiles = [...localFiles, ...newFiles]
       setLocalFiles(updatedFiles)
-      onFilesChange(updatedFiles.map(f => f.file))
+      
+      // Mapear archivos para la respuesta
+      const resultFiles = updatedFiles.map(f => f.fileObj)
+      onFilesChange(resultFiles)
     }
   }
 
   const handleRemoveFile = async (id: number) => {
     try {
-      const updatedFiles = localFiles.filter(f => f.id !== id)
-      setLocalFiles(updatedFiles)
-      onFilesChange(updatedFiles.map(f => f.file))
+      const fileToRemove = localFiles.find(f => f.id === id)
+      let updatedFiles: FileWithId[] = []
+      
+      // Si el archivo tiene un fileId del backend, marcarlo como eliminado
+      if (fileToRemove?.fileObj.fileId) {
+        updatedFiles = localFiles.map(f => 
+          f.id === id 
+            ? { ...f, fileObj: { ...f.fileObj, isDeleted: true } } 
+            : f
+        )
+        // Filtrar para mostrar solo los no eliminados
+        setLocalFiles(updatedFiles.filter(f => !f.fileObj.isDeleted))
+      } else {
+        // Si no tiene fileId, simplemente quitarlo del arreglo
+        updatedFiles = localFiles.filter(f => f.id !== id)
+        setLocalFiles(updatedFiles)
+      }
+      
+      // Preparar resultado: incluir todos los archivos (incluso los marcados como eliminados)
+      const allFiles = updatedFiles.map(f => f.fileObj)
+      onFilesChange(allFiles)
     } catch (error) {
       console.error('Error removing file:', error)
     }
@@ -107,9 +131,9 @@ export function DetalleProcesoComponent({ files, onFilesChange }: DetalleProceso
       </div>
       {localFiles.length > 0 && (
         <div className="space-y-2">
-          {localFiles.map(({ id, file }) => (
+          {localFiles.map(({ id, fileObj }) => (
             <div key={id} className="flex items-center justify-between bg-primary/10 p-2 rounded-md">
-              <span className="text-sm text-primary">{file.name}</span>
+              <span className="text-sm text-primary">{fileObj.file?.name}</span>
               <Button
                 variant="ghost"
                 size="sm"
