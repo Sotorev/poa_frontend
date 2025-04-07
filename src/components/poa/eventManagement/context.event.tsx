@@ -202,16 +202,19 @@ export const EventProvider = ({ children }: ProviderProps) => {
         const dates = event.fechas.map(fecha => ({
             startDate: fecha.inicio || new Date(fecha.inicio).toISOString().split('T')[0],
             endDate: fecha.fin || new Date(fecha.fin).toISOString().split('T')[0],
+            eventDateId: fecha.eventDateId || 0
         }));
 
         // Convertir los financiamientos (aporteUMES y aporteOtros)
         const financings = [
             ...event.aporteUMES.map(aporte => ({
+                eventFinancingId: aporte.eventFinancingId,
                 financingSourceId: aporte.financingSourceId,
                 percentage: aporte.percentage,
                 amount: aporte.amount
             })),
             ...event.aporteOtros.map(aporte => ({
+                eventFinancingId: aporte.eventFinancingId,
                 financingSourceId: aporte.financingSourceId,
                 percentage: aporte.percentage,
                 amount: aporte.amount

@@ -19,16 +19,11 @@ export function ResponsibleComponent({
   onAppendResponsible
 }: ResponsibleComponentProps) {
 
-  useEffect(() => {
-    console.log("Responsables actualizados:", responsible);
-  }, [responsible]);
-
   const handleResponsibleChange = (role: "Principal" | "Ejecución" | "Seguimiento", value: string) => {
     const existingIndex = responsible.findIndex(r => r.responsibleRole === role);
 
     if (existingIndex >= 0) {
       const existingResponsible = responsible[existingIndex];
-      console.log("Responsable existente:", existingResponsible);
       onUpdateResponsible(existingIndex, { 
         name: value, 
         responsibleRole: role,
