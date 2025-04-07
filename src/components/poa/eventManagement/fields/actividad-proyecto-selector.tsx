@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -38,10 +38,6 @@ export function ActivityProjectSelector({
   const [currentDateIndex, setCurrentDateIndex] = useState<number | null>(null)
   const [isStartDateOpen, setIsStartDateOpen] = useState(false)
   const [isEndDateOpen, setIsEndDateOpen] = useState(false)
-
-  useEffect(() => {
-    console.log("dates", dates)
-  }, [dates])
 
   // Función para manejar el cambio de opción (actividad o proyecto)
   const handleOptionChange = (value: string) => {
