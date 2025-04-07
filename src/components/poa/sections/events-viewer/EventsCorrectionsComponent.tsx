@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronUp } from 'lucide-react';
 import { PlanningEvent, SectionProps as OriginalSectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
-import { useCurrentUser } from "@/hooks/use-current-user";
 import { deleteEvent } from '@/services/apiService';
 
 // Context
