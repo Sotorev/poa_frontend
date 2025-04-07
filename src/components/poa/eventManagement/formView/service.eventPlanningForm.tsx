@@ -233,7 +233,9 @@ const formatEventData = (eventData: FullEventRequest, isPlanned: boolean) => {
     // Agregar naturaleza del evento si esta planificado o es extraordinario
     eventNature: isPlanned ? 'Planificado' : 'Extraordinario',
     isDelayed: eventData.isDelayed || false,
-    statusId: eventData.statusId || 1
+    statusId: eventData.statusId || 1,
+    files: eventData.processDocuments?.map(p => ({ fileId: p.fileId, isDeleted: p.isDeleted })),
+    costDetails: eventData.costDetailDocuments?.map(c => ({ fileId: c.costDetailId, isDeleted: c.isDeleted })),
   };
 
   return formattedData;
@@ -308,7 +310,9 @@ export async function updateEvent(eventId: number, eventData: FullEventRequest, 
   if (eventData.costDetailDocuments && eventData.costDetailDocuments.length > 0) {
     eventData.costDetailDocuments.forEach((file: {file: File, isDeleted?: boolean, costDetailId?: number}, index: number) => {
       if (index < 10) {
-        formData.append('costDetailDocuments', file.file);
+        if (!file.isDeleted) {
+          formData.append('costDetailDocuments', file.file);
+        }
       }
     });
   }
@@ -316,7 +320,9 @@ export async function updateEvent(eventId: number, eventData: FullEventRequest, 
   if (eventData.processDocuments && eventData.processDocuments.length > 0) {
     eventData.processDocuments.forEach((file: {file: File, isDeleted?: boolean, fileId?: number}, index: number) => {
       if (index < 10) {
-        formData.append('processDocuments', file.file);
+        if (!file.isDeleted) {
+          formData.append('processDocuments', file.file);
+        }
       }
     });
   }

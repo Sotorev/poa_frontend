@@ -25,7 +25,7 @@ import { CampusSelector } from "../fields/campus-selector"
 import { ResponsibleComponent } from "../fields/responsables"
 import { RecursosSelectorComponent } from "../fields/recursos-selector"
 import { IndicadorLogroComponent } from "../fields/indicador-logro"
-import { DetalleProcesoComponent } from "../fields/detalle-proceso"
+import { ProcessDetailFile } from "../fields/processDetailFile"
 import { ValidationErrorsModal } from "./UI.validationErrorsModal"
 import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
@@ -326,7 +326,7 @@ export function EventPlanningForm({
                                                 control={control}
                                                 defaultValue={[]}
                                                 render={({ field }) => (
-                                                    <DetalleProcesoComponent
+                                                    <ProcessDetailFile
                                                         files={(field.value || [])}
                                                         onFilesChange={(files) => field.onChange(files)}
                                                     />

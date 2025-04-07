@@ -75,25 +75,30 @@ export function EventCostDetail({ files, onFilesChange }: DetalleProps) {
   const handleRemoveFile = async (id: number) => {
     try {
       const fileToRemove = localFiles.find(f => f.id === id)
-      let updatedFiles: FileWithId[] = []
+      let updatedLocalFiles: FileWithId[] = []
       
       // Si el archivo tiene un costDetailId del backend, marcarlo como eliminado
       if (fileToRemove?.fileObj.costDetailId) {
-        updatedFiles = localFiles.map(f => 
+        updatedLocalFiles = localFiles.map(f => 
           f.id === id 
             ? { ...f, fileObj: { ...f.fileObj, isDeleted: true } } 
             : f
         )
         // Filtrar para mostrar solo los no eliminados
-        setLocalFiles(updatedFiles.filter(f => !f.fileObj.isDeleted))
+        setLocalFiles(updatedLocalFiles.filter(f => !f.fileObj.isDeleted))
+        console.log("updatedLocalFiles cargados de la API", localFiles)
       } else {
         // Si no tiene costDetailId, simplemente quitarlo del arreglo
-        updatedFiles = localFiles.filter(f => f.id !== id)
-        setLocalFiles(updatedFiles)
+        updatedLocalFiles = localFiles.filter(f => f.id !== id)
+        setLocalFiles(updatedLocalFiles)
+        console.log("updatedLocalFiles no cargados de la API", localFiles)
       }
       
-      // Preparar resultado: incluir todos los archivos (incluso los marcados como eliminados)
-      const allFiles = updatedFiles.map(f => f.fileObj)
+      // Preparar resultado: incluir todos los archivos actuales más todos los archivos de la API marcados como eliminados
+      const filesFromApi = files.filter(f => f.costDetailId && f.isDeleted)
+      const currentFiles = updatedLocalFiles.map(f => f.fileObj)
+      const allFiles = [...currentFiles, ...filesFromApi]
+      
       onFilesChange(allFiles)
     } catch (error) {
       // En caso de error: toast.error('Error al eliminar el archivo');
