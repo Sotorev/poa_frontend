@@ -220,22 +220,22 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
         // Configurar los responsables
         const responsibles: { responsibleRole: "Principal" | "Ejecución" | "Seguimiento"; name: string }[] = [];
-        if (event.responsables.principal) {
+        if (event.responsables.find(r => r.responsibleRole === "Principal")) {
             responsibles.push({
                 responsibleRole: "Principal",
-                name: event.responsables.principal
+                name: event.responsables.find(r => r.responsibleRole === "Principal")?.name || ''
             });
         }
-        if (event.responsables.ejecucion) {
+        if (event.responsables.find(r => r.responsibleRole === "Ejecución")) {
             responsibles.push({
                 responsibleRole: "Ejecución",
-                name: event.responsables.ejecucion
+                name: event.responsables.find(r => r.responsibleRole === "Ejecución")?.name || ''
             });
         }
-        if (event.responsables.seguimiento) {
+        if (event.responsables.find(r => r.responsibleRole === "Seguimiento")) {
             responsibles.push({
                 responsibleRole: "Seguimiento",
-                name: event.responsables.seguimiento
+                name: event.responsables.find(r => r.responsibleRole === "Seguimiento")?.name || ''
             });
         }
 

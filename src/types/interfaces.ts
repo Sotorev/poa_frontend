@@ -231,8 +231,10 @@ export interface ApiStrategicArea {
 
 // Interfaces existentes
 export interface DateInterval {
+  eventDateId: number;
   inicio: string;
   fin: string;
+  isDeleted: boolean;
 }
 
 /**
@@ -251,14 +253,18 @@ export interface PlanningEvent {
   fechas: DateInterval[]; // Fechas de inicio y fin del evento
   costoTotal: number;
   aporteUMES: {
+    eventFinancingId: number;
     financingSourceId: number;
     percentage: number;
     amount: number;
+    isDeleted: boolean;
   }[];
   aporteOtros: {
+    eventFinancingId: number;
     financingSourceId: number;
     percentage: number;
     amount: number;
+    isDeleted: boolean;
   }[];
   tipoCompra: string;
   detalle: {
@@ -269,10 +275,10 @@ export interface PlanningEvent {
     isDeleted: boolean;
   }[];
   responsables: {
-    principal: string;
-    ejecucion: string;
-    seguimiento: string;
-  };
+    eventResponsibleId: number;
+    responsibleRole: string;
+    name: string;
+  }[];
   recursos: string;
   indicadorLogro: string;
   detalleProceso: {

@@ -44,6 +44,8 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         evento: apiEvent.name,
         objetivo: apiEvent.objective,
         fechas: apiEvent.dates.map(date => ({
+            eventDateId: date.eventDateId,
+            isDeleted: date.isDeleted,
             inicio: date.startDate,
             fin: date.endDate
         })),
@@ -51,6 +53,8 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         aporteUMES: apiEvent.financings
             .filter(f => [1, 4, 5, 7].includes(f.financingSourceId))
             .map(f => ({
+                eventFinancingId: f.eventFinancingId,
+                isDeleted: f.isDeleted,
                 financingSourceId: f.financingSourceId,
                 percentage: f.percentage,
                 amount: f.amount
@@ -58,6 +62,8 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         aporteOtros: apiEvent.financings
             .filter(f => [2, 3, 6].includes(f.financingSourceId))
             .map(f => ({
+                eventFinancingId: f.eventFinancingId,
+                isDeleted: f.isDeleted,
                 financingSourceId: f.financingSourceId,
                 percentage: f.percentage,
                 amount: f.amount
@@ -70,11 +76,11 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
             fileName: detail.fileName,
             isDeleted: detail.isDeleted
         })) || [],
-        responsables: {
-            principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
-            ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
-            seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
-        },
+        responsables: apiEvent.responsibles.map(r => ({
+            eventResponsibleId: r.eventResponsibleId,
+            responsibleRole: r.responsibleRole,
+            name: r.name
+        })),
         recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
         indicadorLogro: apiEvent.achievementIndicator,
         detalleProceso: apiEvent.files?.map(file => ({
