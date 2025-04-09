@@ -41,9 +41,7 @@ export function usePoaEventTrackingFormLogic(
   const [archivosGastos, setArchivosGastos] = useState<File[]>([]);
   const [costoTotal, setCostoTotal] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<EventExecution | null>(null);
-  const [financingSources, setFinancingSources] = useState<FinancingSource[]>(
-    []
-  );
+  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
 
   const user = useCurrentUser();
@@ -67,8 +65,9 @@ export function usePoaEventTrackingFormLogic(
   const {
     fields: fechasFields,
     append: appendFecha,
+    update: updateFecha,
     remove: removeFecha,
-  } = useFieldArray({
+  } = useFieldArray<FormValues, "fechas", "id">({
     control: form.control,
     name: "fechas",
   });
@@ -77,7 +76,7 @@ export function usePoaEventTrackingFormLogic(
     fields: aportesUmesFields,
     append: appendAporteUmes,
     remove: removeAporteUmes,
-  } = useFieldArray({
+  } = useFieldArray<FormValues, "aportesUmes", "id">({
     control: form.control,
     name: "aportesUmes",
   });
@@ -86,7 +85,7 @@ export function usePoaEventTrackingFormLogic(
     fields: aportesOtrosFields,
     append: appendAporteOtros,
     remove: removeAporteOtros,
-  } = useFieldArray({
+  } = useFieldArray<FormValues, "aportesOtros", "id">({
     control: form.control,
     name: "aportesOtros",
   });
@@ -140,22 +139,41 @@ export function usePoaEventTrackingFormLogic(
       if (currentStep === 3 && selectedEvent) {
   
         const defaultDate = {
-          eventExecutionDateId: 0,
+          eventDateId: 0,
           startDate: new Date().toISOString().split('T')[0],
           endDate: new Date().toISOString().split('T')[0],
+          executionStartDate: new Date().toISOString().split('T')[0],
+          executionEndDate: null,
           reasonForChange: null,
-          isDeleted: false,
+          statusId: 1,
+          isEnabled: true
         };
-        const eventDates = selectedEvent.dates.map(date => ({
-          eventExecutionDateId: initialData?.fechas.find((f) => f.startDate === date.startDate && f.endDate === date.endDate)?.eventExecutionDateId || 0,
-          startDate: date.startDate.split('T')[0],
-          endDate: date.endDate.split('T')[0],
-          reasonForChange: "",
-          isDeleted: false,
-        }));
-        form.setValue('fechas', eventDates.length > 0 ? [eventDates[0], ...eventDates.slice(1)] : [defaultDate]);
+        
+        let eventDates;
+        
+        if (initialData && initialData.fechas && initialData.fechas.length > 0) {
+          eventDates = initialData.fechas.map((fecha, index) => ({
+            ...fecha,
+            isEnabled: index === 0 ? true : fecha.isEnabled !== false
+          }));
+        } else {
+          eventDates = selectedEvent.dates.map((date, index) => {
+            return {
+              eventDateId: (date as any).eventDateId || 0,
+              startDate: date.startDate.split('T')[0],
+              endDate: date.endDate.split('T')[0],
+              executionStartDate: date.startDate.split('T')[0],
+              executionEndDate: null,
+              reasonForChange: null,
+              statusId: 1,
+              isEnabled: index === 0
+            };
+          });
+        }
+        
+        form.setValue('fechas', eventDates.length > 0 ? eventDates : [defaultDate]);
       }
-    }, [currentStep, selectedEvent, form, initialData?.fechas]);
+    }, [currentStep, selectedEvent, form, initialData]);
 
   // Carga de tipos de fuentes de financiamiento
   useEffect(() => {
@@ -201,11 +219,14 @@ export function usePoaEventTrackingFormLogic(
       aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
       fechas: [{
-        eventExecutionDateId: 0,
+        eventDateId: 0,
         startDate: new Date().toISOString().split("T")[0],
         endDate: new Date().toISOString().split("T")[0],
+        executionStartDate: new Date().toISOString().split('T')[0],
+        executionEndDate: null,
         reasonForChange: null,
-        isDeleted: false,
+        statusId: 1,
+        isEnabled: true
       }],
     });
     setSelectedEvent(null);
@@ -252,17 +273,17 @@ export function usePoaEventTrackingFormLogic(
         break;
       case 2:
         const aportesUmesFieldsPaths: Array<FormFieldPaths> = aportesUmes
-          .map((_, i) => `aportesUmes.${i}.tipo` as FormFieldPaths)
+          .map((_, i) => `aportesUmes.${i}.financingSourceId` as FormFieldPaths)
           .concat(
             aportesUmes.map(
-              (_, i) => `aportesUmes.${i}.monto` as FormFieldPaths
+              (_, i) => `aportesUmes.${i}.amount` as FormFieldPaths
             )
           );
         const aportesOtrosFieldsPaths: Array<FormFieldPaths> = aportesOtros
-          .map((_, i) => `aportesOtros.${i}.tipo` as FormFieldPaths)
+          .map((_, i) => `aportesOtros.${i}.financingSourceId` as FormFieldPaths)
           .concat(
             aportesOtros.map(
-              (_, i) => `aportesOtros.${i}.monto` as FormFieldPaths
+              (_, i) => `aportesOtros.${i}.amount` as FormFieldPaths
             )
           );
         fieldsToValidate = [
@@ -273,16 +294,8 @@ export function usePoaEventTrackingFormLogic(
         ];
         break;
       case 3:
-        const fechasFieldsPaths = form
-          .getValues("fechas")
-          .flatMap((_, i) => [
-            `fechas.${i}.startDate`,
-            `fechas.${i}.endDate`,
-          ] as FormFieldPaths[]);
-        fieldsToValidate = ["fechas", ...fechasFieldsPaths];
+        fieldsToValidate = ["fechas"];
         break;
-      default:
-        fieldsToValidate = [];
     }
 
     if (fieldsToValidate.length === 0) return true;
@@ -347,6 +360,10 @@ export function usePoaEventTrackingFormLogic(
   };
 
   async function handleFormSubmit(values: FormValues) {
+    // Eliminar fechas que no están habilitadas y eliminar el campo isEnabled
+    const fechasHabilitadas = values.fechas.filter((fecha) => fecha.isEnabled);
+    values.fechas = fechasHabilitadas;
+
     const result = formSchema.safeParse(values);
     if (!result.success) {
       result.error.issues.forEach((issue) => {
@@ -361,7 +378,6 @@ export function usePoaEventTrackingFormLogic(
 
     onSubmit(values);
 
-
     form.reset({
       eventId: "",
       eventName: "",
@@ -371,11 +387,14 @@ export function usePoaEventTrackingFormLogic(
       aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
       archivosGastos: [],
       fechas: [{
-        eventExecutionDateId: 0,
+        eventDateId: 0,
         startDate: new Date().toISOString().split("T")[0],
         endDate: new Date().toISOString().split("T")[0],
+        executionStartDate: new Date().toISOString().split('T')[0],
+        executionEndDate: null,
         reasonForChange: null,
-        isDeleted: false,
+        statusId: 1,
+        isEnabled: true
       }],
     });
     setSelectedEvent(null);
@@ -439,11 +458,14 @@ export function usePoaEventTrackingFormLogic(
         aportesOtros: [{ eventId: undefined, amount: undefined, percentage: undefined, financingSourceId: undefined }],
         archivosGastos: [],
         fechas: [{
-          eventExecutionDateId: 0,
+          eventDateId: 0,
           startDate: new Date().toISOString().split("T")[0],
           endDate: new Date().toISOString().split("T")[0],
+          executionStartDate: new Date().toISOString().split('T')[0],
+          executionEndDate: null,
           reasonForChange: null,
-          isDeleted: false,
+          statusId: 1,
+          isEnabled: true
         }],
       });
       setSelectedEvent(null);
@@ -490,6 +512,7 @@ export function usePoaEventTrackingFormLogic(
     handleFormSubmit,
     fechasFields,
     appendFecha,
+    updateFecha,
     removeFecha,
     aportesUmesFields,
     appendAporteUmes,

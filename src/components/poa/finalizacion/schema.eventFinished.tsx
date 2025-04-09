@@ -7,9 +7,9 @@ export const createEvidenceRequestSchema = z.object({
       required_error: "Debe seleccionar un evento",
       invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventId CreateEvidenceRequest)"
     }),
-    eventExecutionDateId: z.number({
+    eventDateId: z.number({
       required_error: "Debe seleccionar una fecha de ejecución del evento",
-      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventExecutionDateId CreateEvidenceRequest)"
+      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventDateId CreateEvidenceRequest)"
     }),
     endDate: z.string({
       required_error: "Por favor ingrese la fecha de finalización del evento",
@@ -31,9 +31,9 @@ export const updateEvidenceRequestSchema = z.object({
       required_error: "Debe seleccionar un evento",
       invalid_type_error: "Debe seleccionar un evento"
     }),
-    eventExecutionDateId: z.number({
+    eventDateId: z.number({
       required_error: "Debe seleccionar una fecha de ejecución del evento",
-      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventExecutionDateId UpdateEvidenceRequest)"
+      invalid_type_error: "A ocurrido un error por favor intente nuevamente y si el problema persiste contacte al administrador (invalid_type_error eventDateId UpdateEvidenceRequest)"
     }),
     endDate: z.string({
       required_error: "Por favor ingrese la fecha de finalización del evento",
@@ -53,5 +53,9 @@ export const restoreEvidenceRequestSchema = z.object({
   eventId: z.number({
     required_error: "A ocurrido un error por favor recargue la pagina y si el problema persiste contacte al administrador (required_error eventId RestoreEvidenceRequest)",
     invalid_type_error: "A ocurrido un error por favor recargue la pagina y si el problema persiste contacte al administrador (invalid_type_error eventId RestoreEvidenceRequest)"
-  })
+  }),
+  eventDateIds: z.array(z.number({
+    required_error: "A ocurrido un error por favor recargue la pagina y si el problema persiste contacte al administrador (required_error eventDateId RestoreEvidenceRequest)",
+    invalid_type_error: "A ocurrido un error por favor recargue la pagina y si el problema persiste contacte al administrador (invalid_type_error eventDateId RestoreEvidenceRequest)"
+  }))
 });

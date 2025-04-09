@@ -15,7 +15,7 @@ interface PhaseIndicatorProps {
 
 export function PhaseIndicator({ phases, currentPhase, onPhaseClick }: PhaseIndicatorProps) {
   return (
-    <div className="flex items-center justify-between w-full max-w-3xl mx-auto py-6">
+    <div className="flex items-center justify-between w-full max-w-3xl mx-auto ">
       {phases.map((phase, index) => (
         <div
           key={phase.number}

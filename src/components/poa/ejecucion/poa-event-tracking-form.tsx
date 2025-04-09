@@ -248,6 +248,8 @@ type PoaEventTrackingFormProps = {
 
 export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOpenChange }: PoaEventTrackingFormProps) {
 
+  console.log("Events", events);
+
   // Uso del hook personalizado con toda la lógica encapsulada
   const {
     form,
@@ -272,6 +274,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
     handleFormSubmit,
     fechasFields,
     appendFecha,
+    updateFecha,
     removeFecha,
     aportesUmesFields,
     appendAporteUmes,
@@ -604,37 +607,86 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             <CardTitle className="text-lg font-semibold">Fechas de Ejecución</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {fechasFields.map((field, index) => (
-              <FormField
-                key={field.id}
-                control={form.control}
-                name={`fechas.${index}.startDate`}
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel className={cn(index !== 0 && "sr-only")}>
-                      Fecha de Ejecución
-                    </FormLabel>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="date"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        className="w-full sm:w-[280px]"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => removeFecha(index)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
+            {fechasFields.map((field, index) => {
+              // Usar un estado local para controlar si la fecha está habilitada
+              const isEnabled = field.isEnabled;
+
+              return (
+                <div key={field.id} className={`grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-md ${isEnabled ? 'border-primary' : 'border-muted bg-muted/20'}`}>
+                  <FormField
+                    control={form.control}
+                    name={`fechas.${index}.startDate`}
+                    render={({ field: startDateField }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className={isEnabled ? '' : 'text-muted-foreground'}>
+                          Fecha de inicio planificada
+                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="date"
+                            value={startDateField.value}
+                            disabled={true}
+                            className="w-full sm:w-[280px] bg-muted/50"
+                          />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`fechas.${index}.executionStartDate`}
+                    render={({ field: executionField }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className={isEnabled ? '' : 'text-muted-foreground'}>
+                          Fecha de inicio de ejecución
+                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="date"
+                            value={executionField.value || form.getValues(`fechas.${index}.startDate`)}
+                            onChange={(e) => executionField.onChange(e.target.value)}
+                            className="w-full sm:w-[280px]"
+                            disabled={!isEnabled}
+                          />
+                          <Button
+                            name={isEnabled ? "removeFecha" : "enableFecha"}
+                            type="button"
+                            variant={isEnabled ? "outline" : "default"}
+                            size="icon"
+                            onClick={() => {
+                              const updatedFechas = [...form.getValues("fechas")].find(f => f.eventDateId === field.eventDateId);
+                              if (isEnabled) {
+                                if (updatedFechas) {
+                                  updateFecha(index, {
+                                    ...updatedFechas,
+                                    isEnabled: false
+                                  })
+                                }
+                              } else if (!isEnabled) {
+                                if (updatedFechas) {
+                                  updateFecha(index, {
+                                    ...updatedFechas,
+                                    isEnabled: true
+                                  })
+                                }
+                              }
+                            }}
+                          >
+                            {isEnabled ? (
+                              <Trash className="h-4 w-4" />
+                            ) : (
+                              <Plus className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              );
+            })}
             {errors.fechas && (
               <p className="mt-2 text-sm text-destructive">
                 {errors.fechas.message}
@@ -644,7 +696,16 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => appendFecha({ eventExecutionDateId: 0, startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0], reasonForChange: null, isDeleted: false })}
+              onClick={() => appendFecha({
+                eventDateId: 0,
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: new Date().toISOString().split('T')[0],
+                executionStartDate: new Date().toISOString().split('T')[0],
+                executionEndDate: null,
+                reasonForChange: null,
+                statusId: 1,
+                isEnabled: false // Nueva fecha agregada como deshabilitada
+              })}
             >
               <Plus className="h-4 w-4 mr-2" />
               Agregar Fecha
@@ -717,7 +778,6 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 <Button
                   type="submit"
                   className="sm:w-auto"
-                  disabled={!isValid}
                 >
                   {initialData ? 'Actualizar Seguimiento' : 'Guardar Seguimiento'}
                 </Button>

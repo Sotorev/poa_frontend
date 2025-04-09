@@ -10,8 +10,6 @@ import { FinancingSource } from '@/types/FinancingSource'; // Nueva importación
 import { PlanningEvent } from '@/types/interfaces';
 
 // Charge Data
-import { getFinancingSources } from '@/services/apiService';
-import { useCurrentUser } from '@/hooks/use-current-user';
 import { EventContext } from '../../eventManagement/context.event';
 
 interface EventTableProps {

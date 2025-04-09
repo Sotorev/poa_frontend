@@ -11,11 +11,14 @@ const aporteSchema = z.object({
 });
 
 const fechaSchema = z.object({
-  eventExecutionDateId: z.number().optional(),
+  eventDateId: z.number().optional(),
   startDate: z.string().trim().min(1, "La fecha de inicio es requerida"),
   endDate: z.string().optional(),
+  executionStartDate: z.string().optional(),
+  executionEndDate: z.any().optional(),
   reasonForChange: z.string().nullable().optional(),
-  isDeleted: z.boolean().optional(),
+  statusId: z.number().optional(),
+  isEnabled: z.boolean().optional(),
 });
 
 export const formSchema = z.object({

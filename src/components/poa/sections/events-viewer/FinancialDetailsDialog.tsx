@@ -109,11 +109,11 @@ const FinancialDetailsDialog: React.FC<FinancialDetailsDialogProps> = ({ isOpen,
                     <h3 className="text-lg font-semibold mb-2">Archivos del Evento</h3>
                     <div className="space-y-2">
                       {event.detalle.map((file) => (
-                        <div key={file.id}>
-                          <h4 className="text-md font-medium mb-1">{file.name}</h4>
+                        <div key={file.costDetailId}>
+                          <h4 className="text-md font-medium mb-1">{file.fileName}</h4>
                           <DownloadButton
-                            name={file.name}
-                            path={`downloadEventCostDetailDocumentById/${file.id}`}
+                            name={file.fileName}
+                            path={`downloadEventCostDetailDocumentById/${file.costDetailId}`}
                           />
                         </div>
                       ))}

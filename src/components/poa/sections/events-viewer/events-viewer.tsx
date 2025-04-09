@@ -32,34 +32,53 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
     evento: apiEvent.name,
     objetivo: apiEvent.objective,
     fechas: apiEvent.dates.map(date => ({
+      eventDateId: date.eventDateId,
       inicio: date.startDate,
-      fin: date.endDate
+      fin: date.endDate,
+      isDeleted: date.isDeleted
     })),
     costoTotal: apiEvent.totalCost,
     aporteUMES: apiEvent.financings
       .filter(f => [1, 4, 5, 7].includes(f.financingSourceId))
       .map(f => ({
+        eventFinancingId: f.eventFinancingId,
         financingSourceId: f.financingSourceId,
         percentage: f.percentage,
-        amount: f.amount
+        amount: f.amount,
+        isDeleted: f.isDeleted
       })),
     aporteOtros: apiEvent.financings
       .filter(f => [2, 3, 6].includes(f.financingSourceId))
       .map(f => ({
+        eventFinancingId: f.eventFinancingId,
         financingSourceId: f.financingSourceId,
         percentage: f.percentage,
-        amount: f.amount
+        amount: f.amount,
+        isDeleted: f.isDeleted
       })),
     tipoCompra: apiEvent.purchaseType?.name || '',
-    detalle: apiEvent.costDetails.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [], // Ajusta el nombre del campo según los datos reales
-    responsables: {
-      principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
-      ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
-      seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
-    },
+      detalle: apiEvent.costDetails.map(detail => ({
+      costDetailId: detail.costDetailId,
+      eventId: detail.eventId,
+      filePath: detail.filePath,
+      fileName: detail.fileName,
+      isDeleted: detail.isDeleted
+    })) || [], // Ajusta el nombre del campo según los datos reales
+    responsables: apiEvent.responsibles.map(r => ({
+      eventResponsibleId: r.eventResponsibleId,
+      responsibleRole: r.responsibleRole,
+      name: r.name
+    })),
     recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
     indicadorLogro: apiEvent.achievementIndicator,
-    detalleProceso: apiEvent.files?.map(file => ({ id: file.fileId, name: file.fileName })) || [],
+    detalleProceso: apiEvent.files?.map(file => ({
+      fileId: file.fileId,
+      eventId: apiEvent.eventId,
+      filePath: file.filePath,
+      fileName: file.fileName,
+      uploadedAt: file.uploadedAt,
+      isDeleted: file.isDeleted
+    })) || [],
     comentarioDecano: '', // Ajusta según los datos reales
     propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
     fechaCreacion: apiEvent.createdAt,
