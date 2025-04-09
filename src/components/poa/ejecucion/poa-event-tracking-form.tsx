@@ -248,6 +248,8 @@ type PoaEventTrackingFormProps = {
 
 export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOpenChange }: PoaEventTrackingFormProps) {
 
+  console.log("Events", events);
+
   // Uso del hook personalizado con toda la lógica encapsulada
   const {
     form,

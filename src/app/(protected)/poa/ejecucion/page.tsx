@@ -128,7 +128,7 @@ export default function PoaTrackingPage() {
         } as EventExecution));
 
         setEvents(mappedEvents.filter(event =>
-          (event.statusId.includes(1) && event.eventApprovals[0].approvalStatusId === 1)
+          (event.eventApprovals[0].approvalStatusId === 1 && !event.dates.some(date => date.statusId === 3 || date.statusId === 2))
         ));
       });
 
@@ -246,8 +246,10 @@ export default function PoaTrackingPage() {
               } as EventExecution));
 
               setEvents(mappedEvents.filter(event =>
-                (event.statusId.includes(1) && event.eventApprovals[0].approvalStatusId === 1)
+                (event.eventApprovals[0].approvalStatusId === 1 && !event.dates.some(date => date.statusId === 3 || date.statusId === 2))
               ));
+
+              console.log("Eventos actualizados", events);
             });
 
         })
