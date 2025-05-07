@@ -21,6 +21,11 @@ export interface StrategyProposalResponse {
     user: UserResponse
 }
 
+export interface StrategicAreaTable extends Omit<StrategyProposalResponse, 'strategicAreaId'> {
+    strategicAreaId: number | null
+    strategicAreaName: string
+}
+
 export interface UserResponse {
     userId: number
     firstName: string
