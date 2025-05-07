@@ -38,6 +38,7 @@ import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getPoaApprovals } from '@/services/poa/aprovalStatus'
 import { getPoaByFacultyAndYear } from '@/services/apiService'
+import { usePoa } from '@/hooks/use-poa';
 
 // Props
 export interface SectionProps {
@@ -76,6 +77,7 @@ export function PoaDashboardMain() {
   const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
   const [isEditable, setIsEditable] = useState<boolean>(false); // Estado para habilitar o deshabilitar el botón
   const [approvalStatuses, setApprovalStatuses] = useState<ApprovalStatus[]>([]);
+  const { selectedYear } = usePoa();
 
   /**
    * Obtiene y establece los estados de aprobación del POA.
@@ -178,17 +180,16 @@ export function PoaDashboardMain() {
 
   const handleReloadData = useCallback(() => {
     if (facultyId && user?.token) {
-      getPoaByFacultyAndYear(facultyId, new Date().getFullYear(), user.token);
-    
+      getPoaByFacultyAndYear(facultyId, selectedYear, user.token);
     }
-  }, [facultyId, user]);
+  }, [facultyId, user, selectedYear]);
 
   // Obtener el POA actual si ya fue creado
 
   const handleGetPoa = async (facultyId: number) => {
     if (!user?.token) return;
 
-    const poa = await getPoaByFacultyAndYear(facultyId, new Date().getFullYear() ,user.token);
+    const poa = await getPoaByFacultyAndYear(facultyId, selectedYear, user.token);
     setPoaId(poa.poaId);
 
     // Verificar el estado del POA y actualizar la habilitación del botón

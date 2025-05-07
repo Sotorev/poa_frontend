@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { usePoa } from '@/hooks/use-poa';
 
 // Types
 import { PurchaseType } from '@/types/PurchaseType'
@@ -184,11 +185,13 @@ export const EventProvider = ({ children }: ProviderProps) => {
     useEffect(() => {
         if (!facultyId || !user?.token) return;
 
+        // Get the selected year from POA context
+        const { selectedYear } = usePoa();
 
-        getPoaByFacultyAndYear(facultyId, user.token).then(poa => {
+        getPoaByFacultyAndYear(facultyId, user.token, selectedYear).then(poa => {
             setPoaId(poa.poaId);
         });
-    }, [facultyId, user?.token]);
+    }, [facultyId, user?.token, usePoa().selectedYear]);
 
     useEffect(() => {
         if (!user?.userId) return;

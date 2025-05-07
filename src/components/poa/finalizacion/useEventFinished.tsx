@@ -24,8 +24,12 @@ import {
 } from "./type.eventFinished";
 import { ResponseExecutedEvent } from "@/types/eventExecution.type";
 import { getPoaByFacultyAndYear } from "@/services/apiService";
+
 // Charge data
 import { getFacultyByUserId } from "../eventManagement/formView/service.eventPlanningForm";
+
+// Contexts
+import { usePoa } from "@/contexts/PoaContext";
 
 export type FormStep = 'searchEvent' | 'selectDates' | 'uploadFiles';
 
@@ -36,7 +40,7 @@ interface DownloadedFile extends File {
 
 export const useEventFinished = () => {
   const user = useCurrentUser();
-  const year = new Date().getFullYear();
+  const {selectedYear} = usePoa();
   
   // Estados
   const [isLoading, setIsLoading] = useState(false);
@@ -101,7 +105,7 @@ export const useEventFinished = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const poa = await getPoaByFacultyAndYear(facultyId, year, user.token);
+        const poa = await getPoaByFacultyAndYear(facultyId, selectedYear, user.token);
         setPoaId(poa.poaId);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al obtener el POA');
@@ -111,7 +115,7 @@ export const useEventFinished = () => {
     };
     
     fetchPoaId();
-  }, [facultyId, year, user?.token]);
+  }, [facultyId, selectedYear, user?.token]);
 
   // Cargar eventos ejecutados cuando se tenga el poaId
   useEffect(() => {

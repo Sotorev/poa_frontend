@@ -9,6 +9,9 @@ import { ChevronDown, ChevronUp, Edit, Save } from 'lucide-react'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { useToast } from "@/hooks/use-toast"
 
+// Contexts
+import { usePoa } from "@/contexts/PoaContext"
+
 interface FacultadDataSectionProps {
   name: string
   isActive: boolean
@@ -29,7 +32,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
   const [studentCountExists, setStudentCountExists] = useState(false)
   const [studentCountId, setStudentCountId] = useState<number | null>(null)
-  const currentYear = new Date().getFullYear() 
+  const { selectedYear } = usePoa();
   const user = useCurrentUser()
   const { toast } = useToast()
 
@@ -61,7 +64,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
       let studentCountId = null
 
       try {
-        const studentCountResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/facultystudenthistories/count/${facultyId}/${currentYear}`, {
+        const studentCountResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/facultystudenthistories/count/${facultyId}/${selectedYear}`, {
           headers: {
             'Authorization': `Bearer ${user?.token}`,
           },
@@ -72,7 +75,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
         }
 
         studentCountData = await studentCountResponse.json()
-        
+
         // Ajuste para acceder correctamente a studentCount e id
         if (studentCountData.studentCount) {
           studentCountExists = true
@@ -89,14 +92,14 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
       setFacultadData({
         nombreFacultad: facultyData.name,
         nombreDecano: facultyData.deanName,
-        fechaPresentacion: poaData.submissionDate, 
+        fechaPresentacion: poaData.submissionDate,
         cantidadEstudiantes: studentCountData?.studentCount?.studentCount || ""
       })
 
       setTempFacultadData({
         nombreFacultad: facultyData.name,
         nombreDecano: facultyData.deanName,
-        fechaPresentacion: poaData.submissionDate, 
+        fechaPresentacion: poaData.submissionDate,
         cantidadEstudiantes: studentCountData?.studentCount?.studentCount || ""
       })
 
@@ -110,7 +113,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
 
   useEffect(() => {
     fetchData()
-  }, [facultyId, poaId, user, currentYear])
+  }, [facultyId, poaId, user, selectedYear])
 
   const handleEdit = () => {
     if (isEditing) {
@@ -149,7 +152,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
           body: JSON.stringify({
             studentCount: studentCount,
             facultyId: facultyId,
-            year: currentYear,
+            year: selectedYear,
           })
         })
 
@@ -167,7 +170,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
           body: JSON.stringify({
             studentCount: studentCount,
             facultyId: facultyId,
-            year: currentYear,
+            year: selectedYear,
           })
         })
 
@@ -186,7 +189,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
         variant: "success",
       })
 
-    } catch{
+    } catch {
       toast({
         title: "Error",
         description: "No se pudieron guardar los cambios.",

@@ -17,6 +17,9 @@ import { getFacultyByUserId } from '@/services/faculty/currentFaculty'
 import { postEventExecuted, getEventExecutedByPoa, revertEventExecuted, updateEventExecuted } from '@/services/poa/eventExecuted'
 import { PoaExecutedEventsTable } from '@/components/poa/ejecucion/poa-executed-events-table'
 
+// Contexts
+import { usePoa } from '@/contexts/PoaContext'
+
 /**
  * @component PoaTrackingPage
  * @description
@@ -53,6 +56,7 @@ export default function PoaTrackingPage() {
   const [editingEvent, setEditingEvent] = useState<ResponseExecutedEvent>();
   const [facultyId, setFacultyId] = useState<any>();
   const [poa, setPoa] = useState<any>();
+  const {selectedYear} = usePoa()
   const user = useCurrentUser();
 
   /**
@@ -75,7 +79,7 @@ export default function PoaTrackingPage() {
   useEffect(() => {
     if (user === undefined || facultyId === undefined) return;
 
-    getPoaByFacultyAndYear(facultyId, new Date().getFullYear(), user.token)
+    getPoaByFacultyAndYear(facultyId, selectedYear, user.token)
       .then((poa) => {
         setPoa(poa);
       });

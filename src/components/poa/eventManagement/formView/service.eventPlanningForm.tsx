@@ -181,10 +181,9 @@ export async function getFacultyByUserId(userId: number, token: string): Promise
   return dataUser.facultyId;
 }
 
-export async function getPoaByFacultyAndYear(facultyId: number, token: string): Promise<Poa> {
-  const currentYear = new Date().getFullYear();
+export async function getPoaByFacultyAndYear(facultyId: number, token: string, year: number): Promise<Poa> {
 
-  const response = await fetch(`${API_URL}/api/poas/${facultyId}/${currentYear-1}`, {
+  const response = await fetch(`${API_URL}/api/poas/${facultyId}/${year}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
