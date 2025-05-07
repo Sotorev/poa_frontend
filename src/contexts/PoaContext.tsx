@@ -1,7 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useSession } from "next-auth/react";
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { getPoaByFacultyAndYear } from '@/services/apiService';
 import { getFacultyByUserId } from '@/services/faculty/currentFaculty';
 import { Poa } from '@/types/Poa';
@@ -26,7 +25,6 @@ const defaultPoaContext: PoaContextType = {
 };
 
 export const PoaContext = createContext<PoaContextType>(defaultPoaContext);
-
 
 export const PoaProvider = ({ children }: { children: ReactNode }) => {
   const user = useCurrentUser();

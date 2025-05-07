@@ -207,8 +207,7 @@ export default function Header() {
 						onValueChange={(value) => setSelectedYear(parseInt(value))}
 					>
 						<SelectTrigger className="w-32 bg-primary/5 hover:bg-primary/10 transition-colors">
-							<SelectValue placeholder={`POA ${selectedYear}`}>
-								POA {selectedYear + 1}
+							<SelectValue placeholder={`POA ${selectedYear + 1}`}>
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent className="items-center">
