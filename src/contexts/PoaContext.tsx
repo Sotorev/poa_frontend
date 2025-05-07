@@ -34,7 +34,7 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
   const [poa, setPoa] = useState<Poa | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Inicializar el año desde localStorage o usar el año anterior como valor predeterminado
   const [selectedYear, setSelectedYear] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -53,24 +53,24 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchPoa = async () => {
       if (!user) return;
-      
+
       try {
         setLoading(true);
         setError(null);
-        
+
         // Obtener la facultad del usuario
         const facultyId = await getFacultyByUserId(
           Number(user.userId),
           user.token
         );
-        
+
         // Obtener el POA por facultad y año
         const poaData = await getPoaByFacultyAndYear(
           facultyId,
           selectedYear,
           user.token
         );
-        
+
         setPoa(poaData);
         setPoaId(poaData.poaId);
       } catch (err) {
@@ -87,13 +87,13 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
   }, [user, selectedYear]);
 
   return (
-    <PoaContext.Provider value={{ 
-      poaId, 
-      poa, 
-      loading, 
-      error, 
-      selectedYear, 
-      setSelectedYear
+    <PoaContext.Provider value={{
+      poaId,
+      poa,
+      loading,
+      error,
+      selectedYear,
+      setSelectedYear: handleYearChange
     }}>
       {children}
     </PoaContext.Provider>

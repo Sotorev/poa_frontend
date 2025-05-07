@@ -134,7 +134,7 @@ export default function Header() {
 	const user = useCurrentUser()
 	const pathname = usePathname()
 	const permissions = usePermissions()
-	const { selectedYear, setSelectedYear } = React.useContext(PoaContext);
+	const { selectedYear, setSelectedYear } = React.useContext(PoaContext)
 	
 	// Generar años para el selector (año actual - 5 años)
 	const currentYear = new Date().getFullYear()
@@ -201,30 +201,32 @@ export default function Header() {
 						<MobileNav navItems={filteredNavItems} permissions={permissions} />
 					</SheetContent>
 				</Sheet>
-				<div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+				<div className="flex flex-1 items-center justify-end gap-4 md:gap-6">
 					<Select 
 						value={selectedYear.toString()} 
 						onValueChange={(value) => setSelectedYear(parseInt(value))}
 					>
-						<SelectTrigger className="w-[180px] bg-primary/10">
+						<SelectTrigger className="w-32 bg-primary/5 hover:bg-primary/10 transition-colors">
 							<SelectValue placeholder={`POA ${selectedYear}`}>
-								POA {selectedYear}
+								POA {selectedYear + 1}
 							</SelectValue>
 						</SelectTrigger>
-						<SelectContent>
+						<SelectContent className="items-center">
 							{years.map(year => (
-								<SelectItem key={year} value={year.toString()}>
-									POA {year}
+								<SelectItem 
+									key={year} 
+									value={year.toString()}
+									className="hover:bg-primary/5"
+								>
+									POA {year + 1}
 								</SelectItem>
 							))}
 						</SelectContent>
 					</Select>
-					<nav className="flex items-center space-x-2">
+					<div className="flex items-center gap-4">
 						<NotificationButton/>
-					</nav>
-					<nav className="flex items-center space-x-2">
 						<AccountButton username={user?.username} />
-					</nav>
+					</div>
 				</div>
 			</div>
 		</header>
