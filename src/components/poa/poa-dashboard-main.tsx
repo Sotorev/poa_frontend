@@ -153,7 +153,7 @@ export function PoaDashboardMain() {
     }
 
     fetchFacultyId()
-  }, [user])
+  }, [user, selectedYear])
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {

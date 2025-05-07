@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -29,7 +29,7 @@ import { getPoaByFacultyAndYear } from "@/services/apiService";
 import { getFacultyByUserId } from "../eventManagement/formView/service.eventPlanningForm";
 
 // Contexts
-import { usePoa } from "@/contexts/PoaContext";
+import { PoaContext } from "@/contexts/PoaContext";
 
 export type FormStep = 'searchEvent' | 'selectDates' | 'uploadFiles';
 
@@ -40,7 +40,7 @@ interface DownloadedFile extends File {
 
 export const useEventFinished = () => {
   const user = useCurrentUser();
-  const {selectedYear} = usePoa();
+  const {selectedYear} = useContext(PoaContext);
   
   // Estados
   const [isLoading, setIsLoading] = useState(false);

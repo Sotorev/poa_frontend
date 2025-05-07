@@ -83,7 +83,7 @@ export default function PoaTrackingPage() {
       .then((poa) => {
         setPoa(poa);
       });
-  }, [user, facultyId]);
+  }, [user, facultyId, selectedYear]);
 
 
   /**

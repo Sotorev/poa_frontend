@@ -186,9 +186,6 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
     useEffect(() => {
         if (!facultyId || !user?.token) return;
-
-
-
         getPoaByFacultyAndYear(facultyId, user.token, selectedYear).then(poa => {
             setPoaId(poa.poaId);
         });

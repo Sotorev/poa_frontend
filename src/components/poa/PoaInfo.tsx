@@ -1,14 +1,14 @@
 "use client";
 
-import React from 'react';
-import { usePoa } from '@/hooks/use-poa';
+import React, { useContext } from 'react';
+import { PoaContext } from '@/contexts/PoaContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
 export const PoaInfo = () => {
-  const { poa, poaId, loading, error, selectedYear } = usePoa();
+  const { poa, poaId, loading, error, selectedYear } = useContext(PoaContext);
 
   if (loading) {
     return (
@@ -56,8 +56,6 @@ export const PoaInfo = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <p><strong>Facultad:</strong> {poa.faculty?.name || 'No disponible'}</p>
-          <p><strong>Fecha de creación:</strong> {new Date(poa.createdAt).toLocaleDateString('es-ES')}</p>
           <p><strong>Estado:</strong> {poa.status || 'No definido'}</p>
         </div>
       </CardContent>
