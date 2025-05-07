@@ -211,13 +211,14 @@ export default function Header() {
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent className="items-center">
-							{years.map(year => (
+							{years.map((year, index) => (
 								<SelectItem 
 									key={year} 
 									value={year.toString()}
-									className="hover:bg-primary/5"
+									className={`hover:bg-primary/5 ${index === 0 ? 'opacity-50' : ''}`}
+									disabled={index === 0}
 								>
-									POA {year + 1}
+									POA {year + 1} {index === 0}
 								</SelectItem>
 							))}
 						</SelectContent>
