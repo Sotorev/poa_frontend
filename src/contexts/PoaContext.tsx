@@ -6,6 +6,8 @@ import { getFacultyByUserId } from '@/services/faculty/currentFaculty';
 import { Poa } from '@/types/Poa';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
+// Tipos
+
 interface PoaContextType {
   poaId: number | null;
   poa: Poa | null;
@@ -13,6 +15,8 @@ interface PoaContextType {
   error: string | null;
   selectedYear: number;
   setSelectedYear: (year: number) => void;
+  facultyId: number | null;
+  poas: Poa[];
 }
 
 const defaultPoaContext: PoaContextType = {
@@ -22,7 +26,44 @@ const defaultPoaContext: PoaContextType = {
   error: null,
   selectedYear: new Date().getFullYear(),
   setSelectedYear: () => { /* no-op */ },
+  facultyId: null,
+  poas: [],
 };
+
+interface poas {
+  poaId: number
+  year: number
+  facultyId: number
+  userId: number
+  submissionDate?: string
+  status: string
+  completionPercentage: number
+  assignedBudget: number
+  executedBudget: number
+  peiId: number
+  submissionStatus?: string
+  isDeleted: boolean
+}
+
+const getPoasByFacultyId = async (facultyId: number, token: string): Promise<Poa[]> => {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Error fetching POAs');
+  }
+
+  // filtrar por facultyId
+  const poas = await response.json();
+
+  // Ordenar por año de forma descendente y filtrar por facultyId
+  const filteredPoas = poas.filter((poa: poas) => poa.facultyId === facultyId).sort((a: poas, b: poas) => b.year - a.year);
+  return filteredPoas;
+}
 
 export const PoaContext = createContext<PoaContextType>(defaultPoaContext);
 
@@ -32,6 +73,8 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
   const [poa, setPoa] = useState<Poa | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [facultyId, setFacultyId] = useState<number | null>(null);
+  const [poas, setPoas] = useState<Poa[]>([]);
 
   // Inicializar el año desde localStorage o usar el año anterior como valor predeterminado
   const [selectedYear, setSelectedYear] = useState<number>(() => {
@@ -48,19 +91,54 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('selectedPoaYear', year.toString());
   };
 
+  // Efecto para obtener la facultad del usuario actual
+  useEffect(() => {
+    const fetchFaculty = async () => {
+      if (!user) return;
+
+      try {
+        // Obtener la facultad del usuario
+        const faculty = await getFacultyByUserId(
+          Number(user.userId),
+          user.token
+        );
+        setFacultyId(faculty);
+      } catch (err) {
+        console.error("Error al obtener la facultad:", err);
+        setError(err instanceof Error ? err.message : "Error al obtener la facultad");
+      }
+    };
+
+    fetchFaculty();
+  }, [user]);
+
+  // Efecto para obtener todos los POAs de la facultad
+  useEffect(() => {
+    const fetchPoas = async () => {
+      if (!facultyId || !user) return;
+
+      try {
+        setLoading(true);
+        const poasData = await getPoasByFacultyId(facultyId, user.token);
+        setPoas(poasData);
+      } catch (err) {
+        console.error("Error al cargar los POAs:", err);
+        setError(err instanceof Error ? err.message : "Error al cargar los POAs");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPoas();
+  }, [facultyId, user]);
+
   useEffect(() => {
     const fetchPoa = async () => {
-      if (!user) return;
+      if (!user || !facultyId) return;
 
       try {
         setLoading(true);
         setError(null);
-
-        // Obtener la facultad del usuario
-        const facultyId = await getFacultyByUserId(
-          Number(user.userId),
-          user.token
-        );
 
         // Obtener el POA por facultad y año
         const poaData = await getPoaByFacultyAndYear(
@@ -82,7 +160,7 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
     };
 
     fetchPoa();
-  }, [user, selectedYear]);
+  }, [user, selectedYear, facultyId]);
 
   return (
     <PoaContext.Provider value={{
@@ -91,7 +169,9 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
       loading,
       error,
       selectedYear,
-      setSelectedYear: handleYearChange
+      setSelectedYear: handleYearChange,
+      facultyId,
+      poas
     }}>
       {children}
     </PoaContext.Provider>

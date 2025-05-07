@@ -134,11 +134,13 @@ export default function Header() {
 	const user = useCurrentUser()
 	const pathname = usePathname()
 	const permissions = usePermissions()
-	const { selectedYear, setSelectedYear } = React.useContext(PoaContext)
+	const { selectedYear, setSelectedYear, poas } = React.useContext(PoaContext)
 	
 	// Generar años para el selector (año actual - 5 años)
 	const currentYear = new Date().getFullYear()
-	const years = Array.from({length: 6}, (_, i) => currentYear - i)
+
+	// obtener los años en los que han existido POAs
+	const years = poas.map(p => p.year)
 
 	const checkAccess = (item: NavItem): boolean => {
 		if (item.requiredPermission) {
