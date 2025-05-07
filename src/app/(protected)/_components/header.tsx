@@ -26,7 +26,7 @@ import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 import { Role } from "@/types/Permission"
 import { NotificationButton } from "@/components/notifications/NotificationButton"
-import { usePoa } from "@/contexts/PoaContext"
+import { PoaContext } from "@/contexts/PoaContext"
 import { 
 	Select,
 	SelectContent,
@@ -134,7 +134,7 @@ export default function Header() {
 	const user = useCurrentUser()
 	const pathname = usePathname()
 	const permissions = usePermissions()
-	const { selectedYear, setSelectedYear } = usePoa()
+	const { selectedYear, setSelectedYear } = React.useContext(PoaContext);
 	
 	// Generar años para el selector (año actual - 5 años)
 	const currentYear = new Date().getFullYear()

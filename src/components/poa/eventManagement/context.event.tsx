@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { usePoa } from '@/hooks/use-poa';
+import React, { createContext, useState, useEffect, ReactNode, useMemo, useContext } from 'react';
+import { PoaContext } from '@/contexts/PoaContext';
 
 // Types
 import { PurchaseType } from '@/types/PurchaseType'
@@ -125,6 +125,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
     // Obtener el usuario desde el contexto de autenticación
     const user = useCurrentUser();
+    // Get the selected year from POA context
+    const { selectedYear } = useContext(PoaContext);
 
     // Estado para controlar el diálogo de propuesta
     const [isProposeDialogOpen, setIsProposeDialogOpen] = useState<boolean>(false);
@@ -185,13 +187,12 @@ export const EventProvider = ({ children }: ProviderProps) => {
     useEffect(() => {
         if (!facultyId || !user?.token) return;
 
-        // Get the selected year from POA context
-        const { selectedYear } = usePoa();
+
 
         getPoaByFacultyAndYear(facultyId, user.token, selectedYear).then(poa => {
             setPoaId(poa.poaId);
         });
-    }, [facultyId, user?.token, usePoa().selectedYear]);
+    }, [facultyId, user?.token, selectedYear]);
 
     useEffect(() => {
         if (!user?.userId) return;
@@ -318,8 +319,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 ods: odsArray,
                 resources: resourcesParsed,
                 userId: user?.userId || 0,
-                costDetailDocuments: event.detalle.map(file => ({costDetailId: file.costDetailId, name: file.fileName, isDeleted: false })),
-                processDocuments: event.detalleProceso.map(file => ({fileId: file.fileId, name: file.fileName, isDeleted: false }))
+                costDetailDocuments: event.detalle.map(file => ({ costDetailId: file.costDetailId, name: file.fileName, isDeleted: false })),
+                processDocuments: event.detalleProceso.map(file => ({ fileId: file.fileId, name: file.fileName, isDeleted: false }))
             },
             eventId: parseInt(event.id, 10)
         }

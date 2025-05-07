@@ -2,7 +2,7 @@
 
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react'
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -38,7 +38,7 @@ import { PoaApproval } from './sections/sections-dean-poa-approval'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { getPoaApprovals } from '@/services/poa/aprovalStatus'
 import { getPoaByFacultyAndYear } from '@/services/apiService'
-import { usePoa } from '@/hooks/use-poa';
+import { PoaContext } from '@/contexts/PoaContext'
 
 // Props
 export interface SectionProps {
@@ -77,7 +77,7 @@ export function PoaDashboardMain() {
   const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
   const [isEditable, setIsEditable] = useState<boolean>(false); // Estado para habilitar o deshabilitar el botón
   const [approvalStatuses, setApprovalStatuses] = useState<ApprovalStatus[]>([]);
-  const { selectedYear } = usePoa();
+  const { selectedYear } = useContext(PoaContext); // Obtener el año seleccionado del contexto
 
   /**
    * Obtiene y establece los estados de aprobación del POA.

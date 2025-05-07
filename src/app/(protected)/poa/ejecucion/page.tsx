@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { Plus } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ import { postEventExecuted, getEventExecutedByPoa, revertEventExecuted, updateEv
 import { PoaExecutedEventsTable } from '@/components/poa/ejecucion/poa-executed-events-table'
 
 // Contexts
-import { usePoa } from '@/contexts/PoaContext'
+import { PoaContext } from '@/contexts/PoaContext'
 
 /**
  * @component PoaTrackingPage
@@ -56,7 +56,7 @@ export default function PoaTrackingPage() {
   const [editingEvent, setEditingEvent] = useState<ResponseExecutedEvent>();
   const [facultyId, setFacultyId] = useState<any>();
   const [poa, setPoa] = useState<any>();
-  const {selectedYear} = usePoa()
+  const {selectedYear} = useContext(PoaContext)
   const user = useCurrentUser();
 
   /**

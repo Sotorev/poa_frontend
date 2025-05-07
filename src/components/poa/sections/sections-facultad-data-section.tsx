@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +10,7 @@ import { useCurrentUser } from '@/hooks/use-current-user'
 import { useToast } from "@/hooks/use-toast"
 
 // Contexts
-import { usePoa } from "@/contexts/PoaContext"
+import { PoaContext } from '@/contexts/PoaContext'
 
 interface FacultadDataSectionProps {
   name: string
@@ -32,7 +32,7 @@ export function FacultadDataSection({ name, isActive, isEditable, poaId, faculty
   const [tempFacultadData, setTempFacultadData] = useState(facultadData)
   const [studentCountExists, setStudentCountExists] = useState(false)
   const [studentCountId, setStudentCountId] = useState<number | null>(null)
-  const { selectedYear } = usePoa();
+  const { selectedYear } = useContext(PoaContext);
   const user = useCurrentUser()
   const { toast } = useToast()
 

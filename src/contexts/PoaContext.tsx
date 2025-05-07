@@ -16,7 +16,17 @@ interface PoaContextType {
   setSelectedYear: (year: number) => void;
 }
 
-const PoaContext = createContext<PoaContextType | undefined>(undefined);
+const defaultPoaContext: PoaContextType = {
+  poaId: null,
+  poa: null,
+  loading: false,
+  error: null,
+  selectedYear: new Date().getFullYear(),
+  setSelectedYear: () => { /* no-op */ },
+};
+
+export const PoaContext = createContext<PoaContextType>(defaultPoaContext);
+
 
 export const PoaProvider = ({ children }: { children: ReactNode }) => {
   const user = useCurrentUser();
@@ -83,17 +93,9 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
       loading, 
       error, 
       selectedYear, 
-      setSelectedYear: handleYearChange 
+      setSelectedYear
     }}>
       {children}
     </PoaContext.Provider>
   );
-};
-
-export const usePoa = () => {
-  const context = useContext(PoaContext);
-  if (context === undefined) {
-    throw new Error('usePoa debe ser usado dentro de un PoaProvider');
-  }
-  return context;
 };
