@@ -25,8 +25,20 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Por defecto, seleccionar el año anterior (el año actual - 1)
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear() - 1);
+  // Inicializar el año desde localStorage o usar el año anterior como valor predeterminado
+  const [selectedYear, setSelectedYear] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const savedYear = localStorage.getItem('selectedPoaYear');
+      return savedYear ? parseInt(savedYear) : new Date().getFullYear() - 1;
+    }
+    return new Date().getFullYear() - 1;
+  });
+
+  // Guardar el año en localStorage cuando cambie
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
+    localStorage.setItem('selectedPoaYear', year.toString());
+  };
 
   useEffect(() => {
     const fetchPoa = async () => {
@@ -65,7 +77,14 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
   }, [user, selectedYear]);
 
   return (
-    <PoaContext.Provider value={{ poaId, poa, loading, error, selectedYear, setSelectedYear }}>
+    <PoaContext.Provider value={{ 
+      poaId, 
+      poa, 
+      loading, 
+      error, 
+      selectedYear, 
+      setSelectedYear: handleYearChange 
+    }}>
       {children}
     </PoaContext.Provider>
   );
@@ -77,4 +96,4 @@ export const usePoa = () => {
     throw new Error('usePoa debe ser usado dentro de un PoaProvider');
   }
   return context;
-}; 
+};
