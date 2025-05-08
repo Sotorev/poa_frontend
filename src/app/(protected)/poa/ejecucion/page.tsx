@@ -143,17 +143,18 @@ export default function PoaTrackingPage() {
     }
   }, [user, poa]);
 
-  const handleEdit = (event: ResponseExecutedEvent) => {
-    event.eventDates = event.eventDates.filter(d => d.statusId !== 3);
+  const handleEdit = (event: ResponseExecutedEvent) => {   
+    // Make a deep copy to avoid mutating the original event
+    const eventCopy : ResponseExecutedEvent = JSON.parse(JSON.stringify(event));
+    
+    eventCopy.eventDates = eventCopy.eventDates.filter(d => d.statusId !== 3);
 
-    event.eventDates = event.eventDates.map(d => ({
+    eventCopy.eventDates = eventCopy.eventDates.map(d => ({
       ...d,
       isEnabled : d.statusId === 2 ? true : false,
       executionStartDate: d.statusId === 2 ? d.executionStartDate : d.startDate
     }));
-
-    setEditingEvent(event);
-
+    setEditingEvent(eventCopy);
     setIsDialogOpen(true);
   };
 
