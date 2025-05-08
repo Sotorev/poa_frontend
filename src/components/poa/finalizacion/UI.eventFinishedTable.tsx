@@ -319,11 +319,11 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                 {dateFilter.startDate ? formatDateDisplay(dateFilter.startDate) : "Seleccionar fecha"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
+            <PopoverContent className="w-auto p-0">              <Calendar
                 mode="single"
                 locale={es}
                 selected={dateFilter.startDate ? parseISO(dateFilter.startDate) : undefined}
+                defaultMonth={dateFilter.startDate ? parseISO(dateFilter.startDate) : undefined}
                 onSelect={(date) => {
                   setDateFilter({
                     ...dateFilter,
@@ -357,11 +357,11 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                 {dateFilter.endDate ? formatDateDisplay(dateFilter.endDate) : "Seleccionar fecha"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
+            <PopoverContent className="w-auto p-0">              <Calendar
                 mode="single"
                 locale={es}
                 selected={dateFilter.endDate ? parseISO(dateFilter.endDate) : undefined}
+                defaultMonth={dateFilter.endDate ? parseISO(dateFilter.endDate) : dateFilter.startDate ? parseISO(dateFilter.startDate) : undefined}
                 onSelect={(date) => {
                   setDateFilter({
                     ...dateFilter,
