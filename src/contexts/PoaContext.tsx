@@ -120,6 +120,28 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
       try {
         setLoading(true);
         const poasData = await getPoasByFacultyId(facultyId, user.token);
+
+        // agregar el año actual a la lista de años si no existe
+        const currentYear = new Date().getFullYear();
+        const currentYearExists = poasData.some((poa) => Number(poa.year) === currentYear);
+        console.log("Años de POAs:", poasData.map((poa) => Number(poa.year)));
+        console.log("Año actual:", currentYear, "¿existe?", currentYearExists);
+
+        if (!currentYearExists) {
+          poasData.unshift({
+            poaId: 0,
+            year: currentYear.toString(),
+            facultyId: facultyId,
+            userId: user.userId,
+            status: "No definido",
+            completionPercentage: 0,
+            assignedBudget: 0,
+            executedBudget: 0,
+            peiId: 0,
+            isDeleted: false,
+          });
+        }
+
         setPoas(poasData);
       } catch (err) {
         console.error("Error al cargar los POAs:", err);
