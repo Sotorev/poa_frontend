@@ -248,8 +248,6 @@ type PoaEventTrackingFormProps = {
 
 export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOpenChange }: PoaEventTrackingFormProps) {
 
-  console.log("Events", events);
-
   // Uso del hook personalizado con toda la lógica encapsulada
   const {
     form,
@@ -745,7 +743,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
 
         <Form {...form}>
 
-          <form onSubmit={(e) => { e.preventDefault(); console.log("form", form.getValues()); form.handleSubmit(handleFormSubmit)(); }} className="space-y-6">
+          <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(handleFormSubmit)(); }} className="space-y-6">
             {renderStepContent()}
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end </form>gap-2 pt-2">

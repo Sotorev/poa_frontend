@@ -470,7 +470,6 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                                 e.stopPropagation(); // Evitar que se expanda la fila
                                 if (window.confirm("¿Está seguro de restaurar este evento?")) {
                                   restoreEventEvidence(event.eventId, event.dates.map(date => date.eventDateId));
-                                  console.log(event.dates.map(date => date.eventDateId));
                                 }
                               }}
                             >

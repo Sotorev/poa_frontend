@@ -124,8 +124,6 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
         // agregar el año actual a la lista de años si no existe
         const currentYear = new Date().getFullYear();
         const currentYearExists = poasData.some((poa) => Number(poa.year) === currentYear);
-        console.log("Años de POAs:", poasData.map((poa) => Number(poa.year)));
-        console.log("Año actual:", currentYear, "¿existe?", currentYearExists);
 
         if (!currentYearExists) {
           poasData.unshift({

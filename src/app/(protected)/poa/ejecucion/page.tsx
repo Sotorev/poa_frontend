@@ -253,8 +253,6 @@ export default function PoaTrackingPage() {
               setEvents(mappedEvents.filter(event =>
                 (event.eventApprovals[0].approvalStatusId === 1 && !event.dates.some(date => date.statusId === 3 || date.statusId === 2))
               ));
-
-              console.log("Eventos actualizados", events);
             });
 
         })

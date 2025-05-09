@@ -186,7 +186,6 @@ export default function PoaCostChart() {
           endpoint = `${API_URL}/api/reports/financing/financing-by-objective-faculty/${selectedFacultyId}`
         }
 
-        console.log(`Fetching Cost data from: ${endpoint}`) // Registro de depuración
 
         const response = await fetch(endpoint, {
           method: 'GET',
@@ -205,7 +204,6 @@ export default function PoaCostChart() {
 
         const data: CostData[] = await response.json()
 
-        console.log('Cost Data Received:', data) // Registro de depuración
 
         // Mapear los datos para Recharts, asignando 'totalAmount' a 'cost'
         const mapped = data.map(item => ({
