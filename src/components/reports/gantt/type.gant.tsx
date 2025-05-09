@@ -15,8 +15,13 @@ export interface stateEventCounts {
 export interface AllEvents {
     eventId: number
     name: string
-    startExecutionDate?: string
-    endExecutionDate?: string
+    eventDates: EventDate[]
+}
+
+export interface EventDate {
+    eventDateId: number
+    startExecutionDate: string | null
+    endExecutionDate: string | null
     startDate: string
     endDate: string
     status: string
