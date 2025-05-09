@@ -391,20 +391,15 @@ export const EventPlanningFormProvider: React.FC<{
                     // Propiedades mínimas necesarias para identificación
                     poaId: data.poaId || originalData.poaId,
                     userId: data.userId || originalData.userId
-                }
-                
-                // Contador para detectar cambios reales
-                let cambiosReales = 0
-                
+                }                            
                 // Comparar y detectar campos que realmente han cambiado
                 Object.entries(data).forEach(([key, value]) => {
                     const originalKey = key as keyof typeof originalData
-                    
                     // Para arrays necesitamos una comparación especial
-                    if (Array.isArray(value) && Array.isArray(originalData[originalKey])) {
+                    if (Array.isArray(value) && Array.isArray(originalData[originalKey]) && key !== 'processDocuments' && key !== 'costDetailDocuments') {
+
                         // Si las longitudes son diferentes, ha cambiado
                         if (value.length !== (originalData[originalKey] as any[]).length) {
-                            cambiosReales++
                             changedData[originalKey] = value as any
                         } 
                         // Si son objetos dentro de los arrays, comparamos más profundamente
@@ -420,32 +415,21 @@ export const EventPlanningFormProvider: React.FC<{
                             const stringOriginal = JSON.stringify(originalData[originalKey])
                             const stringActual = JSON.stringify(value)
                             if (stringOriginal !== stringActual) {
-                                cambiosReales++
                                 changedData[originalKey] = value as any
                             }
                         }
-                    } 
-                    // Para archivos, verificamos si hay nuevos
+                    }                    
+                    // Para archivos, verificamos si hay nuevos o eliminados
                     else if ((key === 'processDocuments' || key === 'costDetailDocuments') && value) {
                         if (value && (value as any[]).length > 0) {
-                            cambiosReales++
                             changedData[originalKey] = value as any
                         }
                     }
                     // Para campos simples, comparamos directamente
                     else if (JSON.stringify(value) !== JSON.stringify(originalData[originalKey])) {
-                        cambiosReales++
                         changedData[originalKey] = value as any
                     }
                 })
-                
-                console.log("Datos modificados para enviar:", changedData)
-                console.log("Cambios reales detectados:", cambiosReales)
-                
-                // Si no hay cambios sustanciales, retornamos éxito sin llamar a la API
-                if (cambiosReales === 0) {
-                    return { success: true, message: "No se detectaron cambios" }
-                }
                 
                 // Enviar solo los datos que han cambiado
                 return await updateEvent(eventId, changedData, token)
