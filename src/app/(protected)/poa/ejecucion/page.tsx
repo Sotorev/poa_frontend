@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { Plus } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,9 @@ import { useCurrentUser } from '@/hooks/use-current-user'
 import { getFacultyByUserId } from '@/services/faculty/currentFaculty'
 import { postEventExecuted, getEventExecutedByPoa, revertEventExecuted, updateEventExecuted } from '@/services/poa/eventExecuted'
 import { PoaExecutedEventsTable } from '@/components/poa/ejecucion/poa-executed-events-table'
+
+// Contexts
+import { PoaContext } from '@/contexts/PoaContext'
 
 /**
  * @component PoaTrackingPage
@@ -53,6 +56,7 @@ export default function PoaTrackingPage() {
   const [editingEvent, setEditingEvent] = useState<ResponseExecutedEvent>();
   const [facultyId, setFacultyId] = useState<any>();
   const [poa, setPoa] = useState<any>();
+  const {selectedYear} = useContext(PoaContext)
   const user = useCurrentUser();
 
   /**
@@ -75,11 +79,11 @@ export default function PoaTrackingPage() {
   useEffect(() => {
     if (user === undefined || facultyId === undefined) return;
 
-    getPoaByFacultyAndYear(facultyId, new Date().getFullYear(), user.token)
+    getPoaByFacultyAndYear(facultyId, selectedYear, user.token)
       .then((poa) => {
         setPoa(poa);
       });
-  }, [user, facultyId]);
+  }, [user, facultyId, selectedYear]);
 
 
   /**
@@ -121,13 +125,14 @@ export default function PoaTrackingPage() {
             financingSourceId: f.financingSourceId,
           })),
           costDetails: event.costDetails,
-          statusId: event.statusId,
+          statusId: event.dates.map(date => date.statusId),
           eventApprovals: event.eventApprovals,
           files: []
+
         } as EventExecution));
 
         setEvents(mappedEvents.filter(event =>
-          (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+          (event.eventApprovals[0].approvalStatusId === 1 && !event.dates.some(date => date.statusId === 3 || date.statusId === 2))
         ));
       });
 
@@ -139,36 +144,45 @@ export default function PoaTrackingPage() {
   }, [user, poa]);
 
   const handleEdit = (event: ResponseExecutedEvent) => {
+    event.eventDates = event.eventDates.filter(d => d.statusId !== 3);
+
+    event.eventDates = event.eventDates.map(d => ({
+      ...d,
+      isEnabled : d.statusId === 2 ? true : false,
+      executionStartDate: d.statusId === 2 ? d.executionStartDate : d.startDate
+    }));
+
     setEditingEvent(event);
+
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (data: FormValues) => {
+    // Filtrar solo las fechas habilitadas
+    const enabledDates = data.fechas.filter(fecha => fecha.isEnabled !== false);
+
     if (editingEvent) {
-      const updatePayload: UpdateEventExecutedPayload = {
+      const updatePayload = {
         eventId: parseInt(data.eventId, 10),
-        eventExecutionDates: data.fechas.map(f => ({
-          eventExecutionDateId: f.eventExecutionDateId,
-          startDate: f.startDate,
-          reasonForChange: "", // default value or collect from form if needed
-          isDeleted: false,
+        eventDatesWithExecution: enabledDates.map(f => ({
+          eventId: parseInt(data.eventId, 10),
+          eventDateId: f.eventDateId,
+          executionStartDate: f.executionStartDate || f.startDate
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
             eventExecutionFinancingId: um.eventExecutionFinancingId,
-            financingSourceId: um.financingSourceId,
+            eventId: parseInt(data.eventId, 10),
             amount: um.amount,
             percentage: um.percentage,
-            reasonForChange: "",
-            isDeleted: false,
+            financingSourceId: um.financingSourceId
           })),
           ...data.aportesOtros.map(ot => ({
             eventExecutionFinancingId: ot.eventExecutionFinancingId,
-            financingSourceId: ot.financingSourceId,
+            eventId: parseInt(data.eventId, 10),
             amount: ot.amount,
             percentage: ot.percentage,
-            reasonForChange: "",
-            isDeleted: false,
+            financingSourceId: ot.financingSourceId
           })),
         ],
       };
@@ -182,9 +196,10 @@ export default function PoaTrackingPage() {
     } else {
       const requestPayload: RequestEventExecution = {
         eventId: parseInt(data.eventId, 10),
-        eventExecutionDates: data.fechas.map(f => ({
+        eventDatesWithExecution: enabledDates.map(f => ({
           eventId: parseInt(data.eventId, 10),
-          startDate: f.startDate,
+          eventDateId: f.eventDateId,
+          executionStartDate: f.executionStartDate || f.startDate,
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
@@ -229,14 +244,16 @@ export default function PoaTrackingPage() {
                   financingSourceId: f.financingSourceId,
                 })),
                 costDetails: event.costDetails,
-                statusId: event.statusId,
+                statusId: event.dates.map(date => date.statusId),
                 eventApprovals: event.eventApprovals,
                 files: []
               } as EventExecution));
 
               setEvents(mappedEvents.filter(event =>
-                (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+                (event.eventApprovals[0].approvalStatusId === 1 && !event.dates.some(date => date.statusId === 3 || date.statusId === 2))
               ));
+
+              console.log("Eventos actualizados", events);
             });
 
         })
@@ -250,8 +267,8 @@ export default function PoaTrackingPage() {
     setIsDialogOpen(true);
   };
 
-  const handleRestore = (eventId: number) => {
-    revertEventExecuted(eventId)
+  const handleRestore = (eventId: number, eventDateIds: number[]) => {
+    revertEventExecuted(eventId, eventDateIds )
       .then(() => {
         if (!poa) return
         getEventExecutedByPoa(poa.poaId).then((updatedExecutedEvents) => {
@@ -277,13 +294,13 @@ export default function PoaTrackingPage() {
                 financingSourceId: f.financingSourceId,
               })),
               costDetails: event.costDetails,
-              statusId: event.statusId,
+              statusId: event.dates.map(date => date.statusId),
               eventApprovals: event.eventApprovals,
               files: []
             } as EventExecution));
 
             setEvents(mappedEvents.filter(event =>
-              (event.statusId === 1 && event.eventApprovals[0].approvalStatusId === 1)
+              (event.statusId.includes(1) && event.eventApprovals[0].approvalStatusId === 1)
             ));
           });
       })
@@ -295,7 +312,7 @@ export default function PoaTrackingPage() {
         <h1 className="text-2xl sm:text-3xl font-bold">Eventos Ejecutados</h1>
         <Button onClick={handleAddNew}>
           <Plus className="h-4 w-4 mr-2" />
-          Nuevo Evento
+          Marcar fecha de inicio de ejecución
         </Button>
       </div>
 
@@ -321,7 +338,7 @@ export default function PoaTrackingPage() {
             eventId: editingEvent.eventId
           })) || [],
           archivosGastos: editingEvent.eventExecutionFiles?.map(f => new File([], f.fileName)) || [],
-          fechas: editingEvent.eventExecutionDates || []
+          fechas: editingEvent.eventDates || []
         } : undefined}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}

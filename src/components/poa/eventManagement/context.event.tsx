@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useMemo, useContext } from 'react';
+import { PoaContext } from '@/contexts/PoaContext';
 
 // Types
 import { PurchaseType } from '@/types/PurchaseType'
@@ -124,6 +125,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
     // Obtener el usuario desde el contexto de autenticación
     const user = useCurrentUser();
+    // Get the selected year from POA context
+    const { selectedYear } = useContext(PoaContext);
 
     // Estado para controlar el diálogo de propuesta
     const [isProposeDialogOpen, setIsProposeDialogOpen] = useState<boolean>(false);
@@ -183,12 +186,10 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
     useEffect(() => {
         if (!facultyId || !user?.token) return;
-        
-
-        getPoaByFacultyAndYear(facultyId,  user.token).then(poa => {
+        getPoaByFacultyAndYear(facultyId, user.token, selectedYear).then(poa => {
             setPoaId(poa.poaId);
         });
-    }, [facultyId, user?.token]);
+    }, [facultyId, user?.token, selectedYear]);
 
     useEffect(() => {
         if (!user?.userId) return;
@@ -202,16 +203,19 @@ export const EventProvider = ({ children }: ProviderProps) => {
         const dates = event.fechas.map(fecha => ({
             startDate: fecha.inicio || new Date(fecha.inicio).toISOString().split('T')[0],
             endDate: fecha.fin || new Date(fecha.fin).toISOString().split('T')[0],
+            eventDateId: fecha.eventDateId || 0
         }));
 
         // Convertir los financiamientos (aporteUMES y aporteOtros)
         const financings = [
             ...event.aporteUMES.map(aporte => ({
+                eventFinancingId: aporte.eventFinancingId,
                 financingSourceId: aporte.financingSourceId,
                 percentage: aporte.percentage,
                 amount: aporte.amount
             })),
             ...event.aporteOtros.map(aporte => ({
+                eventFinancingId: aporte.eventFinancingId,
                 financingSourceId: aporte.financingSourceId,
                 percentage: aporte.percentage,
                 amount: aporte.amount
@@ -219,23 +223,26 @@ export const EventProvider = ({ children }: ProviderProps) => {
         ];
 
         // Configurar los responsables
-        const responsibles: { responsibleRole: "Principal" | "Ejecución" | "Seguimiento"; name: string }[] = [];
-        if (event.responsables.principal) {
+        const responsibles: { responsibleRole: "Principal" | "Ejecución" | "Seguimiento"; name: string; eventResponsibleId: number }[] = [];
+        if (event.responsables.find(r => r.responsibleRole === "Principal")) {
             responsibles.push({
                 responsibleRole: "Principal",
-                name: event.responsables.principal
+                name: event.responsables.find(r => r.responsibleRole === "Principal")?.name || '',
+                eventResponsibleId: event.responsables.find(r => r.responsibleRole === "Principal")?.eventResponsibleId || 0
             });
         }
-        if (event.responsables.ejecucion) {
+        if (event.responsables.find(r => r.responsibleRole === "Ejecución")) {
             responsibles.push({
                 responsibleRole: "Ejecución",
-                name: event.responsables.ejecucion
+                name: event.responsables.find(r => r.responsibleRole === "Ejecución")?.name || '',
+                eventResponsibleId: event.responsables.find(r => r.responsibleRole === "Ejecución")?.eventResponsibleId || 0
             });
         }
-        if (event.responsables.seguimiento) {
+        if (event.responsables.find(r => r.responsibleRole === "Seguimiento")) {
             responsibles.push({
                 responsibleRole: "Seguimiento",
-                name: event.responsables.seguimiento
+                name: event.responsables.find(r => r.responsibleRole === "Seguimiento")?.name || '',
+                eventResponsibleId: event.responsables.find(r => r.responsibleRole === "Seguimiento")?.eventResponsibleId || 0
             });
         }
 
@@ -266,24 +273,26 @@ export const EventProvider = ({ children }: ProviderProps) => {
         // Establecer el tipo de evento (Actividad o Proyecto)
         const type = event.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto';
 
-        let processDocuments: File[] = [];
-        let costDetailDocuments: File[] = [];
-        try {
-            // Descargar archivos adjuntos
-            processDocuments = await Promise.all(
-                event.detalleProceso.map((doc) =>
-                    downloadFileAux(`/api/fullEvent/downloadEventFileById/${doc.id}`, doc.name, user?.token || '')
-                )
-            );
+        // let processDocuments: {fileId: number, file: File}[] = [];
+        // let costDetailDocuments: {costDetailId: number, file: File}[] = [];
+        // try {
+        //     // Descargar archivos adjuntos
+        //     processDocuments = await Promise.all(
+        //         event.detalleProceso.map((doc) =>
+        //             downloadFileAux(`/api/fullEvent/downloadEventFileById/${doc.fileId}`, doc.fileName, user?.token || '')
+        //             .then(file => ({fileId: doc.fileId, file: file}))
+        //         )
+        //     );
 
-            costDetailDocuments = await Promise.all(
-                event.detalle.map((doc) =>
-                    downloadFileAux(`/api/fullEvent/downloadEventCostDetailDocumentById/${doc.id}`, doc.name, user?.token || '')
-                )
-            );
-        } catch (error) {
-            console.error('Error al descargar archivos adjuntos:', error);
-        }
+        //     costDetailDocuments = await Promise.all(
+        //         event.detalle.map((doc) =>
+        //             downloadFileAux(`/api/fullEvent/downloadEventCostDetailDocumentById/${doc.costDetailId}`, doc.fileName, user?.token || '')
+        //             .then(file => ({costDetailId: doc.costDetailId, file: file}))
+        //         )
+        //     );
+        // } catch (error) {
+        //     console.error('Error al descargar archivos adjuntos:', error);
+        // }
 
         return {
             data: {
@@ -307,8 +316,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 ods: odsArray,
                 resources: resourcesParsed,
                 userId: user?.userId || 0,
-                costDetailDocuments: costDetailDocuments || [],
-                processDocuments: processDocuments || []
+                costDetailDocuments: event.detalle.map(file => ({ costDetailId: file.costDetailId, name: file.fileName, isDeleted: false })),
+                processDocuments: event.detalleProceso.map(file => ({ fileId: file.fileId, name: file.fileName, isDeleted: false }))
             },
             eventId: parseInt(event.id, 10)
         }

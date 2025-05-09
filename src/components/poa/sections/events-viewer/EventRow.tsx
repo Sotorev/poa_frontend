@@ -168,7 +168,7 @@ const EventRow: React.FC<EventRowProps> = ({
                 <div>
                   <span className="font-semibold">Principal:</span>
                   <br />
-                  {event.responsables.principal}
+                  {event.responsables.find(r => r.responsibleRole === "Principal")?.name}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -181,7 +181,7 @@ const EventRow: React.FC<EventRowProps> = ({
                 <div>
                   <span className="font-semibold">Ejecución:</span>
                   <br />
-                  {event.responsables.ejecucion}
+                  {event.responsables.find(r => r.responsibleRole === "Ejecución")?.name}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -194,7 +194,7 @@ const EventRow: React.FC<EventRowProps> = ({
                 <div>
                   <span className="font-semibold">Seguimiento:</span>
                   <br />
-                  {event.responsables.seguimiento}
+                  {event.responsables.find(r => r.responsibleRole === "Seguimiento")?.name}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -210,11 +210,11 @@ const EventRow: React.FC<EventRowProps> = ({
           <>
             {event.detalleProceso.map((file) => {
               return (
-                <div key={file.id}>
-                  <h4 className="text-md font-medium mb-1">{file.name}</h4>
+                <div key={file.fileId}>
+                  <h4 className="text-md font-medium mb-1">{file.fileName}</h4>
                   <DownloadButton
-                    name={file.name}
-                    path={`downloadEventFileById/${file.id}`}
+                    name={file.fileName}
+                    path={`downloadEventFileById/${file.fileId}`}
                   />
                 </div>
               );

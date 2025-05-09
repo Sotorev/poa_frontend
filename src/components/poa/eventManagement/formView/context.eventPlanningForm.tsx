@@ -58,7 +58,7 @@ interface EventPlanningFormContextProps {
     handleSubmit: UseFormHandleSubmit<FullEventRequest>
     reset: UseFormReset<FullEventRequest>
     submitEvent: (data: FullEventRequest, token: string) => Promise<any>
-    updateExistingEvent: (eventId: number, data: FullEventRequest, token: string) => Promise<any>
+    updateExistingEvent: (eventId: number, data: Partial<FullEventRequest>, token: string) => Promise<any>
     errors: any
     isSubmitting: boolean
     setIsSubmitting: (isSubmitting: boolean) => void
@@ -377,11 +377,82 @@ export const EventPlanningFormProvider: React.FC<{
     }
 
     // Función para actualizar un evento existente
-    const updateExistingEvent = async (eventId: number, data: FullEventRequest, token: string) => {
+    const updateExistingEvent = async (eventId: number, data: Partial<FullEventRequest>, token: string) => {
         try {
             setIsSubmitting(true)
-            const result = await updateEvent(eventId, data, token)
-            return result
+
+            // Si estamos editando, necesitamos comparar los datos actuales con los originales
+            if (eventEditing) {
+                // Crear una copia profunda de los datos originales
+                const originalData = eventEditing.data
+                
+                // Objeto para almacenar solo los datos que han cambiado
+                const changedData: Partial<FullEventRequest> = {
+                    // Propiedades mínimas necesarias para identificación
+                    poaId: data.poaId || originalData.poaId,
+                    userId: data.userId || originalData.userId
+                }
+                
+                // Contador para detectar cambios reales
+                let cambiosReales = 0
+                
+                // Comparar y detectar campos que realmente han cambiado
+                Object.entries(data).forEach(([key, value]) => {
+                    const originalKey = key as keyof typeof originalData
+                    
+                    // Para arrays necesitamos una comparación especial
+                    if (Array.isArray(value) && Array.isArray(originalData[originalKey])) {
+                        // Si las longitudes son diferentes, ha cambiado
+                        if (value.length !== (originalData[originalKey] as any[]).length) {
+                            cambiosReales++
+                            changedData[originalKey] = value as any
+                        } 
+                        // Si son objetos dentro de los arrays, comparamos más profundamente
+                        else if (
+                            key === 'interventions' ||
+                            key === 'ods' ||
+                            key === 'dates' ||
+                            key === 'responsibles' ||
+                            key === 'financings' ||
+                            key === 'resources'
+                        ) {
+                            // Comparación más detallada para detectar cambios
+                            const stringOriginal = JSON.stringify(originalData[originalKey])
+                            const stringActual = JSON.stringify(value)
+                            if (stringOriginal !== stringActual) {
+                                cambiosReales++
+                                changedData[originalKey] = value as any
+                            }
+                        }
+                    } 
+                    // Para archivos, verificamos si hay nuevos
+                    else if ((key === 'processDocuments' || key === 'costDetailDocuments') && value) {
+                        if (value && (value as any[]).length > 0) {
+                            cambiosReales++
+                            changedData[originalKey] = value as any
+                        }
+                    }
+                    // Para campos simples, comparamos directamente
+                    else if (JSON.stringify(value) !== JSON.stringify(originalData[originalKey])) {
+                        cambiosReales++
+                        changedData[originalKey] = value as any
+                    }
+                })
+                
+                console.log("Datos modificados para enviar:", changedData)
+                console.log("Cambios reales detectados:", cambiosReales)
+                
+                // Si no hay cambios sustanciales, retornamos éxito sin llamar a la API
+                if (cambiosReales === 0) {
+                    return { success: true, message: "No se detectaron cambios" }
+                }
+                
+                // Enviar solo los datos que han cambiado
+                return await updateEvent(eventId, changedData, token)
+            }
+            
+            // Si no hay datos originales para comparar, enviamos todo
+            return await updateEvent(eventId, data, token)
         } catch (error) {
             throw error
         } finally {
@@ -424,12 +495,11 @@ export const EventPlanningFormProvider: React.FC<{
 
             // Cambiar a la pestaña con errores
             if (validationResults.phaseErrors?.pei) {
-                // Aquí podrías añadir lógica para cambiar a la pestaña PEI
-                // Por ejemplo, si tienes un estado para la pestaña activa
+                setActiveTab("pei")
             } else if (validationResults.phaseErrors?.info) {
-                // Cambiar a la pestaña de información
+                setActiveTab("info")
             } else if (validationResults.phaseErrors?.finance) {
-                // Cambiar a la pestaña de financiamiento
+                setActiveTab("finance")
             }
 
             return
@@ -440,7 +510,7 @@ export const EventPlanningFormProvider: React.FC<{
 
         try {
             setIsSubmitting(true)
-            const formData = getValues()
+            const formData = getValues()      
 
             // Asegurarse de que el poaId esté establecido
             formData.poaId = poaId
@@ -451,25 +521,32 @@ export const EventPlanningFormProvider: React.FC<{
                 formData.userId = userId
             }
 
-            let result
-
             // Verificar si estamos editando un evento existente
-            // Aquí accedemos a event.eventId si existe, o undefined si no
             const eventId = eventEditing ? eventEditing.eventId : undefined
             
             if (eventId) {
                 // Actualizar evento existente
-                result = await updateExistingEvent(eventId, formData, token)
+                const result = await updateExistingEvent(eventId, formData, token)
 
-                // Mensaje de éxito para actualización
-                toast({
-                    title: "Éxito",
-                    description: "Evento actualizado exitosamente",
-                    variant: "success",
-                })
+                // Verificar si el resultado contiene un mensaje personalizado
+                if (result && typeof result === 'object' && 'message' in result && result.message === "No se detectaron cambios") {
+                    // Mensaje informativo para el usuario
+                    toast({
+                        title: "Información",
+                        description: "No se detectaron cambios en el evento",
+                        variant: "default",
+                    })
+                } else {
+                    // Mensaje de éxito para actualización normal
+                    toast({
+                        title: "Éxito",
+                        description: "Evento actualizado exitosamente",
+                        variant: "success",
+                    })
+                }
             } else {
                 // Crear nuevo evento
-                result = await submitEvent(formData, token)
+                await submitEvent(formData, token)
 
                 // Mensaje de éxito para creación
                 toast({
@@ -479,7 +556,7 @@ export const EventPlanningFormProvider: React.FC<{
                 })
             }
 
-            // Cerrar el modal si se proporciona un callback
+            // Cerrar el modal
             setIsOpen(false)
 
         } catch (error) {

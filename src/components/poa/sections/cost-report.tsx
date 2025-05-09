@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Info, EyeOff, Eye, ChevronDown, ChevronUp, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useCurrentUser } from '@/hooks/use-current-user'
-import * as XLSX from 'xlsx'
+import Excel from 'exceljs'
 import { saveAs } from 'file-saver'
 
 interface CostReportProps {
@@ -53,8 +53,6 @@ interface Event {
   responsibles: Responsible[]
   campus: Campus
 }
-
-
 
 interface FinancingSource {
   name: string
@@ -293,155 +291,124 @@ export function CostReport({ name, isActive, poaId }: CostReportProps) {
     }
 
     try {
-      const wb = XLSX.utils.book_new()
-
+      const workbook = new Excel.Workbook()
+      
       // Hoja 1: Estadísticas por Categoría
-      const categoryData = Object.keys(data.categoryStats).flatMap(category => {
+      const worksheetCategory = workbook.addWorksheet('Estadísticas por Categoría')
+      
+      // Agregar encabezados
+      worksheetCategory.columns = [
+        { header: 'Categoría', key: 'categoria', width: 15 },
+        { header: 'Fuente de Financiamiento', key: 'fuente', width: 30 },
+        { header: 'Monto (GTQ)', key: 'monto', width: 15 },
+        { header: '% Total', key: 'porcentaje', width: 10 }
+      ]
+      
+      // Agregar datos
+      Object.keys(data.categoryStats).forEach(category => {
         const financingSources = data.categoryStats[category].financingSources
-        return Object.values(financingSources).map(source => ({
-          'Categoría': category,
-          'Fuente de Financiamiento': source.name,
-          'Monto (GTQ)': source.amount,
-          '% Total': source.percentageOfTotalCost / 100,
-        }))
+        Object.values(financingSources).forEach(source => {
+          worksheetCategory.addRow({
+            categoria: category,
+            fuente: source.name,
+            monto: source.amount,
+            porcentaje: source.percentageOfTotalCost / 100
+          })
+        })
       })
-
-      const wsCategory = XLSX.utils.json_to_sheet(categoryData, { header: ['Categoría', 'Fuente de Financiamiento', 'Monto (GTQ)', '% Total'], skipHeader: false });
-
-      // Ajustar ancho de columnas
-      const categoryCols = calculateColumnWidths(categoryData, ['Categoría', 'Fuente de Financiamiento', 'Monto (GTQ)', '% Total']);
-      wsCategory['!cols'] = categoryCols;
-
-      // Formatear celdas en la hoja de Estadísticas por Categoría
-      const rangeCategory = XLSX.utils.decode_range(wsCategory['!ref'] || 'A1:D1');
-      for (let R = 1; R <= rangeCategory.e.r; ++R) { // Empezar en 1 para omitir encabezado
-        const montoCellAddress = { c: 2, r: R }; // 'Monto (GTQ)' es la tercera columna (índice 2)
-        const montoCellRef = XLSX.utils.encode_cell(montoCellAddress);
-        if (wsCategory[montoCellRef]) {
-          wsCategory[montoCellRef].t = 'n'; // Tipo numérico
-          wsCategory[montoCellRef].z = '"GTQ"#,##0.00'; // Formato moneda GTQ
+      
+      // Aplicar formato a las celdas
+      worksheetCategory.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) { // Omitir encabezados
+          const montoCell = row.getCell(3)
+          montoCell.numFmt = '"GTQ"#,##0.00'
+          
+          const porcentajeCell = row.getCell(4)
+          porcentajeCell.numFmt = '0.00%'
         }
-
-        const porcentajeCellAddress = { c: 3, r: R }; // '% Total' es la cuarta columna (índice 3)
-        const porcentajeCellRef = XLSX.utils.encode_cell(porcentajeCellAddress);
-        if (wsCategory[porcentajeCellRef]) {
-          wsCategory[porcentajeCellRef].t = 'n'; // Tipo numérico
-          wsCategory[porcentajeCellRef].z = '0.00%'; // Formato porcentaje
-        }
-      }
-
-      XLSX.utils.book_append_sheet(wb, wsCategory, 'Estadísticas por Categoría');
-
+      })
+      
       // Hoja 2: Presupuesto y Fondos
-      const presupuestoData = [{
-        'Presupuesto Anual (GTQ)': presupuestoAnual,
-        'Total Fondos Adicionales (GTQ)': fondosAdicionalesTotal,
-        'Total Fondos Externos (GTQ)': fondosExternosTotal,
-        'Costo Total (GTQ)': costoTotal,
-      }]
-
-      const wsPresupuesto = XLSX.utils.json_to_sheet(presupuestoData, { header: ['Presupuesto Anual (GTQ)', 'Total Fondos Adicionales (GTQ)', 'Total Fondos Externos (GTQ)', 'Costo Total (GTQ)'], skipHeader: false });
-
-      // Ajustar ancho de columnas
-      const presupuestoCols = calculateColumnWidths(presupuestoData, ['Presupuesto Anual (GTQ)', 'Total Fondos Adicionales (GTQ)', 'Total Fondos Externos (GTQ)', 'Costo Total (GTQ)']);
-      wsPresupuesto['!cols'] = presupuestoCols;
-
-      // Formatear celdas en la hoja de Presupuesto y Fondos
-      const rangePresupuesto = XLSX.utils.decode_range(wsPresupuesto['!ref'] || 'A1:D1');
-      for (let R = 1; R <= rangePresupuesto.e.r; ++R) { // Empezar en 1 para omitir encabezado
-        for (let C = 0; C <= 3; C++) { // Columnas A a D
-          const cellAddress = { c: C, r: R };
-          const cellRef = XLSX.utils.encode_cell(cellAddress);
-          if (wsPresupuesto[cellRef]) {
-            wsPresupuesto[cellRef].t = 'n'; // Tipo numérico
-            wsPresupuesto[cellRef].z = '"GTQ"#,##0.00'; // Formato moneda GTQ
-          }
-        }
-      }
-
-      XLSX.utils.book_append_sheet(wb, wsPresupuesto, 'Presupuesto y Fondos');
-
-           // Hoja 3: Eventos Aprobados
-           const eventosData = approvedEvents.map(event => ({
-            'ID Evento': event.eventId,
-            'Nombre del Evento': event.name,
-            'Costo Total (GTQ)': event.totalCost,
-            'Tipo de Evento': event.type,
-            'Objetivo': event.objective,
-            'Indicador de logro': event.achievementIndicator,
-            'Naturaleza': event.eventNature,
-            'Campus': event.campus.name,
-            'Fecha de Inicio': event.dates.length > 0 ? event.dates[0].startDate : '',
-            'Fecha de Fin': event.dates.length > 0 ? event.dates[0].endDate : '',
-            'Responsables': event.responsibles.map(responsible => responsible.name).join(', ')
-          }));
-    
-          const wsEventos = XLSX.utils.json_to_sheet(eventosData, { 
-            header: [
-            'ID Evento', 
-            'Nombre del Evento',
-            'Costo Total (GTQ)',
-            'Tipo de Evento',
-            'Objetivo',
-            'Indicador de logro',
-            'Naturaleza',
-            'Campus',
-            'Fecha de Inicio',
-            'Fecha de Fin',
-            'Responsables'], skipHeader: false });
-    
-          // Ajustar ancho de columnas
-          const eventosCols = calculateColumnWidths(eventosData, [
-            'ID Evento', 
-            'Nombre del Evento',  
-            'Costo Total (GTQ)',
-            'Tipo de Evento',
-            'Objetivo',
-            'Indicador de logro',
-            'Naturaleza',
-            'Campus',
-            'Fecha de Inicio',
-            'Fecha de Fin',
-            'Responsables']);
-          wsEventos['!cols'] = eventosCols;
-    
-          // Formatear celdas en la hoja de Eventos Aprobados
-          const rangeEventos = XLSX.utils.decode_range(wsEventos['!ref'] || 'A1:C1');
-          for (let R = 1; R <= rangeEventos.e.r; ++R) { // Empezar en 1 para omitir encabezado
-            const costoCellAddress = { c: 2, r: R }; // 'Costo Total (GTQ)' es la tercera columna (índice 2)
-            const costoCellRef = XLSX.utils.encode_cell(costoCellAddress);
-            if (wsEventos[costoCellRef]) {
-              wsEventos[costoCellRef].t = 'n'; // Tipo numérico
-              wsEventos[costoCellRef].z = '"GTQ"#,##0.00'; // Formato moneda GTQ
-            }
-          }
-    
-          XLSX.utils.book_append_sheet(wb, wsEventos, 'Eventos Aprobados');
-    
-          // Generar el archivo Excel
-          const wbout = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-          const blob = new Blob([wbout], { type: 'application/octet-stream' });
-          saveAs(blob, 'Informe_de_Costos_POA.xlsx');
-        } catch (error) {
-          console.error('Error al exportar a Excel:', error);
-          alert('Hubo un error al generar el archivo Excel. Por favor, intenta nuevamente.')
-        }
-      };
-
-  const calculateColumnWidths = (data: any[], headers: string[]) => {
-    const colWidths = headers.map(header => header.length)
-    data.forEach(row => {
-      headers.forEach((header, i) => {
-        const value = row[header]
-        if (value !== undefined && value !== null) {
-          const valueString = typeof value === 'number' ? value.toString() : value.toString()
-          if (valueString.length > colWidths[i]) {
-            colWidths[i] = valueString.length
+      const worksheetPresupuesto = workbook.addWorksheet('Presupuesto y Fondos')
+      
+      // Agregar encabezados
+      worksheetPresupuesto.columns = [
+        { header: 'Presupuesto Anual (GTQ)', key: 'presupuesto', width: 25 },
+        { header: 'Total Fondos Adicionales (GTQ)', key: 'adicionales', width: 30 },
+        { header: 'Total Fondos Externos (GTQ)', key: 'externos', width: 30 },
+        { header: 'Costo Total (GTQ)', key: 'total', width: 20 }
+      ]
+      
+      // Agregar datos
+      worksheetPresupuesto.addRow({
+        presupuesto: presupuestoAnual,
+        adicionales: fondosAdicionalesTotal,
+        externos: fondosExternosTotal,
+        total: costoTotal
+      })
+      
+      // Aplicar formato a las celdas
+      worksheetPresupuesto.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) { // Omitir encabezados
+          for (let i = 1; i <= 4; i++) {
+            const cell = row.getCell(i)
+            cell.numFmt = '"GTQ"#,##0.00'
           }
         }
       })
-    })
-    return colWidths.map(width => ({ wch: width + 2 }))
+      
+      // Hoja 3: Eventos Aprobados
+      const worksheetEventos = workbook.addWorksheet('Eventos Aprobados')
+      
+      // Agregar encabezados
+      worksheetEventos.columns = [
+        { header: 'ID Evento', key: 'id', width: 10 },
+        { header: 'Nombre del Evento', key: 'nombre', width: 30 },
+        { header: 'Costo Total (GTQ)', key: 'costo', width: 20 },
+        { header: 'Tipo de Evento', key: 'tipo', width: 15 },
+        { header: 'Objetivo', key: 'objetivo', width: 30 },
+        { header: 'Indicador de logro', key: 'indicador', width: 30 },
+        { header: 'Naturaleza', key: 'naturaleza', width: 15 },
+        { header: 'Campus', key: 'campus', width: 15 },
+        { header: 'Fecha de Inicio', key: 'fechaInicio', width: 15 },
+        { header: 'Fecha de Fin', key: 'fechaFin', width: 15 },
+        { header: 'Responsables', key: 'responsables', width: 30 }
+      ]
+      
+      // Agregar datos
+      approvedEvents.forEach(event => {
+        worksheetEventos.addRow({
+          id: event.eventId,
+          nombre: event.name,
+          costo: event.totalCost,
+          tipo: event.type,
+          objetivo: event.objective,
+          indicador: event.achievementIndicator,
+          naturaleza: event.eventNature,
+          campus: event.campus.name,
+          fechaInicio: event.dates.length > 0 ? event.dates[0].startDate : '',
+          fechaFin: event.dates.length > 0 ? event.dates[0].endDate : '',
+          responsables: event.responsibles.map(responsible => responsible.name).join(', ')
+        })
+      })
+      
+      // Aplicar formato a las celdas
+      worksheetEventos.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) { // Omitir encabezados
+          const costoCell = row.getCell(3)
+          costoCell.numFmt = '"GTQ"#,##0.00'
+        }
+      })
+      
+      // Generar el archivo Excel
+      workbook.xlsx.writeBuffer().then(buffer => {
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        saveAs(blob, 'Informe_de_Costos_POA.xlsx')
+      })
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error)
+      alert('Hubo un error al generar el archivo Excel. Por favor, intenta nuevamente.')
+    }
   }
 
   if (!data) {

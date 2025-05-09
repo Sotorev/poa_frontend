@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronUp } from 'lucide-react';
 import { PlanningEvent, SectionProps as OriginalSectionProps, ApiEvent } from '@/types/interfaces';
 import EventTable from './EventTable';
-import { useCurrentUser } from "@/hooks/use-current-user";
 import { deleteEvent } from '@/services/apiService';
 
 // Context
@@ -44,6 +43,8 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         evento: apiEvent.name,
         objetivo: apiEvent.objective,
         fechas: apiEvent.dates.map(date => ({
+            eventDateId: date.eventDateId,
+            isDeleted: date.isDeleted,
             inicio: date.startDate,
             fin: date.endDate
         })),
@@ -51,6 +52,8 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         aporteUMES: apiEvent.financings
             .filter(f => [1, 4, 5, 7].includes(f.financingSourceId))
             .map(f => ({
+                eventFinancingId: f.eventFinancingId,
+                isDeleted: f.isDeleted,
                 financingSourceId: f.financingSourceId,
                 percentage: f.percentage,
                 amount: f.amount
@@ -58,21 +61,36 @@ function mapApiEventToPlanningEvent(apiEvent: ApiEvent): PlanningEvent {
         aporteOtros: apiEvent.financings
             .filter(f => [2, 3, 6].includes(f.financingSourceId))
             .map(f => ({
+                eventFinancingId: f.eventFinancingId,
+                isDeleted: f.isDeleted,
                 financingSourceId: f.financingSourceId,
                 percentage: f.percentage,
                 amount: f.amount
             })),
         tipoCompra: apiEvent.purchaseType?.name || '',
-        detalle: apiEvent.costDetails?.map(detail => ({ id: detail.costDetailId, name: detail.fileName })) || [],
-        responsables: {
-            principal: apiEvent.responsibles.find(r => r.responsibleRole === 'Principal')?.name || '',
-            ejecucion: apiEvent.responsibles.find(r => r.responsibleRole === 'Ejecución')?.name || '',
-            seguimiento: apiEvent.responsibles.find(r => r.responsibleRole === 'Seguimiento')?.name || ''
-        },
+        detalle: apiEvent.costDetails?.map(detail => ({
+            costDetailId: detail.costDetailId,
+            eventId: detail.eventId,
+            filePath: detail.filePath,
+            fileName: detail.fileName,
+            isDeleted: detail.isDeleted
+        })) || [],
+        responsables: apiEvent.responsibles.map(r => ({
+            eventResponsibleId: r.eventResponsibleId,
+            responsibleRole: r.responsibleRole,
+            name: r.name
+        })),
         recursos: apiEvent.institutionalResources.map(r => r.name).join(', '),
         indicadorLogro: apiEvent.achievementIndicator,
-        detalleProceso: apiEvent.files?.map(file => ({ id: file.fileId, name: file.fileName })) || [],
-        comentarioDecano: apiEvent.eventApprovals[0]?.comments || '', // Ajustado aquí
+        detalleProceso: apiEvent.files?.map(file => ({
+            fileId: file.fileId,
+            eventId: apiEvent.eventId,
+            filePath: file.filePath,
+            fileName: file.fileName,
+            uploadedAt: file.uploadedAt,
+            isDeleted: file.isDeleted
+        })) || [],
+        comentarioDecano: "", // Peniente de implementar
         propuestoPor: `${apiEvent.user.firstName} ${apiEvent.user.lastName}`,
         fechaCreacion: apiEvent.createdAt,
         fechaEdicion: apiEvent.updatedAt || '',

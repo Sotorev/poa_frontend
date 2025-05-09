@@ -63,8 +63,10 @@ export function FinancingSource({
   }
 
   const calculateTotalCost = (): number => {
-    return contributions.reduce((acc, contribution) => acc + contribution.amount
-      , 0)
+    return contributions.reduce((acc, contribution) => 
+      // Solo sumar los montos de los aportes que no están marcados como eliminados
+      contribution.isDeleted ? acc : acc + contribution.amount
+    , 0)
   }
 
   // Format number as Quetzal currency
@@ -133,6 +135,22 @@ export function FinancingSource({
     });
   };
 
+  // Función para manejar la eliminación de un aporte
+  const handleRemoveContribution = (index: number) => {
+    const contribution = contributions[index];
+    
+    // Si el aporte tiene un ID de la API (eventFinancingId), marcarlo como eliminado
+    if (contribution.eventFinancingId) {
+      onUpdateContribution(index, {
+        ...contribution,
+        isDeleted: true
+      });
+    } else {
+      // Si es un aporte nuevo, eliminarlo completamente
+      onRemoveContribution(index);
+    }
+  };
+
   // Update totalCost when contributions change
   useEffect(() => {
     const newTotalCost = calculateTotalCost();
@@ -146,12 +164,14 @@ export function FinancingSource({
     if (totalCost === 0) return;
 
     contributions.forEach((contribution, index) => {
+      // Ignorar los aportes marcados como eliminados
+      if (contribution.isDeleted) return;
+      
       // Calculate percentage with full precision first
       let percentage = totalCost > 0 ? (contribution.amount / totalCost) * 100 : 0;
       
       // Round to 2 decimal places using Math.round to avoid floating point issues
       percentage = Math.round(percentage * 100) / 100;
-
 
       onUpdateContribution(index, {
         ...contribution,
@@ -171,7 +191,13 @@ export function FinancingSource({
 
   return (
     <div className="space-y-4">
-      {contributions.filter(f => filteredSources?.some(source => source.financingSourceId === f.financingSourceId )).map((contribution) => {
+      {contributions
+        .filter(f => 
+          // No mostrar aportes marcados como eliminados
+          !f.isDeleted && 
+          filteredSources?.some(source => source.financingSourceId === f.financingSourceId)
+        )
+        .map((contribution) => {
         // Find the actual index in the original contributions array
         const actualIndex = contributions.findIndex(
           cont => cont === contribution
@@ -266,7 +292,7 @@ export function FinancingSource({
                   type="button"
                   variant="destructive"
                   size="icon"
-                  onClick={() => onRemoveContribution(actualIndex)}
+                  onClick={() => handleRemoveContribution(actualIndex)}
                   className="h-10 w-10 bg-primary hover:bg-primary/90"
                 >
                   <X className="h-5 w-5" />

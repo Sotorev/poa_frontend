@@ -26,6 +26,14 @@ import clsx from "clsx"
 import AccountButton from "../autorizacion/_components/account-button"
 import { Role } from "@/types/Permission"
 import { NotificationButton } from "@/components/notifications/NotificationButton"
+import { PoaContext } from "@/contexts/PoaContext"
+import { 
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue 
+} from "@/components/ui/select"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
 
@@ -115,6 +123,10 @@ const navItems: NavItem[] = [
 		icon: FileText,
 		description: "Propuestas",
 		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico"],
+		subItems: [
+			{ title: "Area y Objetivo Estratégico", href: "/propuestas/area-objetivo-estrategico", description: "Propuestas de área y objetivo estratégico", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+			{ title: "Estrategias", href: "/propuestas/estrategias", description: "Propuestas de estrategias", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+		],
 	},
 ]
 
@@ -122,6 +134,12 @@ export default function Header() {
 	const user = useCurrentUser()
 	const pathname = usePathname()
 	const permissions = usePermissions()
+	const { selectedYear, setSelectedYear, poas } = React.useContext(PoaContext)
+
+	// obtener los años en los que han existido POAs
+	const years : number[] = poas.map(poa => {
+		return Number(poa.year)
+	})
 
 	const checkAccess = (item: NavItem): boolean => {
 		if (item.requiredPermission) {
@@ -184,13 +202,32 @@ export default function Header() {
 						<MobileNav navItems={filteredNavItems} permissions={permissions} />
 					</SheetContent>
 				</Sheet>
-				<div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-					<nav className="flex items-center space-x-2">
+				<div className="flex flex-1 items-center justify-end gap-4 md:gap-6">
+					<Select 
+						value={selectedYear.toString()} 
+						onValueChange={(value) => setSelectedYear(parseInt(value))}
+					>
+						<SelectTrigger className="w-32 bg-primary/5 hover:bg-primary/10 transition-colors">
+							<SelectValue placeholder={`POA ${selectedYear + 1}`}>
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent className="items-center">
+							{years.map((year, index) => (
+								<SelectItem 
+									key={year} 
+									value={year.toString()}
+									className={`hover:bg-primary/5 ${index === 0 ? 'opacity-50' : ''}`}
+									disabled={index === 0}
+								>
+									POA {year + 1} {index === 0}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<div className="flex items-center gap-4">
 						<NotificationButton/>
-					</nav>
-					<nav className="flex items-center space-x-2">
 						<AccountButton username={user?.username} />
-					</nav>
+					</div>
 				</div>
 			</div>
 		</header>

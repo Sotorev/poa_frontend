@@ -27,7 +27,7 @@ interface EventFinishedFormProps {
   formSearchTerm: string;
   selectedEvent: ResponseExecutedEvent | null;
   selectedFinishedEvent: EventFinishedResponse | null;
-  selectedDates: { eventExecutionDateId: number, endDate: string }[];
+  selectedDates: { eventDateId: number, endDate: string }[];
   evidenceFiles: Map<number, File[]>;
   downloadedFiles: Map<number, File[]>;
   removedEvidenceIds: Set<number>;
@@ -35,9 +35,9 @@ interface EventFinishedFormProps {
   currentDateId: number | null;
   executedEvents: ResponseExecutedEvent[];
   selectEventForEvidence: (event: ResponseExecutedEvent) => void;
-  selectDateForEvidence: (eventExecutionDateId: number, endDate: string) => void;
-  updateDateEndDate: (eventExecutionDateId: number, endDate: string) => void;
-  addFilesToDate: (eventExecutionDateId: number, files: File[]) => void;
+  selectDateForEvidence: (eventDateId: number, endDate: string) => void;
+  updateDateEndDate: (eventDateId: number, endDate: string) => void;
+  addFilesToDate: (eventDateId: number, files: File[]) => void;
   removeExistingFile: (dateId: number, evidenceId: number) => void;
   goToPreviousStep: () => void;
   goToNextDate: () => void;
@@ -239,20 +239,20 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     let dates: DateInfo[] = []
     if (isEditing && selectedFinishedEvent) {
       dates = selectedFinishedEvent.dates.map((date) => ({
-        id: date.eventExecutionDateId,
+        id: date.eventDateId,
         startDate: date.startDate,
         endDate: date.endDate,
       }))
     } else if (selectedEvent) {
-      dates = selectedEvent.eventExecutionDates.map((date) => ({
-        id: date.eventExecutionDateId,
+      dates = selectedEvent.eventDates.map((date) => ({
+        id: date.eventDateId,
         startDate: date.startDate,
         endDate: date.endDate || "",
       }))
     }
 
     // Marcar fechas ya seleccionadas
-    const selectedDateIds = selectedDates.map((d) => d.eventExecutionDateId)
+    const selectedDateIds = selectedDates.map((d) => d.eventDateId)
 
     return (
       <div className="space-y-4">
@@ -273,17 +273,17 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
             <div className="space-y-2">
               {selectedDates.map((date) => {
                 // Verificar si hay archivos nuevos o existentes
-                const hasNewFiles = evidenceFiles.has(date.eventExecutionDateId) &&
-                  (evidenceFiles.get(date.eventExecutionDateId)?.length || 0) > 0;
-                const hasExistingFiles = isEditing && downloadedFiles.has(date.eventExecutionDateId) &&
-                  ((downloadedFiles.get(date.eventExecutionDateId)?.length || 0) > 0);
+                const hasNewFiles = evidenceFiles.has(date.eventDateId) &&
+                  (evidenceFiles.get(date.eventDateId)?.length || 0) > 0;
+                const hasExistingFiles = isEditing && downloadedFiles.has(date.eventDateId) &&
+                  ((downloadedFiles.get(date.eventDateId)?.length || 0) > 0);
                 
                 // Determinar si tiene archivos (nuevos o existentes)
                 const hasFiles = hasNewFiles || hasExistingFiles;
                 
                 return (
                   <div
-                    key={date.eventExecutionDateId}
+                    key={date.eventDateId}
                     className="p-3 border border-gray-200 rounded-md border-l-4 border-l-[#006837]"
                   >
                     <div className="flex justify-between items-center">
@@ -303,7 +303,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => selectDateForEvidence(date.eventExecutionDateId, date.endDate)}
+                          onClick={() => selectDateForEvidence(date.eventDateId, date.endDate)}
                           className="text-[#006837] hover:text-[#005a2f] hover:bg-[#e6f4ee]"
                         >
                           Editar
@@ -361,7 +361,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
   const renderUploadFilesStep = () => {
     if (!currentDateId) return null
 
-    const selectedDateInfo = selectedDates.find((date) => date.eventExecutionDateId === currentDateId)
+    const selectedDateInfo = selectedDates.find((date) => date.eventDateId === currentDateId)
 
     if (!selectedDateInfo) return null
 
@@ -605,7 +605,7 @@ export const EventFinishedForm: React.FC<EventFinishedFormProps> = ({
     }
 
     if (currentStep === "uploadFiles") {
-      const selectedDateInfo = selectedDates.find((date) => date.eventExecutionDateId === currentDateId)
+      const selectedDateInfo = selectedDates.find((date) => date.eventDateId === currentDateId)
       const currentFiles = currentDateId !== null ? (evidenceFiles.get(currentDateId) || []) : []
       // Si estamos en modo de edición, permitir continuar si hay fecha fin, incluso sin archivos nuevos
       const canSubmit = isEditing 

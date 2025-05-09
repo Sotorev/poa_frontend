@@ -20,22 +20,27 @@ import { EventNameComponent } from "../fields/evento"
 import { ObjectiveComponent } from "../fields/objetivo"
 import { FinancingSource } from "../fields/financing-source"
 import { PurchaseType } from "../fields/purchase-type"
-import { EventCostDetail } from "../fields/detalle"
+import { CostDetailFile } from "../fields/costDetailFile"
 import { CampusSelector } from "../fields/campus-selector"
 import { ResponsibleComponent } from "../fields/responsables"
 import { RecursosSelectorComponent } from "../fields/recursos-selector"
 import { IndicadorLogroComponent } from "../fields/indicador-logro"
-import { DetalleProcesoComponent } from "../fields/detalle-proceso"
+import { ProcessDetailFile } from "../fields/processDetailFile"
 import { ValidationErrorsModal } from "./UI.validationErrorsModal"
 import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
 import { ProposeAreaObjectiveStrategicDialog } from "@/components/approveProposals/AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
+import { ProposeStrategyDialog } from "@/components/approveProposals/strategies/UI.strategyPropose"
+
 
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"
 import { EventContext } from "../context.event"
 import { PlusIcon } from "lucide-react"
 import { useAreaObjectiveStrategicApproval } from "@/components/approveProposals/AreaOjectiveStrategic/useAreaObjectiveStrategicApproval"
+
+import { useStrategyProposals } from "@/components/approveProposals/strategies/useStrategyProposals"
+
 interface EventPlanningFormProps {
 }
 
@@ -91,6 +96,7 @@ export function EventPlanningForm({
         isOpen,
         setIsOpen,
         poaId,
+        strategicAreas,
         selectedStrategicArea,
         selectedStrategicObjective,
         setSelectedStrategicObjective,
@@ -102,6 +108,12 @@ export function EventPlanningForm({
     } = useContext(EventContext)
 
     const { handleAddProposal } = useAreaObjectiveStrategicApproval()
+
+    const {
+        isProposeStrategyDialogOpen,
+        setIsProposeStrategyDialogOpen,
+        handleAddStrategy,
+    } = useStrategyProposals()
 
     const onSubmit = async () => {
         try {
@@ -121,11 +133,20 @@ export function EventPlanningForm({
                 errors={formErrors}
             />
 
-            <ProposeAreaObjectiveStrategicDialog 
+            <ProposeAreaObjectiveStrategicDialog
                 isOpen={isProposeDialogOpen}
                 onClose={() => setIsProposeDialogOpen(false)}
                 onPropose={handleAddProposal}
             />
+
+
+            <ProposeStrategyDialog
+                isOpen={isProposeStrategyDialogOpen}
+                onClose={() => setIsProposeStrategyDialogOpen(false)}
+                onPropose={handleAddStrategy}
+                strategicAreas={strategicAreas}
+            />
+
 
             <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
                 <DialogContent
@@ -140,7 +161,7 @@ export function EventPlanningForm({
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            reset()                          
+                            reset()
                             setIsOpen(false);
                         }}
                         className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none z-50"
@@ -157,7 +178,7 @@ export function EventPlanningForm({
 
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
                         <Tabs defaultValue="pei" className="flex flex-col flex-1" value={activeTab} onValueChange={setActiveTab}>
-                            <div className="px-6 py-2 border-b flex-shrink-0 bg-white sticky top-0 z-10">
+                            <div className="h-24 px-6 py-2 border-b flex-shrink-0 bg-white sticky top-0 z-10">
                                 <PhaseIndicator
                                     phases={phases}
                                     currentPhase={getCurrentPhase(activeTab)}
@@ -172,7 +193,7 @@ export function EventPlanningForm({
                             </TabsList>
 
                             <div className="flex-1 overflow-hidden">
-                                <ScrollArea ref={scrollContainerRef} className="h-64 w-full px-12">
+                                <ScrollArea ref={scrollContainerRef} className="h-80 w-full px-12">
                                     <TabsContent value="pei" className="mt-6 space-y-8 data-[state=inactive]:hidden">
                                         <div className="space-y-6">
                                             <SectionTitle>Objetivo Estratégico</SectionTitle>
@@ -200,6 +221,10 @@ export function EventPlanningForm({
                                                 strategicObjectiveIds={selectedStrategicObjective?.strategicObjectiveId}
                                                 disabled={!selectedStrategicObjective}
                                             />
+                                            <Button variant="outline" className="justify-end" onClick={() => setIsProposeStrategyDialogOpen(true)}>
+                                                <PlusIcon className="w-4 h-4" />
+                                                <span>Proponer Estrategia</span>
+                                            </Button>
                                         </div>
 
                                         <div className="space-y-6">
@@ -326,9 +351,9 @@ export function EventPlanningForm({
                                                 control={control}
                                                 defaultValue={[]}
                                                 render={({ field }) => (
-                                                    <DetalleProcesoComponent
-                                                        files={field.value || []}
-                                                        onFilesChange={(files: File[]) => field.onChange(files)}
+                                                    <ProcessDetailFile
+                                                        files={(field.value || [])}
+                                                        onFilesChange={(files) => field.onChange(files)}
                                                     />
                                                 )}
                                             />
@@ -399,7 +424,10 @@ export function EventPlanningForm({
                                                 control={control}
                                                 defaultValue={[]}
                                                 render={({ field }) => (
-                                                    <EventCostDetail files={field.value || []} onFilesChange={(files) => field.onChange(files)} />
+                                                    <CostDetailFile 
+                                                        files={(field.value || [])} 
+                                                        onFilesChange={(files) => field.onChange(files)} 
+                                                    />
                                                 )}
                                             />
                                         </div>
@@ -446,14 +474,14 @@ export function EventPlanningForm({
                     </form>
 
                     <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 flex-shrink-0 sticky bottom-0 z-20">
-                        <Button variant="outline" onClick={() => { 
-                            reset(); 
-                            setIsOpen(false); 
+                        <Button variant="outline" onClick={() => {
+                            reset();
+                            setIsOpen(false);
                         }} disabled={isSubmitting}>
                             Cancelar
                         </Button>
                         <Button onClick={() => {
-                            onSubmit(); 
+                            onSubmit();
                         }} disabled={isSubmitting}>
                             {isSubmitting ? "Guardando..." : "Guardar"}
                         </Button>

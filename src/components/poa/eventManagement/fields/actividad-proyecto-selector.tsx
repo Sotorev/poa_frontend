@@ -45,15 +45,35 @@ export function ActivityProjectSelector({
 
     // Si cambia a proyecto y hay múltiples fechas, mantener solo la primera
     if (value === "Proyecto" && dates.length > 1) {
-      onReplaceDates([dates[0]])
+      // Filtrar solo fechas no eliminadas
+      const activeDates = dates.filter(d => !d.isDeleted)
+      if (activeDates.length > 1) {
+        // Si hay múltiples fechas activas, conservar solo la primera
+        const updatedDates = [...dates]
+        // Marcar como isDeleted=true todas excepto la primera fecha activa
+        let foundFirst = false
+        updatedDates.forEach((date, index) => {
+          if (!date.isDeleted) {
+            if (!foundFirst) {
+              foundFirst = true
+            } else {
+              updatedDates[index] = { ...date, isDeleted: true }
+            }
+          }
+        })
+        onReplaceDates(updatedDates)
+      }
     }
   }
 
   // Función para añadir un nuevo rango de fechas
   const handleAddDateRange = (): void => {
-    // Si es modo proyecto y ya hay una fecha, no permitir añadir más
-    if (selectedOption === "Proyecto" && dates.length > 0) {
-      return
+    // Si es modo proyecto y ya hay una fecha activa, no permitir añadir más
+    if (selectedOption === "Proyecto") {
+      const activeDates = dates.filter(d => !d.isDeleted)
+      if (activeDates.length > 0) {
+        return
+      }
     }
 
     const newDate: DateSchema = {
@@ -66,9 +86,18 @@ export function ActivityProjectSelector({
     setIsStartDateOpen(true)
   }
 
-  // Función para eliminar un rango de fechas
+  // Función para eliminar o marcar como eliminada una fecha
   const handleDeleteDateRange = (index: number) => {
-    onRemoveDate(index)
+    const date = dates[index]
+    
+    // Si la fecha tiene un ID, significa que viene de la API y solo debemos marcarla como eliminada
+    if (date.eventDateId) {
+      const updatedDate = { ...date, isDeleted: true }
+      onChangeDate(index, updatedDate)
+    } else {
+      // Si es una fecha nueva (sin ID), eliminarla físicamente
+      onRemoveDate(index)
+    }
 
     if (currentDateIndex === index) {
       setCurrentDateIndex(null)
@@ -77,18 +106,17 @@ export function ActivityProjectSelector({
 
   // Función para actualizar una fecha de inicio
   const handleStartDateChange = (date: Date | undefined, index: number) => {
-
     if (date) {
-      const newDates = [...dates]
-      newDates[index] = {
-        ...newDates[index],
+      const existingDate = dates[index]
+      const newDate = {
+        ...existingDate,
         startDate: date.toISOString(),
       }
-      onChangeDate(index, newDates[index])
+      onChangeDate(index, newDate)
       setIsStartDateOpen(false)
 
       // Si no hay fecha de fin, abrir automáticamente el selector de fecha de fin
-      if (!dates[index].endDate) {
+      if (!existingDate.endDate) {
         setIsEndDateOpen(true)
       }
     }
@@ -96,14 +124,13 @@ export function ActivityProjectSelector({
 
   // Función para actualizar una fecha de fin
   const handleEndDateChange = (date: Date | undefined, index: number) => {
-
     if (date) {
-      const newDates = [...dates]
-      newDates[index] = {
-        ...newDates[index],
+      const existingDate = dates[index]
+      const newDate = {
+        ...existingDate,
         endDate: date.toISOString(),
       }
-      onChangeDate(index, newDates[index])
+      onChangeDate(index, newDate)
       setIsEndDateOpen(false)
       setCurrentDateIndex(null)
     }
@@ -114,6 +141,9 @@ export function ActivityProjectSelector({
     if (!dateString) return "Seleccionar"
     return format(new Date(dateString), "dd/MM/yyyy", { locale: es })
   }
+
+  // Obtener solo las fechas no eliminadas para mostrar
+  const activeDates = dates.filter(date => !date.isDeleted)
 
   return (
     <div className="space-y-4">
@@ -135,92 +165,100 @@ export function ActivityProjectSelector({
 
       {/* Lista de rangos de fechas */}
       <div className="space-y-3">
-        {dates.map((dateRange, index) => (
-          <div key={index} className="flex items-center space-x-2">
-            {/* Selector de fecha de inicio */}
-            <Popover
-              open={currentDateIndex === index && isStartDateOpen}
-              onOpenChange={(open) => {
-                if (open) {
-                  setCurrentDateIndex(index)
-                  setIsStartDateOpen(true)
-                  setIsEndDateOpen(false)
-                } else {
-                  setIsStartDateOpen(false)
-                }
-              }}
-            >
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[140px] justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formatDateDisplay(dateRange.startDate)}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  locale={es}
-                  selected={dateRange.startDate ? new Date(dateRange.startDate) : undefined}
-                  defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
-                  onSelect={(date) => handleStartDateChange(date, index)}
-                  initialFocus
-                  captionLayout="dropdown-buttons"
-                  fromYear={new Date().getFullYear()} 
-                  toYear={new Date().getFullYear() + 10}
-                />
-              </PopoverContent>
-            </Popover>
-
-            <span>-</span>
-
-            {/* Selector de fecha de fin */}
-            <Popover
-              open={currentDateIndex === index && isEndDateOpen}
-              onOpenChange={(open) => {
-                if (open) {
-                  setCurrentDateIndex(index)
-                  setIsEndDateOpen(true)
-                  setIsStartDateOpen(false)
-                } else {
-                  setIsEndDateOpen(false)
-                }
-              }}
-            >
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[140px] justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formatDateDisplay(dateRange.endDate)}
-                </Button>
-              </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  locale={es}
-                  selected={dateRange.endDate ? new Date(dateRange.endDate) : undefined}
-                  onSelect={(date) => handleEndDateChange(date, index)}
-                  defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
-                  captionLayout="dropdown-buttons"
-                  fromYear={new Date().getFullYear()} 
-                  toYear={new Date().getFullYear() + 10}
-                  initialFocus
-                  disabled={(date) => {
-                  // Deshabilitar fechas anteriores a la fecha de inicio
-                  if (dateRange.startDate) {
-                    return date < new Date(dateRange.startDate)
+        {activeDates.map((dateRange, visibleIndex) => {
+          // Encontrar el índice real en el array de fechas completo
+          const realIndex = dates.findIndex((d, idx) => 
+            !d.isDeleted && 
+            dates.filter(date => !date.isDeleted).indexOf(d) === visibleIndex
+          )
+          
+          return (
+            <div key={dateRange.eventDateId || visibleIndex} className="flex items-center space-x-2">
+              {/* Selector de fecha de inicio */}
+              <Popover
+                open={currentDateIndex === realIndex && isStartDateOpen}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setCurrentDateIndex(realIndex)
+                    setIsStartDateOpen(true)
+                    setIsEndDateOpen(false)
+                  } else {
+                    setIsStartDateOpen(false)
                   }
-                  return false
-                  }}
-                  className="rounded-md border"
-                />
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[140px] justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formatDateDisplay(dateRange.startDate)}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    locale={es}
+                    selected={dateRange.startDate ? new Date(dateRange.startDate) : undefined}
+                    defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
+                    onSelect={(date) => handleStartDateChange(date, realIndex)}
+                    initialFocus
+                    captionLayout="dropdown-buttons"
+                    fromYear={new Date().getFullYear()} 
+                    toYear={new Date().getFullYear() + 10}
+                  />
                 </PopoverContent>
-            </Popover>
+              </Popover>
 
-            {/* Botón para eliminar el rango de fechas */}
-            <Button type="button" variant="ghost" size="icon" onClick={() => handleDeleteDateRange(index)} className="h-8 w-8">
-              <Trash2Icon className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+              <span>-</span>
+
+              {/* Selector de fecha de fin */}
+              <Popover
+                open={currentDateIndex === realIndex && isEndDateOpen}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setCurrentDateIndex(realIndex)
+                    setIsEndDateOpen(true)
+                    setIsStartDateOpen(false)
+                  } else {
+                    setIsEndDateOpen(false)
+                  }
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[140px] justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formatDateDisplay(dateRange.endDate)}
+                  </Button>
+                </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    locale={es}
+                    selected={dateRange.endDate ? new Date(dateRange.endDate) : undefined}
+                    onSelect={(date) => handleEndDateChange(date, realIndex)}
+                    defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
+                    captionLayout="dropdown-buttons"
+                    fromYear={new Date().getFullYear()} 
+                    toYear={new Date().getFullYear() + 10}
+                    initialFocus
+                    disabled={(date) => {
+                    // Deshabilitar fechas anteriores a la fecha de inicio
+                    if (dateRange.startDate) {
+                      return date < new Date(dateRange.startDate)
+                    }
+                    return false
+                    }}
+                    className="rounded-md border"
+                  />
+                  </PopoverContent>
+              </Popover>
+
+              {/* Botón para eliminar el rango de fechas */}
+              <Button type="button" variant="ghost" size="icon" onClick={() => handleDeleteDateRange(realIndex)} className="h-8 w-8">
+                <Trash2Icon className="h-4 w-4" />
+              </Button>
+            </div>
+          )
+        })}
       </div>
 
       {/* Botón para añadir un nuevo rango de fechas */}
@@ -228,7 +266,7 @@ export function ActivityProjectSelector({
         type="button"
         variant="outline"
         onClick={handleAddDateRange}
-        disabled={selectedOption === "Proyecto" && dates.length > 0}
+        disabled={selectedOption === "Proyecto" && activeDates.length > 0}
         className="mt-2"
       >
         Añadir Fecha

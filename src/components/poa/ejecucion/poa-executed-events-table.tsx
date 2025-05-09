@@ -11,7 +11,7 @@ import ExecutedEventDetailsDialog from "./executed-event-details-dialog"
 type PoaExecutedEventsTableProps = {
   executedEvents: ResponseExecutedEvent[]
   onEdit: (event: ResponseExecutedEvent) => void
-  onRestore: (eventId: number) => void
+  onRestore: (eventId: number, eventDateIds: number[]) => void
 }
 
 export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: PoaExecutedEventsTableProps) {
@@ -43,18 +43,49 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
           </TableRow>
         </TableHeader>
         <TableBody>
-            {Array.isArray(executedEvents) ? executedEvents.map((executedEvent) => (
-              <TableRow key={executedEvent.eventId}>
-                <TableCell className="font-medium text-gray-900">{executedEvent.name}</TableCell>
-                <TableCell>
-                  <div className="space-y-2">
-                  {executedEvent.eventExecutionDates.map((date) => (
-                    <div key={date.eventExecutionDateId} className="text-sm text-gray-600 font-medium">
-                      {formatDate(date.startDate)}
-                    </div>
+          {Array.isArray(executedEvents) ? executedEvents.map((executedEvent) => (
+            <TableRow key={executedEvent.eventId}>
+              {/** TODO: Nombre del evento y tooltip con el numero de fechas por iniciar */}
+              <TableCell className="font-medium text-gray-900 flex items-center gap-2">
+                <TooltipProvider>
+                  {executedEvent.eventDates.some(date => date.statusId === 1) ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2"> 
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <p>{executedEvent.name}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {executedEvent.eventDates.filter(date => date.statusId === 1).length} <p>Fecha(s) por iniciar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <p>{executedEvent.name}</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ya se han iniciado todas las fechas relacionadas con el evento</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </TooltipProvider>
+              </TableCell>
+              {/** TODO: Fechas de ejecución */}
+              <TableCell>
+                <div className="space-y-2">
+                  {executedEvent.eventDates.map((date) => (
+                    date.statusId === 2 ? <div key={date.eventDateId} className="text-sm text-gray-600 font-medium">
+                      {formatDate(date.executionStartDate)}
+                    </div> : null
                   ))}
                 </div>
               </TableCell>
+              {/** TODO: Botón de ver detalles */}
               <TableCell>
                 <div className="flex items-center space-x-4">
                   <Button
@@ -68,6 +99,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                   </Button>
                 </div>
               </TableCell>
+              {/** TODO: Botón de editar evento y restaurar a no ejecutado */}
               <TableCell className="text-right">
                 <TooltipProvider>
                   <div className="flex space-x-2 justify-end">
@@ -87,13 +119,31 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                         <p>Editar evento</p>
                       </TooltipContent>
                     </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
+                    {/** Si alguna fecha tiene statusId 3 entonces deshabilitar el botón */}
+                    {executedEvent.eventDates.some(date => date.statusId === 3) ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              disabled
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>No se puede restaurar a no ejecutado porque alguna fecha ya tiene evidencia</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => onRestore(executedEvent.eventId)}
+                          onClick={() => onRestore(executedEvent.eventId, executedEvent.eventDates.map(date => date.statusId === 2 ? date.eventDateId : null).filter(id => id !== null))}
                           className="border-green-700 text-green-800 hover:bg-green-100 hover:text-green-900 transition-colors"
                         >
                           <RotateCcw className="h-4 w-4" />
@@ -102,13 +152,14 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Restaurar a no ejecutado</p>
-                      </TooltipContent>
-                    </Tooltip>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </TooltipProvider>
               </TableCell>
             </TableRow>
-            )) : null}
+          )) : null}
         </TableBody>
       </Table>
 
