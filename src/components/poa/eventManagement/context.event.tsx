@@ -199,6 +199,8 @@ export const EventProvider = ({ children }: ProviderProps) => {
     }, [user?.userId, user?.token]);
 
     const parseUpdateEventRequest = async (event: PlanningEvent): Promise<UpdateEventRequest> => {
+        console.log('Parsing event:', event);
+
         // Convertir las fechas de PlanningEvent a formato para FullEventRequest
         const dates = event.fechas.map(fecha => ({
             startDate: fecha.inicio || new Date(fecha.inicio).toISOString().split('T')[0],
@@ -256,11 +258,64 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
         // Configurar ODS
         // Asumo que el campo ods contiene IDs separados por comas
-        let odsArray: { ods: number }[] = [];
-        if (event.ods) {
-            const odsMatched = event.ods.split(',').map(o => odsList.find(ods => ods.name === o));
-            odsArray = odsMatched.map(o => ({ ods: o?.odsId || 0 }));
+        const odsArray: { ods: number }[] = [];
+
+// Verificar que event.ods es una cadena no vacía y que odsList está disponible y no vacío.
+    if (event.ods && typeof event.ods === 'string' && event.ods.trim() !== '') {
+        if (typeof odsList !== 'undefined' && odsList && odsList.length > 0) {
+            let currentOdsSegment = event.ods.trim();
+
+            // Ordenar la lista de ODS por la longitud de sus nombres en orden descendente.
+            // Esto es crucial para que los nombres más largos (ej: "Paz, justicia e instituciones sólidas")
+            // se intenten hacer coincidir antes que nombres más cortos que podrían ser subcadenas.
+            const sortedOdsList = [...odsList].sort((a, b) => {
+                const nameA = a.name || "";
+                const nameB = b.name || "";
+                return nameB.length - nameA.length;
+            });
+
+            while (currentOdsSegment.length > 0) {
+                let foundMatchInIteration = false;
+                for (const odsItem of sortedOdsList) {
+                    // Asegurar que odsItem.name es una cadena antes de llamar a startsWith
+                    if (odsItem && typeof odsItem.name === 'string' && currentOdsSegment.startsWith(odsItem.name)) {
+                        odsArray.push({ ods: odsItem.odsId });
+                        
+                        const remainingAfterMatch = currentOdsSegment.substring(odsItem.name.length);
+
+                        // Eliminar el separador (coma y el espacio que típicamente le sigue)
+                        if (remainingAfterMatch.startsWith(', ')) {
+                            currentOdsSegment = remainingAfterMatch.substring(2).trim();
+                        } else if (remainingAfterMatch.startsWith(',')) {
+                            // Manejar el caso donde solo hay una coma sin espacio después
+                            currentOdsSegment = remainingAfterMatch.substring(1).trim();
+                        } else {
+                            // Si no hay coma, significa que era el último elemento o la cadena termina.
+                            currentOdsSegment = remainingAfterMatch.trim();
+                        }
+                        
+                        foundMatchInIteration = true;
+                        // Romper el bucle interno para reiniciar la búsqueda con la cadena actualizada.
+                        break; 
+                    }
+                }
+
+                // Si en una iteración completa no se encontró ninguna coincidencia,
+                // pero la cadena aún tiene contenido, significa que hay una parte no parseable.
+                if (!foundMatchInIteration && currentOdsSegment.length > 0) {
+                    // console.warn(`Advertencia: Segmento de ODS no parseable en event.ods: "${currentOdsSegment}"`);
+                    // Detener el parseo para evitar bucles infinitos con entradas mal formadas.
+                    break; 
+                }
+            }
+        } else {
+            // console.warn('La lista de ODS (odsList) está vacía o no está disponible. No se pueden parsear los nombres de ODS desde event.ods.');
         }
+    } else {
+        // event.ods es null, undefined, no es una cadena, o es una cadena vacía/espacios en blanco.
+        // odsArray permanecerá vacío, lo cual es el comportamiento correcto.
+        // console.log('event.ods está vacío o no fue proporcionado. No se parsearán ODS.');
+    }
 
         // Configurar recursos
         let resourcesParsed: { resourceId: number }[] = [];
