@@ -4,6 +4,21 @@ import { loginSchema } from "./schemas"
 import type { Session } from "next-auth"
 import type { JWT } from "next-auth/jwt"
 
+interface User {
+	userId: number;
+	username: string;
+	role: {
+		roleName: string;
+		roleId: number;
+	};
+	token: string;
+	permissions: {
+		permissionId: number;
+		moduleName: string;
+		action: string;
+		description: string;
+	}[];
+}
 declare module "next-auth" {
 	interface Session {
 		user: {
@@ -99,17 +114,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 	callbacks: {
 		async jwt({ token, user }) {
 			if (user) {
-				token.user = user as any;
+				token.user = user as User;
 			}
 			return token;
 		},
 		async session({ session, token }) {
-			const updatedSession = {
+
+			return {
 				...session,
-				user: token.user as Session["user"]
-			};
-			
-			return updatedSession;
+				user: token.user as User 
+
+			}
 		}
 	}
 })
