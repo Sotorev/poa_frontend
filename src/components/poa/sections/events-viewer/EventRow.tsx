@@ -9,6 +9,8 @@ import { ActionButtonsCorrectionsComponent } from './action-buttons-corrections'
 import AportesPEIDialog from './AportesPEIDialog';
 import FinancialDetailsDialog from './FinancialDetailsDialog';
 import ProponentDetailsDialog from './ProponentDetailsDialog';
+import { parseISO, format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 import { toast } from 'react-toastify';
 import DownloadButton from './DownloadButton';
@@ -18,7 +20,7 @@ import { FinancingSource } from '@/types/FinancingSource';
 
 interface EventRowProps {
   event: PlanningEvent;
-  otherFinancing: FinancingSource[]; 
+  otherFinancing: FinancingSource[];
   umesFinancing: FinancingSource[];
   isPending: boolean;
   onApprove: (id: string) => void;
@@ -89,17 +91,12 @@ const EventRow: React.FC<EventRowProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="cursor-help">
-                    I: {new Date(intervalo.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    I: {format(parseISO(intervalo.inicio), 'dd/MM/yyyy', { locale: es })}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>
-                    Inicio: {new Date(intervalo.inicio).toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    Inicio: {format(parseISO(intervalo.inicio), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -109,17 +106,12 @@ const EventRow: React.FC<EventRowProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="cursor-help">
-                    F: {new Date(intervalo.fin).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    F: {format(parseISO(intervalo.fin), 'dd/MM/yyyy', { locale: es })}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>
-                    Fin: {new Date(intervalo.fin).toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    Fin: {format(parseISO(intervalo.fin), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
                   </p>
                 </TooltipContent>
               </Tooltip>

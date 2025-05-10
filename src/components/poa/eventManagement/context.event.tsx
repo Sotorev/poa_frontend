@@ -199,7 +199,6 @@ export const EventProvider = ({ children }: ProviderProps) => {
     }, [user?.userId, user?.token]);
 
     const parseUpdateEventRequest = async (event: PlanningEvent): Promise<UpdateEventRequest> => {
-        console.log('Parsing event:', event);
 
         // Convertir las fechas de PlanningEvent a formato para FullEventRequest
         const dates = event.fechas.map(fecha => ({
@@ -314,7 +313,6 @@ export const EventProvider = ({ children }: ProviderProps) => {
         } else {
             // event.ods es null, undefined, no es una cadena, o es una cadena vacía/espacios en blanco.
             // odsArray permanecerá vacío, lo cual es el comportamiento correcto.
-            // console.log('event.ods está vacío o no fue proporcionado. No se parsearán ODS.');
         }
 
         let purchaceTypesParsed: { purchaseTypeId: number }[] = [];
@@ -329,11 +327,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
         if (event.recursos) {
             // Asumo que recursos es una lista de IDs separados por comas
             const resourcesMatched = event.recursos.split(',').map(r => resources.find(resource => resource.name === r.trim()));
-            console.log('resourcesMatched', resourcesMatched);
-
             resourcesParsed = resourcesMatched.map(r => ({ resourceId: r?.resourceId || 0 }));
-
-            console.log('resourcesParsed', resourcesParsed);
         }
 
         // Establecer el tipo de evento (Actividad o Proyecto)
