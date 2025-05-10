@@ -6,8 +6,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { signIn } from "next-auth/react"; // Import signIn from next-auth/react
-import { login } from "@/actions/login";
+import { signIn } from "next-auth/react";
 import Logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,47 +20,49 @@ import { Input } from "@/components/ui/input";
 import { loginSchema } from "@/schemas";
 import { FormError } from "./form-error";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
+import { AuthError } from "next-auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
 	const [error, setError] = useState<string | null>(null);
+	const [isPending, setIsPending] = useState(false);
 	const router = useRouter();
 
 	const {
 		register,
 		handleSubmit,
-		formState: { errors, isSubmitting },
+		formState: { errors },
 	} = useForm<LoginFormValues>({
 		resolver: zodResolver(loginSchema),
 	});
 
 	const onSubmit = async (data: LoginFormValues) => {
 		setError(null);
+		setIsPending(true);
 
-		// Validate inputs on the server side
-		const validationResult = await login(data);
-		if (!validationResult.success) {
-			setError(validationResult.error);
-			return;
-		}
+		try {
+			const result = await signIn("credentials", {
+				username: data.username,
+				password: data.password,
+				redirect: false,
+			});
 
-		// Perform sign-in on the client side
-		const res = await signIn("credentials", {
-			username: data.username,
-			password: data.password,
-			redirect: false, // We will handle redirection manually
-		});
-
-		if (res?.error) {
-			// Handle authentication errors
-			setError("Usuario o contraseña incorrectos.");
-		} else if (res?.ok) {
-			// Redirect to the default login redirect path
-			router.push(DEFAULT_LOGIN_REDIRECT);
-		} else {
-			// Handle unexpected errors
-			setError("Ocurrió un error inesperado.");
+			if (!result?.error) {
+				router.push(DEFAULT_LOGIN_REDIRECT);
+				router.refresh();
+			} else {
+				setError("Usuario o contraseña incorrectos.");
+			}
+		} catch (error) {
+			if (error instanceof AuthError) {
+				setError("Error de autenticación: " + error.type);
+			} else {
+				console.error(error);
+				setError("Ocurrió un error inesperado.");
+			}
+		} finally {
+			setIsPending(false);
 		}
 	};
 
@@ -88,7 +89,7 @@ export default function LoginPage() {
 					<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 						<div className="space-y-2">
 							<Input
-								disabled={isSubmitting}
+								disabled={isPending}
 								id="username"
 								{...register("username")}
 								className="w-full border-gray-300 focus:border-[#007041] focus:ring-[#007041] rounded-md shadow-sm placeholder-gray-400"
@@ -100,7 +101,7 @@ export default function LoginPage() {
 						</div>
 						<div className="space-y-2">
 							<Input
-								disabled={isSubmitting}
+								disabled={isPending}
 								id="password"
 								type="password"
 								{...register("password")}
@@ -115,9 +116,9 @@ export default function LoginPage() {
 						<Button
 							type="submit"
 							className="w-full bg-[#007041] hover:bg-[#2e8f66]"
-							disabled={isSubmitting}
+							disabled={isPending}
 						>
-							{isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
+							{isPending ? "Iniciando sesión..." : "Iniciar sesión"}
 						</Button>
 					</form>
 				</CardContent>
