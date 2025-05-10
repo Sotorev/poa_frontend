@@ -181,6 +181,15 @@ export const EventPlanningFormProvider: React.FC<{
         reset(emptyArrayValues);
     }
 
+    // Efecto para cargar los datos del evento en el formulario cuando eventEditing cambia
+    useEffect(() => {
+        if (eventEditing?.data) {
+            // Actualizar el formulario con los datos del evento
+            reset(eventEditing.data);
+            console.log('Formulario actualizado con datos del evento:', eventEditing.data);
+        }
+    }, [eventEditing, reset])
+
     const phases = [
         {
             number: 1,

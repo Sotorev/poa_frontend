@@ -105,6 +105,7 @@ export function EventPlanningForm({
         eventEditing,
         isProposeDialogOpen,
         setIsProposeDialogOpen,
+        resetEventEditing,
     } = useContext(EventContext)
 
     const { handleAddProposal } = useAreaObjectiveStrategicApproval()
@@ -151,6 +152,9 @@ export function EventPlanningForm({
             <Dialog open={isOpen} onOpenChange={(open) => {
                 if (!open) {
                     reset();
+                    // Primero llamamos a resetEventEditing para limpiar el estado de edición
+                    resetEventEditing();
+                    // Luego cerramos el diálogo
                     setIsOpen(false);
                 }
             }}>
@@ -168,6 +172,8 @@ export function EventPlanningForm({
                             e.stopPropagation();
                             reset();
                             setIsOpen(false);
+                            // Llamar a resetEventEditing para limpiar el estado de edición en el contexto
+                            resetEventEditing();
                         }}
                         className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none z-50"
                     >
@@ -480,8 +486,12 @@ export function EventPlanningForm({
 
                     <div className="flex justify-end gap-2 p-4 border-t bg-gray-50 flex-shrink-0 sticky bottom-0 z-20">
                         <Button variant="outline" onClick={() => {
-                            reset();
+                            // Primero cerramos el diálogo
                             setIsOpen(false);
+                            // Luego limpiamos el formulario
+                            reset();
+                            // Finalmente reseteamos el estado de edición
+                            resetEventEditing();
                         }} disabled={isSubmitting}>
                             Cancelar
                         </Button>
