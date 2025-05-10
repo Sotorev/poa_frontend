@@ -56,6 +56,7 @@ interface EventContextProps {
     setPoaId: (poaId: number) => void;
     eventEditing: UpdateEventRequest | undefined;
     handleEditEvent: (event: PlanningEvent) => void;
+    resetEventEditing: () => void;
     isProposeDialogOpen: boolean;
     setIsProposeDialogOpen: (isOpen: boolean) => void;
 }
@@ -85,6 +86,7 @@ export const EventContext = createContext<EventContextProps>({
     setPoaId: (_poaId: number) => { },
     eventEditing: undefined,
     handleEditEvent: (_event: PlanningEvent) => { },
+    resetEventEditing: () => { },
     isProposeDialogOpen: false,
     setIsProposeDialogOpen: (_isOpen: boolean) => { },
 });
@@ -362,6 +364,13 @@ export const EventProvider = ({ children }: ProviderProps) => {
         }
     };
 
+    // Función para resetear el estado de edición
+    const resetEventEditing = () => {
+        setEventEditing(undefined);
+        setSelectedStrategicObjective(undefined);
+        setSelectedStrategies(undefined);
+    };
+
     // Función para manejar la edición de un evento (Actualizar)
     const handleEditEvent = async (event: PlanningEvent) => {
 
@@ -401,6 +410,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 selectedStrategies,
                 setSelectedStrategies,
                 handleEditEvent,
+                resetEventEditing,
                 isProposeDialogOpen,
                 setIsProposeDialogOpen,
             }}

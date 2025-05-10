@@ -148,7 +148,12 @@ export function EventPlanningForm({
             />
 
 
-            <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
+            <Dialog open={isOpen} onOpenChange={(open) => {
+                if (!open) {
+                    reset();
+                    setIsOpen(false);
+                }
+            }}>
                 <DialogContent
                     className="max-w-4xl p-0 flex flex-col overflow-hidden"
                     style={{
@@ -161,7 +166,7 @@ export function EventPlanningForm({
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            reset()
+                            reset();
                             setIsOpen(false);
                         }}
                         className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none z-50"

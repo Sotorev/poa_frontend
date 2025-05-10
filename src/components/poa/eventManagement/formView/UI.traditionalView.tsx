@@ -20,7 +20,8 @@ import { EventContext } from '../context.event'
 
 export function TraditionalView() {
   const {
-    setIsOpen
+    setIsOpen,
+    resetEventEditing
   } = useContext(EventContext)
 
 
@@ -31,7 +32,7 @@ export function TraditionalView() {
       </EventPlanningFormProvider>
 
       <div className="flex justify-center">
-        <Button onClick={() => { setIsOpen(true) }} className="px-8 my-2 mb-6">Agregar Evento</Button>
+        <Button onClick={() => { resetEventEditing(); setIsOpen(true) }} className="px-8 my-2 mb-6">Agregar Evento</Button>
       </div>
       <EventsCorrectionsComponent
         name="Revisión de eventos"
