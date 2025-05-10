@@ -48,6 +48,7 @@ export default function LoginPage() {
 				redirect: false,
 			});
 
+
 			if (!result?.error) {
 				router.push(DEFAULT_LOGIN_REDIRECT);
 				router.refresh();
@@ -56,7 +57,7 @@ export default function LoginPage() {
 			}
 		} catch (error) {
 			if (error instanceof AuthError) {
-				setError("Error de autenticación: " + error.type);
+				setError("Error de autenticación: " + error);
 			} else {
 				console.error(error);
 				setError("Ocurrió un error inesperado.");
