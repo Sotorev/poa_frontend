@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Search, Download, Edit, RotateCcw, FileText, Eye, Loader2, CalendarIcon, Calendar as CalendarIcon2, Info, ChevronLeft, ChevronRight, ServerCog } from "lucide-react"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, isBefore } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -373,13 +373,7 @@ export const EventFinishedTable: React.FC<EventFinishedTableProps> = ({
                 captionLayout="dropdown-buttons"
                 fromYear={new Date().getFullYear() - 5}
                 toYear={new Date().getFullYear() + 5}
-                disabled={(date) => {
-                  // Deshabilitar fechas anteriores a la fecha de inicio
-                  if (dateFilter.startDate) {
-                    return date < parseISO(dateFilter.startDate)
-                  }
-                  return false
-                }}
+                disabled={(date) => dateFilter.startDate ? isBefore(date, parseISO(dateFilter.startDate)) : false}
               />
             </PopoverContent>
           </Popover>
