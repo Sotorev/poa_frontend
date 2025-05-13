@@ -77,7 +77,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
               <TableCell>
                 <div className="space-y-2">
                   {executedEvent.eventDates.map((date) => (
-                    date.statusId === 2 ? <div key={date.eventDateId} className="text-sm text-gray-600 font-medium">
+                    (date.statusId === 2 || date.statusId === 3) ? <div key={date.eventDateId} className="text-sm text-gray-600 font-medium">
                       {formatDate(date.executionStartDate)}
                     </div> : null
                   ))}

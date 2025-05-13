@@ -8,7 +8,7 @@ import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-track
 
 // Types
 import { ApiEvent } from '@/types/interfaces'
-import { EventExecution, FormValues, RequestEventExecution, UpdateEventExecutedPayload, ResponseExecutedEvent } from '@/types/eventExecution.type'
+import { EventExecution, FormValues, RequestEventExecution, ResponseExecutedEvent } from '@/types/eventExecution.type'
 
 // Imports for charge data
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
