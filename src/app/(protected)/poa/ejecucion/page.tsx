@@ -147,12 +147,12 @@ export default function PoaTrackingPage() {
     // Make a deep copy to avoid mutating the original event
     const eventCopy : ResponseExecutedEvent = JSON.parse(JSON.stringify(event));
     
-    eventCopy.eventDates = eventCopy.eventDates.filter(d => d.statusId !== 3);
+    eventCopy.eventDates = eventCopy.eventDates;
 
     eventCopy.eventDates = eventCopy.eventDates.map(d => ({
       ...d,
-      isEnabled : d.statusId === 2 ? true : false,
-      executionStartDate: d.statusId === 2 ? d.executionStartDate : d.startDate
+      isEnabled : (d.statusId === 2 || d.statusId === 3) ? true : false,
+      executionStartDate: (d.statusId === 2 || d.statusId === 3) ? d.executionStartDate : d.startDate
     }));
     setEditingEvent(eventCopy);
     setIsDialogOpen(true);

@@ -1,6 +1,6 @@
 // src/hooks/use-poa-event-tracking-form.ts
-import { useState, useEffect, FormEvent, use } from "react";
-import { useForm, useFieldArray, Path, useWatch } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 // charge data
