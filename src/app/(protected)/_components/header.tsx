@@ -180,7 +180,7 @@ export default function Header() {
 											</NavigationMenuContent>
 										</>
 									) : (
-										<Link href={item.href} legacyBehavior passHref>
+										<Link href={item.href} >
 											<NavigationMenuLink className={clsx(navigationMenuTriggerStyle(), "bg-transparent", pathname === item.href && "text-primary")}>
 												{item.title}
 											</NavigationMenuLink>
