@@ -47,7 +47,7 @@ export default function AccountButton({ username }: { username?: string }) {
 				</DropdownMenuItem>
 				<Link href="/manuales-de-usuario" passHref>
 					<DropdownMenuItem asChild>
-						<a>Manuales de usuario</a>
+						Manuales de usuario
 					</DropdownMenuItem>
 				</Link>
 			</DropdownMenuContent>
