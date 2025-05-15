@@ -83,8 +83,8 @@ const navItems: NavItem[] = [
 		description: "Plan Operativo Anual",
 		// requiredRoles: ['Vicerrector', 'Decano', 'Administrador'],
 		subItems: [
-			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: Settings },
-			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Vicerrector', 'Decano', "Formulador", "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: FileText },
+			{ title: "Gestión", href: "/poa/gestion", description: "Gestión del POA", requiredRoles: ['Vicerrector', 'Decano', "Administrador", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: Settings },
+			{ title: "Crear evento", href: "/poa/crear", description: "Crear nuevo evento de POA", requiredRoles: ['Decano', "Formulador", "Administrador", "Coordinador Pedagógico", "Directora", "Directora académica"], icon: FileText },
 			{ title: "Aprobación", href: "/poa/aprobacion", description: "Aprobación del POA", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Rector", "Tesorería"], icon: CheckSquare },
 		],
 	},
@@ -122,7 +122,7 @@ const navItems: NavItem[] = [
 		href: "/propuestas",
 		icon: FileText,
 		description: "Propuestas",
-		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico"],
+		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Coordinador Pedagógico", "Decano"],
 		subItems: [
 			{ title: "Area y Objetivo Estratégico", href: "/propuestas/area-objetivo-estrategico", description: "Propuestas de área y objetivo estratégico", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
 			{ title: "Estrategias", href: "/propuestas/estrategias", description: "Propuestas de estrategias", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
