@@ -78,6 +78,7 @@ export function PoaDashboardMain() {
   const [approvalStatuses, setApprovalStatuses] = useState<ApprovalStatus[]>([]);
   const [isPoaApproved, setIsPoaApproved] = useState<boolean>(false);
   const { selectedYear } = useContext(PoaContext); // Obtener el año seleccionado del contexto
+  const [isLoadingPoaApproval, setIsLoadingPoaApproval] = useState<boolean>(true); // Estado para la carga
 
   /**
    * Obtiene y establece los estados de aprobación del POA.
@@ -127,6 +128,8 @@ export function PoaDashboardMain() {
           setIsPoaApproved(data.isApproved);
         } catch (error) {
           console.error('Error al obtener el estado de aprobación del POA:', error);
+        } finally {
+          setIsLoadingPoaApproval(false); // Indicar que la carga ha terminado
         }
       }
     };
@@ -386,20 +389,24 @@ export function PoaDashboardMain() {
         </div>
 
         {/* Renderizar las secciones */}
-        {poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
-          <section.component
-            key={section.name}
-            name={section.name}
-            isActive={activeSection === section.name}
-            poaId={poaId} // Pasar el poaId a cada sección
-            facultyId={facultyId} // Pasar el facultyId a cada sección
-            userId={userId ?? 0} // Pasar el userId a cada sección
-            rolId={rolId ?? 0} // Pasar el rolId a cada sección
-            isEditable={!isPoaApproved} // Pasar la prop isEditable combinada
-            aprovalStatuses={approvalStatuses} // Pasar el estado de aprobación
-            onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
-          />
-        ))}
+        {isLoadingPoaApproval ? (
+          <p>Cargando estado de aprobación del POA...</p> // O un componente de spinner
+        ) : (
+          poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
+            <section.component
+              key={section.name}
+              name={section.name}
+              isActive={activeSection === section.name}
+              poaId={poaId} // Pasar el poaId a cada sección
+              facultyId={facultyId} // Pasar el facultyId a cada sección
+              userId={userId ?? 0} // Pasar el userId a cada sección
+              rolId={rolId ?? 0} // Pasar el rolId a cada sección
+              isEditable={!isPoaApproved} // Pasar la prop isEditable combinada
+              aprovalStatuses={approvalStatuses} // Pasar el estado de aprobación
+              onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
+            />
+          ))
+        )}
         <div className="mb-32"></div>
 
       </div>
