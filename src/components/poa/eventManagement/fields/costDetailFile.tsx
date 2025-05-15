@@ -25,14 +25,6 @@ export function CostDetailFile({ files, onFilesChange }: CostDetailFileProps) {
   const [localFiles, setLocalFiles] = useState<FileWithId[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  useEffect(() => {
-    console.log("files", files)
-  }, [files])
-
-  useEffect(() => {
-    console.log("localFiles", localFiles)
-  }, [localFiles])
-  
   // Referencia para controlar si estamos en el primer renderizado
   const initialRender = useRef(true)
 

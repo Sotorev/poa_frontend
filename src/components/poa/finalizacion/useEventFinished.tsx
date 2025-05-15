@@ -132,31 +132,50 @@ export const useEventFinished = () => {
     });
 }, [user?.userId, user?.token]);
 
-  // Filtrado de eventos finalizados
-  const filteredFinishedEvents = useMemo(() => {
-    if (!Array.isArray(finishedEvents)) return [];
-    
-    return finishedEvents.filter(event => {
-      const matchesSearch = searchTerm === '' || 
-        event.name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesDateFilter = !dateFilter.startDate && !dateFilter.endDate || 
-        event.dates?.some(date => {
-          if (dateFilter.startDate && dateFilter.endDate) {
-            return date.endDate >= dateFilter.startDate && date.endDate <= dateFilter.endDate;
-          }
-          if (dateFilter.startDate) {
-            return date.endDate >= dateFilter.startDate;
-          }
-          if (dateFilter.endDate) {
-            return date.endDate <= dateFilter.endDate;
-          }
-          return true;
-        });
-      
-      return matchesSearch && matchesDateFilter;
-    });
-  }, [finishedEvents, searchTerm, dateFilter]);
+// Filtrado de eventos finalizados
+const filteredFinishedEvents = useMemo(() => {
+  if (!Array.isArray(finishedEvents)) return [];
+
+  const { startDate, endDate } = dateFilter;
+
+  return finishedEvents.filter(event => {
+    // 1) Filtrado por nombre
+    const matchesSearch =
+      searchTerm === '' ||
+      event.name?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // 2) Filtrado por fechas (siempre usando executionEndDate)
+    const matchesDateFilter = (() => {
+      // Si no hay ningún filtro, dejamos pasar todo
+      if (!startDate && !endDate) return true;
+
+      if (!Array.isArray(event.dates) || event.dates.length === 0) {
+        // Sin fechas, no lo incluimos
+        return false;
+      }
+
+      return event.dates.some(date => {
+        const execEnd = date.executionEndDate;
+        if (!execEnd) return false; // descartar si no existe
+
+        // Si hay startDate y execEnd es anterior → fuera
+        if (startDate && execEnd < startDate) {
+          return false;
+        }
+        // Si hay endDate y execEnd es posterior → fuera
+        if (endDate && execEnd > endDate) {
+          return false;
+        }
+        // Cumple con todos los filtros aplicables
+        return true;
+      });
+    })();
+
+    return matchesSearch && matchesDateFilter;
+  });
+}, [finishedEvents, searchTerm, dateFilter]);
+
+
 
   // Filtrado de eventos ejecutados
   const filteredExecutedEvents = useMemo(() => {

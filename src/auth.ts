@@ -7,6 +7,7 @@ import type { JWT } from "next-auth/jwt"
 interface User {
 	userId: number;
 	username: string;
+	facultyId: number;
 	role: {
 		roleName: string;
 		roleId: number;
@@ -24,6 +25,7 @@ declare module "next-auth" {
 		user: {
 			userId: number;
 			username: string;
+			facultyId: number;
 			role: {
 				roleName: string;
 				roleId: number;
@@ -44,6 +46,7 @@ declare module "next-auth/jwt" {
 		user: {
 			userId: number;
 			username: string;
+			facultyId: number;
 			role: {
 				roleName: string;
 				roleId: number;

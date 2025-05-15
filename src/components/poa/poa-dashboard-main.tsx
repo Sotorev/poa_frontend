@@ -75,9 +75,10 @@ export function PoaDashboardMain() {
   const user = useCurrentUser();
   const [userId, setUserId] = useState<number>(); // Estado para almacenar el userId
   const [rolId, setRolId] = useState<number>(); // Estado para almacenar el rolId
-  const [isEditable, setIsEditable] = useState<boolean>(false); // Estado para habilitar o deshabilitar el botón
   const [approvalStatuses, setApprovalStatuses] = useState<ApprovalStatus[]>([]);
+  const [isPoaApproved, setIsPoaApproved] = useState<boolean>(false);
   const { selectedYear } = useContext(PoaContext); // Obtener el año seleccionado del contexto
+  const [isLoadingPoaApproval, setIsLoadingPoaApproval] = useState<boolean>(true); // Estado para la carga
 
   /**
    * Obtiene y establece los estados de aprobación del POA.
@@ -109,6 +110,31 @@ export function PoaDashboardMain() {
     handleSetStatusApproval();
   }, [user, poaId]);
 
+  // Obtener si el POA fue aprobado para deshabilitar formularios
+  useEffect(() => {
+    const fetchPoaApprovalFlag = async () => {
+      if (user?.token && poaId !== undefined) {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/poas/status/${poaId}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${user.token}`
+            }
+          });
+          if (!response.ok) {
+            throw new Error('Error al obtener el estado de aprobación del POA.');
+          }
+          const data = await response.json();
+          setIsPoaApproved(data.isApproved);
+        } catch (error) {
+          console.error('Error al obtener el estado de aprobación del POA:', error);
+        } finally {
+          setIsLoadingPoaApproval(false); // Indicar que la carga ha terminado
+        }
+      }
+    };
+    fetchPoaApprovalFlag();
+  }, [user, poaId]);
 
   useEffect(() => {
     if (!user) {
@@ -191,14 +217,6 @@ export function PoaDashboardMain() {
 
     const poa = await getPoaByFacultyAndYear(facultyId, selectedYear, user.token);
     setPoaId(poa.poaId);
-
-    // Verificar el estado del POA y actualizar la habilitación del botón
-    const status = poa.status;
-    if (status === "Abierto") {
-      setIsEditable(true); // Habilitar edición
-    } else {
-      setIsEditable(false); // Deshabilitar edición
-    }
   }
 
   const handleCreatePoa = async () => {
@@ -288,6 +306,7 @@ export function PoaDashboardMain() {
     }
   };
 
+
   return (
     <main className="flex bg-gray-100 min-h-screen">
       <TooltipProvider>
@@ -370,20 +389,24 @@ export function PoaDashboardMain() {
         </div>
 
         {/* Renderizar las secciones */}
-        {poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
-          <section.component
-            key={section.name}
-            name={section.name}
-            isActive={activeSection === section.name}
-            poaId={poaId} // Pasar el poaId a cada sección
-            facultyId={facultyId} // Pasar el facultyId a cada sección
-            userId={userId ?? 0} // Pasar el userId a cada sección
-            rolId={rolId ?? 0} // Pasar el rolId a cada sección
-            isEditable={isEditable} // Pasar la prop isEditable
-            aprovalStatuses={approvalStatuses} // Pasar el estado de aprobación
-            onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
-          />
-        ))}
+        {isLoadingPoaApproval ? (
+          <p>Cargando estado de aprobación del POA...</p> // O un componente de spinner
+        ) : (
+          poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
+            <section.component
+              key={section.name}
+              name={section.name}
+              isActive={activeSection === section.name}
+              poaId={poaId} // Pasar el poaId a cada sección
+              facultyId={facultyId} // Pasar el facultyId a cada sección
+              userId={userId ?? 0} // Pasar el userId a cada sección
+              rolId={rolId ?? 0} // Pasar el rolId a cada sección
+              isEditable={!isPoaApproved} // Pasar la prop isEditable combinada
+              aprovalStatuses={approvalStatuses} // Pasar el estado de aprobación
+              onStatusChange={section.name === "Aprobar POA" ? handleReloadData : undefined} // Pasar la función de recarga de datos
+            />
+          ))
+        )}
         <div className="mb-32"></div>
 
       </div>

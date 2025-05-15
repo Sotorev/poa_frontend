@@ -552,7 +552,7 @@ export function CostReport({ name, isActive, poaId }: CostReportProps) {
                   <div className="flex h-full">
                     {financingSourcesWithColors.map((source) => (
                       <div
-                        key={source.name}
+                        key={source.name + source.percentageOfTotalCost}
                         className="h-full"
                         style={{
                           width: `${source.percentageOfTotalCost}%`,
@@ -564,7 +564,7 @@ export function CostReport({ name, isActive, poaId }: CostReportProps) {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                   {financingSourcesWithColors.map((source) => (
-                    <span key={source.name} className="flex items-center">
+                    <span key={source.name + source.percentageOfTotalCost} className="flex items-center">
                       <div 
                         className="w-3 h-3 rounded-full mr-1" 
                         style={{ backgroundColor: source.color }}

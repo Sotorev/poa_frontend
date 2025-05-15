@@ -56,6 +56,7 @@ interface EventContextProps {
     setPoaId: (poaId: number) => void;
     eventEditing: UpdateEventRequest | undefined;
     handleEditEvent: (event: PlanningEvent) => void;
+    resetEventEditing: () => void;
     isProposeDialogOpen: boolean;
     setIsProposeDialogOpen: (isOpen: boolean) => void;
 }
@@ -85,6 +86,7 @@ export const EventContext = createContext<EventContextProps>({
     setPoaId: (_poaId: number) => { },
     eventEditing: undefined,
     handleEditEvent: (_event: PlanningEvent) => { },
+    resetEventEditing: () => { },
     isProposeDialogOpen: false,
     setIsProposeDialogOpen: (_isOpen: boolean) => { },
 });
@@ -199,6 +201,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
     }, [user?.userId, user?.token]);
 
     const parseUpdateEventRequest = async (event: PlanningEvent): Promise<UpdateEventRequest> => {
+
         // Convertir las fechas de PlanningEvent a formato para FullEventRequest
         const dates = event.fechas.map(fecha => ({
             startDate: fecha.inicio || new Date(fecha.inicio).toISOString().split('T')[0],
@@ -256,43 +259,81 @@ export const EventProvider = ({ children }: ProviderProps) => {
 
         // Configurar ODS
         // Asumo que el campo ods contiene IDs separados por comas
-        let odsArray: { ods: number }[] = [];
-        if (event.ods) {
-            const odsMatched = event.ods.split(',').map(o => odsList.find(ods => ods.name === o));
-            odsArray = odsMatched.map(o => ({ ods: o?.odsId || 0 }));
+        const odsArray: { ods: number }[] = [];
+
+        // Verificar que event.ods es una cadena no vacía y que odsList está disponible y no vacío.
+        if (event.ods && typeof event.ods === 'string' && event.ods.trim() !== '') {
+            if (typeof odsList !== 'undefined' && odsList && odsList.length > 0) {
+                let currentOdsSegment = event.ods.trim();
+
+                // Ordenar la lista de ODS por la longitud de sus nombres en orden descendente.
+                // Esto es crucial para que los nombres más largos (ej: "Paz, justicia e instituciones sólidas")
+                // se intenten hacer coincidir antes que nombres más cortos que podrían ser subcadenas.
+                const sortedOdsList = [...odsList].sort((a, b) => {
+                    const nameA = a.name || "";
+                    const nameB = b.name || "";
+                    return nameB.length - nameA.length;
+                });
+
+                while (currentOdsSegment.length > 0) {
+                    let foundMatchInIteration = false;
+                    for (const odsItem of sortedOdsList) {
+                        // Asegurar que odsItem.name es una cadena antes de llamar a startsWith
+                        if (odsItem && typeof odsItem.name === 'string' && currentOdsSegment.startsWith(odsItem.name)) {
+                            odsArray.push({ ods: odsItem.odsId });
+
+                            const remainingAfterMatch = currentOdsSegment.substring(odsItem.name.length);
+
+                            // Eliminar el separador (coma y el espacio que típicamente le sigue)
+                            if (remainingAfterMatch.startsWith(', ')) {
+                                currentOdsSegment = remainingAfterMatch.substring(2).trim();
+                            } else if (remainingAfterMatch.startsWith(',')) {
+                                // Manejar el caso donde solo hay una coma sin espacio después
+                                currentOdsSegment = remainingAfterMatch.substring(1).trim();
+                            } else {
+                                // Si no hay coma, significa que era el último elemento o la cadena termina.
+                                currentOdsSegment = remainingAfterMatch.trim();
+                            }
+
+                            foundMatchInIteration = true;
+                            // Romper el bucle interno para reiniciar la búsqueda con la cadena actualizada.
+                            break;
+                        }
+                    }
+
+                    // Si en una iteración completa no se encontró ninguna coincidencia,
+                    // pero la cadena aún tiene contenido, significa que hay una parte no parseable.
+                    if (!foundMatchInIteration && currentOdsSegment.length > 0) {
+                        // console.warn(`Advertencia: Segmento de ODS no parseable en event.ods: "${currentOdsSegment}"`);
+                        // Detener el parseo para evitar bucles infinitos con entradas mal formadas.
+                        break;
+                    }
+                }
+            } else {
+                // console.warn('La lista de ODS (odsList) está vacía o no está disponible. No se pueden parsear los nombres de ODS desde event.ods.');
+            }
+        } else {
+            // event.ods es null, undefined, no es una cadena, o es una cadena vacía/espacios en blanco.
+            // odsArray permanecerá vacío, lo cual es el comportamiento correcto.
+        }
+
+        let purchaceTypesParsed: { purchaseTypeId: number }[] = [];
+        if (event.tipoCompra) {
+            // Asumo que tipoCompra es una lista de IDs separados por comas
+            const purchaseTypesMatched = event.tipoCompra.split(',').map(r => purchaseTypes.find(resource => resource.name === r));
+            purchaceTypesParsed = purchaseTypesMatched.map(r => ({ purchaseTypeId: r?.purchaseTypeId || 0 }));
         }
 
         // Configurar recursos
         let resourcesParsed: { resourceId: number }[] = [];
         if (event.recursos) {
             // Asumo que recursos es una lista de IDs separados por comas
-            const resourcesMatched = event.recursos.split(',').map(r => resources.find(resource => resource.name === r));
+            const resourcesMatched = event.recursos.split(',').map(r => resources.find(resource => resource.name === r.trim()));
             resourcesParsed = resourcesMatched.map(r => ({ resourceId: r?.resourceId || 0 }));
         }
 
         // Establecer el tipo de evento (Actividad o Proyecto)
         const type = event.tipoEvento === 'actividad' ? 'Actividad' : 'Proyecto';
-
-        // let processDocuments: {fileId: number, file: File}[] = [];
-        // let costDetailDocuments: {costDetailId: number, file: File}[] = [];
-        // try {
-        //     // Descargar archivos adjuntos
-        //     processDocuments = await Promise.all(
-        //         event.detalleProceso.map((doc) =>
-        //             downloadFileAux(`/api/fullEvent/downloadEventFileById/${doc.fileId}`, doc.fileName, user?.token || '')
-        //             .then(file => ({fileId: doc.fileId, file: file}))
-        //         )
-        //     );
-
-        //     costDetailDocuments = await Promise.all(
-        //         event.detalle.map((doc) =>
-        //             downloadFileAux(`/api/fullEvent/downloadEventCostDetailDocumentById/${doc.costDetailId}`, doc.fileName, user?.token || '')
-        //             .then(file => ({costDetailId: doc.costDetailId, file: file}))
-        //         )
-        //     );
-        // } catch (error) {
-        //     console.error('Error al descargar archivos adjuntos:', error);
-        // }
 
         return {
             data: {
@@ -306,7 +347,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 eventNature: event.naturalezaEvento || "Planificado",
                 isDelayed: false,
                 achievementIndicator: event.indicadorLogro,
-                purchaseTypeId: parseInt(event.tipoCompra, 10) || 1,
+                purchaseTypeId: purchaceTypesParsed.length > 0 ? purchaceTypesParsed[0].purchaseTypeId : 0,
                 totalCost: event.costoTotal,
                 dates: dates,
                 financings: financings,
@@ -321,6 +362,13 @@ export const EventProvider = ({ children }: ProviderProps) => {
             },
             eventId: parseInt(event.id, 10)
         }
+    };
+
+    // Función para resetear el estado de edición
+    const resetEventEditing = () => {
+        setEventEditing(undefined);
+        setSelectedStrategicObjective(undefined);
+        setSelectedStrategies(undefined);
     };
 
     // Función para manejar la edición de un evento (Actualizar)
@@ -362,6 +410,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 selectedStrategies,
                 setSelectedStrategies,
                 handleEditEvent,
+                resetEventEditing,
                 isProposeDialogOpen,
                 setIsProposeDialogOpen,
             }}

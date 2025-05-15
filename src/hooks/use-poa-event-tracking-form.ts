@@ -1,6 +1,6 @@
 // src/hooks/use-poa-event-tracking-form.ts
-import { useState, useEffect, FormEvent, use } from "react";
-import { useForm, useFieldArray, Path, useWatch } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 // charge data
@@ -92,7 +92,7 @@ export function usePoaEventTrackingFormLogic(
 
   // Carga las fuentes de financiamiento y los archivos de costos en el paso 2
   useEffect(() => {
-    if (currentStep === 2 && selectedEvent) {
+    if (selectedEvent) {
       const setAportes = (
         field: "aportesUmes" | "aportesOtros",
         ids: number[]
@@ -133,10 +133,10 @@ export function usePoaEventTrackingFormLogic(
 
       fetchCostFiles();
     }
-  }, [currentStep, selectedEvent, form, user?.token]);
+  }, [selectedEvent, form, user?.token]);
 
   useEffect(() => {
-      if (currentStep === 3 && selectedEvent) {
+      if (selectedEvent) {
   
         const defaultDate = {
           eventDateId: 0,
@@ -173,7 +173,7 @@ export function usePoaEventTrackingFormLogic(
         
         form.setValue('fechas', eventDates.length > 0 ? eventDates : [defaultDate]);
       }
-    }, [currentStep, selectedEvent, form, initialData]);
+    }, [selectedEvent, form, initialData]);
 
   // Carga de tipos de fuentes de financiamiento
   useEffect(() => {

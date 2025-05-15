@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon, Trash2Icon } from "lucide-react"
-import { format } from "date-fns"
+import { format, parseISO, isBefore } from "date-fns"
 import { es } from "date-fns/locale"
 
 // Types
@@ -139,7 +139,7 @@ export function ActivityProjectSelector({
   // Función para formatear la fecha para mostrar
   const formatDateDisplay = (dateString: string) => {
     if (!dateString) return "Seleccionar"
-    return format(new Date(dateString), "dd/MM/yyyy", { locale: es })
+    return format(parseISO(dateString), "dd/MM/yyyy", { locale: es })
   }
 
   // Obtener solo las fechas no eliminadas para mostrar
@@ -197,8 +197,8 @@ export function ActivityProjectSelector({
                   <Calendar
                     mode="single"
                     locale={es}
-                    selected={dateRange.startDate ? new Date(dateRange.startDate) : undefined}
-                    defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
+                    selected={dateRange.startDate ? parseISO(dateRange.startDate) : undefined}
+                    defaultMonth={dateRange.startDate ? parseISO(dateRange.startDate) : defaultDate}
                     onSelect={(date) => handleStartDateChange(date, realIndex)}
                     initialFocus
                     captionLayout="dropdown-buttons"
@@ -233,20 +233,14 @@ export function ActivityProjectSelector({
                   <Calendar
                     mode="single"
                     locale={es}
-                    selected={dateRange.endDate ? new Date(dateRange.endDate) : undefined}
+                    selected={dateRange.endDate ? parseISO(dateRange.endDate) : undefined}
                     onSelect={(date) => handleEndDateChange(date, realIndex)}
-                    defaultMonth={dateRange.startDate ? new Date(dateRange.startDate) : defaultDate}
+                    defaultMonth={dateRange.startDate ? parseISO(dateRange.startDate) : defaultDate}
                     captionLayout="dropdown-buttons"
                     fromYear={new Date().getFullYear()} 
                     toYear={new Date().getFullYear() + 10}
                     initialFocus
-                    disabled={(date) => {
-                    // Deshabilitar fechas anteriores a la fecha de inicio
-                    if (dateRange.startDate) {
-                      return date < new Date(dateRange.startDate)
-                    }
-                    return false
-                    }}
+                    disabled={(date) => dateRange.startDate ? isBefore(date, parseISO(dateRange.startDate)) : false}
                     className="rounded-md border"
                   />
                   </PopoverContent>

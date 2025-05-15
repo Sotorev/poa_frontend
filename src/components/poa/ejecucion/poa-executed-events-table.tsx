@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ResponseExecutedEvent } from "@/types/eventExecution.type"
 import { useState } from "react"
+import { format, parseISO } from "date-fns"
+import { es } from "date-fns/locale"
 import ExecutedEventDetailsDialog from "./executed-event-details-dialog"
 
 type PoaExecutedEventsTableProps = {
@@ -24,11 +26,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-GT", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
+    return format(parseISO(dateString), "d 'de' MMMM 'de' yyyy", { locale: es })
   }
 
   return (
@@ -79,7 +77,7 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
               <TableCell>
                 <div className="space-y-2">
                   {executedEvent.eventDates.map((date) => (
-                    date.statusId === 2 ? <div key={date.eventDateId} className="text-sm text-gray-600 font-medium">
+                    (date.statusId === 2 || date.statusId === 3) ? <div key={date.eventDateId} className="text-sm text-gray-600 font-medium">
                       {formatDate(date.executionStartDate)}
                     </div> : null
                   ))}

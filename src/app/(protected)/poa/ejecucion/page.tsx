@@ -8,7 +8,7 @@ import { PoaEventTrackingForm } from "@/components/poa/ejecucion/poa-event-track
 
 // Types
 import { ApiEvent } from '@/types/interfaces'
-import { EventExecution, FormValues, RequestEventExecution, UpdateEventExecutedPayload, ResponseExecutedEvent } from '@/types/eventExecution.type'
+import { EventExecution, FormValues, RequestEventExecution, ResponseExecutedEvent } from '@/types/eventExecution.type'
 
 // Imports for charge data
 import { getFullEvents, getPoaByFacultyAndYear } from '@/services/apiService'
@@ -143,17 +143,18 @@ export default function PoaTrackingPage() {
     }
   }, [user, poa]);
 
-  const handleEdit = (event: ResponseExecutedEvent) => {
-    event.eventDates = event.eventDates.filter(d => d.statusId !== 3);
+  const handleEdit = (event: ResponseExecutedEvent) => {   
+    // Make a deep copy to avoid mutating the original event
+    const eventCopy : ResponseExecutedEvent = JSON.parse(JSON.stringify(event));
+    
+    eventCopy.eventDates = eventCopy.eventDates;
 
-    event.eventDates = event.eventDates.map(d => ({
+    eventCopy.eventDates = eventCopy.eventDates.map(d => ({
       ...d,
-      isEnabled : d.statusId === 2 ? true : false,
-      executionStartDate: d.statusId === 2 ? d.executionStartDate : d.startDate
+      isEnabled : (d.statusId === 2 || d.statusId === 3) ? true : false,
+      executionStartDate: (d.statusId === 2 || d.statusId === 3) ? d.executionStartDate : d.startDate
     }));
-
-    setEditingEvent(event);
-
+    setEditingEvent(eventCopy);
     setIsDialogOpen(true);
   };
 
@@ -252,8 +253,6 @@ export default function PoaTrackingPage() {
               setEvents(mappedEvents.filter(event =>
                 (event.eventApprovals[0].approvalStatusId === 1 && !event.dates.some(date => date.statusId === 3 || date.statusId === 2))
               ));
-
-              console.log("Eventos actualizados", events);
             });
 
         })

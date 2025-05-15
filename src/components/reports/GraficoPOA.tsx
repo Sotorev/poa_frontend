@@ -163,7 +163,6 @@ export default function PoaChart() {
           endpoint = `${API_URL}/api/reports/financing/event-count-by-objective/${selectedFacultyId}`
         }
 
-        console.log(`Fetching POA data from: ${endpoint}`) // Registro de depuración
 
         const response = await fetch(endpoint, {
           method: 'GET',
@@ -182,7 +181,6 @@ export default function PoaChart() {
 
         const data: PoaData[] = await response.json()
 
-        console.log('POA Data Received:', data) // Registro de depuración
 
         // Mapear los datos para Recharts
         const mapped = data.map(item => ({

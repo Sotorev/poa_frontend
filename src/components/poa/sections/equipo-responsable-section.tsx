@@ -321,36 +321,51 @@ export function EquipoResponsableSectionComponent({ name, isActive, poaId, facul
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-black">Nombre</TableHead>
-                        <TableHead className="text-black">Correo electrónico</TableHead>
-                        <TableHead className="text-black">Nombre de usuario</TableHead>
-                        <TableHead className="text-black">Rol</TableHead> {/* Columna de Rol */}
-                        {isEditing && <TableHead className="text-black">Acciones</TableHead>}
+                        {(() => {
+                          const heads = [
+                            <TableHead key="nombre" className="text-black">Nombre</TableHead>,
+                            <TableHead key="email" className="text-black">Correo electrónico</TableHead>,
+                            <TableHead key="username" className="text-black">Nombre de usuario</TableHead>,
+                            <TableHead key="rol" className="text-black">Rol</TableHead>
+                          ];
+                          if (isEditing) {
+                            heads.push(<TableHead key="acciones" className="text-black">Acciones</TableHead>);
+                          }
+                          return heads;
+                        })()}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {teamMembers.map((member) => {
-                        const role = roles.find(r => r.roleId === member.roleId)?.roleName || 'Desconocido'
+                        const role = roles.find(r => r.roleId === member.roleId)?.roleName || 'Desconocido';
+                        
+                        const cells = [
+                          <TableCell key="name">{member.name}</TableCell>,
+                          <TableCell key="email">{member.email}</TableCell>,
+                          <TableCell key="username">{member.username}</TableCell>,
+                          <TableCell key="role">{role}</TableCell>
+                        ];
+
+                        if (isEditing) {
+                          cells.push(
+                            <TableCell key="actions">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleRemoveMember(member.userId)}
+                                className="text-primary hover:text-primary hover:bg-green-100"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          );
+                        }
+                        
                         return (
                           <TableRow key={member.username}>
-                            <TableCell>{member.name}</TableCell>
-                            <TableCell>{member.email}</TableCell>
-                            <TableCell>{member.username}</TableCell>
-                            <TableCell>{role}</TableCell> {/* Mostrar el nombre del rol */}
-                            {isEditing && (
-                              <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleRemoveMember(member.userId)}
-                                  className="text-primary hover:text-primary hover:bg-green-100"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            )}
+                            {cells}
                           </TableRow>
-                        )
+                        );
                       })}
                     </TableBody>
                   </Table>

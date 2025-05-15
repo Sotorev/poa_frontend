@@ -177,7 +177,6 @@ export default function ODSChart() {
           endpoint = `${API_URL}/api/reports/ods/event-count-by-ods/${selectedFacultyId}`
         }
 
-        console.log(`Fetching ODS data from: ${endpoint}`) // Registro de depuración
 
         const response = await fetch(endpoint, {
           method: 'GET',
@@ -195,8 +194,6 @@ export default function ODSChart() {
         }
 
         const data: ODSData[] = await response.json()
-
-        console.log('ODS Data Received:', data) // Registro de depuración
 
         // Crear un mapa de odsId a eventCount para facilitar la búsqueda
         const dataMap: Record<number, number> = {}

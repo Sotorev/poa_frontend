@@ -27,12 +27,12 @@ import AccountButton from "../autorizacion/_components/account-button"
 import { Role } from "@/types/Permission"
 import { NotificationButton } from "@/components/notifications/NotificationButton"
 import { PoaContext } from "@/contexts/PoaContext"
-import { 
+import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
-	SelectValue 
+	SelectValue
 } from "@/components/ui/select"
 
 type Action = 'Create' | 'Edit' | 'View' | 'Delete'
@@ -114,7 +114,7 @@ const navItems: NavItem[] = [
 		requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'],
 		subItems: [
 			{ title: "Ejecutar", href: "/poa/ejecucion", description: "Eventos ejecutados", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
-			// { title: "Finalizar", href: "/poa/finalizar", description: "Finalizar el POA", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
+			{ title: "Finalizar", href: "/poa/finalizar", description: "Finalizar el POA", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
 		],
 	},
 	{
@@ -137,7 +137,7 @@ export default function Header() {
 	const { selectedYear, setSelectedYear, poas } = React.useContext(PoaContext)
 
 	// obtener los años en los que han existido POAs
-	const years : number[] = poas.map(poa => {
+	const years: number[] = poas.map(poa => {
 		return Number(poa.year)
 	})
 
@@ -180,11 +180,9 @@ export default function Header() {
 											</NavigationMenuContent>
 										</>
 									) : (
-										<Link href={item.href} >
-											<NavigationMenuLink className={clsx(navigationMenuTriggerStyle(), "bg-transparent", pathname === item.href && "text-primary")}>
-												{item.title}
-											</NavigationMenuLink>
-										</Link>
+										<NavigationMenuLink href={item.href} className={clsx(navigationMenuTriggerStyle(), "bg-transparent", pathname === item.href && "text-primary")}>
+											{item.title}
+										</NavigationMenuLink>
 									)}
 								</NavigationMenuItem>
 							))}
@@ -203,8 +201,8 @@ export default function Header() {
 					</SheetContent>
 				</Sheet>
 				<div className="flex flex-1 items-center justify-end gap-4 md:gap-6">
-					<Select 
-						value={selectedYear.toString()} 
+					<Select
+						value={selectedYear.toString()}
 						onValueChange={(value) => setSelectedYear(parseInt(value))}
 					>
 						<SelectTrigger className="w-32 bg-primary/5 hover:bg-primary/10 transition-colors">
@@ -213,8 +211,8 @@ export default function Header() {
 						</SelectTrigger>
 						<SelectContent className="items-center">
 							{years.map((year, index) => (
-								<SelectItem 
-									key={year} 
+								<SelectItem
+									key={year}
 									value={year.toString()}
 									className={`hover:bg-primary/5 ${index === 0 ? 'opacity-50' : ''}`}
 									disabled={index === 0}
@@ -225,7 +223,7 @@ export default function Header() {
 						</SelectContent>
 					</Select>
 					<div className="flex items-center gap-4">
-						<NotificationButton/>
+						<NotificationButton />
 						<AccountButton username={user?.username} />
 					</div>
 				</div>

@@ -257,6 +257,8 @@ const formatEventData = (eventData: Partial<FullEventRequest>, isPlanned: boolea
     formattedData.statusId = 1;
   }
   
+  
+
   // Formatear archivos solo si están definidos
   if (processDocuments) {
     formattedData.files = processDocuments.map(p => ({ fileId: p.fileId, isDeleted: p.isDeleted }));
