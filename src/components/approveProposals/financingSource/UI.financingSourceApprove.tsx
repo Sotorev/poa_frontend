@@ -17,7 +17,7 @@ import { CheckIcon, XIcon, ArrowUpDown, Loader2, SaveIcon } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export function AreaObjectiveStrategicApprove() {
+export function FinancingSourceApprove() {
     const {
         proposals,
         loading,
