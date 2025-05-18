@@ -31,7 +31,7 @@ import { FieldError } from "./field-error"
 import { PhaseIndicator } from "./phase-indicator"
 import { ProposeAreaObjectiveStrategicDialog } from "@/components/approveProposals/AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
 import { ProposeStrategyDialog } from "@/components/approveProposals/strategies/UI.strategyPropose"
-
+import { ProposeInterventionDialog } from "@/components/approveProposals/interventions/UI.interventionPropose"
 
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"
@@ -40,6 +40,7 @@ import { PlusIcon } from "lucide-react"
 import { useAreaObjectiveStrategicApproval } from "@/components/approveProposals/AreaOjectiveStrategic/useAreaObjectiveStrategicApproval"
 
 import { useStrategyProposals } from "@/components/approveProposals/strategies/useStrategyProposals"
+import { useInterventionProposals } from "@/components/approveProposals/interventions/useInterventionProposals"
 
 interface EventPlanningFormProps {
 }
@@ -97,6 +98,7 @@ export function EventPlanningForm({
         setIsOpen,
         poaId,
         strategicAreas,
+        strategics,
         selectedStrategicArea,
         selectedStrategicObjective,
         setSelectedStrategicObjective,
@@ -115,6 +117,12 @@ export function EventPlanningForm({
         setIsProposeStrategyDialogOpen,
         handleAddStrategy,
     } = useStrategyProposals()
+
+    const {
+        isProposeInterventionDialogOpen,
+        setIsProposeInterventionDialogOpen,
+        handleAddIntervention,
+    } = useInterventionProposals()
 
     const onSubmit = async () => {
         try {
@@ -140,12 +148,18 @@ export function EventPlanningForm({
                 onPropose={handleAddProposal}
             />
 
-
             <ProposeStrategyDialog
                 isOpen={isProposeStrategyDialogOpen}
                 onClose={() => setIsProposeStrategyDialogOpen(false)}
                 onPropose={handleAddStrategy}
                 strategicAreas={strategicAreas}
+            />
+
+            <ProposeInterventionDialog
+                isOpen={isProposeInterventionDialogOpen}
+                onClose={() => setIsProposeInterventionDialogOpen(false)}
+                onPropose={handleAddIntervention}
+                strategies={strategics}
             />
 
 
@@ -161,7 +175,7 @@ export function EventPlanningForm({
                 <DialogContent
                     className="max-w-4xl p-0 flex flex-col overflow-hidden"
                     style={{
-                        height: "min(90vh, 900px)",
+                        height: "min(90vh, 900px)", 
                         marginTop: "1rem",
                         marginBottom: "1rem",
                     }}
@@ -252,6 +266,10 @@ export function EventPlanningForm({
                                                     disabled={!selectedStrategies?.length}
                                                     strategyIds={selectedStrategies?.map((est) => est.strategyId) || []}
                                                 />
+                                                <Button variant="outline" className="justify-end" onClick={() => setIsProposeInterventionDialogOpen(true)}>
+                                                    <PlusIcon className="w-4 h-4" />
+                                                    <span>Proponer Intervención</span>
+                                                </Button>
                                                 {formErrors.errorList.find((e) => e.field === "interventions") && (
                                                     <FieldError
                                                         message={formErrors.errorList.find((e) => e.field === "interventions")?.message}

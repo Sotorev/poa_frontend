@@ -1,27 +1,20 @@
 import { z } from 'zod'
-import { AreaObjectiveStrategicSchema, AreaObjectiveStrategicUpdateSchema, approveAreaObjectiveStrategicSchema, AreaObjectiveStrategicProposalSchema } from './schema.intervention'
+import { InterventionSchema, InterventionUpdateSchema, approveInterventionSchema, InterventionProposalSchema } from './schema.intervention'
 
-export type AreaObjectiveStrategicRequest = z.infer<typeof AreaObjectiveStrategicSchema>
-export type AreaObjectiveStrategicUpdateRequest = z.infer<typeof AreaObjectiveStrategicUpdateSchema>
-export type AreaObjectiveStrategicProposal = z.infer<typeof AreaObjectiveStrategicProposalSchema>
-export type ApproveAreaObjectiveStrategic = z.infer<typeof approveAreaObjectiveStrategicSchema>
+export type InterventionRequest = z.infer<typeof InterventionSchema>
+export type InterventionUpdateRequest = z.infer<typeof InterventionUpdateSchema>
+export type InterventionProposal = z.infer<typeof InterventionProposalSchema>
+export type ApproveIntervention = z.infer<typeof approveInterventionSchema>
 
-export interface AreaObjectiveStrategicProposalResponse {
-    strategicAreaId: number
+export interface InterventionProposalResponse {
+    interventionId: number
     name: string
-    peiId: number
-    strategicObjective: string
     isDeleted: boolean
+    strategyId: number
+    status: string
     createdAt: string
     updatedAt: string
-    status: string
-    reasonForChange?: string
-    user?: UserResponse
-}
-
-export interface UserResponse {
-    userId: number
-    firstName: string
-    lastName: string
-    email: string
+    userId: any
+    reasonForChange: any
+    user: any
 }
