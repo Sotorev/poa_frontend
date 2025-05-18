@@ -1,23 +1,23 @@
 import z from 'zod'
 
-export const AreaObjectiveStrategicSchema = z.object({
-    name: z.string().min(1, { message: 'El área estratégica es requerida' }),
-    peiId: z.number().min(1, { message: 'El ID de la PEI es requerido' }),
-    strategicObjective: z.string().min(1, { message: 'El objetivo estratégico es requerido' }),
-    userId: z.number().min(1, { message: 'El ID del usuario es requerido' }),
+export const InterventionSchema = z.object({
+    name: z.string(),
+    userId: z.number(),
+    strategyId: z.number(),
     status: z.enum(["Pendiente", "Aprobado", "Rechazado"]),
-    reasonForChange: z.string().min(1, { message: 'La razón para cambiar es requerida' }),
+    reasonForChange: z.string().optional()
 });
 
-export const AreaObjectiveStrategicProposalSchema = AreaObjectiveStrategicSchema.omit({
+export const InterventionProposalSchema = InterventionSchema.omit({
     userId: true,
     status: true,
-    peiId: true,
 });
 
-export const AreaObjectiveStrategicUpdateSchema = AreaObjectiveStrategicSchema.partial();
+export const InterventionUpdateSchema = InterventionSchema.partial().extend({
+    interventionId: z.number()
+});
 
-export const approveAreaObjectiveStrategicSchema = z.object({
+export const approveInterventionSchema = z.object({
     status: z.enum(["Pendiente", "Aprobado", "Rechazado"]),
 });
 
