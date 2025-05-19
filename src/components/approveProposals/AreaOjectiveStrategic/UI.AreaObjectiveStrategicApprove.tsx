@@ -398,20 +398,30 @@ export function AreaObjectiveStrategicApprove() {
 
             <Card className="w-full">
                 <CardHeader>
-                    <CardTitle>Propuestas de Áreas y Objetivos Estratégicos</CardTitle>
-                    <div className="mt-2 relative">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    {/* Header superior: título a la izquierda + botón a la derecha */}
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg font-semibold">
+                            Propuestas de Áreas y Objetivos Estratégicos
+                        </CardTitle>
+                        <Button
+                            onClick={() => setIsProposeDialogOpen(true)}
+                            className="inline-flex items-center gap-2 px-4 py-2"
+                        >
+                            <PlusIcon className="w-5 h-5" />
+                            <span>Proponer</span>
+                        </Button>
+                    </div>
+
+                    {/* Búsqueda */}
+                    <div className="mt-4 relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Buscar por área, objetivo, estado o usuario..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="pl-8"
+                            className="pl-10 w-full"
                         />
                     </div>
-                    <Button variant="outline" className="justify-end" onClick={() => {setIsProposeDialogOpen(true); }}>
-                        <PlusIcon className="w-4 h-4" />
-                        <span>Proponer Objetivo Estratégico</span>
-                    </Button>
                 </CardHeader>
                 <CardContent>
                     {error && (
