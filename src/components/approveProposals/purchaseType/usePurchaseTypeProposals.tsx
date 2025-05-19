@@ -1,37 +1,37 @@
 "use client"
 
+// Tipos
+import { PurchaseTypeProposalResponse, PurchaseTypeProposal, PurchaseTypeRequest, PurchaseTypeUpdateRequest } from './type.purchaseType'
+
 import { useState, useEffect, useMemo } from 'react'
 import { useCurrentUser } from '@/hooks/use-current-user'
-import { AreaObjectiveStrategicProposalResponse, AreaObjectiveStrategicProposal, AreaObjectiveStrategicRequest } from './type.purchaseType'
-import { getAreaObjectiveStrategicPendings, getAreaObjectiveStrategicApproved, getAreaObjectiveStrategicRejected, approveAreaObjectiveStrategic, rejectAreaObjectiveStrategic, pendingAreaObjectiveStrategic, updateAreaObjectiveStrategic, proposeAreaObjectiveStrategic } from './service.purchaseType'
-import { PEI } from '@/types/pei'
-import { getCurrentPei } from '@/components/pei/service.pei'
 
-type SortColumn = 'name' | 'strategicObjective'
+import { 
+    getPurchaseTypePendings, 
+    getPurchaseTypeApproved, 
+    getPurchaseTypeRejected, 
+    approvePurchaseType, 
+    rejectPurchaseType, 
+    pendingPurchaseType, 
+    updatePurchaseType, 
+    proposePurchaseType 
+} from './service.purchaseType'
+
+type SortColumn = 'name'
 type SortDirection = 'asc' | 'desc'
 
-export function useAreaObjectiveStrategicApproval() {
-    const [proposals, setProposals] = useState<AreaObjectiveStrategicProposalResponse[]>([])
+export function usePurchaseTypeProposals() {
+    const [proposals, setProposals] = useState<PurchaseTypeProposalResponse[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [sortColumn, setSortColumn] = useState<SortColumn>('name')
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
     const [refreshTrigger, setRefreshTrigger] = useState(0)
-    const [currentPei, setCurrentPei] = useState<PEI>()
+    const [isProposePurchaseTypeDialogOpen, setIsProposePurchaseTypeDialogOpen] = useState(false)
 
     const user = useCurrentUser()
 
-    // Cargar PEI actual
-    useEffect(() => {
-        if (!user?.token) return
-
-        const fetchPei = async () => {
-            const pei = await getCurrentPei(user.token)
-            setCurrentPei(pei)
-        }
-
-        fetchPei()
-    }, [user?.token])
+    // No se requiere cargar datos adicionales para recursos
 
     // Cargar propuestas
     useEffect(() => {
@@ -44,9 +44,9 @@ export function useAreaObjectiveStrategicApproval() {
                 
                 // Obtener propuestas de los tres estados
                 const [pendingData, approvedData, rejectedData] = await Promise.all([
-                    getAreaObjectiveStrategicPendings(user.token),
-                    getAreaObjectiveStrategicApproved(user.token),
-                    getAreaObjectiveStrategicRejected(user.token)
+                    getPurchaseTypePendings(user.token),
+                    getPurchaseTypeApproved(user.token),
+                    getPurchaseTypeRejected(user.token)
                 ])
                 
                 // Combinar todas las propuestas
@@ -66,8 +66,8 @@ export function useAreaObjectiveStrategicApproval() {
     // Ordenar propuestas
     const sortedProposals = useMemo(() => {
         return [...proposals].sort((a, b) => {
-            const aValue = a[sortColumn].toLowerCase()
-            const bValue = b[sortColumn].toLowerCase()
+            const aValue = String(a[sortColumn] || '').toLowerCase()
+            const bValue = String(b[sortColumn] || '').toLowerCase()
 
             if (sortDirection === 'asc') {
                 return aValue.localeCompare(bValue)
@@ -88,16 +88,16 @@ export function useAreaObjectiveStrategicApproval() {
     }
 
     // Aprobar o rechazar una propuesta
-    const handleApproval = async (id: number, approved: boolean) => {
+    const handleApproval = async (id: number, reasonForChange: string, approved: boolean) => {
         if (!user?.token) return
 
         try {
             setLoading(true)
             
             if (approved) {
-                await approveAreaObjectiveStrategic(id, user.token)
+                await approvePurchaseType(id, reasonForChange, user.token)
             } else {
-                await rejectAreaObjectiveStrategic(id, user.token)
+                await rejectPurchaseType(id, reasonForChange, user.token)
             }
             
             // Refrescar la lista de propuestas
@@ -111,7 +111,7 @@ export function useAreaObjectiveStrategicApproval() {
     }
 
     // Cambiar el estado de una propuesta
-    const handleChangeStatus = async (id: number, newStatus: 'Pendiente' | 'Aprobado' | 'Rechazado') => {
+    const handleChangeStatus = async (id: number, reasonForChange: string, newStatus: 'Pendiente' | 'Aprobado' | 'Rechazado') => {
         if (!user?.token) return
 
         try {
@@ -120,13 +120,13 @@ export function useAreaObjectiveStrategicApproval() {
             
             switch(newStatus) {
                 case 'Pendiente':
-                    await pendingAreaObjectiveStrategic(id, user.token)
+                    await pendingPurchaseType(id, reasonForChange, user.token)
                     break
                 case 'Aprobado':
-                    await approveAreaObjectiveStrategic(id, user.token)
+                    await approvePurchaseType(id, reasonForChange, user.token)
                     break
                 case 'Rechazado':
-                    await rejectAreaObjectiveStrategic(id, user.token)
+                    await rejectPurchaseType(id, reasonForChange, user.token)
                     break
             }
             
@@ -140,20 +140,23 @@ export function useAreaObjectiveStrategicApproval() {
         }
     }
 
-    // Agregar propuesta
-    const handleAddProposal = async (proposal: AreaObjectiveStrategicProposal) => {
-        if (!user?.token || !currentPei?.peiId) return
+    // Agregar propuesta de tipo de compra
+    const handleAddPurchaseType = async (proposal: PurchaseTypeProposal) => {
+        if (!user?.token) return
 
         try {
             setLoading(true)
-            const completeProposal: AreaObjectiveStrategicRequest = {
-                ...proposal,
-                peiId: currentPei.peiId,
+            const completeProposal: PurchaseTypeRequest = {
+                name: proposal.name,
                 userId: user.userId,
+                reasonForChange: proposal.reasonForChange,
                 status: 'Pendiente',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             }
 
-            await proposeAreaObjectiveStrategic(completeProposal, user.token)
+            await proposePurchaseType(completeProposal, user.token)
+            setRefreshTrigger(prev => prev + 1)
         } catch (err) {
             setError('Error al agregar la propuesta')
             console.error(err)
@@ -163,17 +166,18 @@ export function useAreaObjectiveStrategicApproval() {
     }
 
     // Actualizar los campos de una propuesta
-    const handleUpdateProposal = async (id: number, name: string, strategicObjective: string) => {
+    const handleUpdateProposal = async (id: number, name: string) => {
         if (!user?.token) return
 
         try {
             setLoading(true)
             setError(null)
             
-            await updateAreaObjectiveStrategic({
-                name,
-                strategicObjective
-            }, id, user.token)
+            const updateObj: PurchaseTypeUpdateRequest = {
+                name
+            }
+            
+            await updatePurchaseType(updateObj, id, user.token)
             
             // Refrescar la lista después de actualizar
             setRefreshTrigger(prev => prev + 1)
@@ -195,6 +199,8 @@ export function useAreaObjectiveStrategicApproval() {
         handleApproval,
         handleUpdateProposal,
         handleChangeStatus,
-        handleAddProposal,
+        handleAddPurchaseType,
+        isProposePurchaseTypeDialogOpen,
+        setIsProposePurchaseTypeDialogOpen,
     }
 }
