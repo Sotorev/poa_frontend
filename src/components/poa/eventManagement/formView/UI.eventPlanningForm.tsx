@@ -110,12 +110,14 @@ export function EventPlanningForm({
         selectedStrategies,
         setSelectedStrategies,
         eventEditing,
-        isProposeDialogOpen,
-        setIsProposeDialogOpen,
         resetEventEditing,
     } = useContext(EventContext)
 
-    const { handleAddProposal } = useAreaObjectiveStrategicApproval()
+    const { 
+        handleAddProposal,
+        isProposeDialogOpen,
+        setIsProposeDialogOpen,
+    } = useAreaObjectiveStrategicApproval()
 
     const {
         isProposeStrategyDialogOpen,

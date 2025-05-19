@@ -1,7 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+// React Hooks
+import { useState, useEffect, useContext } from "react"
+
+// Local Hooks
 import { useAreaObjectiveStrategicApproval } from './useAreaObjectiveStrategicApproval'
+
+// Context
+import { EventContext } from "@/components/poa/eventManagement/context.event"
+
+// UI Components (from shadcn/ui or similar)
 import {
     Table,
     TableBody,
@@ -13,10 +21,15 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { CheckIcon, XIcon, ArrowUpDown, Loader2, SaveIcon, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+// Icons (from lucide-react or similar)
+import { CheckIcon, XIcon, ArrowUpDown, Loader2, SaveIcon, Search, ChevronLeft, ChevronRight, PlusIcon } from "lucide-react"
+
+// Local Components
+import { ProposeAreaObjectiveStrategicDialog } from "../AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
 
 export function AreaObjectiveStrategicApprove() {
     const {
@@ -45,20 +58,27 @@ export function AreaObjectiveStrategicApprove() {
         setActiveTabState,
         pendingCount,
         approvedCount,
-        rejectedCount
+        rejectedCount,
+        handleAddProposal,
+        isProposeDialogOpen,
+        setIsProposeDialogOpen,
     } = useAreaObjectiveStrategicApproval()
+
+    const {
+        strategicAreas
+    } = useContext(EventContext)
 
     const [searchInput, setSearchInput] = useState('')
     const [editedProposals, setEditedProposals] = useState<Record<number, { name: string; strategicObjective: string }>>({})
 
     // Ya no necesitamos filtrar las propuestas por estado aquí porque el hook ya lo hace
-    
+
     // Efecto para actualizar la búsqueda después de un breve retraso
     useEffect(() => {
         const timer = setTimeout(() => {
             handleSearch(searchInput)
         }, 300)
-        
+
         return () => clearTimeout(timer)
     }, [searchInput])
 
@@ -66,7 +86,7 @@ export function AreaObjectiveStrategicApprove() {
         setEditedProposals(prev => ({
             ...prev,
             [id]: {
-                ...prev[id] || { 
+                ...prev[id] || {
                     name: proposals.find(p => p.strategicAreaId === id)?.name || '',
                     strategicObjective: proposals.find(p => p.strategicAreaId === id)?.strategicObjective || ''
                 },
@@ -78,7 +98,7 @@ export function AreaObjectiveStrategicApprove() {
     const handleSaveChanges = (id: number) => {
         if (editedProposals[id]) {
             handleUpdateProposal(id, editedProposals[id].name, editedProposals[id].strategicObjective)
-            
+
             // Limpiar el estado de edición para esta propuesta
             setEditedProposals(prev => {
                 const newState = { ...prev }
@@ -109,7 +129,7 @@ export function AreaObjectiveStrategicApprove() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead 
+                        <TableHead
                             className="cursor-pointer"
                             onClick={() => toggleSort('name')}
                         >
@@ -118,7 +138,7 @@ export function AreaObjectiveStrategicApprove() {
                                 <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'name' ? 'opacity-100' : 'opacity-40'}`} />
                             </div>
                         </TableHead>
-                        <TableHead 
+                        <TableHead
                             className="cursor-pointer"
                             onClick={() => toggleSort('strategicObjective')}
                         >
@@ -139,19 +159,19 @@ export function AreaObjectiveStrategicApprove() {
                         const areaValue = isEdited ? editedProposals[proposal.strategicAreaId].name : proposal.name
                         const objectiveValue = isEdited ? editedProposals[proposal.strategicAreaId].strategicObjective : proposal.strategicObjective
                         const proposedByName = proposal.user ? `${proposal.user.firstName} ${proposal.user.lastName}` : 'Usuario desconocido'
-                        
+
                         return (
                             <TableRow key={proposal.strategicAreaId}>
                                 <TableCell className="font-medium">
-                                    <Input 
-                                        value={areaValue} 
+                                    <Input
+                                        value={areaValue}
                                         onChange={(e) => handleInputChange(proposal.strategicAreaId, 'name', e.target.value)}
                                         className={isEdited ? "border-primary" : "border-transparent"}
                                     />
                                 </TableCell>
                                 <TableCell>
-                                    <Input 
-                                        value={objectiveValue} 
+                                    <Input
+                                        value={objectiveValue}
                                         onChange={(e) => handleInputChange(proposal.strategicAreaId, 'strategicObjective', e.target.value)}
                                         className={isEdited ? "border-primary" : "border-transparent"}
                                     />
@@ -164,7 +184,7 @@ export function AreaObjectiveStrategicApprove() {
                                         <div className="flex justify-end space-x-2">
                                             {isEdited && (
                                                 <Button
-                                                    variant="outline" 
+                                                    variant="outline"
                                                     size="sm"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
                                                     onClick={() => handleSaveChanges(proposal.strategicAreaId)}
@@ -174,7 +194,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 </Button>
                                             )}
                                             <Button
-                                                variant="outline" 
+                                                variant="outline"
                                                 size="sm"
                                                 className="text-green-600 border-green-600 hover:bg-green-50"
                                                 onClick={() => handleApproval(proposal.strategicAreaId, true)}
@@ -183,7 +203,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 Aprobar
                                             </Button>
                                             <Button
-                                                variant="outline" 
+                                                variant="outline"
                                                 size="sm"
                                                 className="text-red-600 border-red-600 hover:bg-red-50"
                                                 onClick={() => handleApproval(proposal.strategicAreaId, false)}
@@ -196,7 +216,7 @@ export function AreaObjectiveStrategicApprove() {
                                         <div className="flex justify-end space-x-2">
                                             {isEdited && (
                                                 <Button
-                                                    variant="outline" 
+                                                    variant="outline"
                                                     size="sm"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
                                                     onClick={() => handleSaveChanges(proposal.strategicAreaId)}
@@ -206,7 +226,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 </Button>
                                             )}
                                             <Button
-                                                variant="outline" 
+                                                variant="outline"
                                                 size="sm"
                                                 className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
                                                 onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Pendiente')}
@@ -214,7 +234,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 Mover a Pendiente
                                             </Button>
                                             <Button
-                                                variant="outline" 
+                                                variant="outline"
                                                 size="sm"
                                                 className="text-red-600 border-red-600 hover:bg-red-50"
                                                 onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Rechazado')}
@@ -226,7 +246,7 @@ export function AreaObjectiveStrategicApprove() {
                                         <div className="flex justify-end space-x-2">
                                             {isEdited && (
                                                 <Button
-                                                    variant="outline" 
+                                                    variant="outline"
                                                     size="sm"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
                                                     onClick={() => handleSaveChanges(proposal.strategicAreaId)}
@@ -236,7 +256,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 </Button>
                                             )}
                                             <Button
-                                                variant="outline" 
+                                                variant="outline"
                                                 size="sm"
                                                 className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
                                                 onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Pendiente')}
@@ -244,7 +264,7 @@ export function AreaObjectiveStrategicApprove() {
                                                 Mover a Pendiente
                                             </Button>
                                             <Button
-                                                variant="outline" 
+                                                variant="outline"
                                                 size="sm"
                                                 className="text-green-600 border-green-600 hover:bg-green-50"
                                                 onClick={() => handleChangeStatus(proposal.strategicAreaId, 'Aprobado')}
@@ -265,11 +285,11 @@ export function AreaObjectiveStrategicApprove() {
     // Renderizar controles de paginación
     const renderPagination = () => {
         if (totalItems === 0) return null;
-        
+
         // Crear un array de números de página a mostrar
         const pageNumbers = [];
         const maxVisiblePages = 5;
-        
+
         if (totalPages <= maxVisiblePages) {
             // Si hay pocas páginas, mostrar todas
             for (let i = 1; i <= totalPages; i++) {
@@ -296,7 +316,7 @@ export function AreaObjectiveStrategicApprove() {
                 pageNumbers.push(totalPages);
             }
         }
-        
+
         return (
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -321,7 +341,7 @@ export function AreaObjectiveStrategicApprove() {
                         por página
                     </span>
                 </div>
-                
+
                 <div className="flex items-center space-x-6 lg:space-x-8">
                     <div className="flex items-center space-x-2">
                         <p className="text-sm text-muted-foreground">
@@ -369,60 +389,72 @@ export function AreaObjectiveStrategicApprove() {
     }
 
     return (
-        <Card className="w-full">
-            <CardHeader>
-                <CardTitle>Propuestas de Áreas y Objetivos Estratégicos</CardTitle>
-                <div className="mt-2 relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por área, objetivo, estado o usuario..."
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        className="pl-8"
-                    />
-                </div>
-            </CardHeader>
-            <CardContent>
-                {error && (
-                    <Alert variant="destructive" className="mb-4">
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
+        <>
+            <ProposeAreaObjectiveStrategicDialog
+                isOpen={isProposeDialogOpen}
+                onClose={() => setIsProposeDialogOpen(false)}
+                onPropose={handleAddProposal}
+            />
 
-                <Tabs 
-                    defaultValue="Pendiente" 
-                    className="w-full"
-                    value={activeTab}
-                    onValueChange={(value) => setActiveTabState(value as 'Pendiente' | 'Aprobado' | 'Rechazado')}
-                >
-                    <TabsList className="grid w-full grid-cols-3 mb-4">
-                        <TabsTrigger value="Pendiente" className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800">
-                            Pendientes ({pendingCount})
-                        </TabsTrigger>
-                        <TabsTrigger value="Aprobado" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
-                            Aprobadas ({approvedCount})
-                        </TabsTrigger>
-                        <TabsTrigger value="Rechazado" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800">
-                            Rechazadas ({rejectedCount})
-                        </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="Pendiente">
-                        {renderProposalsTable(proposals)}
-                    </TabsContent>
-                    
-                    <TabsContent value="Aprobado">
-                        {renderProposalsTable(proposals)}
-                    </TabsContent>
-                    
-                    <TabsContent value="Rechazado">
-                        {renderProposalsTable(proposals)}
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-            <CardFooter>
-                {renderPagination()}
-            </CardFooter>
-        </Card>
+            <Card className="w-full">
+                <CardHeader>
+                    <CardTitle>Propuestas de Áreas y Objetivos Estratégicos</CardTitle>
+                    <div className="mt-2 relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por área, objetivo, estado o usuario..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="pl-8"
+                        />
+                    </div>
+                    <Button variant="outline" className="justify-end" onClick={() => {setIsProposeDialogOpen(true); }}>
+                        <PlusIcon className="w-4 h-4" />
+                        <span>Proponer Objetivo Estratégico</span>
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    {error && (
+                        <Alert variant="destructive" className="mb-4">
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    <Tabs
+                        defaultValue="Pendiente"
+                        className="w-full"
+                        value={activeTab}
+                        onValueChange={(value) => setActiveTabState(value as 'Pendiente' | 'Aprobado' | 'Rechazado')}
+                    >
+                        <TabsList className="grid w-full grid-cols-3 mb-4">
+                            <TabsTrigger value="Pendiente" className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800">
+                                Pendientes ({pendingCount})
+                            </TabsTrigger>
+                            <TabsTrigger value="Aprobado" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
+                                Aprobadas ({approvedCount})
+                            </TabsTrigger>
+                            <TabsTrigger value="Rechazado" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800">
+                                Rechazadas ({rejectedCount})
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="Pendiente">
+                            {renderProposalsTable(proposals)}
+                        </TabsContent>
+
+                        <TabsContent value="Aprobado">
+                            {renderProposalsTable(proposals)}
+                        </TabsContent>
+
+                        <TabsContent value="Rechazado">
+                            {renderProposalsTable(proposals)}
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+                <CardFooter>
+                    {renderPagination()}
+                </CardFooter>
+            </Card>
+        </>
     )
 }
