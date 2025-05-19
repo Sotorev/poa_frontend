@@ -6,7 +6,27 @@ import { getFacultyByUserId } from '@/services/faculty/currentFaculty';
 import { Poa } from '@/types/Poa';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
-// Tipos
+// Service functions
+import {
+  getStrategicAreas,
+  getStrategies,
+  getInterventions,
+  getResources,
+  getCampuses,
+  getPurchaseTypes,
+  getFinancingSources
+} from '@/components/poa/eventManagement/formView/service.eventPlanningForm';
+
+// Types
+import { PurchaseType } from '@/types/PurchaseType';
+import { Strategy } from '@/types/Strategy';
+import { Intervention } from '@/types/Intervention';
+import { Resource } from '@/types/Resource';
+import { Campus } from '@/types/Campus';
+import { FinancingSource } from '@/types/FinancingSource';
+import { StrategicArea } from '@/types/StrategicArea';
+
+// Tipos y interfaces
 
 interface PoaContextType {
   poaId: number | null;
@@ -17,6 +37,13 @@ interface PoaContextType {
   setSelectedYear: (year: number) => void;
   facultyId: number | null;
   poas: Poa[];
+  financingSources: FinancingSource[];
+  strategicAreas: StrategicArea[];
+  strategics: Strategy[];
+  interventions: Intervention[];
+  resources: Resource[];
+  campuses: Campus[];
+  purchaseTypes: PurchaseType[];
 }
 
 const defaultPoaContext: PoaContextType = {
@@ -28,6 +55,13 @@ const defaultPoaContext: PoaContextType = {
   setSelectedYear: () => { /* no-op */ },
   facultyId: null,
   poas: [],
+  financingSources: [],
+  strategicAreas: [],
+  strategics: [],
+  interventions: [],
+  resources: [],
+  campuses: [],
+  purchaseTypes: [],
 };
 
 interface poas {
@@ -75,6 +109,15 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [facultyId, setFacultyId] = useState<number | null>(null);
   const [poas, setPoas] = useState<Poa[]>([]);
+  
+  // Data API
+  const [financingSources, setFinancingSources] = useState<FinancingSource[]>([]);
+  const [strategicAreas, setStrategicAreas] = useState<StrategicArea[]>([]);
+  const [strategics, setStrategics] = useState<Strategy[]>([]);
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [purchaseTypes, setPurchaseTypes] = useState<PurchaseType[]>([]);
 
   // Inicializar el año desde localStorage o usar el año anterior como valor predeterminado
   const [selectedYear, setSelectedYear] = useState<number>(() => {
@@ -182,6 +225,52 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
     fetchPoa();
   }, [user, selectedYear, facultyId]);
 
+  // Fetch catalog data (FinancingSources, StrategicAreas, Strategics, etc.)
+  useEffect(() => {
+    if (!user?.token) return;
+
+    const fetchCatalogData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch all the catalog data
+        const [
+          financingSourcesData,
+          strategicAreasData,
+          strategicsData,
+          interventionsData,
+          resourcesData,
+          campusesData,
+          purchaseTypesData
+        ] = await Promise.all([
+          getFinancingSources(user.token),
+          getStrategicAreas(user.token),
+          getStrategies(user.token),
+          getInterventions(user.token),
+          getResources(user.token),
+          getCampuses(user.token),
+          getPurchaseTypes(user.token)
+        ]);
+
+        // Set all the state variables
+        setFinancingSources(financingSourcesData);
+        setStrategicAreas(strategicAreasData);
+        setStrategics(strategicsData);
+        setInterventions(interventionsData);
+        setResources(resourcesData);
+        setCampuses(campusesData);
+        setPurchaseTypes(purchaseTypesData);
+      } catch (err) {
+        console.error("Error al cargar datos de catálogo:", err);
+        setError(err instanceof Error ? err.message : "Error al cargar datos de catálogo");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCatalogData();
+  }, [user?.token]);
+
   return (
     <PoaContext.Provider value={{
       poaId,
@@ -191,7 +280,14 @@ export const PoaProvider = ({ children }: { children: ReactNode }) => {
       selectedYear,
       setSelectedYear: handleYearChange,
       facultyId,
-      poas
+      poas,
+      financingSources,
+      strategicAreas,
+      strategics,
+      interventions,
+      resources,
+      campuses,
+      purchaseTypes
     }}>
       {children}
     </PoaContext.Provider>

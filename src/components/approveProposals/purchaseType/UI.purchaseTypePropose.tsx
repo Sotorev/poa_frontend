@@ -10,32 +10,31 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 // Types
-import { AreaObjectiveStrategicProposalSchema } from "./schema.purchaseType"
-import { AreaObjectiveStrategicProposal } from "./type.purchaseType"
+import { PurchaseTypeProposalSchema } from "./schema.purchaseType"
+import { PurchaseTypeProposal } from "./type.purchaseType"
 
-interface ProposeAreaObjectiveStrategicProps {
+interface ProposePurchaseTypeProps {
     isOpen: boolean
     onClose: () => void
-    onPropose: (data: AreaObjectiveStrategicProposal) => Promise<void>
+    onPropose: (data: PurchaseTypeProposal) => Promise<void>
 }
 
-export function ProposeAreaObjectiveStrategicDialog({
+export function ProposePurchaseTypeDialog({
     isOpen,
     onClose,
     onPropose
-}: ProposeAreaObjectiveStrategicProps) {
+}: ProposePurchaseTypeProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const form = useForm<AreaObjectiveStrategicProposal>({
-        resolver: zodResolver(AreaObjectiveStrategicProposalSchema),
+    const form = useForm<PurchaseTypeProposal>({
+        resolver: zodResolver(PurchaseTypeProposalSchema),
         defaultValues: {
             name: "",
-            strategicObjective: "",
             reasonForChange: ""
         }
     })
 
-    const handleSubmit = async (data: AreaObjectiveStrategicProposal) => {
+    const handleSubmit = async (data: PurchaseTypeProposal) => {
         try {
             setIsSubmitting(true)
             await onPropose(data)
@@ -52,7 +51,7 @@ export function ProposeAreaObjectiveStrategicDialog({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Proponer Nuevo Objetivo Estratégico</DialogTitle>
+                    <DialogTitle>Proponer Nuevo Tipo de Compra</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
@@ -62,23 +61,9 @@ export function ProposeAreaObjectiveStrategicDialog({
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Área Estratégica</FormLabel>
+                                    <FormLabel>Tipo de Compra</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ingrese el área estratégica" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="strategicObjective"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Objetivo Estratégico</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Ingrese el objetivo estratégico" {...field} />
+                                        <Input placeholder="Ingrese el tipo de compra" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -90,9 +75,9 @@ export function ProposeAreaObjectiveStrategicDialog({
                             name="reasonForChange"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Razón del cambio</FormLabel>
+                                    <FormLabel>Justificación</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ingrese la razón del cambio" {...field} />
+                                        <Input placeholder="Ingrese la razón por la cual se propone el tipo de compra" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

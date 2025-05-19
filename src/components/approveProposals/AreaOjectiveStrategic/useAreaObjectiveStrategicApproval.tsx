@@ -18,6 +18,13 @@ export function useAreaObjectiveStrategicApproval() {
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
     const [refreshTrigger, setRefreshTrigger] = useState(0)
     const [currentPei, setCurrentPei] = useState<PEI>()
+    const [isProposeDialogOpen, setIsProposeDialogOpen] = useState<boolean>(false);
+    
+    // Estados para búsqueda y paginación
+    const [searchTerm, setSearchTerm] = useState('')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [itemsPerPage, setItemsPerPage] = useState(5)
+    const [activeTab, setActiveTab] = useState<'Pendiente' | 'Aprobado' | 'Rechazado'>('Pendiente')
 
     const user = useCurrentUser()
 
@@ -61,13 +68,29 @@ export function useAreaObjectiveStrategicApproval() {
         }
 
         fetchProposals()
-    }, [user?.token, refreshTrigger])
+    }, [user?.token, refreshTrigger, isProposeDialogOpen])
 
-    // Ordenar propuestas
-    const sortedProposals = useMemo(() => {
-        return [...proposals].sort((a, b) => {
-            const aValue = a[sortColumn].toLowerCase()
-            const bValue = b[sortColumn].toLowerCase()
+    // Filtrar y ordenar propuestas
+    const filteredAndSortedProposals = useMemo(() => {
+        // Primero filtramos por el término de búsqueda
+        const filtered = searchTerm.trim() === '' 
+            ? [...proposals]
+            : [...proposals].filter(proposal => {
+                const searchTermLower = searchTerm.toLowerCase()
+                return (
+                    proposal.name.toLowerCase().includes(searchTermLower) || 
+                    proposal.strategicObjective.toLowerCase().includes(searchTermLower) ||
+                    proposal.status.toLowerCase().includes(searchTermLower) ||
+                    (proposal.user?.firstName?.toLowerCase().includes(searchTermLower) || false) ||
+                    (proposal.user?.lastName?.toLowerCase().includes(searchTermLower) || false) ||
+                    (proposal.user?.email?.toLowerCase().includes(searchTermLower) || false)
+                )
+            })
+        
+        // Luego ordenamos los resultados filtrados
+        return filtered.sort((a, b) => {
+            const aValue = a[sortColumn]?.toLowerCase() || ''
+            const bValue = b[sortColumn]?.toLowerCase() || ''
 
             if (sortDirection === 'asc') {
                 return aValue.localeCompare(bValue)
@@ -75,7 +98,12 @@ export function useAreaObjectiveStrategicApproval() {
                 return bValue.localeCompare(aValue)
             }
         })
-    }, [proposals, sortColumn, sortDirection])
+    }, [proposals, sortColumn, sortDirection, searchTerm])
+    
+    // Filtrar por el estado activo (pendiente, aprobado, rechazado)
+    const proposalsByStatus = useMemo(() => {
+        return filteredAndSortedProposals.filter(proposal => proposal.status === activeTab)
+    }, [filteredAndSortedProposals, activeTab])
 
     // Cambiar columna de ordenamiento
     const toggleSort = (column: SortColumn) => {
@@ -185,8 +213,59 @@ export function useAreaObjectiveStrategicApproval() {
         }
     }
 
+    // Paginar resultados por estado activo
+    const paginatedProposals = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage
+        const endIndex = startIndex + itemsPerPage
+        return proposalsByStatus.slice(startIndex, endIndex)
+    }, [proposalsByStatus, currentPage, itemsPerPage])
+    
+    // Calcular total de páginas para el estado activo
+    const totalPages = useMemo(() => {
+        return Math.max(1, Math.ceil(proposalsByStatus.length / itemsPerPage))
+    }, [proposalsByStatus, itemsPerPage])
+    
+    // Funciones para manejar la paginación
+    const goToNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1)
+        }
+    }
+    
+    const goToPreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1)
+        }
+    }
+    
+    const goToPage = (pageNumber: number) => {
+        if (pageNumber >= 1 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber)
+        }
+    }
+    
+    // Función para manejar la búsqueda
+    const handleSearch = (term: string) => {
+        setSearchTerm(term)
+        setCurrentPage(1) // Resetear a la primera página cuando se realiza una búsqueda
+    }
+    
+    // Función para cambiar la pestaña activa
+    const setActiveTabState = (tab: 'Pendiente' | 'Aprobado' | 'Rechazado') => {
+        setActiveTab(tab)
+        setCurrentPage(1) // Resetear a la primera página cuando se cambia de pestaña
+    }
+    
+    // Función para cambiar ítems por página
+    const changeItemsPerPage = (items: number) => {
+        setItemsPerPage(items)
+        setCurrentPage(1) // Resetear a la primera página
+    }
+    
     return {
-        proposals: sortedProposals,
+        proposals: paginatedProposals,
+        allProposals: filteredAndSortedProposals,
+        proposalsByStatus,
         loading,
         error,
         sortColumn,
@@ -196,5 +275,23 @@ export function useAreaObjectiveStrategicApproval() {
         handleUpdateProposal,
         handleChangeStatus,
         handleAddProposal,
+        searchTerm,
+        handleSearch,
+        currentPage,
+        itemsPerPage,
+        totalPages,
+        goToNextPage,
+        goToPreviousPage,
+        goToPage,
+        changeItemsPerPage,
+        totalItems: proposalsByStatus.length,
+        activeTab,
+        setActiveTabState,
+        isProposeDialogOpen,
+        setIsProposeDialogOpen,
+        // Totales por estado para mostrar en las pestañas
+        pendingCount: filteredAndSortedProposals.filter(p => p.status === 'Pendiente').length,
+        approvedCount: filteredAndSortedProposals.filter(p => p.status === 'Aprobado').length,
+        rejectedCount: filteredAndSortedProposals.filter(p => p.status === 'Rechazado').length
     }
 }
