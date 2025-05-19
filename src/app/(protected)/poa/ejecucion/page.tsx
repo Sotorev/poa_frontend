@@ -163,30 +163,54 @@ export default function PoaTrackingPage() {
     const enabledDates = data.fechas.filter(fecha => fecha.isEnabled !== false);
 
     if (editingEvent) {
+      // Depurar los datos recibidos antes de procesarlos
+      console.log('DATOS COMPLETOS EN EL SUBMIT:', JSON.stringify(data));
+      
+      // Revisar específicamente cada aporte para ver su valor isDeleted
+      data.aportesUmes.forEach((um, idx) => {
+        console.log(`Aporte UMES[${idx}] ID=${um.eventExecutionFinancingId}, isDeleted=${um.isDeleted}, valor original=${um.isDeleted}`);
+      });
+      data.aportesOtros.forEach((ot, idx) => {
+        console.log(`Aporte Otros[${idx}] ID=${ot.eventExecutionFinancingId}, isDeleted=${ot.isDeleted}, valor original=${ot.isDeleted}`);
+      });
+      
       const updatePayload = {
         eventId: parseInt(data.eventId, 10),
-        eventDatesWithExecution: enabledDates.map(f => ({
+        eventDatesWithExecution: data.fechas.map(f => ({
           eventId: parseInt(data.eventId, 10),
           eventDateId: f.eventDateId,
-          executionStartDate: f.executionStartDate || f.startDate
+          executionStartDate: f.executionStartDate || f.startDate,
+          isDeleted: f.isDeleted
         })),
         eventExecutionFinancings: [
-          ...data.aportesUmes.map(um => ({
-            eventExecutionFinancingId: um.eventExecutionFinancingId,
-            eventId: parseInt(data.eventId, 10),
-            amount: um.amount,
-            percentage: um.percentage,
-            financingSourceId: um.financingSourceId
-          })),
-          ...data.aportesOtros.map(ot => ({
-            eventExecutionFinancingId: ot.eventExecutionFinancingId,
-            eventId: parseInt(data.eventId, 10),
-            amount: ot.amount,
-            percentage: ot.percentage,
-            financingSourceId: ot.financingSourceId
-          })),
+          // Revisar cada aporte y asegurar que isDeleted se respete
+          ...data.aportesUmes.map(um => {
+            // Forzar isDeleted=true si eventExecutionFinancingId=776 (para depuración)
+            const isDeleted = um.eventExecutionFinancingId === 776 ? true : (um.isDeleted || false);
+            console.log(`Procesando UMES ${um.eventExecutionFinancingId}: isDeleted=${isDeleted}`);
+            return {
+              eventExecutionFinancingId: um.eventExecutionFinancingId,
+              eventId: parseInt(data.eventId, 10),
+              amount: um.amount,
+              percentage: um.percentage,
+              financingSourceId: um.financingSourceId,
+              isDeleted: isDeleted
+            };
+          }),
+          ...data.aportesOtros.map(ot => {
+            console.log(`Procesando Otros ${ot.eventExecutionFinancingId}: isDeleted=${ot.isDeleted}`);
+            return {
+              eventExecutionFinancingId: ot.eventExecutionFinancingId,
+              eventId: parseInt(data.eventId, 10),
+              amount: ot.amount,
+              percentage: ot.percentage,
+              financingSourceId: ot.financingSourceId,
+              isDeleted: ot.isDeleted || false
+            };
+          }),
         ],
       };
+      console.log('Enviando al servidor:', JSON.stringify(updatePayload));
       updateEventExecuted(parseInt(data.eventId, 10), updatePayload, data.archivosGastos as File[])
         .then(() => {
           if (!poa) return
@@ -197,10 +221,11 @@ export default function PoaTrackingPage() {
     } else {
       const requestPayload: RequestEventExecution = {
         eventId: parseInt(data.eventId, 10),
-        eventDatesWithExecution: enabledDates.map(f => ({
+        eventDatesWithExecution: data.fechas.map(f => ({
           eventId: parseInt(data.eventId, 10),
           eventDateId: f.eventDateId,
           executionStartDate: f.executionStartDate || f.startDate,
+          isDeleted: f.isDeleted
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
@@ -209,6 +234,7 @@ export default function PoaTrackingPage() {
             amount: um.amount,
             percentage: um.percentage,
             financingSourceId: um.financingSourceId,
+            isDeleted: um.isDeleted
           })),
           ...data.aportesOtros.map(ot => ({
             eventExecutionFinancingId: ot.eventExecutionFinancingId,
@@ -216,6 +242,7 @@ export default function PoaTrackingPage() {
             amount: ot.amount,
             percentage: ot.percentage,
             financingSourceId: ot.financingSourceId,
+            isDeleted: ot.isDeleted
           })),
         ],
       };

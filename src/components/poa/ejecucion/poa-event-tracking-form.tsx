@@ -302,7 +302,7 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
         </CardHeader>
         <CardContent className="space-y-4">
           {fields.map((field, index) => (
-            <div key={field.id} className="flex flex-col sm:flex-row gap-4 items-end">
+            <div key={field.id} id={`${name}-row-${index}`} className="flex flex-col sm:flex-row gap-4 items-end">
               <FormField
                 control={form.control}
                 name={`${name}.${index}.financingSourceId`}
@@ -368,7 +368,36 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => remove(index)}
+                onClick={() => {
+                  // Identificar el financiamiento que se va a eliminar
+                  const currentFinancingSource = form.getValues(`${name}.${index}`);
+                  console.log('Eliminando financiamiento:', currentFinancingSource);
+                  
+                  if (currentFinancingSource.eventExecutionFinancingId) {
+                    // Si tiene ID (existe en la base de datos), marcar como eliminado y mantenerlo en el array
+                    
+                    // Establecer directamente isDeleted = true (en lugar de isToBeDeleted)
+                    form.setValue(`${name}.${index}.isDeleted`, true);
+                    console.log(`Marcando ${name}.${index} como isDeleted=true DIRECTAMENTE`);
+                    
+                    // También imprimir todos los valores actuales para debug
+                    setTimeout(() => {
+                      console.log('Valores después de marcar como eliminado:', form.getValues());
+                    }, 100);
+                    
+                    // Ocultar la fila visualmente
+                    const row = document.getElementById(`${name}-row-${index}`);
+                    console.log('Elemento a ocultar:', row, `${name}-row-${index}`);
+                    if (row) {
+                      row.style.display = 'none';
+                      row.style.opacity = '0.3';
+                      row.style.backgroundColor = '#ffeeee';
+                    }
+                  } else {
+                    // Si es un elemento nuevo (sin ID), podemos eliminarlo directamente del array
+                    remove(index);
+                  }
+                }}
                 className="shrink-0"
               >
                 <Trash className="h-4 w-4" />
