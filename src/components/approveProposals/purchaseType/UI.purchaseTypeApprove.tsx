@@ -88,7 +88,7 @@ export function PurchaseTypeApprove() {
                             onClick={() => toggleSort('name')}
                         >
                             <div className="flex items-center">
-                                Nombre del Recurso
+                                Nombre del Tipo de Compra
                                 <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'name' ? 'opacity-100' : 'opacity-40'}`} />
                             </div>
                         </TableHead>
@@ -220,7 +220,7 @@ export function PurchaseTypeApprove() {
     return (
         <Card className="w-full">
             <CardHeader>
-                <CardTitle>Propuestas de Recursos</CardTitle>
+                <CardTitle>Propuestas de Tipos de Compra</CardTitle>
             </CardHeader>
             <CardContent>
                 {error && (

@@ -1,21 +1,20 @@
 import { z } from 'zod'
-import { AreaObjectiveStrategicSchema, AreaObjectiveStrategicUpdateSchema, approveAreaObjectiveStrategicSchema, AreaObjectiveStrategicProposalSchema } from './schema.resources'
+import { ResourcesSchema, ResourcesUpdateSchema, approveResourcesSchema, ResourcesProposalSchema } from './schema.resources'
 
-export type AreaObjectiveStrategicRequest = z.infer<typeof AreaObjectiveStrategicSchema>
-export type AreaObjectiveStrategicUpdateRequest = z.infer<typeof AreaObjectiveStrategicUpdateSchema>
-export type AreaObjectiveStrategicProposal = z.infer<typeof AreaObjectiveStrategicProposalSchema>
-export type ApproveAreaObjectiveStrategic = z.infer<typeof approveAreaObjectiveStrategicSchema>
+export type ResourcesRequest = z.infer<typeof ResourcesSchema>
+export type ResourcesUpdateRequest = z.infer<typeof ResourcesUpdateSchema>
+export type ResourcesProposal = z.infer<typeof ResourcesProposalSchema>
+export type ApproveResources = z.infer<typeof approveResourcesSchema>
 
-export interface AreaObjectiveStrategicProposalResponse {
-    strategicAreaId: number
+export interface ResourcesProposalResponse {
+    resourceId: number
     name: string
-    peiId: number
-    strategicObjective: string
-    isDeleted: boolean
+    status: string
+    userId?: number
     createdAt: string
     updatedAt: string
-    status: string
-    reasonForChange?: string
+    reasonForChange: string
+    isDeleted: boolean
     user?: UserResponse
 }
 

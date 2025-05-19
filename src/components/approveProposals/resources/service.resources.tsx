@@ -1,9 +1,9 @@
-import { AreaObjectiveStrategicRequest, AreaObjectiveStrategicProposalResponse, ApproveAreaObjectiveStrategic, AreaObjectiveStrategicUpdateRequest } from './type.resources'
+import { ResourcesRequest, ResourcesProposalResponse, ApproveResources, ResourcesUpdateRequest } from './type.resources'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-export async function proposeAreaObjectiveStrategic(data: AreaObjectiveStrategicRequest, token: string) {
-    const response = await fetch(`${API_URL}/api/strategicareas`, {
+export async function proposeResources(data: ResourcesRequest, token: string) {
+    const response = await fetch(`${API_URL}/api/institutionalResources`, {
         method: 'POST',
         body: JSON.stringify(data),
         headers: {
@@ -13,14 +13,14 @@ export async function proposeAreaObjectiveStrategic(data: AreaObjectiveStrategic
     })
 
     if (!response.ok) {
-        throw new Error(`Error al proponer área y objetivo estratégico: ${response.statusText}`);
+        throw new Error(`Error al proponer recurso: ${response.statusText}`);
     }
 
     return response.json();
 }
 
-export async function updateAreaObjectiveStrategic(data: AreaObjectiveStrategicUpdateRequest, strategicAreaId: number, token: string) {
-    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
+export async function updateResources(data: ResourcesUpdateRequest, resourceId: number, token: string) {
+    const response = await fetch(`${API_URL}/api/institutionalResources/${resourceId}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         headers: {
@@ -36,8 +36,8 @@ export async function updateAreaObjectiveStrategic(data: AreaObjectiveStrategicU
     return response.json();
 }
 
-export async function getAreaObjectiveStrategicPendings(token: string): Promise<AreaObjectiveStrategicProposalResponse[]> {
-    const response = await fetch(`${API_URL}/api/strategicareas/status/Pendiente`, {
+export async function getResourcesPendings(token: string): Promise<ResourcesProposalResponse[]> {
+    const response = await fetch(`${API_URL}/api/institutionalResources/status/Pendiente`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -52,8 +52,8 @@ export async function getAreaObjectiveStrategicPendings(token: string): Promise<
     return response.json();
 }
 
-export async function getAreaObjectiveStrategicApproved(token: string): Promise<AreaObjectiveStrategicProposalResponse[]> {
-    const response = await fetch(`${API_URL}/api/strategicareas/status/Aprobado`, {
+export async function getResourcesApproved(token: string): Promise<ResourcesProposalResponse[]> {
+    const response = await fetch(`${API_URL}/api/institutionalResources/status/Aprobado`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -68,8 +68,8 @@ export async function getAreaObjectiveStrategicApproved(token: string): Promise<
     return response.json();
 }
 
-export async function getAreaObjectiveStrategicRejected(token: string): Promise<AreaObjectiveStrategicProposalResponse[]> {
-    const response = await fetch(`${API_URL}/api/strategicareas/status/Rechazado`, {
+export async function getResourcesRejected(token: string): Promise<ResourcesProposalResponse[]> {
+    const response = await fetch(`${API_URL}/api/institutionalResources/status/Rechazado`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -84,10 +84,10 @@ export async function getAreaObjectiveStrategicRejected(token: string): Promise<
     return response.json();
 }
 
-export async function approveAreaObjectiveStrategic(strategicAreaId: number, token: string) {
-    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
+export async function approveResources(resourceId: number, reasonForChange: string, token: string) {
+    const response = await fetch(`${API_URL}/api/institutionalResources/${resourceId}`, {
         method: 'PUT',
-        body: JSON.stringify({ status: 'Aprobado' }),
+        body: JSON.stringify({ resourceId, status: 'Aprobado', reasonForChange }),
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -95,16 +95,16 @@ export async function approveAreaObjectiveStrategic(strategicAreaId: number, tok
     })
 
     if (!response.ok) {
-        throw new Error(`Error al aprobar/rechazar propuesta: ${response.statusText}`);
+        throw new Error(`Error al aprobar propuesta: ${response.statusText}`);
     }
 
     return response.json();
 }
 
-export async function rejectAreaObjectiveStrategic(strategicAreaId: number, token: string) {
-    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
+export async function rejectResources(resourceId: number, reasonForChange: string, token: string) {
+    const response = await fetch(`${API_URL}/api/institutionalResources/${resourceId}`, {
         method: 'PUT',
-        body: JSON.stringify({ status: 'Rechazado' }),
+        body: JSON.stringify({ resourceId, status: 'Rechazado', reasonForChange }),
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -118,10 +118,10 @@ export async function rejectAreaObjectiveStrategic(strategicAreaId: number, toke
     return response.json();
 }
 
-export async function pendingAreaObjectiveStrategic(strategicAreaId: number, token: string) {
-    const response = await fetch(`${API_URL}/api/strategicareas/${strategicAreaId}`, {
+export async function pendingResources(resourceId: number, reasonForChange: string, token: string) {
+    const response = await fetch(`${API_URL}/api/institutionalResources/${resourceId}`, {
         method: 'PUT',
-        body: JSON.stringify({ status: 'Pendiente' }),
+        body: JSON.stringify({ resourceId, status: 'Pendiente', reasonForChange }),
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
