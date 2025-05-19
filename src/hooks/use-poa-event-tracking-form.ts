@@ -368,50 +368,62 @@ export function usePoaEventTrackingFormLogic(
       isDeleted: !fecha.isEnabled
     }));
     
-    // Marcar financiamientos eliminados - prioriza isToBeDeleted (UI), luego verifica si es vacío/cero
+    // PRESERVAR LOS VALORES EXISTENTES DE isDeleted Y SOLO ACTUALIZAR SI SE HA MARCADO isToBeDeleted
     values.aportesUmes = values.aportesUmes.map(aporte => {
-      // Forzar isDeleted=true si isToBeDeleted está establecido
-      if (aporte.isToBeDeleted === true) {
-        console.log(`Forzando isDeleted=true para aporte UMES ${aporte.eventExecutionFinancingId}`);
-        // Sobreescribir isDeleted directamente en forma.values también, para asegurar propagación
-        if (aporte.eventExecutionFinancingId) {
-          // Buscar el índice del aporte en el array para establecer el valor
-          const idx = values.aportesUmes.findIndex(a => a.eventExecutionFinancingId === aporte.eventExecutionFinancingId);
-          if (idx >= 0) form.setValue(`aportesUmes.${idx}.isDeleted`, true);
-        }
+      // Convertir aporte.isDeleted a booleano explícito
+      const currentIsDeleted = Boolean(aporte.isDeleted);
+      
+      // Si ya está marcado como eliminado en la UI, respetarlo
+      if (currentIsDeleted === true) {
+        console.log(`Respetando isDeleted=true existente para aporte UMES ${aporte.eventExecutionFinancingId}`);
         return {
           ...aporte,
-          isDeleted: true // Forzar a true explícitamente
+          isDeleted: true
         };
       }
       
-      // Caso normal: verificar condiciones estándar
+      // Forzar isDeleted=true si isToBeDeleted está establecido
+      if (aporte.isToBeDeleted === true) {
+        console.log(`Forzando isDeleted=true para aporte UMES ${aporte.eventExecutionFinancingId} por isToBeDeleted`);
+        return {
+          ...aporte,
+          isDeleted: true
+        };
+      }
+      
+      // Si no está eliminado, asegurarse que isDeleted sea false explícitamente
       return {
         ...aporte,
-        isDeleted: !aporte.financingSourceId || aporte.amount === 0
+        isDeleted: false
       };
     });
     
     values.aportesOtros = values.aportesOtros.map(aporte => {
-      // Forzar isDeleted=true si isToBeDeleted está establecido
-      if (aporte.isToBeDeleted === true) {
-        console.log(`Forzando isDeleted=true para aporte Otros ${aporte.eventExecutionFinancingId}`);
-        // Sobreescribir isDeleted directamente en forma.values también, para asegurar propagación
-        if (aporte.eventExecutionFinancingId) {
-          // Buscar el índice del aporte en el array para establecer el valor
-          const idx = values.aportesOtros.findIndex(a => a.eventExecutionFinancingId === aporte.eventExecutionFinancingId);
-          if (idx >= 0) form.setValue(`aportesOtros.${idx}.isDeleted`, true);
-        }
+      // Convertir aporte.isDeleted a booleano explícito
+      const currentIsDeleted = Boolean(aporte.isDeleted);
+      
+      // Si ya está marcado como eliminado en la UI, respetarlo
+      if (currentIsDeleted === true) {
+        console.log(`Respetando isDeleted=true existente para aporte Otros ${aporte.eventExecutionFinancingId}`);
         return {
           ...aporte,
-          isDeleted: true // Forzar a true explícitamente
+          isDeleted: true
         };
       }
       
-      // Caso normal: verificar condiciones estándar
+      // Forzar isDeleted=true si isToBeDeleted está establecido
+      if (aporte.isToBeDeleted === true) {
+        console.log(`Forzando isDeleted=true para aporte Otros ${aporte.eventExecutionFinancingId} por isToBeDeleted`);
+        return {
+          ...aporte,
+          isDeleted: true
+        };
+      }
+      
+      // Si no está eliminado, asegurarse que isDeleted sea false explícitamente
       return {
         ...aporte,
-        isDeleted: !aporte.financingSourceId || aporte.amount === 0
+        isDeleted: false
       };
     });
     
