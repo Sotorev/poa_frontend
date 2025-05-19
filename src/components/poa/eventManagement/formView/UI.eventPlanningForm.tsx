@@ -32,6 +32,8 @@ import { PhaseIndicator } from "./phase-indicator"
 import { ProposeAreaObjectiveStrategicDialog } from "@/components/approveProposals/AreaOjectiveStrategic/UI.AreaObjectiveStrategic"
 import { ProposeStrategyDialog } from "@/components/approveProposals/strategies/UI.strategyPropose"
 import { ProposeInterventionDialog } from "@/components/approveProposals/interventions/UI.interventionPropose"
+import { ProposeResourcesDialog } from "@/components/approveProposals/resources/UI.resourcesPropose"
+import { ProposePurchaseTypeDialog } from "@/components/approveProposals/purchaseType/UI.purchaseTypePropose"
 
 // Context
 import { EventPlanningFormContext } from "./context.eventPlanningForm"
@@ -39,8 +41,11 @@ import { EventContext } from "../context.event"
 import { PlusIcon } from "lucide-react"
 import { useAreaObjectiveStrategicApproval } from "@/components/approveProposals/AreaOjectiveStrategic/useAreaObjectiveStrategicApproval"
 
+// Dialogs
 import { useStrategyProposals } from "@/components/approveProposals/strategies/useStrategyProposals"
 import { useInterventionProposals } from "@/components/approveProposals/interventions/useInterventionProposals"
+import { useResourcesProposals } from "@/components/approveProposals/resources/useResourcesProposals"
+import { usePurchaseTypeProposals } from "@/components/approveProposals/purchaseType/usePurchaseTypeProposals"
 
 interface EventPlanningFormProps {
 }
@@ -124,6 +129,18 @@ export function EventPlanningForm({
         handleAddIntervention,
     } = useInterventionProposals()
 
+    const {
+        isProposeResourceDialogOpen,
+        setIsProposeResourceDialogOpen,
+        handleAddResource,
+    } = useResourcesProposals()
+
+    const {
+        isProposePurchaseTypeDialogOpen,
+        setIsProposePurchaseTypeDialogOpen,
+        handleAddPurchaseType,
+    } = usePurchaseTypeProposals()
+
     const onSubmit = async () => {
         try {
             await handleFormSubmit(poaId || undefined)
@@ -162,6 +179,17 @@ export function EventPlanningForm({
                 strategies={strategics}
             />
 
+            <ProposeResourcesDialog
+                isOpen={isProposeResourceDialogOpen}
+                onClose={() => setIsProposeResourceDialogOpen(false)}
+                onPropose={handleAddResource}
+            />
+
+            <ProposePurchaseTypeDialog
+                isOpen={isProposePurchaseTypeDialogOpen}
+                onClose={() => setIsProposePurchaseTypeDialogOpen(false)}
+                onPropose={handleAddPurchaseType}
+            />
 
             <Dialog open={isOpen} onOpenChange={(open) => {
                 if (!open) {
@@ -438,6 +466,13 @@ export function EventPlanningForm({
                                                         <PurchaseType selectedTipo={field.value} onSelectTipo={(tipo) => field.onChange(tipo)} />
                                                     )}
                                                 />
+                                                <Button
+                                                    onClick={() => setIsProposePurchaseTypeDialogOpen(true)}
+                                                    className="mt-2"
+                                                >
+                                                    <PlusIcon className="mr-2 h-4 w-4" />
+                                                    Proponer Nuevo Tipo de Compra
+                                                </Button>
                                                 {formErrors.errorList.find((e) => e.field === "purchaseTypeId") && (
                                                     <FieldError
                                                         message={formErrors.errorList.find((e) => e.field === "purchaseTypeId")?.message}
@@ -491,6 +526,10 @@ export function EventPlanningForm({
                                                         removeResource(index)
                                                     }}
                                                 />
+                                                <Button variant="outline" className="justify-end" onClick={() => setIsProposeResourceDialogOpen(true)}>
+                                                    <PlusIcon className="w-4 h-4" />
+                                                    <span>Proponer Recurso</span>
+                                                </Button>
                                                 {formErrors.errorList.find((e) => e.field === "resources") && (
                                                     <FieldError message={formErrors.errorList.find((e) => e.field === "resources")?.message} />
                                                 )}

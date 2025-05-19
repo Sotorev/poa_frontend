@@ -14,7 +14,14 @@ export interface InterventionProposalResponse {
     status: string
     createdAt: string
     updatedAt: string
-    userId: any
-    reasonForChange: any
-    user: any
+    userId: number
+    reasonForChange: string
+    user: UserResponse
+}
+
+export interface UserResponse {
+    userId: number
+    firstName: string
+    lastName: string
+    email: string
 }
