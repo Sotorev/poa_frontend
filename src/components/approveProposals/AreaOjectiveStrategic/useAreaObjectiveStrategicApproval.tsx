@@ -18,6 +18,7 @@ export function useAreaObjectiveStrategicApproval() {
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
     const [refreshTrigger, setRefreshTrigger] = useState(0)
     const [currentPei, setCurrentPei] = useState<PEI>()
+    const [isProposeDialogOpen, setIsProposeDialogOpen] = useState<boolean>(false);
     
     // Estados para búsqueda y paginación
     const [searchTerm, setSearchTerm] = useState('')
@@ -67,7 +68,7 @@ export function useAreaObjectiveStrategicApproval() {
         }
 
         fetchProposals()
-    }, [user?.token, refreshTrigger])
+    }, [user?.token, refreshTrigger, isProposeDialogOpen])
 
     // Filtrar y ordenar propuestas
     const filteredAndSortedProposals = useMemo(() => {
@@ -274,7 +275,6 @@ export function useAreaObjectiveStrategicApproval() {
         handleUpdateProposal,
         handleChangeStatus,
         handleAddProposal,
-        // Nuevas propiedades para búsqueda y paginación
         searchTerm,
         handleSearch,
         currentPage,
@@ -287,6 +287,8 @@ export function useAreaObjectiveStrategicApproval() {
         totalItems: proposalsByStatus.length,
         activeTab,
         setActiveTabState,
+        isProposeDialogOpen,
+        setIsProposeDialogOpen,
         // Totales por estado para mostrar en las pestañas
         pendingCount: filteredAndSortedProposals.filter(p => p.status === 'Pendiente').length,
         approvedCount: filteredAndSortedProposals.filter(p => p.status === 'Aprobado').length,

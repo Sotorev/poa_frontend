@@ -57,8 +57,6 @@ interface EventContextProps {
     eventEditing: UpdateEventRequest | undefined;
     handleEditEvent: (event: PlanningEvent) => void;
     resetEventEditing: () => void;
-    isProposeDialogOpen: boolean;
-    setIsProposeDialogOpen: (isOpen: boolean) => void;
 }
 
 export const EventContext = createContext<EventContextProps>({
@@ -87,8 +85,6 @@ export const EventContext = createContext<EventContextProps>({
     eventEditing: undefined,
     handleEditEvent: (_event: PlanningEvent) => { },
     resetEventEditing: () => { },
-    isProposeDialogOpen: false,
-    setIsProposeDialogOpen: (_isOpen: boolean) => { },
 });
 
 interface ProviderProps {
@@ -131,7 +127,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
     const { selectedYear } = useContext(PoaContext);
 
     // Estado para controlar el diálogo de propuesta
-    const [isProposeDialogOpen, setIsProposeDialogOpen] = useState<boolean>(false);
+    
 
     /**
     * Effect hook to fetch initial data required for the planning form
@@ -411,8 +407,6 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 setSelectedStrategies,
                 handleEditEvent,
                 resetEventEditing,
-                isProposeDialogOpen,
-                setIsProposeDialogOpen,
             }}
         >
             {children}
