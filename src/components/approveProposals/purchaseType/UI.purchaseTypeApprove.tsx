@@ -13,9 +13,20 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckIcon, XIcon, ArrowUpDown, Loader2, SaveIcon } from "lucide-react"
+import { CheckIcon, XIcon, ArrowUpDown, Loader2, SaveIcon, Search, PlusCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+    PaginationEllipsis
+} from "@/components/ui/pagination"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ProposePurchaseTypeDialog } from "./UI.purchaseTypePropose"
 
 export function PurchaseTypeApprove() {
     const {
@@ -27,15 +38,26 @@ export function PurchaseTypeApprove() {
         toggleSort,
         handleApproval,
         handleUpdateProposal,
-        handleChangeStatus
+        handleChangeStatus,
+        handleAddPurchaseType,
+        searchTerm,
+        handleSearch,
+        currentPage,
+        totalPages,
+        goToNextPage,
+        goToPreviousPage,
+        goToPage,
+        totalItems,
+        activeTab,
+        setActiveTabState,
+        pendingCount,
+        approvedCount,
+        rejectedCount,
+        isProposePurchaseTypeDialogOpen,
+        setIsProposePurchaseTypeDialogOpen
     } = usePurchaseTypeProposals()
 
     const [editedProposals, setEditedProposals] = useState<Record<number, { name: string }>>({})
-
-    // Filtrar propuestas por estado
-    const pendingProposals = proposals.filter(proposal => proposal.status === 'Pendiente')
-    const approvedProposals = proposals.filter(proposal => proposal.status === 'Aprobado')
-    const rejectedProposals = proposals.filter(proposal => proposal.status === 'Rechazado')
 
     const handleInputChange = (id: number, field: 'name', value: string) => {
         setEditedProposals(prev => ({
@@ -219,44 +241,166 @@ export function PurchaseTypeApprove() {
         )
     }
 
+    // Renderizar paginación
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+
+        const pages = [];
+        const maxVisiblePages = 5;
+
+        // Lógica para mostrar un número limitado de páginas con elipsis
+        if (totalPages <= maxVisiblePages) {
+            // Mostrar todas las páginas si hay pocas
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Lógica para mostrar algunas páginas con elipsis
+            const leftSide = Math.floor(maxVisiblePages / 2);
+            const rightSide = maxVisiblePages - leftSide - 1;
+
+            if (currentPage > leftSide + 1) {
+                pages.push(1);
+                if (currentPage > leftSide + 2) {
+                    pages.push('ellipsis');
+                }
+            }
+
+            // Páginas alrededor de la página actual
+            const startPage = Math.max(1, currentPage - leftSide);
+            const endPage = Math.min(totalPages, currentPage + rightSide);
+
+            for (let i = startPage; i <= endPage; i++) {
+                pages.push(i);
+            }
+
+            if (currentPage < totalPages - rightSide) {
+                if (currentPage < totalPages - rightSide - 1) {
+                    pages.push('ellipsis');
+                }
+                pages.push(totalPages);
+            }
+        }
+
+        return (
+            <Pagination className="mt-4">
+                <PaginationContent>
+                    <PaginationItem>
+                        <PaginationPrevious
+                            onClick={goToPreviousPage}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                    </PaginationItem>
+
+                    {pages.map((page, index) => (
+                        <PaginationItem key={index}>
+                            {page === 'ellipsis' ? (
+                                <PaginationEllipsis />
+                            ) : (
+                                <PaginationLink
+                                    isActive={page === currentPage}
+                                    onClick={() => goToPage(page as number)}
+                                >
+                                    {page}
+                                </PaginationLink>
+                            )}
+                        </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                        <PaginationNext
+                            onClick={goToNextPage}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                    </PaginationItem>
+                </PaginationContent>
+            </Pagination>
+        );
+    };
+
+    // Renderizar información de paginación
+    const renderPaginationInfo = () => {
+        const start = (currentPage - 1) * 5 + 1;
+        const end = Math.min(start + 4, totalItems);
+
+        return (
+            <div className="text-sm text-muted-foreground mt-2">
+                Mostrando {totalItems > 0 ? start : 0} a {end} de {totalItems} resultados
+            </div>
+        );
+    };
+
     return (
-        <Card className="w-full">
-            <CardHeader>
-                <CardTitle>Propuestas de Tipos de Compra</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {error && (
-                    <Alert variant="destructive" className="mb-4">
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
+        <>
+            <ProposePurchaseTypeDialog
+                isOpen={isProposePurchaseTypeDialogOpen}
+                onClose={() => setIsProposePurchaseTypeDialogOpen(false)}
+                onPropose={handleAddPurchaseType}
+            />
+            <Card className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Propuestas de Tipos de Compra</CardTitle>
+                    <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-primary border-primary hover:bg-primary/10"
+                            onClick={() => setIsProposePurchaseTypeDialogOpen(true)}
+                        >
+                            <PlusCircle className="h-4 w-4 mr-2" />
+                            Nueva Propuesta
+                        </Button>
+                </CardHeader>
+                <CardContent>
+                    {error && (
+                        <Alert variant="destructive" className="mb-4">
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
 
-                <Tabs defaultValue="Pendiente" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 mb-4">
-                        <TabsTrigger value="Pendiente" className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800">
-                            Pendientes ({pendingProposals.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="Aprobado" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
-                            Aprobadas ({approvedProposals.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="Rechazado" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800">
-                            Rechazadas ({rejectedProposals.length})
-                        </TabsTrigger>
-                    </TabsList>
+                    {/* Barra de búsqueda */}
+                    <div className="relative mb-4">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar propuestas..."
+                            className="pl-8"
+                            value={searchTerm}
+                            onChange={(e) => handleSearch(e.target.value)}
+                        />
+                    </div>
 
-                    <TabsContent value="Pendiente">
-                        {renderProposalsTable(pendingProposals)}
-                    </TabsContent>
+                    <Tabs value={activeTab} onValueChange={(value) => setActiveTabState(value as 'Pendiente' | 'Aprobado' | 'Rechazado')} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3 mb-4">
+                            <TabsTrigger value="Pendiente" className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800">
+                                Pendientes ({pendingCount})
+                            </TabsTrigger>
+                            <TabsTrigger value="Aprobado" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
+                                Aprobadas ({approvedCount})
+                            </TabsTrigger>
+                            <TabsTrigger value="Rechazado" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800">
+                                Rechazadas ({rejectedCount})
+                            </TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="Aprobado">
-                        {renderProposalsTable(approvedProposals)}
-                    </TabsContent>
+                        <TabsContent value="Pendiente">
+                            {renderProposalsTable(proposals)}
+                            {renderPagination()}
+                            {renderPaginationInfo()}
+                        </TabsContent>
 
-                    <TabsContent value="Rechazado">
-                        {renderProposalsTable(rejectedProposals)}
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-        </Card>
+                        <TabsContent value="Aprobado">
+                            {renderProposalsTable(proposals)}
+                            {renderPagination()}
+                            {renderPaginationInfo()}
+                        </TabsContent>
+
+                        <TabsContent value="Rechazado">
+                            {renderProposalsTable(proposals)}
+                            {renderPagination()}
+                            {renderPaginationInfo()}
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+            </Card>
+        </>
     )
 }
