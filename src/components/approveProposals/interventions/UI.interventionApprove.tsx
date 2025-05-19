@@ -97,6 +97,7 @@ export function InterventionApprove() {
                                 Estrategia
                             </div>
                         </TableHead>
+                        <TableHead>Justificación</TableHead>
                         <TableHead>Propuesto por</TableHead>
                         <TableHead>Fecha</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
@@ -121,6 +122,7 @@ export function InterventionApprove() {
                                 <TableCell>
                                     {strategyId}
                                 </TableCell>
+                                <TableCell>{proposal.reasonForChange || 'N/A'}</TableCell>
                                 <TableCell>{proposedByName}</TableCell>
                                 <TableCell>{new Date(proposal.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell className="text-right">

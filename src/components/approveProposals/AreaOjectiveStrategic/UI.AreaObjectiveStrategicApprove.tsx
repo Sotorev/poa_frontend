@@ -102,6 +102,7 @@ export function AreaObjectiveStrategicApprove() {
                                 <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'strategicObjective' ? 'opacity-100' : 'opacity-40'}`} />
                             </div>
                         </TableHead>
+                        <TableHead>Justificación</TableHead>
                         <TableHead>Propuesto por</TableHead>
                         <TableHead>Fecha</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
@@ -130,6 +131,7 @@ export function AreaObjectiveStrategicApprove() {
                                         className={isEdited ? "border-primary" : "border-transparent"}
                                     />
                                 </TableCell>
+                                <TableCell>{proposal.reasonForChange || 'N/A'}</TableCell>
                                 <TableCell>{proposedByName}</TableCell>
                                 <TableCell>{new Date(proposal.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell className="text-right">
