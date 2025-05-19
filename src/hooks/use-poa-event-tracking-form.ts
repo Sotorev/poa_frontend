@@ -360,9 +360,62 @@ export function usePoaEventTrackingFormLogic(
   };
 
   async function handleFormSubmit(values: FormValues) {
-    // Eliminar fechas que no están habilitadas y eliminar el campo isEnabled
-    const fechasHabilitadas = values.fechas.filter((fecha) => fecha.isEnabled);
-    values.fechas = fechasHabilitadas;
+    console.log('Procesando submit con valores iniciales:', JSON.stringify(values));
+    
+    // Marcar fechas no habilitadas como eliminadas en lugar de filtrarlas
+    values.fechas = values.fechas.map(fecha => ({
+      ...fecha,
+      isDeleted: !fecha.isEnabled
+    }));
+    
+    // Marcar financiamientos eliminados - prioriza isToBeDeleted (UI), luego verifica si es vacío/cero
+    values.aportesUmes = values.aportesUmes.map(aporte => {
+      // Forzar isDeleted=true si isToBeDeleted está establecido
+      if (aporte.isToBeDeleted === true) {
+        console.log(`Forzando isDeleted=true para aporte UMES ${aporte.eventExecutionFinancingId}`);
+        // Sobreescribir isDeleted directamente en forma.values también, para asegurar propagación
+        if (aporte.eventExecutionFinancingId) {
+          // Buscar el índice del aporte en el array para establecer el valor
+          const idx = values.aportesUmes.findIndex(a => a.eventExecutionFinancingId === aporte.eventExecutionFinancingId);
+          if (idx >= 0) form.setValue(`aportesUmes.${idx}.isDeleted`, true);
+        }
+        return {
+          ...aporte,
+          isDeleted: true // Forzar a true explícitamente
+        };
+      }
+      
+      // Caso normal: verificar condiciones estándar
+      return {
+        ...aporte,
+        isDeleted: !aporte.financingSourceId || aporte.amount === 0
+      };
+    });
+    
+    values.aportesOtros = values.aportesOtros.map(aporte => {
+      // Forzar isDeleted=true si isToBeDeleted está establecido
+      if (aporte.isToBeDeleted === true) {
+        console.log(`Forzando isDeleted=true para aporte Otros ${aporte.eventExecutionFinancingId}`);
+        // Sobreescribir isDeleted directamente en forma.values también, para asegurar propagación
+        if (aporte.eventExecutionFinancingId) {
+          // Buscar el índice del aporte en el array para establecer el valor
+          const idx = values.aportesOtros.findIndex(a => a.eventExecutionFinancingId === aporte.eventExecutionFinancingId);
+          if (idx >= 0) form.setValue(`aportesOtros.${idx}.isDeleted`, true);
+        }
+        return {
+          ...aporte,
+          isDeleted: true // Forzar a true explícitamente
+        };
+      }
+      
+      // Caso normal: verificar condiciones estándar
+      return {
+        ...aporte,
+        isDeleted: !aporte.financingSourceId || aporte.amount === 0
+      };
+    });
+    
+    console.log('Valores finales para submit:', JSON.stringify(values));
 
     const result = formSchema.safeParse(values);
     if (!result.success) {
