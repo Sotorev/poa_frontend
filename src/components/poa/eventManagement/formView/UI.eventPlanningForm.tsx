@@ -467,6 +467,7 @@ export function EventPlanningForm({
                                                     )}
                                                 />
                                                 <Button
+                                                    variant="outline"
                                                     onClick={() => setIsProposePurchaseTypeDialogOpen(true)}
                                                     className="mt-2"
                                                 >
