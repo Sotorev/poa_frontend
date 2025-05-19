@@ -17,6 +17,7 @@ export interface InterventionProposalResponse {
     userId: number
     reasonForChange: string
     user: UserResponse
+    strategyDescription?: string // Descripción de la estrategia asociada (agregada durante el procesamiento)
 }
 
 export interface UserResponse {
