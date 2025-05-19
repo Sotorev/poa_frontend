@@ -103,6 +103,7 @@ export function StrategyApprove() {
                                 <ArrowUpDown className={`ml-2 h-4 w-4 ${sortColumn === 'strategicAreaId' ? 'opacity-100' : 'opacity-40'}`} />
                             </div>
                         </TableHead>
+                        <TableHead>Justificación</TableHead>
                         <TableHead>Propuesto por</TableHead>
                         <TableHead>Fecha</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
@@ -126,6 +127,7 @@ export function StrategyApprove() {
                                 <TableCell>
                                     {proposal.strategicAreaName}
                                 </TableCell>
+                                <TableCell>{proposal.reasonForChange || 'N/A'}</TableCell>
                                 <TableCell>{proposedByName}</TableCell>
                                 <TableCell>{new Date(proposal.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell className="text-right">
