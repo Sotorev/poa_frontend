@@ -9,6 +9,7 @@ import { TraditionalView } from '@/components/poa/eventManagement/formView/UI.tr
 
 // Context
 import { EventProvider } from '@/components/poa/eventManagement/context.event'
+import { TableForm } from '@/components/poa/eventManagement/table-form/table-form'
 
 const CreatePOAPage = () => {
 	const [formPreference, setFormPreference] = useState<'traditional' | 'table'>('traditional')
@@ -47,7 +48,7 @@ const CreatePOAPage = () => {
 				{formPreference === 'traditional' ? (
 					<TraditionalView />
 				) : (
-					<TraditionalView />
+					<TableForm />
 				)}
 			</EventProvider>
 

@@ -30,7 +30,7 @@ interface ExtendedStrategicObjective extends StrategicObjective {
   number: number;
 }
 
-export function StrategicObjectiveSelector({ selectedObjetive, onSelectObjetive, addStrategicObjective }: StrategicObjectiveProps) {
+export function   StrategicObjectiveSelector({ selectedObjetive, onSelectObjetive, addStrategicObjective }: StrategicObjectiveProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [extendedStrategicObjective, setExtendedStrategicObjective] = useState<ExtendedStrategicObjective[]>([]);
