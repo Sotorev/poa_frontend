@@ -360,9 +360,74 @@ export function usePoaEventTrackingFormLogic(
   };
 
   async function handleFormSubmit(values: FormValues) {
-    // Eliminar fechas que no están habilitadas y eliminar el campo isEnabled
-    const fechasHabilitadas = values.fechas.filter((fecha) => fecha.isEnabled);
-    values.fechas = fechasHabilitadas;
+    console.log('Procesando submit con valores iniciales:', JSON.stringify(values));
+    
+    // Marcar fechas no habilitadas como eliminadas en lugar de filtrarlas
+    values.fechas = values.fechas.map(fecha => ({
+      ...fecha,
+      isDeleted: !fecha.isEnabled
+    }));
+    
+    // PRESERVAR LOS VALORES EXISTENTES DE isDeleted Y SOLO ACTUALIZAR SI SE HA MARCADO isToBeDeleted
+    values.aportesUmes = values.aportesUmes.map(aporte => {
+      // Convertir aporte.isDeleted a booleano explícito
+      const currentIsDeleted = Boolean(aporte.isDeleted);
+      
+      // Si ya está marcado como eliminado en la UI, respetarlo
+      if (currentIsDeleted === true) {
+        console.log(`Respetando isDeleted=true existente para aporte UMES ${aporte.eventExecutionFinancingId}`);
+        return {
+          ...aporte,
+          isDeleted: true
+        };
+      }
+      
+      // Forzar isDeleted=true si isToBeDeleted está establecido
+      if (aporte.isToBeDeleted === true) {
+        console.log(`Forzando isDeleted=true para aporte UMES ${aporte.eventExecutionFinancingId} por isToBeDeleted`);
+        return {
+          ...aporte,
+          isDeleted: true
+        };
+      }
+      
+      // Si no está eliminado, asegurarse que isDeleted sea false explícitamente
+      return {
+        ...aporte,
+        isDeleted: false
+      };
+    });
+    
+    values.aportesOtros = values.aportesOtros.map(aporte => {
+      // Convertir aporte.isDeleted a booleano explícito
+      const currentIsDeleted = Boolean(aporte.isDeleted);
+      
+      // Si ya está marcado como eliminado en la UI, respetarlo
+      if (currentIsDeleted === true) {
+        console.log(`Respetando isDeleted=true existente para aporte Otros ${aporte.eventExecutionFinancingId}`);
+        return {
+          ...aporte,
+          isDeleted: true
+        };
+      }
+      
+      // Forzar isDeleted=true si isToBeDeleted está establecido
+      if (aporte.isToBeDeleted === true) {
+        console.log(`Forzando isDeleted=true para aporte Otros ${aporte.eventExecutionFinancingId} por isToBeDeleted`);
+        return {
+          ...aporte,
+          isDeleted: true
+        };
+      }
+      
+      // Si no está eliminado, asegurarse que isDeleted sea false explícitamente
+      return {
+        ...aporte,
+        isDeleted: false
+      };
+    });
+    
+    console.log('Valores finales para submit:', JSON.stringify(values));
 
     const result = formSchema.safeParse(values);
     if (!result.success) {

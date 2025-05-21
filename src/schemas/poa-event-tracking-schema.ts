@@ -8,6 +8,7 @@ const aporteSchema = z.object({
   financingSourceId: z.coerce.number().min(1, "Seleccione una fuente de financiamiento"),
   amount: z.coerce.number().nonnegative("El monto debe ser un valor positivo"),
   percentage: z.coerce.number().optional(),
+  isDeleted: z.boolean().optional().default(false),
 });
 
 const fechaSchema = z.object({
@@ -19,6 +20,7 @@ const fechaSchema = z.object({
   reasonForChange: z.string().nullable().optional(),
   statusId: z.number().optional(),
   isEnabled: z.boolean().optional(),
+  isDeleted: z.boolean().optional().default(false),
 });
 
 export const formSchema = z.object({

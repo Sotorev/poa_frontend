@@ -286,6 +286,29 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+  // Función para calcular el total de todos los aportes en tiempo real
+  const calculateTotal = () => {
+    const umesValues = form.getValues('aportesUmes') || [];
+    const otrosValues = form.getValues('aportesOtros') || [];
+    
+    const umesTotal = umesValues
+      .filter(um => !um.isDeleted) // Excluir elementos eliminados
+      .reduce((sum, um) => sum + (Number(um.amount) || 0), 0);
+    
+    const otrosTotal = otrosValues
+      .filter(ot => !ot.isDeleted) // Excluir elementos eliminados
+      .reduce((sum, ot) => sum + (Number(ot.amount) || 0), 0);
+    
+    return {
+      umesTotal,
+      otrosTotal,
+      total: umesTotal + otrosTotal
+    };
+  };
+  
+  // Actualizar el cálculo cuando cambia cualquier valor
+  const totalValues = calculateTotal();
+  
   const renderAporteFields = (
     fields: { id: string }[],
     name: "aportesUmes" | "aportesOtros",
@@ -295,14 +318,17 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
   ) => {
     return (
       <Card className={cn(error && "border border-destructive")}>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold">
             {name === "aportesUmes" ? "Detalles de Aporte UMES" : "Detalles de Aporte Otros"}
           </CardTitle>
+          <div className="text-sm font-medium">
+            Total: <span className="font-bold">{name === "aportesUmes" ? totalValues.umesTotal.toFixed(2) : totalValues.otrosTotal.toFixed(2)}</span>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {fields.map((field, index) => (
-            <div key={field.id} className="flex flex-col sm:flex-row gap-4 items-end">
+            <div key={field.id} id={`${name}-row-${index}`} className="flex flex-col sm:flex-row gap-4 items-end">
               <FormField
                 control={form.control}
                 name={`${name}.${index}.financingSourceId`}
@@ -353,6 +379,8 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                         onChange={(e) => {
                           const formattedValue = formatDecimal(e.target.value);
                           field.onChange(formattedValue);
+                          // Forzar re-render para actualizar totales en tiempo real
+                          setTimeout(() => form.trigger(), 0);
                         }}
                         className={cn(
                           "pr-8",
@@ -368,7 +396,38 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => remove(index)}
+                onClick={() => {
+                  // Identificar el financiamiento que se va a eliminar
+                  const currentFinancingSource = form.getValues(`${name}.${index}`);
+                  console.log('Eliminando financiamiento:', currentFinancingSource);
+                  
+                  if (currentFinancingSource.eventExecutionFinancingId) {
+                    // Si tiene ID (existe en la base de datos), marcar como eliminado y mantenerlo en el array
+                    
+                    // Establecer directamente isDeleted = true (en lugar de isToBeDeleted)
+                    form.setValue(`${name}.${index}.isDeleted`, true);
+                    console.log(`Marcando ${name}.${index} como isDeleted=true DIRECTAMENTE`);
+                    
+                    // También imprimir todos los valores actuales para debug
+                    setTimeout(() => {
+                      console.log('Valores después de marcar como eliminado:', form.getValues());
+                      // Forzar re-render para actualizar totales después de eliminar un item
+                      form.trigger();
+                    }, 100);
+                    
+                    // Ocultar la fila visualmente
+                    const row = document.getElementById(`${name}-row-${index}`);
+                    console.log('Elemento a ocultar:', row, `${name}-row-${index}`);
+                    if (row) {
+                      row.style.display = 'none';
+                      row.style.opacity = '0.3';
+                      row.style.backgroundColor = '#ffeeee';
+                    }
+                  } else {
+                    // Si es un elemento nuevo (sin ID), podemos eliminarlo directamente del array
+                    remove(index);
+                  }
+                }}
                 className="shrink-0"
               >
                 <Trash className="h-4 w-4" />
@@ -384,7 +443,11 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ eventId: 0, eventExecutionFinancingId: 0, financingSourceId: 0, amount: 0, percentage: 0 })}
+            onClick={() => {
+              append({ eventId: 0, eventExecutionFinancingId: 0, financingSourceId: 0, amount: 0, percentage: 0 });
+              // Forzar re-render para actualizar totales después de añadir un item
+              setTimeout(() => form.trigger(), 0);
+            }}
             className="mt-2"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -478,7 +541,20 @@ export function PoaEventTrackingForm({ events, onSubmit, initialData, open, onOp
               <CardTitle className="text-lg font-semibold">Costo Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-primary">Q{Number(costoTotal).toFixed(2)}</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total UMES:</span>
+                  <span>Q{totalValues.umesTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total Otros:</span>
+                  <span>Q{totalValues.otrosTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t mt-2">
+                  <span className="font-medium">TOTAL GENERAL:</span>
+                  <span className="text-2xl font-bold text-primary">Q{totalValues.total.toFixed(2)}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
           <Card>

@@ -163,30 +163,120 @@ export default function PoaTrackingPage() {
     const enabledDates = data.fechas.filter(fecha => fecha.isEnabled !== false);
 
     if (editingEvent) {
+      console.log('DATOS ORIGINALES EN EL SUBMIT ANTES DE PROCESAR:', JSON.stringify(data));
+      
+      // [1] USAR DIRECTAMENTE LOS VALORES DE isDeleted DEL FORMULARIO EN LUGAR DE VERIFICAR EL DOM
+      // Esto garantiza que los elementos eliminados en la UI realmente se envíen con isDeleted=true
+      console.log('Valores de isDeleted en aportesUmes:', data.aportesUmes.map((um, idx) => ({ 
+        idx, 
+        id: um.eventExecutionFinancingId, 
+        isDeleted: um.isDeleted 
+      })));
+      console.log('Valores de isDeleted en aportesOtros:', data.aportesOtros.map((ot, idx) => ({ 
+        idx, 
+        id: ot.eventExecutionFinancingId, 
+        isDeleted: ot.isDeleted 
+      })));
+      
+      // [2] USAR DIRECTAMENTE LOS VALORES DEL FORMULARIO
+      const umesWithDeleted = data.aportesUmes.map(um => {
+        // Asegurarse de que isDeleted sea un booleano
+        return {
+          ...um,
+          isDeleted: um.isDeleted === true
+        };
+      });
+      
+      const otrosWithDeleted = data.aportesOtros.map(ot => {
+        // Asegurarse de que isDeleted sea un booleano
+        return {
+          ...ot,
+          isDeleted: ot.isDeleted === true
+        };
+      });
+      
+      // [3] TERCER PASO: CALCULAR EL TOTAL Y LOS PORCENTAJES EN BASE A LOS MONTOS DE ITEMS NO ELIMINADOS
+      
+      // Asegurarnos de que estamos trabajando con los valores correctos de isDeleted provenientes del formulario
+      console.log('Estado de isDeleted en data original:', {
+        umes: data.aportesUmes.map(um => ({id: um.eventExecutionFinancingId, isDeleted: um.isDeleted})),
+        otros: data.aportesOtros.map(ot => ({id: ot.eventExecutionFinancingId, isDeleted: ot.isDeleted}))
+      });
+
+      // Usamos directamente los datos del formulario para calcular los totales, no los valores modificados
+      const totalUmes = data.aportesUmes
+        .filter(um => um.isDeleted !== true) // Solo incluir los NO eliminados
+        .reduce((sum, um) => sum + Number(um.amount), 0);
+      
+      const totalOtros = data.aportesOtros
+        .filter(ot => ot.isDeleted !== true) // Solo incluir los NO eliminados
+        .reduce((sum, ot) => sum + Number(ot.amount), 0);
+      
+      const totalAmount = totalUmes + totalOtros;
+      console.log(`Monto total RECALCULADO: ${totalAmount} (UMES: ${totalUmes}, Otros: ${totalOtros})`);
+      
+      // [4] ACTUALIZAR PORCENTAJES PARA ELEMENTOS NO ELIMINADOS
+      const umesWithPercentages = data.aportesUmes.map(um => {
+        // Si está eliminado, mantener el porcentaje original
+        if (um.isDeleted === true) {
+          console.log(`UMES ${um.eventExecutionFinancingId}: amount=${um.amount}, percentage=${um.percentage}, isDeleted=true (ELIMINADO)`);
+          return { ...um };
+        }
+        
+        // Calcular nuevo porcentaje para elementos NO eliminados
+        const newPercentage = totalAmount > 0 
+          ? Number(((Number(um.amount) / totalAmount) * 100).toFixed(2))
+          : 0; // Si no hay monto total, porcentaje es 0
+          
+        console.log(`UMES ${um.eventExecutionFinancingId}: amount=${um.amount}, percentage=${newPercentage}, isDeleted=false (ACTIVO)`);
+        return { ...um, percentage: newPercentage };
+      });
+      
+      const otrosWithPercentages = data.aportesOtros.map(ot => {
+        // Si está eliminado, mantener el porcentaje original
+        if (ot.isDeleted === true) {
+          console.log(`OTROS ${ot.eventExecutionFinancingId}: amount=${ot.amount}, percentage=${ot.percentage}, isDeleted=true (ELIMINADO)`);
+          return { ...ot };
+        }
+        
+        // Calcular nuevo porcentaje para elementos NO eliminados
+        const newPercentage = totalAmount > 0 
+          ? Number(((Number(ot.amount) / totalAmount) * 100).toFixed(2))
+          : 0; // Si no hay monto total, porcentaje es 0
+          
+        console.log(`OTROS ${ot.eventExecutionFinancingId}: amount=${ot.amount}, percentage=${newPercentage}, isDeleted=false (ACTIVO)`);
+        return { ...ot, percentage: newPercentage };
+      });
+      
       const updatePayload = {
         eventId: parseInt(data.eventId, 10),
-        eventDatesWithExecution: enabledDates.map(f => ({
+        eventDatesWithExecution: data.fechas.map(f => ({
           eventId: parseInt(data.eventId, 10),
           eventDateId: f.eventDateId,
-          executionStartDate: f.executionStartDate || f.startDate
+          executionStartDate: f.executionStartDate || f.startDate,
+          isDeleted: f.isDeleted
         })),
         eventExecutionFinancings: [
-          ...data.aportesUmes.map(um => ({
+          // Usar los arrays con isDeleted y porcentajes actualizados
+          ...umesWithPercentages.map(um => ({
             eventExecutionFinancingId: um.eventExecutionFinancingId,
             eventId: parseInt(data.eventId, 10),
             amount: um.amount,
             percentage: um.percentage,
-            financingSourceId: um.financingSourceId
+            financingSourceId: um.financingSourceId,
+            isDeleted: um.isDeleted
           })),
-          ...data.aportesOtros.map(ot => ({
+          ...otrosWithPercentages.map(ot => ({
             eventExecutionFinancingId: ot.eventExecutionFinancingId,
             eventId: parseInt(data.eventId, 10),
             amount: ot.amount,
             percentage: ot.percentage,
-            financingSourceId: ot.financingSourceId
+            financingSourceId: ot.financingSourceId,
+            isDeleted: ot.isDeleted
           })),
         ],
       };
+      console.log('Enviando al servidor:', JSON.stringify(updatePayload));
       updateEventExecuted(parseInt(data.eventId, 10), updatePayload, data.archivosGastos as File[])
         .then(() => {
           if (!poa) return
@@ -197,10 +287,11 @@ export default function PoaTrackingPage() {
     } else {
       const requestPayload: RequestEventExecution = {
         eventId: parseInt(data.eventId, 10),
-        eventDatesWithExecution: enabledDates.map(f => ({
+        eventDatesWithExecution: data.fechas.map(f => ({
           eventId: parseInt(data.eventId, 10),
           eventDateId: f.eventDateId,
           executionStartDate: f.executionStartDate || f.startDate,
+          isDeleted: f.isDeleted
         })),
         eventExecutionFinancings: [
           ...data.aportesUmes.map(um => ({
@@ -209,6 +300,7 @@ export default function PoaTrackingPage() {
             amount: um.amount,
             percentage: um.percentage,
             financingSourceId: um.financingSourceId,
+            isDeleted: um.isDeleted
           })),
           ...data.aportesOtros.map(ot => ({
             eventExecutionFinancingId: ot.eventExecutionFinancingId,
@@ -216,6 +308,7 @@ export default function PoaTrackingPage() {
             amount: ot.amount,
             percentage: ot.percentage,
             financingSourceId: ot.financingSourceId,
+            isDeleted: ot.isDeleted
           })),
         ],
       };

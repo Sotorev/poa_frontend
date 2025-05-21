@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
@@ -61,6 +61,11 @@ const ExecutedEventDetailsDialog: React.FC<ExecutedEventDetailsDialogProps> = ({
   const getOtherFinancings = () => {
     return event.eventExecutionFinancings.filter((financing) => [2, 3, 6].includes(financing.financingSourceId))
   }
+
+  // Calcular el costo total de todas las fuentes
+  useEffect(() => {
+    event.totalCost = event.eventExecutionFinancings.reduce((total, financing) => total + financing.amount, 0)
+  }, [event.eventExecutionFinancings])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

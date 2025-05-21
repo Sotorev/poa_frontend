@@ -39,12 +39,15 @@ export interface eventExecutionFinancings {
   amount: number
   percentage: number
   financingSourceId: number
+  isDeleted?: boolean
+  isToBeDeleted?: boolean /** @info: flag only for frontend to mark items for deletion */
 };
 
 export interface EventDatesWithExecution {
   eventId: number
   eventDateId: number
   executionStartDate: string
+  isDeleted?: boolean
 }
 
 export interface RequestEventExecution {
@@ -69,6 +72,7 @@ export interface ResponseEventExecutionDate {
   reasonForChange: any
   statusId: number
   isEnabled?: boolean /** @info: no es respuesta de la API, es un campo que se agrega en el formulario, para indicar si la fecha se envia o no al backend */
+  isDeleted?: boolean /** @info: indica si la fecha ha sido marcada como eliminada en el frontend */
 }
 
 export interface ResponseEventExecutionFinancing {
@@ -137,5 +141,6 @@ export interface UpdateEventExecutedPayload {
     amount: number;
     percentage: number;
     financingSourceId: number;
+    isDeleted?: boolean;
   }[];
 }
