@@ -25,7 +25,10 @@ export function PoaExecutedEventsTable({ executedEvents, onEdit, onRestore }: Po
     setIsDetailsOpen(true)
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) {
+      return "";
+    }
     return format(parseISO(dateString), "d 'de' MMMM 'de' yyyy", { locale: es })
   }
 
