@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import FacultyComponent from '@/components/faculty/faculties-component'
+import { ProtectedRoute } from '../../_components/protected-route'
 
 export default async function UsersPage() {
   // const session = await getServerSession()
@@ -13,5 +14,9 @@ export default async function UsersPage() {
   //   redirect('/no-authorizado')
   // }
 
-  return <FacultyComponent />
+  return (
+    <ProtectedRoute action="View" moduleName="Faculty">
+      <FacultyComponent />
+    </ProtectedRoute>
+  )
 }
