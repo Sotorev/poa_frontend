@@ -78,32 +78,6 @@ export function EventRow({
 				/>
 			</TableCell>
 
-			{/* Nature */}
-			<TableCell className="p-2 border-r">
-				<FormField
-					control={form.control}
-					name={`eventNature`}
-					render={({ field }) => (
-						<FormItem>
-							<FormControl>
-								<Select
-									value={field.value as string}
-									onValueChange={field.onChange}
-								>
-									<SelectTrigger>
-										<SelectValue placeholder="Naturaleza" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="Planificado">Planificado</SelectItem>
-										<SelectItem value="Extraordinario">Extraordinario</SelectItem>
-									</SelectContent>
-								</Select>
-							</FormControl>
-						</FormItem>
-					)}
-				/>
-			</TableCell>
-
 			{/* Achievement Indicator */}
 			<TableCell className="p-2 border-r min-w-[200px]">
 				<FormField

@@ -143,7 +143,7 @@ export const EventPlanningFormProvider: React.FC<{
     const [showValidationErrors, setShowValidationErrors] = useState(false)
     const { toast } = useToast()
 
-    const { setIsOpen, user, eventEditing, setSelectedStrategicObjective, setSelectedStrategies } = useContext(EventContext)
+    const { setIsOpen, user, eventEditing, setSelectedStrategicObjective, setSelectedStrategies, isPoaApproved } = useContext(EventContext)
 
     const {
         register,
@@ -165,6 +165,9 @@ export const EventPlanningFormProvider: React.FC<{
         setSelectedStrategies(undefined)
         handlePhaseClick(1)
         
+        // Set eventNature based on isPoaApproved
+        const eventNature = isPoaApproved ? 'Extraordinario' : 'Planificado' as "Planificado" | "Extraordinario";
+        
         // Valores iniciales vacíos para todos los arrays
         const emptyArrayValues = {
             interventions: [],
@@ -174,7 +177,8 @@ export const EventPlanningFormProvider: React.FC<{
             financings: [],
             resources: [],
             processDocuments: [],
-            costDetailDocuments: []
+            costDetailDocuments: [],
+            eventNature: eventNature
         };
         
         // Resetear el formulario con valores por defecto vacíos para los arrays
@@ -189,6 +193,15 @@ export const EventPlanningFormProvider: React.FC<{
             console.log('Formulario actualizado con datos del evento:', eventEditing.data);
         }
     }, [eventEditing, reset])
+
+    // Efecto para establecer eventNature automáticamente basado en isPoaApproved
+    useEffect(() => {
+        // Solo establecer automáticamente si no estamos editando un evento existente
+        if (!eventEditing) {
+            const eventNature = isPoaApproved ? 'Extraordinario' : 'Planificado';
+            setValue('eventNature', eventNature);
+        }
+    }, [isPoaApproved, setValue, eventEditing]);
 
     const phases = [
         {
@@ -315,11 +328,20 @@ export const EventPlanningFormProvider: React.FC<{
         }
         setValue("statusId", 1)
         setValue("completionPercentage", 0)
-        setValue("eventNature", "Planificado")
         setValue("userId", user?.userId || 0)
         setValue("isDelayed", false)
 
-        const formData = getValues()
+        // Get current form data to check if eventNature is set
+        let formData = getValues()
+        
+        // Set eventNature automatically based on isPoaApproved if not already set
+        if (!formData.eventNature) {
+            const eventNature = isPoaApproved ? 'Extraordinario' : 'Planificado';
+            setValue("eventNature", eventNature)
+        }
+
+        // Get updated form data after setting eventNature
+        formData = getValues()
 
         // Usamos Zod para validar el formulario
         const validationResult = fullEventSchema.safeParse(formData)
@@ -336,6 +358,7 @@ export const EventPlanningFormProvider: React.FC<{
             const infoFields = [
                 "name",
                 "objective",
+                "eventNature",
                 "responsibles",
                 "achievementIndicator",
                 "type",
@@ -531,9 +554,10 @@ export const EventPlanningFormProvider: React.FC<{
                     })
                 } else {
                     // Mensaje de éxito para actualización normal
+                    const eventTypeText = formData.eventNature === 'Extraordinario' ? 'extraordinario' : 'planificado';
                     toast({
                         title: "Éxito",
-                        description: "Evento actualizado exitosamente",
+                        description: `Evento ${eventTypeText} actualizado exitosamente`,
                         variant: "success",
                     })
                 }
@@ -542,9 +566,10 @@ export const EventPlanningFormProvider: React.FC<{
                 await submitEvent(formData, token)
 
                 // Mensaje de éxito para creación
+                const eventTypeText = formData.eventNature === 'Extraordinario' ? 'extraordinario' : 'planificado';
                 toast({
                     title: "Éxito",
-                    description: "Evento creado exitosamente",
+                    description: `Evento ${eventTypeText} creado exitosamente`,
                     variant: "success",
                 })
             }

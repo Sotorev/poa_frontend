@@ -8,9 +8,6 @@ export function TableFormHeader() {
           Nombre
         </TableHead>
         <TableHead className="px-4 py-3 text-left font-medium text-sm text-gray-700 whitespace-nowrap border-r">
-          Naturaleza
-        </TableHead>
-        <TableHead className="px-4 py-3 text-left font-medium text-sm text-gray-700 whitespace-nowrap border-r">
           Indicador de Logro
         </TableHead>
         <TableHead className="px-4 py-3 text-left font-medium text-sm text-gray-700 whitespace-nowrap border-r">

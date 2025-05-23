@@ -23,7 +23,8 @@ import {
     getCampuses,
     getPurchaseTypes,
     downloadFileAux,
-    getFacultyByUserId
+    getFacultyByUserId,
+    getPoaApprovalStatus
     // Si existe, agregar getFinancingSources
 } from './formView/service.eventPlanningForm'
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -57,6 +58,7 @@ interface EventContextProps {
     eventEditing: UpdateEventRequest | undefined;
     handleEditEvent: (event: PlanningEvent) => void;
     resetEventEditing: () => void;
+    isPoaApproved: boolean;
 }
 
 export const EventContext = createContext<EventContextProps>({
@@ -85,6 +87,7 @@ export const EventContext = createContext<EventContextProps>({
     eventEditing: undefined,
     handleEditEvent: (_event: PlanningEvent) => { },
     resetEventEditing: () => { },
+    isPoaApproved: false
 });
 
 interface ProviderProps {
@@ -102,6 +105,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
     const [resources, setResources] = useState<Resource[]>([]);
     const [campuses, setCampuses] = useState<Campus[]>([]);
     const [purchaseTypes, setPurchaseTypes] = useState<PurchaseType[]>([]);
+    const [isPoaApproved, setIsPoaApproved] = useState<boolean>(false);
 
     // Event
     const [eventEditing, setEventEditing] = useState<UpdateEventRequest | undefined>(undefined);
@@ -126,8 +130,14 @@ export const EventProvider = ({ children }: ProviderProps) => {
     // Get the selected year from POA context
     const { selectedYear } = useContext(PoaContext);
 
-    // Estado para controlar el diálogo de propuesta
-    
+
+    // Obtener el estado de aprobación del POA
+    useEffect(() => {
+        if (!poaId || !user?.token) return;
+        getPoaApprovalStatus(poaId, user.token).then(isApproved => {
+            setIsPoaApproved(isApproved);
+        });
+    }, [poaId, user?.token]);
 
     /**
     * Effect hook to fetch initial data required for the planning form
@@ -340,7 +350,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 completionPercentage: 0,
                 campusId: parseInt(event.campus, 10) || 1,
                 objective: event.objetivo,
-                eventNature: event.naturalezaEvento || "Planificado",
+                eventNature: (event.naturalezaEvento === "Extraordinario" ? "Extraordinario" : "Planificado") as "Planificado" | "Extraordinario",
                 isDelayed: false,
                 achievementIndicator: event.indicadorLogro,
                 purchaseTypeId: purchaceTypesParsed.length > 0 ? purchaceTypesParsed[0].purchaseTypeId : 0,
@@ -407,6 +417,7 @@ export const EventProvider = ({ children }: ProviderProps) => {
                 setSelectedStrategies,
                 handleEditEvent,
                 resetEventEditing,
+                isPoaApproved
             }}
         >
             {children}
