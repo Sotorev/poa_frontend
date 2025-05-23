@@ -6,8 +6,6 @@ import { Role } from "@/types/Permission"
 
 type Action = 'Crear' | 'Editar' | 'Ver' | 'Eliminar'
 
-
-
 type ModuleMapping = {
 	[key: string]: string;
 }
@@ -16,9 +14,10 @@ const moduleMapping: ModuleMapping = {
 	'POA': 'POA',
 	'PEI': 'PEI',
 	'Campus': 'Campus',
-	'Facultades': 'Faculty',
-	'Eventos': 'Events',
-	'Autenticación': 'Auth'
+	'Faculty': 'Facultades',
+	'Events': 'Eventos',
+	'Auth': 'Autenticación',
+	'Dashboard': 'Dashboard'
 }
 
 const actionMapping: { [key: string]: Action } = {
@@ -33,7 +32,7 @@ export function usePermissions() {
 
 	const checkPermission = (moduleName: string, action: 'Create' | 'Edit' | 'View' | 'Delete'): boolean => {
 		if (!session?.user?.permissions) return false
-		const spanishModule = Object.keys(moduleMapping).find(key => moduleMapping[key] === moduleName) || moduleName
+		const spanishModule = moduleMapping[moduleName] || moduleName
 		const spanishAction = actionMapping[action]
 		return session.user.permissions.some(
 			(permission) => permission.moduleName === spanishModule && permission.action === spanishAction

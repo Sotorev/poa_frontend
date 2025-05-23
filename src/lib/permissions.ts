@@ -13,7 +13,7 @@ const moduleMapping: ModuleMapping = {
 	'Campus': 'Campus',
 	'Faculty': 'Facultades',
 	'Events': 'Eventos',
-	'Auth': 'Autenticación'
+	'Auth': 'Autenticación',
 }
 
 const actionMapping: { [key in Action]: SpanishAction } = {
@@ -27,7 +27,8 @@ export async function checkPermission(moduleName: string, action: Action): Promi
 	const session = await auth();
 	if (!session?.user.permissions) return false
 
-	const spanishModule = Object.keys(moduleMapping).find(key => moduleMapping[key] === moduleName) || moduleName
+	// Si el moduleName está en inglés, obtener su equivalente en español
+	const spanishModule = moduleMapping[moduleName] || moduleName
 	const spanishAction = actionMapping[action]
 
 	return session.user.permissions.some(

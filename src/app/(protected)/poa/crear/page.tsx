@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // Components
 import { TraditionalView } from '@/components/poa/eventManagement/formView/UI.traditionalView'
+import { ProtectedRoute } from '../../_components/protected-route'
 
 // Context
 import { EventContext, EventProvider } from '@/components/poa/eventManagement/context.event'
@@ -69,9 +70,11 @@ const PageContent = () => {
 
 const CreatePOAPage = () => {
 	return (
-		<EventProvider>
-			<PageContent />
-		</EventProvider>
+		<ProtectedRoute action="Create" moduleName="Events">
+			<EventProvider>
+				<PageContent />
+			</EventProvider>
+		</ProtectedRoute>
 	)
 }
 

@@ -61,7 +61,7 @@ const navItems: NavItem[] = [
 		href: "/facultades/gestion",
 		icon: BookOpen,
 		description: "Gestión de facultades",
-		requiredPermission: { module: "Auth", action: "Edit" },
+		requiredPermission: { module: "Faculty", action: "View" },
 		requiredRoles: ['Vicerrector', 'Administrador']
 	},
 	{
@@ -264,9 +264,16 @@ function MobileNav({ navItems, permissions }: MobileNavProps) {
 						</Button>
 						{item.subItems && (
 							<div className="ml-4 space-y-1">
-								{item.subItems.filter(subItem =>
-									subItem.requiredPermission && permissions[`can${subItem.requiredPermission.action}` as keyof typeof permissions](subItem.requiredPermission.module as any)
-								).map((subItem) => (
+								{item.subItems.filter(subItem => {
+									if (subItem.requiredPermission) {
+										const permissionKey = `can${subItem.requiredPermission.action}` as keyof typeof permissions;
+										return permissions[permissionKey](subItem.requiredPermission.module as any);
+									}
+									if (subItem.requiredRoles && subItem.requiredRoles.length > 0) {
+										return permissions.hasRole(subItem.requiredRoles);
+									}
+									return true;
+								}).map((subItem) => (
 									<Button key={subItem.title} variant="ghost" className={clsx("w-full justify-start", pathname === subItem.href && "bg-muted")} asChild>
 										<Link href={subItem.href}>{subItem.title}</Link>
 									</Button>
