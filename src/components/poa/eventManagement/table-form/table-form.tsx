@@ -63,6 +63,12 @@ function TableForm() {
     form.setValue('poaId', eventContext.poaId || 1);
   }, [eventContext.poaId, form]);
 
+  useEffect(() => {
+    // Set eventNature based on isPoaApproved
+    const eventNature = eventContext.isPoaApproved ? 'Extraordinario' : 'Planificado';
+    form.setValue('eventNature', eventNature);
+  }, [eventContext.isPoaApproved, form]);
+
   const onSubmit = async (data: FormSchema) => {
     try {
       setIsSubmitting(true);
@@ -104,9 +110,10 @@ function TableForm() {
       }
       
       // Handle success
+      const eventTypeText = dataToSubmit.eventNature === 'Extraordinario' ? 'extraordinario' : 'planificado';
       toast({
         title: 'Éxito',
-        description: 'El evento se ha guardado correctamente.',
+        description: `El evento ${eventTypeText} se ha guardado correctamente.`,
       });
       
       // Reset form and state

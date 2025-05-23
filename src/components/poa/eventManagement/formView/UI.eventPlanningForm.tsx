@@ -367,6 +367,7 @@ export function EventPlanningForm({
                                                         <FieldError message={formErrors.errorList.find((e) => e.field === "objective")?.message} />
                                                     )}
                                                 </div>
+                                
                                             </div>
                                         </div>
 

@@ -122,10 +122,10 @@ const navItems: NavItem[] = [
 		href: "/propuestas",
 		icon: FileText,
 		description: "Propuestas",
-		requiredRoles: ['Coordinador Pedagógico'],
+		requiredRoles: ['Coordinador Pedagógico', "Administrador"],
 		subItems: [
-			{ title: "Area y Objetivo Estratégico", href: "/propuestas/area-objetivo-estrategico", description: "Propuestas de área y objetivo estratégico", requiredRoles: ['Coordinador Pedagógico'], icon: FileText },
-			{ title: "Estrategias", href: "/propuestas/estrategias", description: "Propuestas de estrategias", requiredRoles: ['Coordinador Pedagógico'], icon: FileText },
+			{ title: "Area y Objetivo Estratégico", href: "/propuestas/area-objetivo-estrategico", description: "Propuestas de área y objetivo estratégico", requiredRoles: ['Coordinador Pedagógico', "Administrador"], icon: FileText },
+			{ title: "Estrategias", href: "/propuestas/estrategias", description: "Propuestas de estrategias", requiredRoles: ['Coordinador Pedagógico', "Administrador"], icon: FileText },
 			{ title: "Intervenciones", href: "/propuestas/intervenciones", description: "Propuestas de intervenciones", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
 			// { title: "Campus", href: "/propuestas/campus", description: "Propuestas de campus", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },
 			// { title: "Fuente de financiamiento", href: "/propuestas/fuentes-de-financiamiento", description: "Propuestas de fuentes de financiamiento", requiredRoles: ['Decano', 'Administrador', 'Directora', 'Directora académica', 'Coordinador Pedagógico', 'Formulador'], icon: FileText },

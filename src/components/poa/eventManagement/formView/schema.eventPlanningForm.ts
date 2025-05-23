@@ -118,12 +118,10 @@ export const fullEventSchema = z
       .trim(),
 
     eventNature: z
-      .string({
+      .enum(["Planificado", "Extraordinario"], {
         required_error: "La naturaleza del evento es requerida",
-        invalid_type_error: "La naturaleza del evento debe ser texto",
-      })
-      .min(1, "La naturaleza del evento es requerida")
-      .trim(),
+        invalid_type_error: "La naturaleza del evento debe ser Planificado o Extraordinario",
+      }),
 
     isDelayed: z.boolean(),
 

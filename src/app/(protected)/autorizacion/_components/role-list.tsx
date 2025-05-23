@@ -85,15 +85,19 @@ export function RoleList({ roles, onSelectRole, onDeleteRole, canEdit, canDelete
 							<TableCell>
 								{canEdit && (
 									<>
-										<Button variant="outline" onClick={() => onSelectRole(role)} className="mr-2">
-											Editar permisos
-										</Button>
-										<Button variant="outline" onClick={() => handleEditClick(role)} className="mr-2">
-											Editar nombre
-										</Button>
+										{role.roleId !== 6 && (
+											<Button variant="outline" onClick={() => onSelectRole(role)} className="mr-2">
+												Editar permisos
+											</Button>
+										)}
+										{role.roleId !== 6 && (
+											<Button variant="outline" onClick={() => handleEditClick(role)} className="mr-2">
+												Editar nombre
+											</Button>
+										)}
 									</>
 								)}
-								{canDelete && (
+								{canDelete && role.roleId !== 6 && (
 									<Button variant="destructive" onClick={() => handleDeleteClick(role)}>
 										Eliminar
 									</Button>

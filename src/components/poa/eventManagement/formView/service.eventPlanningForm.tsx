@@ -433,3 +433,29 @@ export async function getEventById(eventId: number, token: string): Promise<Resp
 
   return await response.json();
 }
+
+/**
+ * Obtiene el estado de aprobación del POA
+ * @param poaId ID del POA
+ * @param token Token de autenticación
+ * @returns Estado de aprobación del POA
+ */
+export async function getPoaApprovalStatus(poaId: number, token: string): Promise<boolean> {
+  if (!API_URL) {
+    throw new Error("La URL de la API no está definida.");
+  }
+
+  const response = await fetch(`${API_URL}/api/poas/status/${poaId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al obtener el estado de aprobación del POA.');
+  }
+
+  const data = await response.json();
+  return data.isApproved;
+}
