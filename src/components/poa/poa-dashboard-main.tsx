@@ -204,9 +204,12 @@ export function PoaDashboardMain() {
   }
 
 
-  const handleReloadData = useCallback(() => {
+  const handleReloadData = useCallback(async () => {
     if (facultyId && user?.token) {
-      getPoaByFacultyAndYear(facultyId, selectedYear, user.token);
+      const poa = await getPoaByFacultyAndYear(facultyId, selectedYear, user.token);
+      setPoaId(poa.poaId);
+      // Reload approval statuses after POA data is updated
+      await handleSetStatusApproval();
     }
   }, [facultyId, user, selectedYear]);
 
@@ -389,7 +392,7 @@ export function PoaDashboardMain() {
         </div>
 
         {/* Renderizar las secciones */}
-        {isLoadingPoaApproval ? (
+        {poaId && isLoadingPoaApproval ? (
           <p>Cargando estado de aprobación del POA...</p> // O un componente de spinner
         ) : (
           poaId && !isNaN(poaId) && facultyId !== undefined && sections.map((section) => (
