@@ -61,7 +61,6 @@ const navItems: NavItem[] = [
 		href: "/facultades/gestion",
 		icon: BookOpen,
 		description: "Gestión de facultades",
-		requiredPermission: { module: "Faculty", action: "View" },
 		requiredRoles: ['Vicerrector', 'Administrador']
 	},
 	{
@@ -93,7 +92,7 @@ const navItems: NavItem[] = [
 		href: "/pei",
 		icon: BarChart2,
 		description: "Plan Estratégico Institucional",
-		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo"],
+		requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Rector"],
 		subItems: [
 			{ title: "Gestión", href: "/pei/crear", description: "Gestionar plan estratégico institucional", requiredRoles: ['Vicerrector', "Administrador", "Vicerrector académico", "Vicerrector administrativo", "Rector"], icon: FileText },
 			{ title: "ODS Gestión", href: "/pei/ods/gestion", description: "Gestión de ODS", requiredRoles: ["Administrador"], icon: Settings },
