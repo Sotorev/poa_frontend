@@ -16,6 +16,7 @@ import {
 import { CheckCircle, XCircle, AlertCircle, RotateCcw, MessageCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useCurrentUser } from "@/hooks/use-current-user"
+import { CommentThread } from "./comment-thread" 
 
 interface SectionProps {
   name: string
@@ -37,6 +38,10 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
 
   const handleOpenComments = () => {
     setShowComments(true)
+  }
+
+  const handleCloseComments = () => {
+    setShowComments(false)
   }
 
   const buttonClass = "w-64 h-12 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center"
@@ -223,25 +228,24 @@ export function PoaApproval({ name, isActive, poaId, onStatusChange }: SectionPr
           </AlertDialogContent>
         </AlertDialog>
 
-        {/*<Button
+        <Button
           onClick={handleOpenComments}
           className="w-12 h-12 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-full transition duration-300 ease-in-out flex items-center justify-center"
           aria-label="Abrir comentarios"
         >
           <MessageCircle className="h-6 w-6" />
-        </Button>*/}
+        </Button>
       </div>
 
       {showComments && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Comentarios</h2>
-            <p>Aquí iría el componente de comentarios.</p>
-            <Button onClick={() => setShowComments(false)} className="mt-4">
-              Cerrar
-            </Button>
-          </div>
-        </div>
+        <CommentThread 
+          isOpen={showComments}
+          onClose={handleCloseComments}
+          entityId={poaId}
+          entityName={`POA ${name}`}
+        />
+      </div>
       )}
     </div>
   )

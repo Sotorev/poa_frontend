@@ -56,7 +56,7 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentInput>({
     resolver: zodResolver(commentSchema),
     defaultValues: {
-      entityType: "Event",
+      entityType: "POA",
       entityId: entityId,
       userId: currentUserId,
       comment: "",
@@ -84,7 +84,7 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
   const fetchComments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/entity/Event/${entityId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comment/entity/POA/${entityId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.token}`
@@ -95,7 +95,7 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
       }
       const data = await response.json();
       
-      // Add user data to each comment
+          // Add user data to each comment
     const commentsWithUserData = await Promise.all(data.comments.map(async (comment: Comment) => {
       if (comment.userId === currentUserId) {
         return {
@@ -200,7 +200,7 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
           </Button>
         </div>
         <div className="text-sm text-[#0f766e] px-4 py-2 bg-[#e6f7f1] bg-opacity-50">
-          Evento: {entityName}
+          Comentarios del POA
         </div>
         <ScrollArea className="h-[300px] w-full" ref={scrollAreaRef}>
           <div className="p-3 space-y-3">
@@ -220,18 +220,18 @@ export function CommentThread({ isOpen, onClose, entityId, entityName }: Comment
                     }`}
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <span
-                      className={`font-semibold ${
-                        comment.userId === currentUserId ? "text-[#0f766e]" : "text-gray-700"
-                      }`}
-                    >
-                      {comment.userId === currentUserId 
-                        ? "Usuario Actual" 
-                        : comment.user 
-                          ? `${comment.user.firstName || "Usuario"} ${comment.user.lastName || comment.userId}` 
-                          : `Usuario ${comment.userId}`
-                      }
-                    </span>
+                  <span
+                    className={`font-semibold ${
+                      comment.userId === currentUserId ? "text-[#0f766e]" : "text-gray-700"
+                    }`}
+                  >
+                    {comment.userId === currentUserId 
+                      ? "Usuario Actual" 
+                      : comment.user 
+                        ? `${comment.user.firstName || "Usuario"} ${comment.user.lastName || comment.userId}` 
+                        : `Usuario ${comment.userId}`
+                    }
+                  </span>
                     <div className="flex items-center space-x-2">
                       <span className="text-xs text-gray-500">
                         {new Date(comment.timestamp).toLocaleString("es-ES")}
