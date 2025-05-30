@@ -6,15 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // Components
 import { TraditionalView } from '@/components/poa/eventManagement/formView/UI.traditionalView'
+import { ProtectedRoute } from '../../_components/protected-route'
 
 // Context
 import { EventContext, EventProvider } from '@/components/poa/eventManagement/context.event'
 import { TableForm } from '@/components/poa/eventManagement/table-form/table-form'
-import { Card, CardTitle, CardHeader } from '@/components/ui/card'
+import { Card, CardTitle, CardHeader, CardDescription } from '@/components/ui/card'
 
 const PageContent = () => {
 	const [formPreference, setFormPreference] = useState<'traditional' | 'table'>('traditional')
-	const { isPoaApproved } = useContext(EventContext)
+	const { isPoaApproved, poaId } = useContext(EventContext)
 	
 	useEffect(() => {
 		// Load preference from local storage
@@ -32,7 +33,18 @@ const PageContent = () => {
 		}
 	}
 	
-	
+	if(!poaId){
+		return (
+			<Card>
+				<CardHeader>
+					<CardTitle>POA no encontrado</CardTitle>
+					<CardDescription>
+						El POA no se encuentra en la base de datos. Por favor, contacte al administrador.
+					</CardDescription>
+				</CardHeader>
+			</Card>
+		)
+	}
 	return (
 		<div className="w-full max-w-7xl mx-auto">
 			{isPoaApproved && (
@@ -69,9 +81,11 @@ const PageContent = () => {
 
 const CreatePOAPage = () => {
 	return (
-		<EventProvider>
-			<PageContent />
-		</EventProvider>
+		<ProtectedRoute action="Create" moduleName="Events">
+			<EventProvider>
+				<PageContent />
+			</EventProvider>
+		</ProtectedRoute>
 	)
 }
 

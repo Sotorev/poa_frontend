@@ -102,6 +102,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 							return null;
 						}
 						const userData = await res.json();
+						console.log("userData", userData)
 						return userData;
 					}
 					else {

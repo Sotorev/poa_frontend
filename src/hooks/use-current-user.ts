@@ -14,6 +14,7 @@ interface User {
 		action: string;
 		description: string;
 	}[];
+	facultyId: number;
 }
 
 export const useCurrentUser = () => {
